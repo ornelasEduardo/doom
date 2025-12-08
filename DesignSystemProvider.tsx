@@ -9,12 +9,14 @@ export function DesignSystemProvider({
   children,
   initialTheme = 'default',
   withBody = false,
-  className = ''
+  className = '',
+  fontClassName = ''
 }: { 
   children: React.ReactNode;
   initialTheme?: ThemeKey;
   withBody?: boolean;
   className?: string;
+  fontClassName?: string;
 }) {
   const content = (
     <ThemeProvider initialTheme={initialTheme}>
@@ -23,16 +25,18 @@ export function DesignSystemProvider({
     </ThemeProvider>
   );
 
+  const combinedClassName = `${fontClassName} ${className}`.trim();
+
   if (withBody) {
     return (
-      <body className={className}>
+      <body className={combinedClassName}>
         {content}
       </body>
     );
   }
 
   return (
-    <div className={className} style={{ display: 'contents' }}>
+    <div className={combinedClassName} style={{ display: 'contents' }}>
       {content}
     </div>
   );
