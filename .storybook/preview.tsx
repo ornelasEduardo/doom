@@ -1,6 +1,7 @@
 import type { Preview } from "@storybook/react";
 import React from 'react';
 import { DesignSystemProvider } from '../DesignSystemProvider';
+import { themes, ThemeKey } from '../styles/themes/definitions';
 import { Montserrat } from 'next/font/google';
 
 const montserrat = Montserrat({
@@ -19,8 +20,22 @@ const preview: Preview = {
       },
     },
   },
+  globalTypes: {
+    theme: {
+      name: 'Theme',
+      description: 'Global theme for components',
+      defaultValue: 'default',
+      toolbar: {
+        icon: 'paintbrush',
+        items: Object.keys(themes).map(theme => ({ value: theme, title: themes[theme as ThemeKey].name })),
+        showName: true,
+      },
+    },
+  },
   decorators: [
-    (Story) => {
+    (Story, context) => {
+      const theme = context.globals.theme as ThemeKey;
+      
       React.useEffect(() => {
         document.body.classList.add(montserrat.variable);
         return () => {
@@ -29,7 +44,7 @@ const preview: Preview = {
       }, []);
 
       return (
-        <DesignSystemProvider>
+        <DesignSystemProvider initialTheme={theme}>
           <Story />
         </DesignSystemProvider>
       );

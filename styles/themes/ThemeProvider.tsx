@@ -23,6 +23,10 @@ export function ThemeProvider({
 }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeKey>(initialTheme);
 
+  useEffect(() => {
+    setCurrentTheme(initialTheme);
+  }, [initialTheme]);
+
   const handleSetTheme = (newTheme: ThemeKey) => {
     setCurrentTheme(newTheme);
     onThemeChange?.(newTheme);

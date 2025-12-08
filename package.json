@@ -15,7 +15,8 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vitest"
   },
   "keywords": [
     "design-system",
@@ -50,6 +51,7 @@
     "storybook": "^10.1.4",
     "styled-jsx": "^5.1.7",
     "typescript": "^5",
+    "vite": "^7.2.7",
     "vitest": "^4.0.15"
   },
   "dependencies": {
