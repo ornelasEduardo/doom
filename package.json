@@ -1,0 +1,46 @@
+{
+  "name": "doom-design-system",
+  "version": "0.1.0",
+  "description": "Neubrutalist and comic book inspired design system",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc"
+  },
+  "keywords": [
+    "design-system",
+    "react",
+    "ui-kit",
+    "components"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "lucide-react": "^0.555.0",
+    "next": "^15.5.7",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
+    "@types/styled-jsx": "^2.2.9",
+    "rimraf": "^6.1.2",
+    "styled-jsx": "^5.1.7",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.12"
+  }
+}
