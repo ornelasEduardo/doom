@@ -30,14 +30,17 @@ npm install @emotion/react @emotion/styled lucide-react
 
 ### 1. Setup Provider
 
-Wrap your application with the `DesignSystemProvider` to ensure all styles and themes are applied correctly.
+Wrap your application with the `DesignSystemProvider` to ensure all styles and themes are applied correctly. You can also pass a custom font class using `fontClassName`.
 
 ```tsx
 import { DesignSystemProvider } from 'doom-design-system';
+import { Montserrat } from 'next/font/google';
+
+const montserrat = Montserrat({ subsets: ['latin'] });
 
 export default function App() {
   return (
-    <DesignSystemProvider>
+    <DesignSystemProvider fontClassName={montserrat.className}>
       <YourApp />
     </DesignSystemProvider>
   );
