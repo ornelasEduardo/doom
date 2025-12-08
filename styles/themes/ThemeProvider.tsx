@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Global, css } from '@emotion/react';
 import { themes, ThemeKey } from './definitions';
-import { setThemePreference } from './actions';
 
 interface ThemeContextType {
   theme: ThemeKey;
@@ -15,16 +14,18 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ 
   children, 
-  initialTheme 
+  initialTheme,
+  onThemeChange
 }: { 
   children: React.ReactNode; 
   initialTheme: ThemeKey;
+  onThemeChange?: (theme: ThemeKey) => void;
 }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeKey>(initialTheme);
 
-  const handleSetTheme = async (newTheme: ThemeKey) => {
+  const handleSetTheme = (newTheme: ThemeKey) => {
     setCurrentTheme(newTheme);
-    await setThemePreference(newTheme);
+    onThemeChange?.(newTheme);
   };
 
   // Get the variables for the current theme

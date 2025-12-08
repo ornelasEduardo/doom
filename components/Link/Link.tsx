@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import NextLink, { LinkProps as NextLinkProps } from 'next/link';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
 
@@ -11,7 +10,7 @@ interface StyledLinkProps {
   variant?: LinkVariant;
 }
 
-const StyledLink = styled(NextLink)<StyledLinkProps>`
+const StyledLink = styled.a<StyledLinkProps>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -70,16 +69,14 @@ const StyledLink = styled(NextLink)<StyledLinkProps>`
   `}
 `;
 
-interface LinkProps extends NextLinkProps {
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   children: React.ReactNode;
-  className?: string;
   variant?: LinkVariant;
-  style?: React.CSSProperties;
 }
 
-export function Link({ children, variant = 'default', prefetch, ...props }: LinkProps) {
+export function Link({ children, variant = 'default', ...props }: LinkProps) {
   return (
-    <StyledLink variant={variant} prefetch={prefetch} {...props}>
+    <StyledLink variant={variant} {...props}>
       {children}
     </StyledLink>
   );

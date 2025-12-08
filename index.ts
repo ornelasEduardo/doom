@@ -21,4 +21,3 @@ export * from './components/ActionRow';
 export * from './components/Skeleton';
 export * from './DesignSystemProvider';
 export * from './styles/themes';
-export * from './fonts';
