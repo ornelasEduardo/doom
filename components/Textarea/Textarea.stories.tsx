@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Textarea  } from '../..';
+import { Textarea } from 'doom-design-system';
 
 const meta: Meta<typeof Textarea> = {
   title: 'Design System/Textarea',

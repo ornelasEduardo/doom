@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Table  } from '../..';
+import {  Table  } from 'doom-design-system';
 import { createColumnHelper } from '@tanstack/react-table';
 
 const meta: Meta<typeof Table> = {

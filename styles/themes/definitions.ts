@@ -29,6 +29,20 @@ const baseVariables = {
   '--z-dropdown': '50',
   '--z-modal': '100',
   '--z-tooltip': '200',
+
+  // Motion
+  '--duration-fast': '150ms',
+  '--duration-normal': '250ms',
+  '--duration-slow': '350ms',
+  '--ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+  '--ease-out': 'cubic-bezier(0.0, 0, 0.2, 1)',
+  '--ease-in': 'cubic-bezier(0.4, 0, 1, 1)',
+
+  // Shadows (consistent relative to theme colors)
+  '--shadow-sm': '2px 2px 0px 0px var(--card-border)',
+  '--shadow-sm-hover': '3px 3px 0px 0px var(--card-border)',
+  '--shadow-sm-checked': '3px 3px 0px 0px var(--card-border)',
+  '--shadow-sm-checked-hover': '4px 4px 0px 0px var(--card-border)',
 };
 
 export const themes = {

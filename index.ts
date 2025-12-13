@@ -19,5 +19,6 @@ export * from './components/Textarea';
 export * from './components/Toast';
 export * from './components/ActionRow';
 export * from './components/Skeleton';
+export * from './components/Switch';
 export * from './DesignSystemProvider';
 export * from './styles/themes';

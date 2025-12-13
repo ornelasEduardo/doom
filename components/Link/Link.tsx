@@ -16,7 +16,7 @@ const StyledLink = styled.a<StyledLinkProps>`
   justify-content: center;
   font-weight: 700;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all var(--duration-fast) var(--ease-in-out);
   cursor: pointer;
   
   /* Default Variant */

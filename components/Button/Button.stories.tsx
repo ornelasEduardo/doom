@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Button  } from '../..';
+import {  Button  } from 'doom-design-system';
 
 const meta: Meta<typeof Button> = {
   title: 'Design System/Button',

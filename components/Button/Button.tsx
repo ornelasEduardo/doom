@@ -20,7 +20,7 @@ const StyledButton = styled.button<StyledButtonProps>`
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.1s ease;
+  transition: all var(--duration-fast) var(--ease-in-out);
   cursor: pointer;
   border: var(--border-width) solid var(--card-border);
   box-shadow: var(--shadow-hard);

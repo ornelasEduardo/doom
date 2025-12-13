@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Flex, Grid  } from '../..';
+import {  Flex, Grid  } from 'doom-design-system';
 
-import {  Text  } from '../..';
+import {  Text  } from 'doom-design-system';
 
 const meta: Meta<typeof Flex> = {
   title: 'Design System/Layout',

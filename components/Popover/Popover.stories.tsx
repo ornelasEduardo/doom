@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Popover } from './Popover';
-import { Button, Card, Text } from '../..';
+import { Button, Card, Text } from 'doom-design-system';
 import { useState } from 'react';
 
 const meta: Meta<typeof Popover> = {

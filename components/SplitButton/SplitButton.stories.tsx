@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  SplitButton  } from '../..';
+import {  SplitButton  } from 'doom-design-system';
 
 const meta: Meta<typeof SplitButton> = {
   title: 'Design System/SplitButton',

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Text  } from '../..';
+import {  Text  } from 'doom-design-system';
 
 const meta: Meta<typeof Text> = {
   title: 'Design System/Text',

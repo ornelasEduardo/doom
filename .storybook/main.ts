@@ -16,5 +16,14 @@ const config: StorybookConfig = {
   typescript: {
     reactDocgen: "react-docgen-typescript",
   },
+  webpackFinal: async (config) => {
+    if (config.resolve) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'doom-design-system': require('path').resolve(__dirname, '../index.ts'),
+      };
+    }
+    return config;
+  },
 };
 export default config;
