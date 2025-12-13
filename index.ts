@@ -32,4 +32,5 @@ export * from './components/Slider';
 export * from './components/Drawer';
 export * from './components/Sheet';
 export * from './DesignSystemProvider';
+export * from './components/Icon';
 export * from './styles/themes';

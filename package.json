@@ -1,6 +1,6 @@
 {
   "name": "doom-design-system",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Neubrutalist and comic book inspired design system",
   "type": "module",
   "main": "dist/index.js",
