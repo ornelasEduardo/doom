@@ -1,66 +1,107 @@
+'use client';
+
 import React from 'react';
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 
-interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
+
+const StyledForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+`;
+
+const StyledField = styled.div<{ error?: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  
+`;
+
+
+import { Label } from '../Label/Label';
+export { Label };
+
+const StyledMessage = styled.span<{ variant: 'error' | 'description' }>`
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  ${props => props.variant === 'error' && css`
+    color: var(--error);
+    font-weight: 700;
+    text-transform: uppercase;
+    animation: shake 0.3s ease-in-out;
+  `}
+
+  ${props => props.variant === 'description' && css`
+    color: var(--muted-foreground);
+  `}
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+`;
+
+
+export interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
 }
 
-export function Form({ children, className = '', style, ...props }: FormProps) {
-  return (
-    <form 
-      className={className}
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '1.5rem',
-        ...style 
-      }}
-      {...props}
-    >
-      {children}
-    </form>
-  );
+export function Form({ children, ...props }: FormProps) {
+  return <StyledForm {...props}>{children}</StyledForm>;
 }
 
-interface FormGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+
+export interface FormMessageProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
+  variant?: 'error' | 'description';
 }
 
-export function FormGroup({ children, className = '', style, ...props }: FormGroupProps) {
-  return (
-    <div 
-      className={className}
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '0.5rem',
-        ...style 
-      }}
-      {...props}
-    >
-      {children}
-    </div>
-  );
+export function FormMessage({ children, variant = 'description', ...props }: FormMessageProps) {
+  return <StyledMessage variant={variant} {...props}>{children}</StyledMessage>;
 }
 
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+
+export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  label?: string;
+  error?: string | boolean;
+  description?: string;
+  htmlFor?: string;
+  required?: boolean;
 }
 
-export function Label({ children, className = '', style, ...props }: LabelProps) {
+export function Field({ 
+  children, 
+  label, 
+  error, 
+  description, 
+  htmlFor, 
+  required,
+  ...props 
+}: FieldProps) {
   return (
-    <label 
-      className={className}
-      style={{ 
-        fontWeight: 700, 
-        fontSize: '0.9rem',
-        color: '#000000',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        ...style 
-      }}
-      {...props}
-    >
+    <StyledField error={!!error} {...props}>
+      {label && (
+        <Label htmlFor={htmlFor} required={required}>
+          {label}
+        </Label>
+      )}
       {children}
-    </label>
+
+      {description && !error && (
+        <FormMessage variant="description">{description}</FormMessage>
+      )}
+
+      {error && typeof error === 'string' && (
+        <FormMessage variant="error">{error}</FormMessage>
+      )}
+    </StyledField>
   );
 }
+
+export const FormGroup = StyledField;

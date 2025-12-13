@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
@@ -13,6 +11,9 @@ interface StyledButtonProps {
 }
 
 const StyledButton = styled.button<StyledButtonProps>`
+  --btn-focus-border: var(--primary);
+  --btn-focus-shadow: var(--shadow-primary);
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -20,22 +21,36 @@ const StyledButton = styled.button<StyledButtonProps>`
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all var(--duration-fast) var(--ease-in-out);
+  transition: 
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+    box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
   cursor: pointer;
   border: var(--border-width) solid var(--card-border);
   box-shadow: var(--shadow-hard);
   background-color: var(--card-bg);
   color: var(--foreground);
   font-size: var(--text-base);
+  position: relative;
 
   &:hover {
     transform: translate(-2px, -2px);
     box-shadow: var(--shadow-hover);
   }
 
+  &:focus {
+    outline: none;
+    box-shadow: 7px 7px 0px 0px var(--btn-focus-shadow);
+    transform: translate(-2px, -2px);
+    border-color: var(--btn-focus-border);
+  }
+
   &:active {
-    transform: translate(0px, 0px);
-    box-shadow: 0px 0px 0px 0px var(--card-border);
+    transition: none;
+    transform: translate(2px, 2px);
+    box-shadow: none;
   }
 
   &:disabled {
@@ -47,6 +62,10 @@ const StyledButton = styled.button<StyledButtonProps>`
 
   /* Variants */
   ${props => props.variant === 'primary' && css`
+    /* Contrast Override */
+    --btn-focus-border: var(--card-border);
+    --btn-focus-shadow: #000000;
+
     background-color: var(--primary);
     color: var(--primary-foreground);
     &:hover {
@@ -55,6 +74,10 @@ const StyledButton = styled.button<StyledButtonProps>`
   `}
 
   ${props => props.variant === 'secondary' && css`
+    /* Contrast Override */
+    --btn-focus-border: var(--card-border);
+    --btn-focus-shadow: #000000;
+
     background-color: var(--secondary);
     color: var(--secondary-foreground);
     &:hover {
@@ -63,6 +86,10 @@ const StyledButton = styled.button<StyledButtonProps>`
   `}
 
   ${props => props.variant === 'success' && css`
+    /* Contrast Override */
+    --btn-focus-border: var(--card-border);
+    --btn-focus-shadow: #000000;
+
     background-color: var(--success);
     color: var(--card-bg);
     &:hover {
@@ -72,18 +99,23 @@ const StyledButton = styled.button<StyledButtonProps>`
   
   ${props => props.variant === 'outline' && css`
     background-color: transparent;
-    /* Outline is default style basically */
   `}
 
   ${props => props.variant === 'ghost' && css`
     background-color: transparent;
     border-color: transparent;
     box-shadow: none;
-    &:hover {
+    &:hover, &:focus {
       background-color: color-mix(in srgb, var(--primary), transparent 90%);
       color: var(--primary);
       transform: none;
       box-shadow: none;
+      border-color: transparent;
+      outline: none;
+    }
+    &:active {
+      transform: scale(0.95);
+      transition: none;
     }
   `}
 

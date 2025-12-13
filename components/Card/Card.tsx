@@ -11,7 +11,7 @@ const StyledCard = styled.div`
   background-color: var(--card-bg);
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   box-shadow: var(--shadow-hard);
   min-width: 0; /* Safe default for grid/flex items */
 `;

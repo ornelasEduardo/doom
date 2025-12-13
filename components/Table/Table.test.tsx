@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Table } from './Table';
 import { describe, it, expect, vi } from 'vitest';
@@ -21,6 +22,28 @@ vi.mock('../..', () => ({
   ),
   Flex: ({ children }: any) => <div>{children}</div>,
   Text: ({ children }: any) => <span>{children}</span>,
+}));
+
+vi.mock('../Pagination', () => ({
+  Pagination: ({ currentPage, totalPages, onPageChange }: any) => (
+    <div>
+      <button 
+        onClick={() => onPageChange(currentPage - 1)} 
+        disabled={currentPage === 1}
+        aria-label="Go to previous page"
+      >
+        Previous
+      </button>
+      <span>Page {currentPage} of {totalPages}</span>
+      <button 
+        onClick={() => onPageChange(currentPage + 1)} 
+        disabled={currentPage === totalPages}
+        aria-label="Go to next page"
+      >
+        Next
+      </button>
+    </div>
+  ),
 }));
 
 interface TestData {
@@ -70,16 +93,13 @@ describe('Table Component', () => {
     const nameHeader = screen.getByText('Name').closest('th');
     fireEvent.click(nameHeader!);
     
-    // Should be sorted by Name ASC: Alice, Bob, Charlie
     const rows = screen.getAllByRole('row');
-    // row 0 is header
     expect(rows[1]).toHaveTextContent('Alice');
     expect(rows[2]).toHaveTextContent('Bob');
     expect(rows[3]).toHaveTextContent('Charlie');
     
     fireEvent.click(nameHeader!);
     
-    // Should be sorted by Name DESC: Charlie, Bob, Alice
     const rowsDesc = screen.getAllByRole('row');
     expect(rowsDesc[1]).toHaveTextContent('Charlie');
     expect(rowsDesc[2]).toHaveTextContent('Bob');
@@ -87,13 +107,12 @@ describe('Table Component', () => {
   });
 
   it('should paginate data', () => {
-    // Set page size to 1 to force pagination
     render(<Table data={data} columns={columns} pageSize={1} />);
     
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.queryByText('Bob')).not.toBeInTheDocument();
     
-    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByLabelText('Go to next page'));
     
     expect(screen.queryByText('Alice')).not.toBeInTheDocument();
     expect(screen.getByText('Charlie')).toBeInTheDocument();

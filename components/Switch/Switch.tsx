@@ -41,9 +41,9 @@ const Toggle = styled.div<{ checked?: boolean }>`
   height: 32px;
   background-color: ${props => props.checked ? 'var(--primary)' : 'var(--card-bg)'};
   border: var(--border-width) solid var(--card-border);
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   transition: background-color var(--duration-normal) var(--ease-in-out), transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
-  box-shadow: ${props => props.checked ? 'var(--shadow-sm-checked)' : 'var(--shadow-sm)'};
+  box-shadow: var(--shadow-sm);
   box-sizing: border-box;
 
   &::after {
@@ -62,15 +62,6 @@ const Toggle = styled.div<{ checked?: boolean }>`
     box-sizing: border-box;
   }
 
-  &:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: ${props => props.checked ? 'var(--shadow-sm-checked-hover)' : 'var(--shadow-sm-hover)'};
-  }
-
-  &:active {
-    transform: translate(0, 0);
-    box-shadow: none;
-  }
 `;
 
 const Label = styled.span`

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, KeyboardEvent, useId } from 'react';
+import { baseInteractiveStyles, focusStyles } from '../../styles/mixins';
 import styled from '@emotion/styled';
 import { Text, Popover } from '../..';
 import { Check, ChevronDown } from 'lucide-react';
@@ -15,46 +16,33 @@ const SelectContainer = styled.div`
 const SelectTrigger = styled.button`
   width: 100%;
   background: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
   color: var(--foreground);
   padding: 0.75rem 1rem;
   font-size: var(--text-base);
   cursor: pointer;
-  box-shadow: var(--shadow-hard);
-  border-radius: var(--radius);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.1s ease;
   min-height: 42px;
+
+  ${baseInteractiveStyles}
 
   &:hover {
     transform: translate(-2px, -2px);
     box-shadow: var(--shadow-hover);
   }
 
-  &:focus {
-    outline: none;
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover);
-    border-color: var(--primary);
-  }
-
-  &[aria-expanded="true"] {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover);
-    border-color: var(--primary);
-  }
+  ${focusStyles}
 `;
 
 const OptionsList = styled.ul`
   background: var(--card-bg);
   border: var(--border-width) solid var(--primary);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-hover);
+  box-shadow: none;
   min-width: 200px;
   max-height: 300px;
   overflow-y: auto;

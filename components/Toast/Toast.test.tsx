@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ToastProvider, useToast } from './Toast';
 import { describe, it, expect, vi } from 'vitest';

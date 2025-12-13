@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Input } from './Input';
 import { describe, it, expect, vi } from 'vitest';
@@ -8,6 +9,11 @@ describe('Input Component', () => {
     render(<Input label="Username" />);
     expect(screen.getByText('Username')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+
+  it('should render required attribute', () => {
+    render(<Input label="Required" required />);
+    expect(screen.getByRole('textbox')).toBeRequired();
   });
 
   it('should handle value changes', () => {

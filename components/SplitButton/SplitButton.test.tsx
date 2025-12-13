@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SplitButton } from './SplitButton';
 import { describe, it, expect, vi } from 'vitest';

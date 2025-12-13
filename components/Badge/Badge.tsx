@@ -18,7 +18,7 @@ const StyledBadge = styled.span<StyledBadgeProps>`
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;

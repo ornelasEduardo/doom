@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabsBody } from './Tabs';
 import { describe, it, expect, vi } from 'vitest';

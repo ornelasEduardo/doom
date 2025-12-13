@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { Select } from './Select';
 import { describe, it, expect, vi } from 'vitest';

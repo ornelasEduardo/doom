@@ -14,8 +14,8 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button, Input, Select, Flex, Text } from '../..';
+import { Pagination } from '../Pagination';
 
-// --- Styled Components ---
 
 const TableContainer = styled.div`
   width: 100%;
@@ -29,7 +29,7 @@ const TableContainer = styled.div`
 `;
 
 const Toolbar = styled.div`
-  padding: 1rem;
+  padding: var(--spacing-md);
   border-bottom: var(--border-width) solid var(--card-border);
   background: var(--background);
   display: flex;
@@ -110,7 +110,7 @@ const Tr = styled.tr<{ $striped?: boolean }>`
 `;
 
 const PaginationContainer = styled.div`
-  padding: 1rem;
+  padding: var(--spacing-md);
   border-top: var(--border-width) solid var(--card-border);
   background: var(--background);
   display: flex;
@@ -118,7 +118,6 @@ const PaginationContainer = styled.div`
   align-items: center;
 `;
 
-// --- Component ---
 
 interface TableProps<T> {
   data: T[];
@@ -318,41 +317,26 @@ export function Table<T>({
 
       {enablePagination && !isVirtual && (
         <PaginationContainer>
-          <Flex gap="1rem" align="center">
-            <Text color="muted" className="min-w-fit">
-              Page {table.getState().pagination.pageIndex + 1} of{' '}
-              {table.getPageCount()}
-            </Text>
-            <Select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => {
-                table.setPageSize(Number(e.target.value));
-              }}
-              options={[
-                { value: 10, label: '10 rows' },
-                { value: 20, label: '20 rows' },
-                { value: 50, label: '50 rows' },
-                { value: 100, label: '100 rows' },
-              ]}
+          <Flex gap="1rem" align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+            <div style={{ flexShrink: 0 }}>
+              <Select
+                value={table.getState().pagination.pageSize}
+                onChange={(e) => {
+                  table.setPageSize(Number(e.target.value));
+                }}
+                options={[
+                  { value: 10, label: '10 rows' },
+                  { value: 20, label: '20 rows' },
+                  { value: 50, label: '50 rows' },
+                  { value: 100, label: '100 rows' },
+                ]}
+              />
+            </div>
+            <Pagination
+              currentPage={table.getState().pagination.pageIndex + 1}
+              totalPages={table.getPageCount()}
+              onPageChange={(page) => table.setPageIndex(page - 1)}
             />
-          </Flex>
-          <Flex gap="0.5rem">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
           </Flex>
         </PaginationContainer>
       )}

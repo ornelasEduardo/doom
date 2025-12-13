@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { keyframes } from '@emotion/react';
+
+const popoverScale = keyframes`
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+`;
 
 interface PopoverProps {
   trigger: React.ReactNode;
   content: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-  placement?: 'bottom-start' | 'bottom-end' | 'bottom-center';
+  placement?: 'bottom-start' | 'bottom-end' | 'bottom-center' | 'top-start' | 'top-end' | 'top-center';
   offset?: number;
 }
 
@@ -33,42 +39,66 @@ export function Popover({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let top = triggerRect.bottom + offset;
-    let left = triggerRect.left;
-    let origin = 'top left';
-
-    // Vertical positioning (flip if not enough space below)
-    if (top + contentRect.height > viewportHeight && triggerRect.top > contentRect.height) {
+    let top = 0;
+    let left = 0;
+    let origin = 'top center';
+    
+    const isTop = placement.startsWith('top');
+    
+    if (isTop) {
       top = triggerRect.top - contentRect.height - offset;
       origin = 'bottom';
+      if (top < 0) {
+        top = triggerRect.bottom + offset;
+        origin = 'top';
+      }
     } else {
+      top = triggerRect.bottom + offset;
       origin = 'top';
+      if (top + contentRect.height > viewportHeight) {
+        top = triggerRect.top - contentRect.height - offset;
+        origin = 'bottom';
+      }
     }
 
-    // Horizontal positioning
-    if (placement === 'bottom-start') {
+    const align = placement.split('-')[1];
+    
+    if (align === 'start') {
       left = triggerRect.left;
-    } else if (placement === 'bottom-end') {
+      origin += ' left';
+    } else if (align === 'end') {
       left = triggerRect.right - contentRect.width;
-    } else if (placement === 'bottom-center') {
+      origin += ' right';
+    } else {
       left = triggerRect.left + (triggerRect.width / 2) - (contentRect.width / 2);
+      origin += ' center';
     }
 
-    // Edge detection (keep within viewport)
-    if (left + contentRect.width > viewportWidth - 16) {
-      left = viewportWidth - contentRect.width - 16; // 16px padding from right edge
-      if (origin.includes('left')) origin = origin.replace('left', 'right');
+    // Edge Config
+    const padding = 16;
+    
+    // Horizontal Clamping
+    if (left + contentRect.width > viewportWidth - padding) {
+      left = viewportWidth - contentRect.width - padding;
     }
-    if (left < 16) {
-      left = 16; // 16px padding from left edge
-      if (origin.includes('right')) origin = origin.replace('right', 'left');
+    if (left < padding) {
+      left = padding;
+    }
+
+    // Vertical Clamping (Fail-safe)
+    if (top < padding) {
+      top = padding;
+    }
+    if (top + contentRect.height > viewportHeight - padding) {
+      top = viewportHeight - contentRect.height - padding;
     }
 
     setPosition({ top, left });
     setTransformOrigin(origin);
   }, [isOpen, placement, offset]);
 
-  useEffect(() => {
+  // Use useLayoutEffect for layout measurements to prevent flash
+  useLayoutEffect(() => {
     if (isOpen) {
       updatePosition();
       window.addEventListener('resize', updatePosition);
@@ -113,16 +143,10 @@ export function Popover({
             left: position.left,
             zIndex: 9999, // High z-index to ensure it's on top
             transformOrigin: transformOrigin,
-            animation: 'popoverScale 0.1s ease-out',
+            animation: `${popoverScale} 0.1s ease-out`,
           }}
         >
           {content}
-          <style jsx global>{`
-            @keyframes popoverScale {
-              from { opacity: 0; transform: scale(0.95); }
-              to { opacity: 1; transform: scale(1); }
-            }
-          `}</style>
         </div>,
         document.body
       )}

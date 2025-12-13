@@ -19,13 +19,13 @@ const ModalContext = React.createContext<{ onClose: () => void }>({ onClose: () 
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: var(--spacing-md);
   backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, var(--overlay-opacity));
   animation: fadeIn 0.2s ease-out;
 
   @keyframes fadeIn {
@@ -46,23 +46,23 @@ const ContentContainer = styled.div`
 `;
 
 const StyledHeader = styled(Flex)`
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   border-bottom: var(--border-width) solid var(--card-border);
   background: var(--background);
   
   h2 {
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
     font-weight: bold;
     margin: 0;
   }
 `;
 
 const StyledBody = styled.div`
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
 `;
 
 const StyledFooter = styled.div`
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   border-top: var(--border-width) solid var(--card-border);
   background: var(--background);
 `;

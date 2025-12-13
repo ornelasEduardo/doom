@@ -60,3 +60,10 @@ export const WithEndAdornment: Story = {
     placeholder: '0',
   },
 };
+export const Required: Story = {
+  args: {
+    label: 'Required Field',
+    required: true,
+    placeholder: 'This field has an asterisk',
+  },
+};

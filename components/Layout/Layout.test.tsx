@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { Flex, Grid } from './Layout';
 import { describe, it, expect } from 'vitest';

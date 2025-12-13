@@ -44,7 +44,7 @@ const ToastItem = styled.div<{ type: ToastType; isExiting?: boolean }>`
   border: var(--border-width) solid var(--card-border);
   color: var(--foreground);
   box-shadow: var(--shadow-hard);
-  padding: 1rem;
+  padding: var(--spacing-md);
   display: flex;
   align-items: center;
   gap: 0.75rem;

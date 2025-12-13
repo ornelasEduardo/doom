@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Textarea } from './Textarea';
 import { describe, it, expect, vi } from 'vitest';

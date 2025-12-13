@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState } from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import { Flex } from '../Layout';
 
-// --- Context ---
 interface TabsContextType {
   activeTab: string;
   setActiveTab: (value: string) => void;
@@ -12,20 +12,16 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | null>(null);
 
-// --- Styled Components ---
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const StyledTabsList = styled.div`
-  display: flex;
-  gap: 0.5rem;
+const StyledTabsList = styled(Flex)`
   margin-bottom: 0;
-  padding-left: 1rem;
+  padding-left: var(--spacing-md);
   position: relative;
-  /* z-index is managed by triggers */
 `;
 
 interface StyledTriggerProps {
@@ -46,7 +42,7 @@ const StyledTabsTrigger = styled.button<StyledTriggerProps>`
   border-radius: var(--radius) var(--radius) 0 0;
   cursor: pointer;
   position: relative;
-  z-index: ${props => props.isActive ? 'var(--z-elevated)' : 1};
+  z-index: ${props => props.isActive ? 'var(--z-elevated)' : '1'};
   transition: all 0.2s ease;
   transform: ${props => props.isActive ? 'translateY(0)' : 'translateY(4px)'};
 
@@ -65,7 +61,7 @@ const StyledTabsBody = styled.div`
   padding: 2.5rem;
   box-shadow: var(--shadow-hard);
   position: relative;
-  z-index: 5;
+  z-index: var(--z-elevated);
   min-height: 600px;
   margin-top: -3px;
 `;
@@ -74,7 +70,6 @@ const StyledTabsContent = styled.div`
   animation: ${fadeIn} 0.3s ease-out forwards;
 `;
 
-// --- Components ---
 
 interface TabsProps {
   defaultValue?: string;
@@ -112,7 +107,7 @@ interface TabsListProps {
 }
 
 export function TabsList({ children, className }: TabsListProps) {
-  return <StyledTabsList className={className}>{children}</StyledTabsList>;
+  return <StyledTabsList gap="0.5rem" className={className}>{children}</StyledTabsList>;
 }
 
 interface TabsTriggerProps {
