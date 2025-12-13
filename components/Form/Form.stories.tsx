@@ -1,8 +1,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Form, FormGroup, Label  } from '../..';
-import {  Input  } from '../..';
-import {  Button, Switch  } from '../..';
+import {  Form, FormGroup, Label  } from 'doom-design-system';
+import {  Input  } from 'doom-design-system';
+import {  Button, Switch  } from 'doom-design-system';
 
 const meta: Meta<typeof Form> = {
   title: 'Design System/Form',

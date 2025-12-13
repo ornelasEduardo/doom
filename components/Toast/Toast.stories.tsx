@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  ToastProvider, useToast  } from '../..';
-import {  Button  } from '../..';
-import {  Flex  } from '../..';
+import {  ToastProvider, useToast  } from 'doom-design-system';
+import {  Button  } from 'doom-design-system';
+import {  Flex  } from 'doom-design-system';
 
 const meta: Meta<typeof ToastProvider> = {
   title: 'Design System/Toast',

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Card  } from '../..';
-import {  Text  } from '../..';
+import {  Card  } from 'doom-design-system';
+import {  Text  } from 'doom-design-system';
 
 const meta: Meta<typeof Card> = {
   title: 'Design System/Card',

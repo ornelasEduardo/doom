@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Link  } from '../..';
+import {  Link  } from 'doom-design-system';
 
 const meta: Meta<typeof Link> = {
   title: 'Design System/Link',

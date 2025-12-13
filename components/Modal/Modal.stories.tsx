@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Modal  } from '../..';
-import {  Button  } from '../..';
-import {  Text  } from '../..';
+import {  Modal  } from 'doom-design-system';
+import {  Button  } from 'doom-design-system';
+import {  Text  } from 'doom-design-system';
 import { useState } from 'react';
 
 const meta: Meta<typeof Modal> = {

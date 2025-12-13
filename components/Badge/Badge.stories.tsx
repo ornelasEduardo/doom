@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Badge  } from '../..';
+import {  Badge  } from 'doom-design-system';
 
 const meta: Meta<typeof Badge> = {
   title: 'Design System/Badge',

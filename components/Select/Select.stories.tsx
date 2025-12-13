@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Select  } from '../..';
+import {  Select  } from 'doom-design-system';
 
 const meta: Meta<typeof Select> = {
   title: 'Design System/Select',

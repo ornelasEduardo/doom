@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Page  } from '../..';
-import {  Text  } from '../..';
+import {  Page  } from 'doom-design-system';
+import {  Text  } from 'doom-design-system';
 
 const meta: Meta<typeof Page> = {
   title: 'Design System/Page',
