@@ -29,6 +29,29 @@ const baseVariables = {
   '--z-dropdown': '50',
   '--z-modal': '100',
   '--z-tooltip': '200',
+
+  // Motion
+  '--duration-fast': '150ms',
+  '--duration-normal': '250ms',
+  '--duration-slow': '350ms',
+  '--ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+  '--ease-out': 'cubic-bezier(0.0, 0, 0.2, 1)',
+  '--ease-in': 'cubic-bezier(0.4, 0, 1, 1)',
+
+  // Shadows (consistent relative to theme colors)
+  '--shadow-sm': '2px 2px 0px 0px var(--card-border)',
+  '--shadow-sm-hover': '3px 3px 0px 0px var(--card-border)',
+  '--shadow-sm-checked': '3px 3px 0px 0px var(--card-border)',
+  '--shadow-sm-checked-hover': '4px 4px 0px 0px var(--card-border)',
+
+  // Structural (Standardized across themes)
+  '--border-width': '3px',
+  '--radius': '8px',
+  '--shadow-hard': '5px 5px 0px 0px #000000',
+  '--shadow-hover': '7px 7px 0px 0px #000000',
+  '--font-heading': 'var(--font-montserrat)',
+  '--heading-transform': 'uppercase',
+  '--heading-weight': '800', // Standardized to ExtraBold
 };
 
 export const themes = {
@@ -51,13 +74,6 @@ export const themes = {
       '--success': '#22c55e',
       '--warning': '#f59e0b',
       '--error': '#ef4444',
-      '--border-width': '3px',
-      '--radius': '8px',
-      '--shadow-hard': '5px 5px 0px 0px #000000',
-      '--shadow-hover': '7px 7px 0px 0px #000000',
-      '--font-heading': 'var(--font-montserrat)',
-      '--heading-transform': 'uppercase',
-      '--heading-weight': '900',
     }
   },
   doom: {
@@ -79,13 +95,6 @@ export const themes = {
       '--success': '#10b981',
       '--warning': '#fbbf24',
       '--error': '#ef4444',
-      '--border-width': '2px',
-      '--radius': '2px', // Sharp, angular, metallic feel
-      '--shadow-hard': '5px 5px 0px 0px #000000', // Hard shadow for neubrutalist feel
-      '--shadow-hover': '7px 7px 0px 0px #000000',
-      '--font-heading': 'var(--font-montserrat)',
-      '--heading-transform': 'uppercase',
-      '--heading-weight': '700',
     }
   },
   neighbor: {
@@ -107,13 +116,6 @@ export const themes = {
       '--success': '#15803D',
       '--warning': '#B45309',
       '--error': '#B91C1C',
-      '--border-width': '3px', // Extra bold borders
-      '--radius': '8px',
-      '--shadow-hard': '6px 6px 0px 0px #0F172A', // Dark Slate shadow (easier on eyes)
-      '--shadow-hover': '8px 8px 0px 0px #0F172A',
-      '--font-heading': 'var(--font-montserrat)',
-      '--heading-transform': 'uppercase',
-      '--heading-weight': '900', // Extra bold
     }
   },
   vigilante: {
@@ -135,13 +137,6 @@ export const themes = {
       '--success': '#48BB78', // Softer green (not neon)
       '--warning': '#ED8936', // Warm orange warning
       '--error': '#F56565', // Softer red (not harsh)
-      '--border-width': '2px',
-      '--radius': '6px', // Slightly rounded for modern feel
-      '--shadow-hard': '5px 5px 0px 0px #000000', // Hard shadow
-      '--shadow-hover': '7px 7px 0px 0px #000000',
-      '--font-heading': 'var(--font-montserrat)',
-      '--heading-transform': 'uppercase',
-      '--heading-weight': '700',
     }
   }
 } as const;

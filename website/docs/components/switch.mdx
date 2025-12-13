@@ -1,0 +1,70 @@
+---
+sidebar_position: 1
+---
+
+import { Switch, Card, Table } from 'doom-design-system';
+import { useState } from 'react';
+
+# Switch
+
+A control that allows the user to toggle between two states.
+
+## Live Demo
+
+export const SwitchDemo = () => {
+  const [active, setActive] = useState(false);
+  return (
+    <Card style={{ padding: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <Switch 
+        checked={active} 
+        onChange={setActive} 
+        label={active ? "Active Mode" : "Inactive Mode"} 
+      />
+    </Card>
+  );
+}
+
+<SwitchDemo />
+
+## Usage
+
+```tsx
+import { Switch } from 'doom-design-system';
+import { useState } from 'react';
+
+export default function MyComponent() {
+  const [enabled, setEnabled] = useState(false);
+
+  return (
+    <Switch 
+      checked={enabled} 
+      onChange={setEnabled} 
+      label="Toggle me" 
+    />
+  );
+}
+```
+
+## Props
+
+export const propsData = [
+  { prop: 'checked', type: 'boolean', default: 'false', description: 'Whether the switch is checked.' },
+  { prop: 'onChange', type: '(checked: boolean) => void', default: '-', description: 'Callback when state changes.' },
+  { prop: 'label', type: 'string', default: '-', description: 'Optional label text.' },
+  { prop: 'disabled', type: 'boolean', default: 'false', description: 'Whether the switch is disabled.' },
+];
+
+export const propsColumns = [
+  { header: 'Prop', accessorKey: 'prop' },
+  { header: 'Type', accessorKey: 'type' },
+  { header: 'Default', accessorKey: 'default' },
+  { header: 'Description', accessorKey: 'description' },
+];
+
+<Table 
+  data={propsData} 
+  columns={propsColumns} 
+  enablePagination={false} 
+  enableFiltering={false} 
+  enableSorting={false} 
+/>

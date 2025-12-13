@@ -9,24 +9,27 @@ import styled from '@emotion/styled';
 
 interface StyledGridProps {
   columns: string;
+  rows?: string;
   gap: string;
 }
 
 const StyledGrid = styled.div<StyledGridProps>`
   display: grid;
   grid-template-columns: ${props => props.columns};
+  grid-template-rows: ${props => props.rows || 'auto'};
   gap: ${props => props.gap};
 `;
 
 interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   columns?: string;
+  rows?: string;
   gap?: string;
 }
 
-export function Grid({ children, columns = '1fr', gap = '1rem', ...props }: GridProps) {
+export function Grid({ children, columns = '1fr', rows, gap = '1rem', ...props }: GridProps) {
   return (
-    <StyledGrid columns={columns} gap={gap} {...props}>
+    <StyledGrid columns={columns} rows={rows} gap={gap} {...props}>
       {children}
     </StyledGrid>
   );

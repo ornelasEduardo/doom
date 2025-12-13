@@ -1,0 +1,47 @@
+---
+sidebar_position: 2
+---
+
+import { Text, Card } from 'doom-design-system';
+
+# Getting Started
+
+## Installation
+
+<Text style={{ marginBottom: '1rem' }}>Install the package via npm:</Text>
+
+```bash
+npm install doom-design-system
+```
+
+<Text style={{ marginTop: '1rem', marginBottom: '1rem' }}>You also need a few peer dependencies:</Text>
+
+```bash
+npm install @emotion/react @emotion/styled lucide-react
+```
+
+## Setup
+
+<Card style={{ padding: '2rem', border: '3px solid var(--primary)' }}>
+  <Text variant="h3" style={{ marginTop: 0 }}>⚠️ Critical Step: The Provider</Text>
+  <Text style={{ marginBottom: '1rem' }}>
+    You <strong>must</strong> wrap your application root with the <code>DesignSystemProvider</code>. 
+    This injects the necessary CSS variables (tokens) into your app. Without this, components will look broken.
+  </Text>
+
+```tsx
+import { DesignSystemProvider } from 'doom-design-system';
+
+export default function App() {
+  return (
+    <DesignSystemProvider>
+      <YourApp />
+    </DesignSystemProvider>
+  );
+}
+```
+</Card>
+
+<Text variant="lead" style={{ marginTop: '2rem' }}>
+  Now you are ready to use the components!
+</Text>
