@@ -3,7 +3,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
-
+import { Label } from '../Label/Label';
 
 const StyledForm = styled.form`
   display: flex;
@@ -19,10 +19,6 @@ const StyledField = styled.div<{ error?: boolean }>`
   width: 100%;
   
 `;
-
-
-import { Label } from '../Label/Label';
-export { Label };
 
 const StyledMessage = styled.span<{ variant: 'error' | 'description' }>`
   font-size: 0.75rem;

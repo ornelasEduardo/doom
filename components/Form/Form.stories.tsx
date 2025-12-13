@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Form, Field, Label, FormMessage } from './Form';
-import { Input, Button, Switch, Select, Textarea, RadioGroup, RadioGroupItem, Slider } from '../..';
+import { Form, Field, FormMessage } from './Form';
+import { Input, Button, Switch, Select, Textarea, RadioGroup, RadioGroupItem, Slider, Label } from '../..';
 import React from 'react';
 
 const meta: Meta<typeof Form> = {

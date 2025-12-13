@@ -2,8 +2,9 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { Form, Field, Label, FormMessage } from './Form';
+import { Form, Field, FormMessage } from './Form';
 import { Input } from '../Input';
+import { Label } from '../Label';
 
 describe('Form Component', () => {
   it('renders children correctly', () => {
