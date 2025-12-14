@@ -25,73 +25,75 @@ p {
 }
 
 /* Typography Utilities */
-$text-sizes: 'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl';
-@each $size in $text-sizes {
-  .text-#{$size} { font-size: var(--text-#{$size}); }
-}
-
-$font-weights: 'thin', 'extralight', 'light', 'regular', 'medium', 'semibold', 'bold', 'extrabold', 'black';
-@each $weight in $font-weights {
-  .font-#{$weight} { font-weight: var(--font-#{$weight}); }
-}
-
-$colors: 'primary', 'secondary', 'muted', 'success', 'warning', 'error', 'background', 'foreground';
-@each $color in $colors {
-  .text-#{$color} { color: var(--#{$color}); }
-  .bg-#{$color} { background-color: var(--#{$color}); }
-}
-
-.text-muted { color: var(--muted-foreground); }
-
-/* Layout Utilities */
-.flex { display: flex; }
-.grid { display: grid; }
-.hidden { display: none; }
-.block { display: block; }
-.w-full { width: 100%; }
-.h-full { height: 100%; }
-.relative { position: relative; }
-.absolute { position: absolute; }
-.fixed { position: fixed; }
-
-/* Spacing Scale (0-10) */
-@for $i from 0 through 10 {
-  $value: 0;
-  @if $i != 0 {
-    $value: #{$i * 0.25}rem;
+body {
+  $text-sizes: 'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl';
+  @each $size in $text-sizes {
+    .text-#{$size} { font-size: var(--text-#{$size}); }
   }
-  
-  .m-#{$i} { margin: $value; }
-  .mt-#{$i} { margin-top: $value; }
-  .mb-#{$i} { margin-bottom: $value; }
-  .ml-#{$i} { margin-left: $value; }
-  .mr-#{$i} { margin-right: $value; }
-  .mx-#{$i} { margin-left: $value; margin-right: $value; }
-  .my-#{$i} { margin-top: $value; margin-bottom: $value; }
-  
-  .p-#{$i} { padding: $value; }
-  .pt-#{$i} { padding-top: $value; }
-  .pb-#{$i} { padding-bottom: $value; }
-  .pl-#{$i} { padding-left: $value; }
-  .pr-#{$i} { padding-right: $value; }
-  .px-#{$i} { padding-left: $value; padding-right: $value; }
-  .py-#{$i} { padding-top: $value; padding-bottom: $value; }
-}
 
-/* Opacity */
-@for $i from 0 through 10 {
-  $opacity: $i * 10;
-  .opacity-#{$opacity} { opacity: math.div($opacity, 100); }
-}
+  $font-weights: 'thin', 'extralight', 'light', 'regular', 'medium', 'semibold', 'bold', 'extrabold', 'black';
+  @each $weight in $font-weights {
+    .font-#{$weight} { font-weight: var(--font-#{$weight}); }
+  }
 
-/* Extras */
-.italic { font-style: italic; }
-.uppercase { text-transform: uppercase; }
-.text-center { text-align: center; }
-.cursor-pointer { cursor: pointer; }
-.cursor-not-allowed { cursor: not-allowed; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.transition-all { transition: all 0.2s ease; }
-.shadow-hard { box-shadow: var(--shadow-hard); }
+  $colors: 'primary', 'secondary', 'muted', 'success', 'warning', 'error', 'background', 'foreground';
+  @each $color in $colors {
+    .text-#{$color} { color: var(--#{$color}); }
+    .bg-#{$color} { background-color: var(--#{$color}); }
+  }
+
+  .text-muted { color: var(--muted-foreground); }
+
+  /* Layout Utilities */
+  .flex { display: flex; }
+  .grid { display: grid; }
+  .hidden { display: none; }
+  .block { display: block; }
+  .w-full { width: 100%; }
+  .h-full { height: 100%; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .fixed { position: fixed; }
+
+  /* Spacing Scale (0-10) */
+  @for $i from 0 through 10 {
+    $value: 0;
+    @if $i != 0 {
+      $value: #{$i * 0.25}rem;
+    }
+    
+    .m-#{$i} { margin: $value; }
+    .mt-#{$i} { margin-top: $value; }
+    .mb-#{$i} { margin-bottom: $value; }
+    .ml-#{$i} { margin-left: $value; }
+    .mr-#{$i} { margin-right: $value; }
+    .mx-#{$i} { margin-left: $value; margin-right: $value; }
+    .my-#{$i} { margin-top: $value; margin-bottom: $value; }
+    
+    .p-#{$i} { padding: $value; }
+    .pt-#{$i} { padding-top: $value; }
+    .pb-#{$i} { padding-bottom: $value; }
+    .pl-#{$i} { padding-left: $value; }
+    .pr-#{$i} { padding-right: $value; }
+    .px-#{$i} { padding-left: $value; padding-right: $value; }
+    .py-#{$i} { padding-top: $value; padding-bottom: $value; }
+  }
+
+  /* Opacity */
+  @for $i from 0 through 10 {
+    $opacity: $i * 10;
+    .opacity-#{$opacity} { opacity: math.div($opacity, 100); }
+  }
+
+  /* Extras */
+  .italic { font-style: italic; }
+  .uppercase { text-transform: uppercase; }
+  .text-center { text-align: center; }
+  .cursor-pointer { cursor: pointer; }
+  .cursor-not-allowed { cursor: not-allowed; }
+  .items-center { align-items: center; }
+  .justify-center { justify-content: center; }
+  .justify-between { justify-content: space-between; }
+  .transition-all { transition: all 0.2s ease; }
+  .shadow-hard { box-shadow: var(--shadow-hard); }
+}
