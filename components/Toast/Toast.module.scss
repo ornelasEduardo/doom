@@ -1,0 +1,71 @@
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+.container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: var(--z-tooltip);
+  pointer-events: none; /* Allow clicking through the container area */
+}
+
+.toast {
+  min-width: 300px;
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  color: var(--foreground);
+  box-shadow: var(--shadow-hard);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease-out forwards;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto; /* Re-enable pointer events for the toast itself */
+  border-radius: var(--radius);
+
+  &.exiting {
+    animation: slideOut 0.3s ease-in forwards;
+  }
+
+  /* Left Accent Bar */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+  }
+
+  &.success::before { background-color: var(--success); }
+  &.error::before { background-color: var(--error); }
+  &.warning::before { background-color: var(--warning); }
+  &.info::before { background-color: var(--primary); }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  margin-left: auto;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--foreground);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}

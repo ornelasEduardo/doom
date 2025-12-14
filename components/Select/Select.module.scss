@@ -1,0 +1,89 @@
+@use '../../styles/mixins' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+.trigger {
+  width: 100%;
+  background: var(--card-bg);
+  color: var(--foreground);
+  padding: 0.75rem 1rem;
+  font-size: var(--text-base);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-height: 42px;
+
+  @include base-interactive;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  @include focus;
+}
+
+.optionsList {
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--primary);
+  border-radius: var(--radius);
+  box-shadow: none;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin: 0;
+  list-style: none;
+}
+
+.optionItem {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: 400;
+  transition: all 0.1s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--primary), transparent 85%);
+    color: var(--primary);
+  }
+
+  &.highlighted {
+    background: color-mix(in srgb, var(--primary), transparent 85%);
+    color: var(--primary);
+  }
+
+  &.selected {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: 700;
+
+    &:hover {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      filter: brightness(1.1);
+    }
+  }
+}

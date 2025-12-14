@@ -1,89 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect, KeyboardEvent, useId } from 'react';
-import { baseInteractiveStyles, focusStyles } from '../../styles/mixins';
-import styled from '@emotion/styled';
-import { Text, Popover } from '../..';
+import clsx from 'clsx';
+import { Text } from '../Text/Text';
+import { Popover } from '../Popover/Popover';
 import { Check, ChevronDown } from 'lucide-react';
+import styles from './Select.module.scss';
 
-const SelectContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  position: relative;
-`;
-
-const SelectTrigger = styled.button`
-  width: 100%;
-  background: var(--card-bg);
-  color: var(--foreground);
-  padding: 0.75rem 1rem;
-  font-size: var(--text-base);
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-height: 42px;
-
-  ${baseInteractiveStyles}
-
-  &:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover);
-  }
-
-  ${focusStyles}
-`;
-
-const OptionsList = styled.ul`
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--primary);
-  border-radius: var(--radius);
-  box-shadow: none;
-  min-width: 200px;
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  margin: 0;
-  list-style: none;
-`;
-
-const OptionItem = styled.li<{ isSelected?: boolean; isHighlighted?: boolean }>`
-  text-align: left;
-  padding: 0.75rem 1rem;
-  background: ${props => props.isSelected ? 'var(--primary)' : (props.isHighlighted ? 'color-mix(in srgb, var(--primary), transparent 85%)' : 'transparent')};
-  border: none;
-  border-radius: calc(var(--radius) - 2px);
-  color: ${props => props.isSelected ? 'var(--primary-foreground)' : (props.isHighlighted ? 'var(--primary)' : 'var(--foreground)')};
-  cursor: pointer;
-  font-size: var(--text-base);
-  font-weight: ${props => props.isSelected ? '700' : '400'};
-  transition: all 0.1s ease;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  user-select: none;
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--primary), transparent 85%);
-    color: var(--primary);
-  }
-  
-  ${props => props.isSelected && `
-    &:hover {
-      background-color: var(--primary);
-      color: var(--primary-foreground);
-      filter: brightness(1.1);
-    }
-  `}
-`;
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   options: { value: string | number; label: string }[];
@@ -194,7 +117,7 @@ export function Select({
   };
 
   return (
-    <SelectContainer className={className} style={style}>
+    <div className={clsx(styles.container, className)} style={style}>
       {label && (
         <Text 
           as="label" 
@@ -213,8 +136,9 @@ export function Select({
         onClose={() => setIsOpen(false)}
         placement="bottom-start"
         trigger={
-          <SelectTrigger 
+          <button
             ref={triggerRef}
+            className={styles.trigger}
             type="button" 
             id={id}
             onClick={() => setIsOpen(!isOpen)}
@@ -229,13 +153,14 @@ export function Select({
           >
             <span>{selectedOption ? selectedOption.label : (placeholder || 'Select...')}</span>
             <ChevronDown size={16} strokeWidth={2.5} style={{ marginLeft: '0.5rem' }} />
-          </SelectTrigger>
+          </button>
         }
         content={
-          <OptionsList 
+          <ul 
             id={listboxId} 
             role="listbox" 
             aria-labelledby={label ? labelId : undefined}
+            className={styles.optionsList}
             style={{ width: triggerRef.current?.offsetWidth }}
           >
             {options.map((opt, index) => {
@@ -243,22 +168,25 @@ export function Select({
               const isHighlighted = index === highlightedIndex;
               
               return (
-                <OptionItem
+                <li
                   key={opt.value}
                   id={`${listboxId}-option-${index}`}
                   role="option"
                   aria-selected={isSelected}
-                  isSelected={isSelected}
-                  isHighlighted={isHighlighted}
+                  className={clsx(
+                    styles.optionItem,
+                    isSelected && styles.selected,
+                    isHighlighted && styles.highlighted
+                  )}
                   onClick={() => handleSelect(opt.value)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   <span>{opt.label}</span>
                   {isSelected && <Check size={14} strokeWidth={3} />}
-                </OptionItem>
+                </li>
               );
             })}
-          </OptionsList>
+          </ul>
         }
       />
       <input 
@@ -279,6 +207,6 @@ export function Select({
           pointerEvents: 'none',
         }}
       />
-    </SelectContainer>
+    </div>
   );
 }

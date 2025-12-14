@@ -1,0 +1,86 @@
+.container {
+  display: inline-flex;
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+  transition: all 0.1s ease;
+
+  &.primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  &.secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+
+  &:hover,
+  &[aria-expanded="true"] {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+.mainButton {
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0.75rem 1rem;
+  padding-right: 0.75rem;
+  font-weight: 700;
+  font-size: var(--text-base);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border-right: 2px solid rgba(0,0,0,0.2);
+
+  &:hover {
+    background-color: rgba(0,0,0,0.25);
+  }
+}
+
+.dropdownTrigger {
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0.75rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: rgba(0,0,0,0.25);
+  }
+}
+
+.menu {
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  min-width: 200px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+.item {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--foreground);
+  cursor: pointer;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: var(--text-base);
+  font-weight: 600;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--primary), transparent 85%);
+    color: var(--primary);
+  }
+}

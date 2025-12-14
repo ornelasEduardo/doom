@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import styled from '@emotion/styled';
+import clsx from 'clsx';
 import {
   useReactTable,
   getCoreRowModel,
@@ -13,111 +12,12 @@ import {
   SortingState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Button, Input, Select, Flex, Text } from '../..';
-import { Pagination } from '../Pagination';
-
-
-const TableContainer = styled.div`
-  width: 100%;
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  background: var(--card-bg);
-  box-shadow: var(--shadow-hard);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-`;
-
-const Toolbar = styled.div`
-  padding: var(--spacing-md);
-  border-bottom: var(--border-width) solid var(--card-border);
-  background: var(--background);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-base);
-`;
-
-const getDensityPadding = (density: 'compact' | 'standard' | 'relaxed' = 'standard') => {
-  switch (density) {
-    case 'compact': return '0.5rem 1rem';
-    case 'relaxed': return '1.5rem 1rem';
-    case 'standard':
-    default: return '1rem';
-  }
-};
-
-const Th = styled.th<{ isSortable?: boolean; $density?: 'compact' | 'standard' | 'relaxed' }>`
-  text-align: left;
-  padding: ${props => getDensityPadding(props.$density)};
-  background: var(--secondary);
-  border-bottom: var(--border-width) solid var(--card-border);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: ${props => props.isSortable ? 'pointer' : 'default'};
-  user-select: none;
-  white-space: nowrap;
-  color: var(--secondary-foreground);
-
-  ${props => props.isSortable && `
-    &:hover {
-      filter: brightness(0.95);
-      color: var(--secondary-foreground);
-    }
-  `}
-`;
-
-const Td = styled.td<{ $density?: 'compact' | 'standard' | 'relaxed' }>`
-  padding: ${props => getDensityPadding(props.$density)};
-  border-bottom: 1px solid var(--card-border);
-  color: var(--foreground);
-`;
-
-const Tr = styled.tr<{ $striped?: boolean }>`
-  &:last-child td {
-    border-bottom: none;
-  }
-  &:hover {
-    background-color: rgba(var(--muted-rgb, 113, 128, 150), 0.1);
-  }
-
-  ${props => props.$striped && `
-    &:nth-of-type(even) {
-      background-color: rgba(var(--muted-rgb, 113, 128, 150), 0.05);
-    }
-    &:hover {
-      background-color: rgba(var(--muted-rgb, 113, 128, 150), 0.15);
-    }
-  `}
-
-  /* Hide actions by default */
-  & .row-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-  }
-
-  /* Show actions on hover */
-  &:hover .row-actions {
-    opacity: 1;
-  }
-`;
-
-const PaginationContainer = styled.div`
-  padding: var(--spacing-md);
-  border-top: var(--border-width) solid var(--card-border);
-  background: var(--background);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
+import { Input } from '../Input/Input';
+import { Select } from '../Select/Select';
+import { Flex } from '../Layout/Layout';
+import { Pagination } from '../Pagination/Pagination';
+import styles from './Table.module.scss';
+import React, { useState } from 'react';
 
 interface TableProps<T> {
   data: T[];
@@ -189,17 +89,13 @@ export function Table<T>({
 
   const isVirtual = !!height;
 
-  const variantStyles: React.CSSProperties = variant === 'flat' ? {
-    border: 'none',
-    boxShadow: 'none',
-    background: 'transparent',
-    borderRadius: 0,
-  } : {};
-
   return (
-    <TableContainer className={className} style={{ ...variantStyles, ...style }}>
+    <div 
+      className={clsx(styles.container, variant === 'flat' && styles.flat, className)} 
+      style={style}
+    >
       {enableFiltering && (
-        <Toolbar>
+        <div className={styles.toolbar}>
           <div style={{ width: '300px' }}>
             <Input
               placeholder="Search..."
@@ -212,7 +108,7 @@ export function Table<T>({
               {toolbarContent}
             </Flex>
           )}
-        </Toolbar>
+        </div>
       )}
 
       <div 
@@ -224,21 +120,24 @@ export function Table<T>({
           width: '100%'
         }}
       >
-        <StyledTable>
+        <table className={styles.table}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   return (
-                    <Th
+                    <th
                       key={header.id}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                       style={{ width: header.getSize() }}
-                      isSortable={canSort}
-                      $density={density}
+                      className={clsx(
+                        styles.th, 
+                        styles[density], 
+                        canSort && styles.sortable
+                      )}
                     >
-                      <Flex align="center" gap="0.5rem">
+                      <div className={styles.headerContent}>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
@@ -247,8 +146,8 @@ export function Table<T>({
                           asc: ' ▲',
                           desc: ' ▼',
                         }[header.column.getIsSorted() as string] ?? null)}
-                      </Flex>
-                    </Th>
+                      </div>
+                    </th>
                   );
                 })}
               </tr>
@@ -266,9 +165,9 @@ export function Table<T>({
               {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 const row = rows[virtualRow.index];
                 return (
-                  <Tr
+                  <tr
                     key={row.id}
-                    $striped={striped}
+                    className={clsx(styles.tr, striped && styles.striped)}
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -279,44 +178,44 @@ export function Table<T>({
                     }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <Td key={cell.id} $density={density}>
+                      <td key={cell.id} className={clsx(styles.td, styles[density])}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
                         )}
-                      </Td>
+                      </td>
                     ))}
-                  </Tr>
+                  </tr>
                 );
               })}
             </tbody>
           ) : (
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <Tr key={row.id} className="group" $striped={striped}>
+                <tr key={row.id} className={clsx(styles.tr, striped && styles.striped, 'group')}>
                   {row.getVisibleCells().map((cell) => (
-                    <Td key={cell.id} $density={density}>
+                    <td key={cell.id} className={clsx(styles.td, styles[density])}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
                       )}
-                    </Td>
+                    </td>
                   ))}
-                </Tr>
+                </tr>
               ))}
             </tbody>
           )}
-        </StyledTable>
+        </table>
         
         {table.getRowModel().rows.length === 0 && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>
+          <div className={styles.noResults}>
             No results found.
           </div>
         )}
       </div>
 
       {enablePagination && !isVirtual && (
-        <PaginationContainer>
+        <div className={styles.paginationContainer}>
           <Flex gap="1rem" align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
             <div style={{ flexShrink: 0 }}>
               <Select
@@ -338,8 +237,8 @@ export function Table<T>({
               onPageChange={(page) => table.setPageIndex(page - 1)}
             />
           </Flex>
-        </PaginationContainer>
+        </div>
       )}
-    </TableContainer>
+    </div>
   );
 }

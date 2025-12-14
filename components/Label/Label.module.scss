@@ -1,0 +1,17 @@
+.label {
+  font-family: var(--font-heading);
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &.required::after {
+    content: '*';
+    color: var(--error);
+    margin-left: 0.25rem;
+  }
+}

@@ -1,0 +1,64 @@
+.avatar {
+  position: relative;
+  border: var(--border-width) solid var(--card-border);
+  overflow: hidden;
+  background-color: var(--card-bg); /* Fallback bg */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.circle {
+    border-radius: 50%;
+  }
+
+  &.square {
+    border-radius: var(--radius);
+  }
+
+  /* Sizes */
+  &.sm {
+    width: 32px;
+    height: 32px;
+  }
+
+  &.md {
+    width: 48px;
+    height: 48px;
+  }
+
+  &.lg {
+    width: 64px;
+    height: 64px;
+  }
+
+  &.xl {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fallback {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--primary-foreground);
+  background-color: var(--primary);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+
+  /* Font sizes mapped to parent sizes */
+  &.sm { font-size: var(--text-xs); }
+  &.md { font-size: var(--text-base); }
+  &.lg { font-size: var(--text-lg); }
+  &.xl { font-size: var(--text-2xl); }
+}

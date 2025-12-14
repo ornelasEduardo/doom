@@ -1,0 +1,86 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.itemLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  position: relative;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  opacity: 1;
+  
+  &:hover:not([aria-disabled="true"]) {
+    background-color: var(--muted);
+    background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.radioCircle {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  position: relative;
+
+  &.checked {
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+}
+
+.innerDot {
+  width: 10px;
+  height: 10px;
+  background: var(--primary-foreground);
+  border-radius: 50%;
+  transform: scale(0);
+  animation: radioScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes radioScale {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.hiddenInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+
+  &:focus-visible ~ .radioCircle {
+    outline: var(--outline-width) solid var(--primary);
+    outline-offset: var(--outline-offset);
+  }
+}
+
+.labelText {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-base);
+  color: var(--foreground);
+  user-select: none;
+}

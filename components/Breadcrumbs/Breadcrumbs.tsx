@@ -1,46 +1,9 @@
 'use client';
 
+import clsx from 'clsx';
+import { Link } from '../Link/Link';
+import styles from './Breadcrumbs.module.scss';
 import React from 'react';
-import styled from '@emotion/styled';
-import { ChevronRight } from 'lucide-react';
-import { Link } from '../Link';
-
-const BreadcrumbNav = styled.nav`
-  display: flex;
-  align-items: center;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-`;
-
-const BreadcrumbList = styled.ol`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  gap: 0.5rem;
-`;
-
-const BreadcrumbLi = styled.li`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &:not(:last-child)::after {
-    /* Separator */
-    content: '/';
-    margin-left: 0.25rem;
-    color: var(--muted-foreground);
-    opacity: 0.5;
-    font-weight: 700;
-  }
-`;
-
-const CurrentPage = styled.span`
-  font-weight: 700;
-  color: var(--foreground);
-`;
 
 interface BreadcrumbsProps {
   children: React.ReactNode;
@@ -49,11 +12,11 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ children, className }: BreadcrumbsProps) {
   return (
-    <BreadcrumbNav aria-label="breadcrumb" className={className}>
-      <BreadcrumbList>
+    <nav aria-label="breadcrumb" className={clsx(styles.nav, className)}>
+      <ol className={styles.list}>
         {children}
-      </BreadcrumbList>
-    </BreadcrumbNav>
+      </ol>
+    </nav>
   );
 }
 
@@ -66,14 +29,14 @@ interface BreadcrumbItemProps {
 export function BreadcrumbItem({ href, isCurrent, children }: BreadcrumbItemProps) {
   if (isCurrent) {
     return (
-      <BreadcrumbLi aria-current="page">
-        <CurrentPage>{children}</CurrentPage>
-      </BreadcrumbLi>
+      <li className={styles.li} aria-current="page">
+        <span className={styles.currentPage}>{children}</span>
+      </li>
     );
   }
 
   return (
-    <BreadcrumbLi>
+    <li className={styles.li}>
       {href ? (
         <Link href={href} variant="default" style={{ fontSize: 'inherit' }}>
           {children}
@@ -81,6 +44,6 @@ export function BreadcrumbItem({ href, isCurrent, children }: BreadcrumbItemProp
       ) : (
         <span>{children}</span>
       )}
-    </BreadcrumbLi>
+    </li>
   );
 }

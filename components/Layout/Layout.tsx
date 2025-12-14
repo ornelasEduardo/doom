@@ -1,22 +1,7 @@
 'use client';
 
-'use client';
-
-'use client';
-
 import React from 'react';
-import styled from '@emotion/styled';
-
-interface StyledGridProps {
-  columns: string;
-  gap: string;
-}
-
-const StyledGrid = styled.div<StyledGridProps>`
-  display: grid;
-  grid-template-columns: ${props => props.columns};
-  gap: ${props => props.gap};
-`;
+import styles from './Layout.module.scss';
 
 interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -24,30 +9,21 @@ interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
   gap?: string;
 }
 
-export function Grid({ children, columns = '1fr', gap = '1rem', ...props }: GridProps) {
+export function Grid({ children, columns = '1fr', gap = '1rem', className, style, ...props }: GridProps) {
   return (
-    <StyledGrid columns={columns} gap={gap} {...props}>
+    <div 
+      className={`${styles.grid} ${className || ''}`}
+      style={{ 
+        gridTemplateColumns: columns,
+        gap,
+        ...style 
+      }}
+      {...props}
+    >
       {children}
-    </StyledGrid>
+    </div>
   );
 }
-
-interface StyledFlexProps {
-  direction: 'row' | 'column';
-  justify: string;
-  align: string;
-  gap: string;
-  $wrap: boolean;
-}
-
-const StyledFlex = styled.div<StyledFlexProps>`
-  display: flex;
-  flex-direction: ${props => props.direction};
-  justify-content: ${props => props.justify};
-  align-items: ${props => props.align};
-  gap: ${props => props.gap};
-  flex-wrap: ${props => props.$wrap ? 'wrap' : 'nowrap'};
-`;
 
 interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -65,18 +41,24 @@ export function Flex({
   align = 'stretch', 
   gap = '0', 
   wrap = false,
+  className,
+  style,
   ...props 
 }: FlexProps) {
   return (
-    <StyledFlex 
-      direction={direction} 
-      justify={justify} 
-      align={align} 
-      gap={gap} 
-      $wrap={wrap} 
+    <div 
+      className={`${styles.flex} ${className || ''}`}
+      style={{
+        flexDirection: direction,
+        justifyContent: justify,
+        alignItems: align,
+        gap,
+        flexWrap: wrap ? 'wrap' : 'nowrap',
+        ...style
+      }}
       {...props}
     >
       {children}
-    </StyledFlex>
+    </div>
   );
 }

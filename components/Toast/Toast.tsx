@@ -1,9 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import styled from '@emotion/styled';
+import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import styles from './Toast.module.scss';
 
 // Types
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -25,74 +26,6 @@ interface ToastContextType {
 
 // Context
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-// Styled Components
-const ToastContainer = styled.div`
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  z-index: var(--z-tooltip);
-  pointer-events: none; /* Allow clicking through the container area */
-`;
-
-const ToastItem = styled.div<{ type: ToastType; isExiting?: boolean }>`
-  min-width: 300px;
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  color: var(--foreground);
-  box-shadow: var(--shadow-hard);
-  padding: var(--spacing-md);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  animation: ${props => props.isExiting ? 'slideOut 0.3s ease-in forwards' : 'slideIn 0.3s ease-out forwards'};
-  position: relative;
-  overflow: hidden;
-  pointer-events: auto; /* Re-enable pointer events for the toast itself */
-  border-radius: var(--radius);
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    background-color: ${props => {
-      switch (props.type) {
-        case 'success': return 'var(--success)';
-        case 'error': return 'var(--error)';
-        case 'warning': return 'var(--warning)';
-        default: return 'var(--primary)';
-      }
-    }};
-  }
-
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-  }
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  margin-left: auto;
-  cursor: pointer;
-  font-size: 1.25rem;
-  color: var(--foreground);
-  opacity: 0.5;
-  transition: opacity 0.2s;
-  &:hover { opacity: 1; }
-`;
 
 // Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -130,20 +63,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, toastSuccess, toastError, toastWarning, toastInfo }}>
       {children}
       {isMounted && createPortal(
-        <ToastContainer>
+        <div className={styles.container}>
           {toasts.map(t => (
-            <ToastItem key={t.id} type={t.type} isExiting={t.isExiting}>
+            <div 
+              key={t.id} 
+              className={clsx(styles.toast, styles[t.type], t.isExiting && styles.exiting)}
+            >
               {t.type === 'success' && <CheckCircle2 size={20} strokeWidth={2.5} color="var(--success)" />}
               {t.type === 'error' && <XCircle size={20} strokeWidth={2.5} color="var(--error)" />}
               {t.type === 'warning' && <AlertTriangle size={20} strokeWidth={2.5} color="var(--warning)" />}
               {t.type === 'info' && <Info size={20} strokeWidth={2.5} color="var(--primary)" />}
               <span className="font-semibold">{t.message}</span>
-              <CloseButton onClick={() => removeToast(t.id)}>
+              <button className={styles.closeButton} onClick={() => removeToast(t.id)}>
                 <X size={16} strokeWidth={2.5} />
-              </CloseButton>
-            </ToastItem>
+              </button>
+            </div>
           ))}
-        </ToastContainer>,
+        </div>,
         document.body
       )}
     </ToastContext.Provider>

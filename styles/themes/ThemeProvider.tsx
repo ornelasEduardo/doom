@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Global, css } from '@emotion/react';
 import { themes, ThemeKey } from './definitions';
 
 interface ThemeContextType {
@@ -35,14 +34,10 @@ export function ThemeProvider({
   // Get the variables for the current theme
   const themeVars = themes[currentTheme]?.variables || themes.default.variables;
 
-  // Generate CSS variables block
-  const themeStyles = css`
-    :root {
-      ${Object.entries(themeVars)
-        .map(([key, value]) => `${key}: ${value};`)
-        .join('\n      ')}
-    }
-  `;
+  // Generate CSS variables string
+  const cssVariables = Object.entries(themeVars)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join('\n');
 
   return (
     <ThemeContext.Provider 
@@ -52,7 +47,7 @@ export function ThemeProvider({
         availableThemes: themes
       }}
     >
-      <Global styles={themeStyles} />
+      <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVariables} }` }} />
       {children}
     </ThemeContext.Provider>
   );

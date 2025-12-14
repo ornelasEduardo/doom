@@ -1,54 +1,16 @@
 'use client';
 
 import React from 'react';
-import styled from '@emotion/styled';
-import { css } from '@emotion/react';
+import clsx from 'clsx';
 import { Label } from '../Label/Label';
-
-const StyledForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-`;
-
-const StyledField = styled.div<{ error?: boolean }>`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  
-`;
-
-const StyledMessage = styled.span<{ variant: 'error' | 'description' }>`
-  font-size: 0.75rem;
-  font-weight: 500;
-  
-  ${props => props.variant === 'error' && css`
-    color: var(--error);
-    font-weight: 700;
-    text-transform: uppercase;
-    animation: shake 0.3s ease-in-out;
-  `}
-
-  ${props => props.variant === 'description' && css`
-    color: var(--muted-foreground);
-  `}
-
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
-  }
-`;
-
+import styles from './Form.module.scss';
 
 export interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
 }
 
-export function Form({ children, ...props }: FormProps) {
-  return <StyledForm {...props}>{children}</StyledForm>;
+export function Form({ children, className, ...props }: FormProps) {
+  return <form className={clsx(styles.form, className)} {...props}>{children}</form>;
 }
 
 
@@ -57,8 +19,20 @@ export interface FormMessageProps extends React.HTMLAttributes<HTMLSpanElement> 
   variant?: 'error' | 'description';
 }
 
-export function FormMessage({ children, variant = 'description', ...props }: FormMessageProps) {
-  return <StyledMessage variant={variant} {...props}>{children}</StyledMessage>;
+export function FormMessage({ children, variant = 'description', className, ...props }: FormMessageProps) {
+  return (
+    <span 
+      className={clsx(
+        styles.message, 
+        variant === 'error' && styles.error,
+        variant === 'description' && styles.description,
+        className
+      )} 
+      {...props}
+    >
+      {children}
+    </span>
+  );
 }
 
 
@@ -78,10 +52,11 @@ export function Field({
   description, 
   htmlFor, 
   required,
+  className,
   ...props 
 }: FieldProps) {
   return (
-    <StyledField error={!!error} {...props}>
+    <div className={clsx(styles.field, className)} {...props}>
       {label && (
         <Label htmlFor={htmlFor} required={required}>
           {label}
@@ -96,8 +71,8 @@ export function Field({
       {error && typeof error === 'string' && (
         <FormMessage variant="error">{error}</FormMessage>
       )}
-    </StyledField>
+    </div>
   );
 }
 
-export const FormGroup = StyledField;
+export const FormGroup = Field;

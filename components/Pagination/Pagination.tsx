@@ -1,50 +1,9 @@
 'use client';
 
-import React from 'react';
-import styled from '@emotion/styled';
+import clsx from 'clsx';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-import { Button } from '../Button';
-
-const PaginationNav = styled.nav`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const PageButton = styled.button<{ isActive?: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  background-color: ${props => props.isActive ? 'var(--primary)' : 'var(--card-bg)'};
-  color: ${props => props.isActive ? 'var(--primary-foreground)' : 'var(--foreground)'};
-  font-family: var(--font-heading);
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: ${props => props.isActive ? 'var(--shadow-sm)' : 'none'};
-
-  &:hover:not(:disabled) {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-sm);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-  }
-
-  &:active:not(:disabled) {
-    transform: translate(0, 0);
-    box-shadow: none;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: var(--muted);
-  }
-`;
+import styles from './Pagination.module.scss';
+import React from 'react';
 
 interface PaginationProps {
   currentPage: number;
@@ -104,37 +63,39 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
       
       const pageNum = page as number;
       return (
-        <PageButton
+        <button
           key={pageNum}
-          isActive={currentPage === pageNum}
+          className={clsx(styles.button, currentPage === pageNum && styles.active)}
           onClick={() => handlePageChange(pageNum)}
           aria-current={currentPage === pageNum ? 'page' : undefined}
         >
           {pageNum}
-        </PageButton>
+        </button>
       );
     });
   };
 
   return (
-    <PaginationNav aria-label="pagination" className={className}>
-      <PageButton 
+    <nav aria-label="pagination" className={clsx(styles.nav, className)}>
+      <button 
+        className={styles.button}
         onClick={() => handlePageChange(currentPage - 1)} 
         disabled={currentPage === 1}
         aria-label="Go to previous page"
       >
         <ChevronLeft size={20} strokeWidth={2.5} />
-      </PageButton>
+      </button>
       
       {renderPageNumbers()}
       
-      <PageButton 
+      <button 
+        className={styles.button}
         onClick={() => handlePageChange(currentPage + 1)} 
         disabled={currentPage === totalPages}
         aria-label="Go to next page"
       >
         <ChevronRight size={20} strokeWidth={2.5} />
-      </PageButton>
-    </PaginationNav>
+      </button>
+    </nav>
   );
 }

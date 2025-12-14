@@ -1,20 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Tooltip } from './Tooltip';
-import styled from '@emotion/styled';
 
-const UnderlinedText = styled.span`
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
-  cursor: help;
-  font-weight: 600;
-  
-  &:hover {
-    color: var(--primary);
-    text-decoration-style: solid;
-  }
-`;
+const UnderlinedText = ({ children }: { children: React.ReactNode }) => (
+  <span style={{
+    textDecoration: 'underline',
+    textDecorationStyle: 'dotted',
+    textDecorationThickness: '2px',
+    textUnderlineOffset: '4px',
+    cursor: 'help',
+    fontWeight: 600
+  }} className="hover:text-primary hover:decoration-solid">
+    {children}
+  </span>
+);
 
 const meta: Meta<typeof Tooltip> = {
   title: 'Design System/Tooltip',

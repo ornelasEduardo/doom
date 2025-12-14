@@ -1,0 +1,17 @@
+.triggerWrapper {
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltipBody {
+  padding: 0.5rem 0.75rem;
+  background-color: var(--foreground);
+  color: var(--background);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--card-border);
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-tooltip);
+}

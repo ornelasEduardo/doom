@@ -1,0 +1,130 @@
+.button {
+  --btn-focus-border: var(--primary);
+  --btn-focus-shadow: var(--shadow-primary);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: 
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+    box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  cursor: pointer;
+  border: var(--border-width) solid var(--card-border);
+  box-shadow: var(--shadow-hard);
+  background-color: var(--card-bg);
+  color: var(--foreground);
+  font-size: var(--text-base);
+  position: relative; // Restored as per analysis
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 7px 7px 0px 0px var(--btn-focus-shadow);
+    transform: translate(-2px, -2px);
+    border-color: var(--btn-focus-border);
+  }
+
+  &:active {
+    transition: none;
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--shadow-hard);
+  }
+}
+
+/* Variants */
+.primary {
+  /* Contrast Override */
+  --btn-focus-border: var(--card-border);
+  --btn-focus-shadow: #000000;
+
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.secondary {
+  /* Contrast Override */
+  --btn-focus-border: var(--card-border);
+  --btn-focus-shadow: #000000;
+
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.success {
+  /* Contrast Override */
+  --btn-focus-border: var(--card-border);
+  --btn-focus-shadow: #000000;
+
+  background-color: var(--success);
+  color: var(--card-bg);
+  
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.outline {
+  background-color: transparent;
+}
+
+.ghost {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  
+  &:hover, &:focus {
+    background-color: color-mix(in srgb, var(--primary), transparent 90%);
+    color: var(--primary);
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
+    outline: none;
+  }
+  
+  &:active {
+    transform: scale(0.95);
+    transition: none;
+  }
+}
+
+/* Sizes */
+.sm {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--text-sm);
+}
+
+.md {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--text-base);
+}
+
+.lg {
+  padding: 1rem 2rem;
+  font-size: var(--text-lg);
+}

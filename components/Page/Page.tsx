@@ -1,7 +1,8 @@
 'use client';
 
+import clsx from 'clsx';
+import styles from './Page.module.scss';
 import React from 'react';
-import styled from '@emotion/styled';
 
 interface PageProps {
   children: React.ReactNode;
@@ -14,28 +15,6 @@ interface PageProps {
   style?: React.CSSProperties;
 }
 
-const PageContainer = styled.main<{ variant: 'default' | 'fullWidth' }>`
-  flex: 1;
-  width: 100%;
-  
-  /* Variant Styles */
-  ${props => props.variant === 'default' ? `
-    width: 90%;
-    max-width: 1920px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
-
-    @media (max-width: 1024px) {
-      width: 95%;
-      padding: 1rem;
-    }
-  ` : `
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-  `}
-`;
-
 export function Page({ 
   children, 
   variant = 'default',
@@ -43,8 +22,11 @@ export function Page({
   style 
 }: PageProps) {
   return (
-    <PageContainer variant={variant} className={className} style={style}>
+    <main 
+      className={clsx(styles.container, styles[variant], className)} 
+      style={style}
+    >
       {children}
-    </PageContainer>
+    </main>
   );
 }

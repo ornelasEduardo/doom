@@ -1,26 +1,8 @@
 'use client';
 
+import { Popover } from '../Popover/Popover';
+import styles from './Tooltip.module.scss';
 import React, { useState } from 'react';
-import styled from '@emotion/styled';
-import { Popover } from '../Popover';
-
-const TooltipTriggerWrapper = styled.div`
-  display: inline-block;
-  cursor: help; /* Optional hint */
-`;
-
-const TooltipBody = styled.div`
-  padding: 0.5rem 0.75rem;
-  background-color: var(--foreground);
-  color: var(--background);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  white-space: nowrap;
-  border-radius: var(--radius);
-  border: var(--border-width) solid var(--card-border);
-  box-shadow: var(--shadow-sm);
-  z-index: var(--z-tooltip);
-`;
 
 interface TooltipProps {
   content: string;
@@ -53,19 +35,20 @@ export function Tooltip({ content, children, delay = 200, placement = 'top' }: T
       placement={popoverPlacement}
       offset={8}
       trigger={
-        <TooltipTriggerWrapper 
+        <div 
+          className={styles.triggerWrapper}
           onMouseEnter={show} 
           onMouseLeave={hide} 
           onFocus={show} 
           onBlur={hide}
         >
           {children}
-        </TooltipTriggerWrapper>
+        </div>
       }
       content={
-        <TooltipBody role="tooltip">
+        <div className={styles.tooltipBody} role="tooltip">
           {content}
-        </TooltipBody>
+        </div>
       }
     />
   );

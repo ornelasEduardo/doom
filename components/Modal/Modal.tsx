@@ -3,8 +3,11 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import styled from '@emotion/styled';
-import { Card, Button, Flex } from '../..';
+import clsx from 'clsx';
+import { Card } from '../Card/Card';
+import { Button } from '../Button/Button';
+import { Flex } from '../Layout/Layout';
+import styles from './Modal.module.scss';
 
 interface ModalProps {
   isOpen: boolean;
@@ -16,86 +19,35 @@ interface ModalProps {
 
 const ModalContext = React.createContext<{ onClose: () => void }>({ onClose: () => {} });
 
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-md);
-  backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, var(--overlay-opacity));
-  animation: fadeIn 0.2s ease-out;
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-`;
-
-const ContentContainer = styled.div`
-  width: 100%;
-  max-width: 28rem;
-  animation: slideUp 0.3s ease-out;
-
-  @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-`;
-
-const StyledHeader = styled(Flex)`
-  padding: var(--spacing-lg);
-  border-bottom: var(--border-width) solid var(--card-border);
-  background: var(--background);
-  
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: bold;
-    margin: 0;
-  }
-`;
-
-const StyledBody = styled.div`
-  padding: var(--spacing-lg);
-`;
-
-const StyledFooter = styled.div`
-  padding: var(--spacing-lg);
-  border-top: var(--border-width) solid var(--card-border);
-  background: var(--background);
-`;
-
 export function ModalHeader({ children, className }: { children: React.ReactNode; className?: string }) {
   const { onClose } = React.useContext(ModalContext);
   return (
-    <StyledHeader 
-      justify="space-between" 
-      align="center" 
-      className={className}
+    <Flex 
+      align="center"
+      justify="space-between"
+      className={clsx(styles.header, className)}
     >
       <h2>{children}</h2>
       <Button variant="ghost" size="sm" onClick={onClose}>
         <X size={20} strokeWidth={2.5} />
       </Button>
-    </StyledHeader>
+    </Flex>
   );
 }
 
 export function ModalBody({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <StyledBody className={className}>
+    <div className={clsx(styles.body, className)}>
       {children}
-    </StyledBody>
+    </div>
   );
 }
 
 export function ModalFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <StyledFooter className={className}>
+    <div className={clsx(styles.footer, className)}>
       {children}
-    </StyledFooter>
+    </div>
   );
 }
 
@@ -128,11 +80,12 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
 
   return createPortal(
     <ModalContext.Provider value={{ onClose }}>
-      <Overlay
+      <div
+        className={styles.overlay}
         ref={overlayRef}
         onClick={handleOverlayClick}
       >
-        <ContentContainer>
+        <div className={styles.contentContainer}>
           <Card style={{ padding: 0, overflow: 'hidden' }}>
             {title ? (
               <>
@@ -144,8 +97,8 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
               children
             )}
           </Card>
-        </ContentContainer>
-      </Overlay>
+        </div>
+      </div>
     </ModalContext.Provider>,
     document.body
   );

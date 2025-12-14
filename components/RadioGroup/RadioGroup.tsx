@@ -1,89 +1,9 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import styled from '@emotion/styled';
+import clsx from 'clsx';
+import styles from './RadioGroup.module.scss';
 
-const Group = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const ItemLabel = styled.label<{ disabled?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  position: relative;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  transition: all 0.15s ease;
-  opacity: ${props => props.disabled ? 0.5 : 1};
-  
-  &:hover:not([aria-disabled="true"]) {
-    background-color: var(--muted);
-    background-color: color-mix(in srgb, var(--primary) 8%, transparent);
-  }
-`;
-
-const RadioCircle = styled.div<{ checked: boolean }>`
-  width: 22px;
-  height: 22px;
-  border: 2px solid ${props => props.checked ? 'var(--primary)' : 'var(--foreground)'};
-  border-radius: 50%;
-  background: var(--background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
-  position: relative;
-
-  ${props => props.checked && `
-    border-color: var(--primary);
-    background: var(--primary);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent);
-  `}
-`;
-
-const InnerDot = styled.div`
-  width: 10px;
-  height: 10px;
-  background: var(--primary-foreground);
-  border-radius: 50%;
-  transform: scale(0);
-  animation: radioScale 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-
-  @keyframes radioScale {
-    from {
-      transform: scale(0);
-    }
-    to {
-      transform: scale(1);
-    }
-  }
-`;
-
-const HiddenInput = styled.input`
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-
-  &:focus-visible ~ div {
-    outline: var(--outline-width) solid var(--primary);
-    outline-offset: var(--outline-offset);
-  }
-`;
-
-const LabelText = styled.span`
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: var(--text-base);
-  color: var(--foreground);
-  user-select: none;
-`;
 
 interface RadioGroupContextValue {
   name?: string;
@@ -127,9 +47,9 @@ export function RadioGroup({
 
   return (
     <RadioGroupContext.Provider value={{ name, value: currentValue, onChange: handleChange, disabled }}>
-      <Group role="radiogroup" className={className}>
+      <div role="radiogroup" className={clsx(styles.group, className)}>
         {children}
-      </Group>
+      </div>
     </RadioGroupContext.Provider>
   );
 }
@@ -149,8 +69,12 @@ export function RadioGroupItem({ value, children, disabled, className }: RadioGr
   const isDisabled = disabled || context.disabled;
 
   return (
-    <ItemLabel disabled={isDisabled} aria-disabled={isDisabled} className={className}>
-      <HiddenInput 
+    <label 
+      className={clsx(styles.itemLabel, isDisabled && styles.disabled, className)}
+      aria-disabled={isDisabled} 
+    >
+      <input 
+        className={styles.hiddenInput}
         type="radio" 
         name={context.name} 
         value={value} 
@@ -158,10 +82,13 @@ export function RadioGroupItem({ value, children, disabled, className }: RadioGr
         onChange={() => !isDisabled && context.onChange(value)}
         disabled={isDisabled}
       />
-      <RadioCircle checked={checked} aria-hidden="true">
-        {checked && <InnerDot />}
-      </RadioCircle>
-      <LabelText>{children}</LabelText>
-    </ItemLabel>
+      <div 
+        className={clsx(styles.radioCircle, checked && styles.checked)} 
+        aria-hidden="true"
+      >
+        {checked && <div className={styles.innerDot} />}
+      </div>
+      <span className={styles.labelText}>{children}</span>
+    </label>
   );
 }

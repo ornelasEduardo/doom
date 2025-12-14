@@ -1,20 +1,8 @@
 'use client';
 
-'use client';
-
-'use client';
-
 import React from 'react';
-import styled from '@emotion/styled';
-
-const StyledCard = styled.div`
-  background-color: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-hard);
-  min-width: 0; /* Safe default for grid/flex items */
-`;
+import clsx from 'clsx';
+import styles from './Card.module.scss';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -22,10 +10,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean;
 }
 
-export function Card({ children, className, as, ...props }: CardProps) {
+export function Card({ children, className, as: Component = 'div', ...props }: CardProps) {
   return (
-    <StyledCard as={as} className={className} {...props}>
+    <Component className={clsx(styles.card, className)} {...props}>
       {children}
-    </StyledCard>
+    </Component>
   );
 }

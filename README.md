@@ -1,12 +1,13 @@
 # Doom Design System
 
-A modern, premium, neubrutalist and comic book inspired design system built with React and Emotion.
+A modern, premium, neubrutalist and comic book inspired design system built with React and SASS Modules.
 
 ## Features
 
 - 🎨 **Distinctive Aesthetic**: Bold, high-contrast, and playful design.
-- 🧩 **Framework Agnostic**: Works with any React framework (Next.js, Vite, Remix, CRA).
-- 🌙 **Theming**: Built-in dark mode and theming support.
+- 🚀 **Server Components Ready**: Fully compatible with Next.js App Router and React Server Components (RSC) with zero-runtime CSS.
+- 🧩 **Framework Agnostic**: Works with any React framework (Next.js, Vite, Remix).
+- 🌙 **Theming**: Built-in dark mode and theming support via CSS Variables.
 - ♿ **Accessible**: Built with accessibility in mind.
 - 📦 **TypeScript**: Fully typed for excellent developer experience.
 
@@ -20,36 +21,39 @@ npm install doom-design-system
 
 ### 2. Install Peer Dependencies
 
-This library relies on a few peer dependencies. If you don't have them installed already, please install them:
+This library requires just `react` and `lucide-react`.
 
 ```bash
-npm install @emotion/react @emotion/styled lucide-react
+npm install lucide-react
 ```
 
 ## Usage
 
 ### 1. Setup Provider
 
-Wrap your application with the `DesignSystemProvider` to ensure all styles and themes are applied correctly. You can also pass a custom font class using `fontClassName`.
+Wrap your application with the `DesignSystemProvider` to ensure all styles and themes are applied correctly. It injects the necessary global CSS and theme variables.
 
 ```tsx
 import { DesignSystemProvider } from 'doom-design-system';
 import { Montserrat } from 'next/font/google';
 
+// Optional: Use a custom google font
 const montserrat = Montserrat({ subsets: ['latin'] });
 
-export default function App() {
+export default function RootLayout({ children }) {
   return (
-    <DesignSystemProvider fontClassName={montserrat.className}>
-      <YourApp />
-    </DesignSystemProvider>
+    <html lang="en">
+      <DesignSystemProvider withBody fontClassName={montserrat.className}>
+        {children}
+      </DesignSystemProvider>
+    </html>
   );
 }
 ```
 
 ### 2. Use Components
 
-Import and use components in your application:
+Import and use components in your application. They are now fully tree-shakeable and lightweight.
 
 ```tsx
 import { Button, Card, Text, Link } from 'doom-design-system';
@@ -71,14 +75,11 @@ function MyComponent() {
 
 ### 3. Theming
 
-You can control the theme using the `DesignSystemProvider` or the `useTheme` hook.
+The Design System uses CSS Variables for theming. You can control the theme using the `DesignSystemProvider`.
 
 ```tsx
-<DesignSystemProvider 
-  initialTheme="doom" 
-  onThemeChange={(theme) => console.log(`Theme changed to ${theme}`)}
->
-  {/* ... */}
+<DesignSystemProvider initialTheme="doom" >
+  {/* The entire app will be themed automatically */}
 </DesignSystemProvider>
 ```
 
@@ -87,6 +88,8 @@ You can control the theme using the `DesignSystemProvider` or the `useTheme` hoo
 This library requires the following peer dependencies:
 
 - React >= 19
-- @emotion/react
-- @emotion/styled
-- lucide-react
+- lucide-react (for icons)
+
+## Architecture
+
+This system uses **CSS Modules** (`.module.scss`) for component styling, ensuring styles are locally scoped and avoid collisions. It uses **SASS** for mixins and shared logic at build time. All styles are compiled to standard CSS during the build, making it extremely fast and lightweight.

@@ -1,13 +1,9 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import clsx from 'clsx';
 import { createPortal } from 'react-dom';
-import { keyframes } from '@emotion/react';
-
-const popoverScale = keyframes`
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-`;
+import styles from './Popover.module.scss';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 
 interface PopoverProps {
   trigger: React.ReactNode;
@@ -43,6 +39,9 @@ export function Popover({
     let left = 0;
     let origin = 'top center';
     
+    // Edge Config
+    const padding = 16;
+    
     const isTop = placement.startsWith('top');
     
     if (isTop) {
@@ -58,7 +57,25 @@ export function Popover({
       if (top + contentRect.height > viewportHeight) {
         top = triggerRect.top - contentRect.height - offset;
         origin = 'bottom';
+        if (top < 0) top = padding;
       }
+    }
+
+    
+    // Vertical Clamping (Fail-safe)
+    if (top < padding) {
+      top = padding;
+    }
+    if (top + contentRect.height > viewportHeight - padding) {
+      top = viewportHeight - contentRect.height - padding;
+    }
+
+    // Horizontal Clamping
+    if (left + contentRect.width > viewportWidth - padding) {
+      left = viewportWidth - contentRect.width - padding;
+    }
+    if (left < padding) {
+      left = padding;
     }
 
     const align = placement.split('-')[1];
@@ -72,25 +89,6 @@ export function Popover({
     } else {
       left = triggerRect.left + (triggerRect.width / 2) - (contentRect.width / 2);
       origin += ' center';
-    }
-
-    // Edge Config
-    const padding = 16;
-    
-    // Horizontal Clamping
-    if (left + contentRect.width > viewportWidth - padding) {
-      left = viewportWidth - contentRect.width - padding;
-    }
-    if (left < padding) {
-      left = padding;
-    }
-
-    // Vertical Clamping (Fail-safe)
-    if (top < padding) {
-      top = padding;
-    }
-    if (top + contentRect.height > viewportHeight - padding) {
-      top = viewportHeight - contentRect.height - padding;
     }
 
     setPosition({ top, left });
@@ -131,19 +129,17 @@ export function Popover({
 
   return (
     <>
-      <div ref={triggerRef} style={{ display: 'inline-block' }}>
+      <div ref={triggerRef} className={styles.triggerWrapper}>
         {trigger}
       </div>
       {isOpen && typeof document !== 'undefined' && createPortal(
         <div
           ref={contentRef}
+          className={styles.popover}
           style={{
-            position: 'fixed',
             top: position.top,
             left: position.left,
-            zIndex: 9999, // High z-index to ensure it's on top
             transformOrigin: transformOrigin,
-            animation: `${popoverScale} 0.1s ease-out`,
           }}
         >
           {content}

@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Global } from '@emotion/react';
-import { resetStyles, utilityStyles } from './styles';
+import './styles/globals.scss';
 import { ThemeProvider, ThemeKey } from './styles/themes';
 
 export function DesignSystemProvider({ 
@@ -20,7 +19,6 @@ export function DesignSystemProvider({
 }) {
   const content = (
     <ThemeProvider initialTheme={initialTheme}>
-      <Global styles={[resetStyles, utilityStyles]} />
       {children}
     </ThemeProvider>
   );

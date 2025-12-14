@@ -1,0 +1,36 @@
+.menu {
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  min-width: 200px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+.item {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--foreground);
+  cursor: pointer;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: var(--text-base);
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--primary), transparent 85%);
+    color: var(--primary);
+  }
+}
+
+.trigger {
+  &[aria-expanded="true"] {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover);
+  }
+}

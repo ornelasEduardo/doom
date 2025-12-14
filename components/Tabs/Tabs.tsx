@@ -1,9 +1,8 @@
 'use client';
 
+import clsx from 'clsx';
+import styles from './Tabs.module.scss';
 import React, { createContext, useContext, useState } from 'react';
-import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
-import { Flex } from '../Layout';
 
 interface TabsContextType {
   activeTab: string;
@@ -11,65 +10,6 @@ interface TabsContextType {
 }
 
 const TabsContext = createContext<TabsContextType | null>(null);
-
-
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
-const StyledTabsList = styled(Flex)`
-  margin-bottom: 0;
-  padding-left: var(--spacing-md);
-  position: relative;
-`;
-
-interface StyledTriggerProps {
-  isActive: boolean;
-}
-
-const StyledTabsTrigger = styled.button<StyledTriggerProps>`
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  opacity: ${props => props.isActive ? '1' : '0.6'};
-  border: var(--border-width) solid var(--card-border);
-  border-bottom: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius) var(--radius) 0 0;
-  cursor: pointer;
-  position: relative;
-  z-index: ${props => props.isActive ? 'var(--z-elevated)' : '1'};
-  transition: all 0.2s ease;
-  transform: ${props => props.isActive ? 'translateY(0)' : 'translateY(4px)'};
-
-  &:hover {
-    ${props => !props.isActive && `
-      opacity: 0.8;
-      transform: translateY(2px);
-    `}
-  }
-`;
-
-const StyledTabsBody = styled.div`
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-hard);
-  position: relative;
-  z-index: var(--z-elevated);
-  min-height: 600px;
-  margin-top: -3px;
-`;
-
-const StyledTabsContent = styled.div`
-  animation: ${fadeIn} 0.3s ease-out forwards;
-`;
-
 
 interface TabsProps {
   defaultValue?: string;
@@ -107,7 +47,7 @@ interface TabsListProps {
 }
 
 export function TabsList({ children, className }: TabsListProps) {
-  return <StyledTabsList gap="0.5rem" className={className}>{children}</StyledTabsList>;
+  return <div className={clsx(styles.tabsList, className)}>{children}</div>;
 }
 
 interface TabsTriggerProps {
@@ -124,16 +64,15 @@ export function TabsTrigger({ value, children, className, onClick }: TabsTrigger
   const isActive = context.activeTab === value;
 
   return (
-    <StyledTabsTrigger 
-      isActive={isActive}
+    <button 
+      className={clsx(styles.tabsTrigger, isActive && styles.active, className)}
       onClick={() => {
         context.setActiveTab(value);
         onClick?.();
       }}
-      className={className}
     >
       {children}
-    </StyledTabsTrigger>
+    </button>
   );
 }
 
@@ -144,7 +83,7 @@ interface TabsBodyProps {
 }
 
 export function TabsBody({ children, className, style }: TabsBodyProps) {
-  return <StyledTabsBody className={className} style={style}>{children}</StyledTabsBody>;
+  return <div className={clsx(styles.tabsBody, className)} style={style}>{children}</div>;
 }
 
 interface TabsContentProps {
@@ -159,5 +98,5 @@ export function TabsContent({ value, children, className }: TabsContentProps) {
   
   if (context.activeTab !== value) return null;
 
-  return <StyledTabsContent className={className}>{children}</StyledTabsContent>;
+  return <div className={clsx(styles.tabsContent, className)}>{children}</div>;
 }

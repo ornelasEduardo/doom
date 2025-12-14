@@ -1,0 +1,36 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--card-border);
+  box-shadow: 2px 2px 0px 0px var(--card-border);
+
+  &.primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  &.success {
+    background-color: var(--success);
+    color: var(--card-bg);
+  }
+
+  &.warning {
+    background-color: var(--warning);
+    color: var(--card-bg);
+  }
+
+  &.error {
+    background-color: var(--error);
+    color: var(--card-bg);
+  }
+
+  &.secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+}
