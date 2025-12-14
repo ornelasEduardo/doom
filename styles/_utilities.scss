@@ -77,6 +77,13 @@ body {
     .pr-#{$i} { padding-right: $value; }
     .px-#{$i} { padding-left: $value; padding-right: $value; }
     .py-#{$i} { padding-top: $value; padding-bottom: $value; }
+
+    /* Positioning */
+    .top-#{$i} { top: $value; }
+    .bottom-#{$i} { bottom: $value; }
+    .left-#{$i} { left: $value; }
+    .right-#{$i} { right: $value; }
+    .inset-#{$i} { top: $value; right: $value; bottom: $value; left: $value; }
   }
 
   /* Opacity */
