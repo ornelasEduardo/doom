@@ -15,7 +15,7 @@
   "scripts": {
     "build": "rimraf dist && tsc && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build-storybook": "storybook build -o storybook-static",
     "test": "vitest"
   },
   "keywords": [

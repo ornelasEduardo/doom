@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOOM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Montserrat', sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 8rem;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      margin: 0 0 2rem 0;
+      text-transform: lowercase;
+      line-height: 1;
+      position: relative;
+      color: #ffffff;
+      z-index: 2;
+      transform-origin: center;
+    }
+
+    .glitching {
+      animation: skew-glitch 0.4s 1 cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    @keyframes skew-glitch {
+      0% { transform: skewX(0deg) scale(1); filter: blur(0); }
+      
+      /* Violent structural collapse */
+      20% { transform: skewX(-60deg) scaleY(0.4) scaleX(1.5); filter: blur(2px); }
+      40% { transform: skewX(60deg) scaleY(1.5) scaleX(0.8); }
+      60% { transform: skewX(-30deg) scale(1); filter: none; }
+      
+      /* Extreme horizontal shear */
+      70% { transform: skewX(85deg); }
+      80% { transform: skewX(-85deg); }
+      
+      /* Micro-shudder */
+      90% { transform: translate(10px, 0); }
+      100% { transform: skewX(0deg); }
+    }
+
+    .storybook-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      background-color: #FF4785;
+      color: #000000;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 3px solid #FF4785;
+      border-radius: 8px;
+      /* Neo-brutalist shadow effect */
+      box-shadow: 6px 6px 0px 0px #992b50; 
+      transition: all 0.1s ease;
+    }
+
+    .storybook-link:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0px 0px #992b50;
+      background-color: #FF4785;
+      filter: brightness(1.1);
+    }
+
+    .storybook-link:active {
+      transform: translate(0, 0);
+      box-shadow: none;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 data-text="doom">doom</h1>
+
+  <a href="../storybook-static/" class="storybook-link">
+    Storybook
+    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17 2H7C4.23858 2 2 4.23858 2 7V17C2 19.7614 4.23858 22 7 22H17C19.7614 22 22 19.7614 22 17V7C22 4.23858 19.7614 2 17 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 16.5V7.5L16 12L12 16.5Z" fill="currentColor"/>
+      <path d="M8 12H12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
+  <div class="glitch-flash"></div>
+
+  <script>
+    const title = document.querySelector('h1');
+    
+    // Config: Start at 2s delay, then multiply by 2 each time
+    let currentDelay = 2000;
+    
+    function triggerGlitch() {
+      // Add the animation class
+      title.classList.add('glitching');
+      
+      // When animation ends (0.4s), clean up and schedule next one
+      setTimeout(() => {
+        title.classList.remove('glitching');
+        
+        // Schedule next glitch with exponential backoff
+        // Cap it at some reasonable max delay if desired, e.g., 5 mins
+        // console.log(`Next glitch in: ${currentDelay}ms`);
+        setTimeout(triggerGlitch, currentDelay);
+        
+        currentDelay = Math.min(currentDelay * 5, 300000); // 5x backoff, capped at 5 mins
+      }, 400); // Match animation duration roughly
+    }
+
+    // Start the first loop
+    setTimeout(triggerGlitch, 2000);
+  </script>
+
+</body>
+</html>
