@@ -16,7 +16,7 @@
     "build": "rimraf dist && tsc && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
-    "deploy-build": "rimraf build && mkdir -p build && cp website/index.html build/ && storybook build -o build/storybook",
+    "deploy-build": "rimraf build && mkdir -p build && cp website/index.html website/doom.png build/ && storybook build -o build/storybook",
     "test": "vitest"
   },
   "keywords": [
