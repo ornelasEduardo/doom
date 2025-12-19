@@ -17,7 +17,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
     "deploy-build": "rimraf build && mkdir -p build && cp website/index.html website/doom.png build/ && storybook build -o build/storybook",
-    "test": "vitest"
+    "test": "vitest",
+    "lint:package": "publint"
   },
   "keywords": [
     "design-system",
@@ -47,6 +48,7 @@
     "eslint-plugin-storybook": "^10.1.4",
     "jsdom": "^27.2.0",
     "next": "^15.5.7",
+    "publint": "^0.3.16",
     "replace-in-file": "^8.4.0",
     "rimraf": "^6.1.2",
     "sass": "^1.96.0",
