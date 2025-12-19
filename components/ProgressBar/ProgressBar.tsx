@@ -23,6 +23,7 @@ export function ProgressBar({
   ...props
 }: ProgressBarProps) {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const clampedValue = Math.min(Math.max(value, 0), max);
   const heightStyle = typeof height === "number" ? `${height}px` : height;
 
   return (

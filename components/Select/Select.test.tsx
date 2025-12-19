@@ -35,15 +35,28 @@ describe("Select Component", () => {
     expect(screen.getByText("Select an option")).toBeInTheDocument();
   });
 
-  it("should open options when clicked", () => {
-    const { container } = render(<Select options={options} />);
+  it("should open options when clicked and update aria attributes", () => {
+    const { container } = render(<Select options={options} id="my-select" />);
 
-    const trigger = container.querySelector("button") as HTMLElement;
+    const trigger = screen.getByRole("combobox");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveAttribute("aria-haspopup", "listbox");
+
+    // Check if aria-controls points to something valid (even if listbox isn't rendered yet or is hidden)
+    const controlsId = trigger.getAttribute("aria-controls");
+    expect(controlsId).toBeTruthy();
+
     fireEvent.click(trigger);
 
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("popover-content")).toBeInTheDocument();
-    expect(screen.getByText("Option 1")).toBeInTheDocument();
-    expect(screen.getByText("Option 2")).toBeInTheDocument();
+
+    // Check listbox role inside popover
+    // Note: The mocked popover renders content directly.
+    // In our implementation, Select renders a <ul> with role="listbox"
+    // We need to ensure the mocked popover preserves that structure or we test what we can.
+    // The Select component passes the <ul> into the Popover content prop.
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
   });
 
   it("should select an option", () => {
@@ -70,6 +83,6 @@ describe("Select Component", () => {
     // Note: We changed type="hidden" to type="text" with opacity 0, so we query by name
     const input = container.querySelector('input[name="test-select"]');
     expect(input).toHaveAttribute("required");
-    expect(input).toHaveAttribute("type", "hidden"); // Verify it's text type for validation
+    expect(input).toHaveAttribute("type", "hidden");
   });
 });
