@@ -48,8 +48,14 @@ jobs:
       - name: Build Package
         run: npm run build
 
+      - name: Validate Build Output
+        run: npm run validate:build
+
       - name: Validate Package Exports
         run: npm run lint:package
+
+      - name: Test Package Imports
+        run: npm run test:integration
 
   storybook-build:
     name: Build Storybook
