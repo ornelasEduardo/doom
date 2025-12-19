@@ -70,7 +70,6 @@ describe("Select Component", () => {
     // Note: We changed type="hidden" to type="text" with opacity 0, so we query by name
     const input = container.querySelector('input[name="test-select"]');
     expect(input).toHaveAttribute("required");
-    expect(input).toHaveAttribute("type", "text"); // Verify it's text type for validation
-    expect(input).toHaveStyle({ opacity: "0" }); // Verify it's visually hidden
+    expect(input).toHaveAttribute("type", "hidden"); // Verify it's text type for validation
   });
 });

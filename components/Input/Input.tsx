@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import clsx from 'clsx';
-import { Label } from '../Label/Label';
-import styles from './Input.module.scss';
+import React, { useState, useId } from "react";
+import clsx from "clsx";
+import { Label } from "../Label/Label";
+import styles from "./Input.module.scss";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -12,17 +12,19 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;
   format?: (value: string | number | readonly string[] | undefined) => string;
-  validate?: (value: string | number | readonly string[] | undefined) => string | undefined;
+  validate?: (
+    value: string | number | readonly string[] | undefined
+  ) => string | undefined;
 }
 
-export function Input({ 
-  label, 
-  error: errorProp, 
-  helperText, 
-  startAdornment, 
-  endAdornment, 
-  style, 
-  className, 
+export function Input({
+  label,
+  error: errorProp,
+  helperText,
+  startAdornment,
+  endAdornment,
+  style,
+  className,
   format,
   validate,
   onBlur,
@@ -30,10 +32,17 @@ export function Input({
   value,
   id,
   required,
-  ...props 
+  ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const [internalError, setInternalError] = useState<string | undefined>(undefined);
+  const [internalError, setInternalError] = useState<string | undefined>(
+    undefined
+  );
+
+  const reactId = useId();
+  const inputId = id || `input-${reactId}`;
+  const helperId = `${inputId}-helper`;
+  const errorId = `${inputId}-error`;
 
   const error = errorProp || internalError;
 
@@ -50,47 +59,63 @@ export function Input({
     if (onFocus) onFocus(e);
   };
 
-  const displayValue = (!isFocused && format && value !== undefined) 
-    ? format(value) 
-    : value;
+  const displayValue =
+    !isFocused && format && value !== undefined ? format(value) : value;
+
+  const describedBy =
+    clsx(helperText && helperId, error && errorId) || undefined;
 
   return (
     <div className={clsx(styles.container, className)} style={style}>
       {label && (
-        <Label htmlFor={id} required={required}>
+        <Label htmlFor={inputId} required={required}>
           {label}
         </Label>
       )}
-      
+
       <div className={styles.wrapper}>
         {startAdornment && (
-          <span className={clsx(styles.adornment, styles.start)}>{startAdornment}</span>
+          <span className={clsx(styles.adornment, styles.start)}>
+            {startAdornment}
+          </span>
         )}
-        <input 
+        <input
           className={clsx(
             styles.input,
             startAdornment && styles.hasStartAdornment,
             endAdornment && styles.hasEndAdornment,
             error && styles.error
           )}
-          id={id}
+          id={inputId}
           required={required}
           value={displayValue}
           onBlur={handleBlur}
           onFocus={handleFocus}
-          {...props} 
+          aria-invalid={!!error}
+          aria-describedby={describedBy}
+          {...props}
         />
         {endAdornment && (
-          <span className={clsx(styles.adornment, styles.end)}>{endAdornment}</span>
+          <span className={clsx(styles.adornment, styles.end)}>
+            {endAdornment}
+          </span>
         )}
       </div>
 
       {helperText && !error && (
-        <span className={styles.helperText}>{helperText}</span>
+        <span id={helperId} className={styles.helperText}>
+          {helperText}
+        </span>
       )}
 
       {error && (
-        <span className={clsx(styles.helperText, styles.error)}>{error}</span>
+        <span
+          id={errorId}
+          className={clsx(styles.helperText, styles.error)}
+          role="alert"
+        >
+          {error}
+        </span>
       )}
     </div>
   );
