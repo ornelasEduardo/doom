@@ -48,6 +48,9 @@ jobs:
       - name: Build Package
         run: npm run build
 
+      - name: Validate Package Exports
+        run: npm run lint:package
+
   storybook-build:
     name: Build Storybook
     runs-on: ubuntu-latest
