@@ -29,7 +29,7 @@ export function ProgressBar({
   return (
     <div
       role="progressbar"
-      aria-valuenow={value}
+      aria-valuenow={clampedValue}
       aria-valuemin={0}
       aria-valuemax={max}
       className={clsx(styles.container, className)}
