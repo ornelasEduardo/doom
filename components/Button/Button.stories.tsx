@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {  Button  } from 'doom-design-system';
+import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
   title: 'Design System/Button',
@@ -13,6 +13,9 @@ const meta: Meta<typeof Button> = {
     size: {
       control: 'select',
       options: ['sm', 'md', 'lg'],
+    },
+    loading: {
+      control: 'boolean',
     },
   },
 };
@@ -66,5 +69,13 @@ export const Large: Story = {
   args: {
     size: 'lg',
     children: 'Large Button',
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    variant: 'primary',
+    loading: true,
+    children: 'Processing...',
   },
 };

@@ -1,0 +1,62 @@
+@use '../../styles/mixins' as m;
+
+.checkboxWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  user-select: none;
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.checkboxInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  
+  &:focus-visible + .checkboxDisplay {
+    @include m.focus;
+    outline: 2px solid var(--primary);
+  }
+}
+
+.checkboxDisplay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  width: 1.5rem;
+  height: 1.5rem;
+  
+  background-color: var(--card-bg);
+  color: transparent;
+  
+  border: 3px solid var(--muted-foreground);
+  border-radius: 4px;
+  
+  transition: all 0.1s ease;
+  
+  .checkboxInput:checked + & {
+    background-color: var(--primary);
+    border-color: var(--card-border); 
+    
+    color: var(--primary-foreground);
+  }
+}
+
+.icon {
+  width: 80%;
+  height: 80%;
+  stroke-width: 3.5px;
+}
+
+.labelOverride {
+  cursor: pointer;
+  margin-left: var(--spacing-xs);
+}

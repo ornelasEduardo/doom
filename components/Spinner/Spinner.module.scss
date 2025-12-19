@@ -1,0 +1,34 @@
+@use '../../styles/mixins' as *;
+
+.spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  
+  color: currentColor;
+
+  // Sizes
+  &.sm {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  &.md {
+    width: var(--size-icon-md);
+    height: var(--size-icon-md);
+  }
+
+  &.lg {
+    width: var(--size-icon-lg);
+    height: var(--size-icon-lg);
+  }
+
+  &.xl {
+    width: var(--size-touch-target);
+    height: var(--size-touch-target);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

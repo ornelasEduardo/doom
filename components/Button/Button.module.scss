@@ -21,7 +21,7 @@
   background-color: var(--card-bg);
   color: var(--foreground);
   font-size: var(--text-base);
-  position: relative; // Restored as per analysis
+  position: relative;
 
   &:hover {
     transform: translate(-2px, -2px);
@@ -51,7 +51,6 @@
 
 /* Variants */
 .primary {
-  /* Contrast Override */
   --btn-focus-border: var(--card-border);
   --btn-focus-shadow: #000000;
 
@@ -64,7 +63,6 @@
 }
 
 .secondary {
-  /* Contrast Override */
   --btn-focus-border: var(--card-border);
   --btn-focus-shadow: #000000;
 
@@ -77,7 +75,6 @@
 }
 
 .success {
-  /* Contrast Override */
   --btn-focus-border: var(--card-border);
   --btn-focus-shadow: #000000;
 
@@ -127,4 +124,14 @@
 .lg {
   padding: 1rem 2rem;
   font-size: var(--text-lg);
+}
+/* Loading State */
+.loading {
+  cursor: wait;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.spinnerIcon {
+  margin-right: 0.5rem;
 }

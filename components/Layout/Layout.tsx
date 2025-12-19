@@ -1,37 +1,54 @@
 'use client';
 
-import React from 'react';
+import React, { ElementType } from 'react';
+import clsx from 'clsx';
 import styles from './Layout.module.scss';
 
-interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  columns?: string;
-  gap?: string;
+// --- Types ---
+interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
+  children?: React.ReactNode;
+  as?: ElementType;
 }
 
-export function Grid({ children, columns = '1fr', gap = '1rem', className, style, ...props }: GridProps) {
+// --- Grid ---
+export interface GridProps extends LayoutProps {
+  columns?: string | number;
+  gap?: string | number;
+}
+
+export function Grid({ 
+  children, 
+  columns = '1fr', 
+  gap = '1rem', 
+  className, 
+  style, 
+  as: Component = 'div',
+  ...props 
+}: GridProps) {
+  const gridTemplateColumns = typeof columns === 'number' ? `repeat(${columns}, 1fr)` : columns;
+  
   return (
-    <div 
-      className={`${styles.grid} ${className || ''}`}
+    <Component 
+      className={clsx(styles.grid, className)}
       style={{ 
-        gridTemplateColumns: columns,
+        gridTemplateColumns,
         gap,
         ...style 
       }}
       {...props}
     >
       {children}
-    </div>
+    </Component>
   );
 }
 
-interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  direction?: 'row' | 'column';
-  justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around';
+// --- Flex ---
+export interface FlexProps extends LayoutProps {
+  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+  justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
   align?: 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
-  gap?: string;
-  wrap?: boolean;
+  gap?: string | number;
+  wrap?: boolean | 'wrap' | 'nowrap' | 'wrap-reverse';
 }
 
 export function Flex({ 
@@ -43,22 +60,77 @@ export function Flex({
   wrap = false,
   className,
   style,
+  as: Component = 'div',
   ...props 
 }: FlexProps) {
+  const flexWrap = typeof wrap === 'boolean' 
+    ? (wrap ? 'wrap' : 'nowrap') 
+    : wrap;
+
   return (
-    <div 
-      className={`${styles.flex} ${className || ''}`}
+    <Component 
+      className={clsx(styles.flex, className)}
       style={{
         flexDirection: direction,
         justifyContent: justify,
         alignItems: align,
         gap,
-        flexWrap: wrap ? 'wrap' : 'nowrap',
+        flexWrap,
         ...style
       }}
       {...props}
     >
       {children}
-    </div>
+    </Component>
+  );
+}
+
+// --- Stack (Vertical Flex) ---
+export interface StackProps extends Omit<FlexProps, 'direction'> {
+  direction?: 'column' | 'column-reverse' | 'row' | 'row-reverse'; // Allow override but default to column
+}
+
+export function Stack({ 
+  children, 
+  direction = 'column', 
+  gap = '1rem', 
+  align = 'stretch',
+  ...props 
+}: StackProps) {
+  return (
+    <Flex 
+      direction={direction} 
+      gap={gap} 
+      align={align}
+      {...props}
+    >
+      {children}
+    </Flex>
+  );
+}
+
+// --- Container ---
+export interface ContainerProps extends LayoutProps {
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | 'fluid';
+}
+
+export function Container({ 
+  children, 
+  maxWidth = 'xl', 
+  className, 
+  as: Component = 'div',
+  ...props 
+}: ContainerProps) {
+  return (
+    <Component 
+      className={clsx(
+        styles.container, 
+        styles[maxWidth],
+        className
+      )} 
+      {...props}
+    >
+      {children}
+    </Component>
   );
 }
