@@ -20,7 +20,7 @@
     "build-storybook": "storybook build -o storybook-static",
     "deploy-build": "rimraf build && mkdir -p build && cp website/index.html website/doom.png build/ && storybook build -o build/storybook",
     "test": "vitest",
-    "test:integration": "vitest run tests/integration.test.ts --exclude='' ",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:package": "publint",
     "validate:build": "node scripts/validate-build.cjs"
   },
