@@ -1,25 +1,48 @@
-import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import { ProgressBar } from './ProgressBar';
-import { describe, it, expect } from 'vitest';
-import React from 'react';
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
+import { ProgressBar } from "./ProgressBar";
+import { describe, it, expect } from "vitest";
+import React from "react";
 
-describe('ProgressBar Component', () => {
-  it('should render', () => {
-    render(<ProgressBar value={50} />);
-    // We can't easily check styles, but we can check if it renders without crashing
-    // and maybe check if the container exists.
-    // Since it's a styled component, it doesn't have a specific role by default.
-    // We can add a data-testid or just check for existence.
-    // Let's rely on the fact that it renders a div.
-    // Or we can check if the stripes are rendered if showStripes is true.
+describe("ProgressBar Component", () => {
+  it("should render with correct accessibility attributes", () => {
+    render(<ProgressBar value={50} aria-label="Loading progress" />);
+    const progress = screen.getByRole("progressbar");
+
+    expect(progress).toBeInTheDocument();
+    expect(progress).toHaveAttribute("aria-valuenow", "50");
+    expect(progress).toHaveAttribute("aria-valuemin", "0");
+    expect(progress).toHaveAttribute("aria-valuemax", "100");
+    expect(progress).toHaveAttribute("aria-label", "Loading progress");
   });
 
-  it('should clamp value between 0 and 100', () => {
-    // This logic is internal to the component and affects style props.
-    // Hard to test without checking computed styles or internal state.
-    // But we can verify it doesn't crash with out of bounds values.
-    render(<ProgressBar value={150} />);
-    render(<ProgressBar value={-50} />);
+  it("should clamp value between 0 and 100 in accessibility attributes", () => {
+    const { rerender } = render(<ProgressBar value={150} />);
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "100"
+    );
+
+    rerender(<ProgressBar value={-50} />);
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "0"
+    );
+  });
+
+  it("should support custom max value", () => {
+    render(<ProgressBar value={50} max={200} />);
+    const progress = screen.getByRole("progressbar");
+    expect(progress).toHaveAttribute("aria-valuemax", "200");
+    expect(progress).toHaveAttribute("aria-valuenow", "50");
+  });
+
+  it("should spread additional props to the container", () => {
+    render(
+      <ProgressBar value={20} data-testid="custom-bar" className="my-class" />
+    );
+    const progress = screen.getByRole("progressbar");
+    expect(progress).toHaveAttribute("data-testid", "custom-bar");
+    expect(progress).toHaveClass("my-class");
   });
 });
