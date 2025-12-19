@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Form, Field, FormMessage } from './Form';
-import { Input, Button, Switch, Select, Textarea, RadioGroup, RadioGroupItem, Slider, Label } from '../..';
+import { Input, Button, Switch, Select, Textarea, RadioGroup, RadioGroupItem, Slider, Label, Checkbox } from '../..';
 import React from 'react';
 
 const meta: Meta<typeof Form> = {
@@ -52,6 +52,7 @@ export const ComprehensiveForm: Story = {
       bio: '',
       volume: 50,
       notifications: true,
+      terms: false,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -133,6 +134,14 @@ export const ComprehensiveForm: Story = {
             label="Enable email notifications"
             checked={formData.notifications}
             onChange={(checked) => setFormData({ ...formData, notifications: checked })}
+          />
+        </Field>
+
+        <Field>
+          <Checkbox 
+            label="I agree to the Terms and Conditions"
+            checked={formData.terms}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, terms: e.target.checked })}
           />
         </Field>
 

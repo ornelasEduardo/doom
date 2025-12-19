@@ -50,7 +50,7 @@
     "replace-in-file": "^8.4.0",
     "rimraf": "^6.1.2",
     "sass": "^1.96.0",
-    "storybook": "^10.1.4",
+    "storybook": "^10.1.10",
     "styled-jsx": "^5.1.7",
     "tsc-alias": "^1.8.16",
     "typescript": "^5",
