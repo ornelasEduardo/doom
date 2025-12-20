@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Modal } from "./Modal";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "./Modal";
 import { Button } from "../Button/Button";
 import { Text } from "../Text/Text";
 import { Stack } from "../Layout/Layout";
@@ -110,4 +110,49 @@ const FeedbackFormExample = () => {
 
 export const FeedbackForm: Story = {
   render: () => <FeedbackFormExample />,
+};
+
+const CustomCompositionExample = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
+      <Button onClick={() => setIsOpen(true)} variant="outline">
+        Open Custom Modal
+      </Button>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <ModalHeader>
+          <Text variant="h3" as="h2" className="mb-0">
+            Custom Composition
+          </Text>
+        </ModalHeader>
+        <ModalBody>
+          <Stack gap="1rem">
+            <Text>
+              This modal is built by composing <code>ModalHeader</code>,{" "}
+              <code>ModalBody</code>, and <code>ModalFooter</code> manually
+              instead of using props.
+            </Text>
+            <div
+              style={{
+                background: "var(--primary)",
+                padding: "1rem",
+                border: "2px solid black",
+                fontWeight: "bold",
+              }}
+            >
+              It allows for completely custom layouts!
+            </div>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Text variant="small">Custom Footer Content</Text>
+          <Button onClick={() => setIsOpen(false)}>Got it</Button>
+        </ModalFooter>
+      </Modal>
+    </Stack>
+  );
+};
+
+export const CustomComposition: Story = {
+  render: () => <CustomCompositionExample />,
 };
