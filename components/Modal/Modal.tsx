@@ -6,13 +6,15 @@ import { X } from "lucide-react";
 import clsx from "clsx";
 import { Card } from "../Card/Card";
 import { Button } from "../Button/Button";
-import { Flex } from "../Layout/Layout";
+import { Stack, Flex } from "../Layout/Layout";
+import { Text } from "../Text/Text";
 import styles from "./Modal.module.scss";
 
-interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
+interface ModalProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -24,28 +26,30 @@ const ModalContext = React.createContext<{
   onClose: () => {},
 });
 
-export function ModalHeader({
-  children,
-  className,
-  id,
-}: {
+interface ModalHeaderProps {
   children: React.ReactNode;
   className?: string;
   id?: string;
-}) {
+}
+
+export function ModalHeader({ children, className, id }: ModalHeaderProps) {
   const { onClose, titleId } = React.useContext(ModalContext);
+
   return (
     <Flex
       align="center"
       justify="space-between"
       className={clsx(styles.header, className)}
     >
-      <h2 id={id || titleId}>{children}</h2>
+      <div id={id || titleId} className={styles.headerContent}>
+        {children}
+      </div>
       <Button
         variant="ghost"
         size="sm"
         onClick={onClose}
         aria-label="Close modal"
+        className={styles.closeButton}
       >
         <X size={20} strokeWidth={2.5} />
       </Button>
@@ -70,7 +74,16 @@ export function ModalFooter({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={clsx(styles.footer, className)}>{children}</div>;
+  return (
+    <Flex
+      justify="flex-end"
+      align="center"
+      gap="var(--spacing-md)"
+      className={clsx(styles.footer, className)}
+    >
+      {children}
+    </Flex>
+  );
 }
 
 export function Modal({
@@ -86,6 +99,11 @@ export function Modal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const titleId = `modal-title-${reactId}`;
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -95,6 +113,8 @@ export function Modal({
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
     }
 
     return () => {
@@ -103,7 +123,7 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) {
@@ -114,7 +134,7 @@ export function Modal({
   return createPortal(
     <ModalContext.Provider value={{ onClose, titleId }}>
       <div
-        className={clsx(styles.overlay, className)}
+        className={clsx(styles.overlay, isOpen && styles.isOpen, className)}
         ref={overlayRef}
         onClick={handleOverlayClick}
         style={style}
@@ -126,12 +146,17 @@ export function Modal({
             aria-labelledby={title ? titleId : undefined}
             {...props}
           >
-            <Card style={{ padding: 0, overflow: "hidden" }}>
+            <Card
+              className={styles.modalCard}
+              style={{ padding: 0, overflow: "hidden" }}
+            >
               {title ? (
                 <>
                   <ModalHeader>{title}</ModalHeader>
-                  <ModalBody>{children}</ModalBody>
-                  {footer && <ModalFooter>{footer}</ModalFooter>}
+                  <Stack gap={0} className={styles.modalContent}>
+                    <ModalBody>{children}</ModalBody>
+                    {footer && <ModalFooter>{footer}</ModalFooter>}
+                  </Stack>
                 </>
               ) : (
                 children

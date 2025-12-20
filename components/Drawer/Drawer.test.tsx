@@ -25,13 +25,15 @@ vi.mock("../Button", () => ({
 }));
 
 describe("Drawer Component", () => {
-  it("does not render when closed", () => {
-    render(
+  it("is hidden when closed", () => {
+    const { container } = render(
       <Drawer isOpen={false} onClose={() => {}} title="Test Drawer">
         Content
       </Drawer>
     );
-    expect(screen.queryByText("Test Drawer")).not.toBeInTheDocument();
+    // The component stays mounted for exit animations but should be hidden
+    const panel = screen.getByRole("dialog", { hidden: true });
+    expect(panel).not.toHaveClass(/isOpen/);
   });
 
   it("renders when open", () => {

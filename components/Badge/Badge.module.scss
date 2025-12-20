@@ -16,17 +16,17 @@
 
   &.success {
     background-color: var(--success);
-    color: var(--card-bg);
+    color: var(--success-foreground);
   }
 
   &.warning {
     background-color: var(--warning);
-    color: var(--card-bg);
+    color: var(--warning-foreground);
   }
 
   &.error {
     background-color: var(--error);
-    color: var(--card-bg);
+    color: var(--error-foreground);
   }
 
   &.secondary {

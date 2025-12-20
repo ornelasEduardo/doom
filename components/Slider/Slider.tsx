@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import styles from './Slider.module.scss';
-import React from 'react';
+import clsx from "clsx";
+import styles from "./Slider.module.scss";
+import React from "react";
 
-interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SliderProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
   showValue?: boolean;
   value?: number;
@@ -12,21 +13,28 @@ interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 
   onChange?: (value: number) => void;
 }
 
-export function Slider({ 
-  label, 
-  showValue, 
-  value, 
-  defaultValue, 
-  onChange, 
-  min = 0, 
-  max = 100, 
+import { Label } from "../Label/Label";
+
+export function Slider({
+  label,
+  showValue,
+  value,
+  defaultValue,
+  onChange,
+  min = 0,
+  max = 100,
   step = 1,
   className,
-  ...props 
+  id,
+  ...props
 }: SliderProps) {
-  
-  const [internalValue, setInternalValue] = React.useState(defaultValue !== undefined ? defaultValue : (min as number));
-  
+  const reactId = React.useId();
+  const inputId = id || `slider-${reactId}`;
+
+  const [internalValue, setInternalValue] = React.useState(
+    defaultValue !== undefined ? defaultValue : (min as number)
+  );
+
   const isControlled = value !== undefined;
   const currentValue = isControlled ? value : internalValue;
 
@@ -38,22 +46,27 @@ export function Slider({
     onChange?.(newVal);
   };
 
-  const percentage = ((currentValue! - (min as number)) / ((max as number) - (min as number))) * 100;
+  const percentage =
+    ((currentValue! - (min as number)) / ((max as number) - (min as number))) *
+    100;
 
   return (
     <div className={clsx(styles.container, className)}>
       {(label || showValue) && (
         <div className={styles.labelRow}>
-          {label && <span>{label}</span>}
-          {showValue && <span className={styles.valueDisplay}>{currentValue}</span>}
+          {label && <Label htmlFor={inputId}>{label}</Label>}
+          {showValue && (
+            <span className={styles.valueDisplay}>{currentValue}</span>
+          )}
         </div>
       )}
       <div className={styles.trackWrapper}>
-        <div 
-          className={styles.progressFill} 
-          style={{ '--percentage': `${percentage}%` } as React.CSSProperties}
+        <div
+          className={styles.progressFill}
+          style={{ "--percentage": `${percentage}%` } as React.CSSProperties}
         />
         <input
+          id={inputId}
           className={styles.rangeInput}
           type="range"
           min={min}
@@ -61,6 +74,10 @@ export function Slider({
           step={step}
           value={currentValue}
           onChange={handleChange}
+          aria-label={!label ? props["aria-label"] || "Slider" : undefined}
+          aria-valuenow={currentValue}
+          aria-valuemin={Number(min)}
+          aria-valuemax={Number(max)}
           {...props}
         />
       </div>

@@ -1,4 +1,4 @@
-@use '../../styles/mixins' as *;
+@use "../../styles/mixins" as *;
 
 .container {
   display: flex;
@@ -67,12 +67,12 @@
 
   &:hover {
     background-color: color-mix(in srgb, var(--primary), transparent 85%);
-    color: var(--primary);
+    color: color-mix(in srgb, var(--primary), var(--foreground) 25%);
   }
 
   &.highlighted {
     background: color-mix(in srgb, var(--primary), transparent 85%);
-    color: var(--primary);
+    color: color-mix(in srgb, var(--primary), var(--foreground) 25%);
   }
 
   &.selected {

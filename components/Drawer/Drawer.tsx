@@ -26,6 +26,8 @@ export function Drawer({
   footer,
   className,
 }: DrawerProps) {
+  const reactId = React.useId();
+  const titleId = `drawer-title-${reactId}`;
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -48,12 +50,12 @@ export function Drawer({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  if (!mounted || !isOpen) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <>
       <div
-        className={clsx(styles.overlay, isOpen && styles.open)}
+        className={clsx(styles.overlay, isOpen && styles.isOpen)}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -61,14 +63,20 @@ export function Drawer({
         className={clsx(
           styles.panel,
           styles[side],
-          isOpen && styles.open,
+          isOpen && styles.isOpen,
           className
         )}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={!title ? "Drawer" : undefined}
       >
         <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
+          {title && (
+            <h2 id={titleId} className={styles.title}>
+              {title}
+            </h2>
+          )}
           <Button
             variant="ghost"
             size="sm"

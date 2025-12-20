@@ -1,36 +1,63 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { ChevronDown } from 'lucide-react';
-import styles from './Accordion.module.scss';
-import React, { useState } from 'react';
+import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
+import { Stack } from "../Layout/Layout";
+import { Button } from "../Button/Button";
+import { Text } from "../Text/Text";
+import styles from "./Accordion.module.scss";
+import React, { useState } from "react";
+
+const AccordionContext = React.createContext<{
+  value: string | string[];
+  onToggle: (value: string) => void;
+  type: "single" | "multiple";
+} | null>(null);
 
 interface AccordionItemProps {
   value: string;
   trigger: string;
   children: React.ReactNode;
-  isOpen?: boolean;
-  onToggle?: () => void;
+  className?: string;
 }
 
-export function AccordionItem({ value, trigger, children, isOpen, onToggle }: AccordionItemProps) {
+export function AccordionItem({
+  value,
+  trigger,
+  children,
+  className,
+}: AccordionItemProps) {
+  const context = React.useContext(AccordionContext);
+  if (!context) throw new Error("AccordionItem must be used within Accordion");
+
+  const reactId = React.useId();
+  const triggerId = `accordion-trigger-${reactId}`;
+  const contentId = `accordion-content-${reactId}`;
+  const isOpen = Array.isArray(context.value)
+    ? context.value.includes(value)
+    : context.value === value;
+
   return (
-    <div className={styles.item}>
-      <h3 className={styles.header}>
-        <button 
+    <div className={clsx(styles.item, isOpen && styles.isOpen, className)}>
+      <Text variant="h3" className={styles.header}>
+        <Button
+          id={triggerId}
+          variant="ghost"
           className={styles.trigger}
-          type="button" 
-          onClick={onToggle}
+          onClick={() => context.onToggle(value)}
           aria-expanded={isOpen}
+          aria-controls={contentId}
         >
           {trigger}
           <ChevronDown size={20} strokeWidth={2.5} className={styles.icon} />
-        </button>
-      </h3>
-      <div 
-        className={styles.contentWrapper} 
+        </Button>
+      </Text>
+      <div
+        id={contentId}
+        className={styles.contentWrapper}
         aria-hidden={!isOpen}
         role="region"
+        aria-labelledby={triggerId}
       >
         <div className={styles.contentBody}>{children}</div>
       </div>
@@ -39,42 +66,53 @@ export function AccordionItem({ value, trigger, children, isOpen, onToggle }: Ac
 }
 
 interface AccordionProps {
-  type?: 'single' | 'multiple';
-  children: React.ReactNode; 
+  type?: "single" | "multiple";
+  children: React.ReactNode;
   defaultValue?: string | string[];
+  value?: string | string[];
+  onValueChange?: (value: string | string[]) => void;
   className?: string;
 }
 
-export function Accordion({ type = 'single', children, defaultValue, className }: AccordionProps) {
-  const [value, setValue] = useState<string | string[]>(defaultValue || (type === 'multiple' ? [] : ''));
+export function Accordion({
+  type = "single",
+  children,
+  defaultValue,
+  value: controlledValue,
+  onValueChange,
+  className,
+}: AccordionProps) {
+  const [internalValue, setInternalValue] = useState<string | string[]>(
+    defaultValue || (type === "multiple" ? [] : "")
+  );
+
+  const isControlled = controlledValue !== undefined;
+  const currentValue = isControlled ? controlledValue : internalValue;
 
   const handleToggle = (itemValue: string) => {
-    if (type === 'single') {
-      setValue(prev => prev === itemValue ? '' : itemValue);
+    let newValue: string | string[];
+    if (type === "single") {
+      newValue = currentValue === itemValue ? "" : itemValue;
     } else {
-      setValue(prev => {
-        const arr = Array.isArray(prev) ? prev : [];
-        if (arr.includes(itemValue)) {
-          return arr.filter(v => v !== itemValue);
-        }
-        return [...arr, itemValue];
-      });
+      const arr = Array.isArray(currentValue) ? currentValue : [];
+      newValue = arr.includes(itemValue)
+        ? arr.filter((v) => v !== itemValue)
+        : [...arr, itemValue];
     }
+
+    if (!isControlled) {
+      setInternalValue(newValue);
+    }
+    onValueChange?.(newValue);
   };
 
   return (
-    <div className={clsx(styles.root, className)}>
-      {React.Children.map(children, (child) => {
-        if (!React.isValidElement(child)) return null;
-        
-        const itemValue = (child as React.ReactElement<AccordionItemProps>).props.value;
-        const isOpen = Array.isArray(value) ? value.includes(itemValue) : value === itemValue;
-        
-        return React.cloneElement(child as React.ReactElement<any>, {
-          isOpen,
-          onToggle: () => handleToggle(itemValue),
-        });
-      })}
-    </div>
+    <AccordionContext.Provider
+      value={{ value: currentValue, onToggle: handleToggle, type }}
+    >
+      <Stack gap={0} className={clsx(styles.root, className)}>
+        {children}
+      </Stack>
+    </AccordionContext.Provider>
   );
 }

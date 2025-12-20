@@ -4,12 +4,14 @@
   background-color: rgba(0, 0, 0, var(--overlay-opacity));
   backdrop-filter: blur(4px);
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
   pointer-events: none;
   z-index: var(--z-dropdown);
 
-  &.open {
+  &.isOpen {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
   }
 }
@@ -20,7 +22,8 @@
   z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   top: 0;
   bottom: 0;
   width: 100%;
@@ -32,7 +35,7 @@
     box-shadow: 8px 0px 0px 0px var(--card-border);
     border-top-right-radius: var(--radius);
     border-bottom-right-radius: var(--radius);
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% - 20px));
   }
 
   &.right {
@@ -40,10 +43,10 @@
     box-shadow: -8px 0px 0px 0px var(--card-border);
     border-top-left-radius: var(--radius);
     border-bottom-left-radius: var(--radius);
-    transform: translateX(100%);
+    transform: translateX(calc(100% + 20px));
   }
 
-  &.open {
+  &.isOpen {
     visibility: visible;
     transform: translateX(0);
   }

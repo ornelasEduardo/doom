@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import clsx from 'clsx';
-import styles from './Avatar.module.scss';
+import React, { useState } from "react";
+import clsx from "clsx";
+import styles from "./Avatar.module.scss";
 
-export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
-export type AvatarShape = 'circle' | 'square';
+export type AvatarSize = "sm" | "md" | "lg" | "xl";
+export type AvatarShape = "circle" | "square";
 
 interface AvatarProps {
   src?: string;
@@ -16,35 +16,30 @@ interface AvatarProps {
   className?: string;
 }
 
-export function Avatar({ 
-  src, 
-  alt = 'Avatar', 
-  fallback, 
-  size = 'md', 
-  shape = 'circle', 
-  className 
+export function Avatar({
+  src,
+  alt = "Avatar",
+  fallback,
+  size = "md",
+  shape = "square",
+  className,
 }: AvatarProps) {
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div 
-      className={clsx(
-        styles.avatar, 
-        styles[size], 
-        styles[shape], 
-        className
-      )}
+    <div
+      className={clsx(styles.avatar, styles[size], styles[shape], className)}
     >
       {src && !hasError ? (
-        <img 
-          src={src} 
-          alt={alt} 
+        <img
+          src={src}
+          alt={alt}
           className={styles.image}
-          onError={() => setHasError(true)} 
+          onError={() => setHasError(true)}
         />
       ) : (
         <span className={clsx(styles.fallback, styles[size])}>
-          {typeof fallback === 'string' ? fallback.slice(0, 2) : fallback}
+          {typeof fallback === "string" ? fallback.slice(0, 2) : fallback}
         </span>
       )}
     </div>

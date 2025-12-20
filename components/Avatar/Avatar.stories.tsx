@@ -1,21 +1,21 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Avatar } from './Avatar';
-import { User } from 'lucide-react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Avatar } from "./Avatar";
+import { User } from "lucide-react";
 
 const meta: Meta<typeof Avatar> = {
-  title: 'Design System/Avatar',
+  title: "Design System/Avatar",
   component: Avatar,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     size: {
-      control: 'select',
-      options: ['sm', 'md', 'lg', 'xl'],
+      control: "select",
+      options: ["sm", "md", "lg", "xl"],
     },
     shape: {
-      control: 'radio',
-      options: ['circle', 'square'],
+      control: "radio",
+      options: ["circle", "square"],
     },
-    src: { control: 'text' },
+    src: { control: "text" },
   },
 };
 
@@ -25,32 +25,29 @@ type Story = StoryObj<typeof Avatar>;
 export const Default: Story = {
   args: {
     fallback: <User strokeWidth={2.5} size={24} />,
-    size: 'md',
-    shape: 'circle',
+    size: "md",
   },
 };
 
 export const WithImage: Story = {
   args: {
-    src: 'https://github.com/shadcn.png', // Reliable tech placeholder
+    src: "https://github.com/shadcn.png",
     fallback: <User strokeWidth={2.5} />,
-    size: 'md',
-    shape: 'circle',
+    size: "md",
   },
 };
 
 export const Initials: Story = {
   args: {
-    fallback: 'JD',
-    size: 'md',
-    shape: 'circle',
+    fallback: "JD",
+    size: "md",
   },
 };
 
-export const Square: Story = {
+export const Circle: Story = {
   args: {
     fallback: <User strokeWidth={2.5} size={32} />,
-    size: 'lg',
-    shape: 'square',
+    size: "lg",
+    shape: "circle",
   },
 };

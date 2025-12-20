@@ -5,12 +5,14 @@ import clsx from "clsx";
 import { Label } from "../Label/Label";
 import styles from "./Input.module.scss";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "title"> {
   label?: string;
   error?: string;
   helperText?: string;
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;
+  showCount?: boolean;
   format?: (value: string | number | readonly string[] | undefined) => string;
   validate?: (
     value: string | number | readonly string[] | undefined
@@ -23,20 +25,27 @@ export function Input({
   helperText,
   startAdornment,
   endAdornment,
+  showCount,
   style,
   className,
   format,
   validate,
   onBlur,
   onFocus,
+  onChange,
   value,
+  defaultValue,
   id,
   required,
+  maxLength,
   ...props
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [internalError, setInternalError] = useState<string | undefined>(
     undefined
+  );
+  const [charCount, setCharCount] = useState(
+    (value?.toString() || defaultValue?.toString() || "").length
   );
 
   const reactId = useId();
@@ -58,6 +67,18 @@ export function Input({
     setIsFocused(true);
     if (onFocus) onFocus(e);
   };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCharCount(e.target.value.length);
+    if (onChange) onChange(e);
+  };
+
+  // Sync charCount if value is updated externally (controlled)
+  React.useEffect(() => {
+    if (value !== undefined) {
+      setCharCount(value.toString().length);
+    }
+  }, [value]);
 
   const displayValue =
     !isFocused && format && value !== undefined ? format(value) : value;
@@ -89,8 +110,11 @@ export function Input({
           id={inputId}
           required={required}
           value={displayValue}
+          defaultValue={defaultValue}
           onBlur={handleBlur}
           onFocus={handleFocus}
+          onChange={handleChange}
+          maxLength={maxLength}
           aria-invalid={!!error}
           aria-describedby={describedBy}
           {...props}
@@ -102,20 +126,33 @@ export function Input({
         )}
       </div>
 
-      {helperText && !error && (
-        <span id={helperId} className={styles.helperText}>
-          {helperText}
-        </span>
-      )}
+      {(error || helperText || (showCount ?? maxLength !== undefined)) && (
+        <div className={styles.bottomRow}>
+          <div className={styles.messageArea}>
+            {error ? (
+              <span
+                id={errorId}
+                className={clsx(styles.helperText, styles.error)}
+                role="alert"
+              >
+                {error}
+              </span>
+            ) : (
+              helperText && (
+                <span id={helperId} className={styles.helperText}>
+                  {helperText}
+                </span>
+              )
+            )}
+          </div>
 
-      {error && (
-        <span
-          id={errorId}
-          className={clsx(styles.helperText, styles.error)}
-          role="alert"
-        >
-          {error}
-        </span>
+          {(showCount ?? maxLength !== undefined) && (
+            <span className={styles.counter}>
+              {charCount}
+              {maxLength !== undefined ? ` / ${maxLength}` : ""}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

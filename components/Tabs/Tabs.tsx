@@ -60,6 +60,7 @@ export function TabsList({ children, className, ...props }: TabsListProps) {
     <div
       role="tablist"
       aria-orientation="horizontal"
+      aria-label={props["aria-label"] || "Tabs"}
       className={clsx(styles.tabsList, className)}
       {...props}
     >
@@ -94,7 +95,7 @@ export function TabsTrigger({
       role="tab"
       type="button"
       aria-selected={isActive}
-      aria-controls={contentId}
+      aria-controls={isActive ? contentId : undefined}
       className={clsx(styles.tabsTrigger, isActive && styles.active, className)}
       onClick={(e) => {
         context.setActiveTab(value);

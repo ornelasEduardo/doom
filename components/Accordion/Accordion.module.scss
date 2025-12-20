@@ -1,52 +1,119 @@
 .root {
   display: flex;
   flex-direction: column;
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  background-color: var(--card-bg);
-  overflow: hidden;
+  padding: var(--spacing-lg); // Provide space for floating breakout
 }
 
 .item {
-  border-bottom: var(--border-width) solid var(--card-border);
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  box-shadow: var(--shadow-hard);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+
+  &:not(:first-child) {
+    margin-top: calc(var(--border-width) * -1);
+  }
+
+  &:first-child {
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
 
   &:last-child {
-    border-bottom: none;
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+  }
+
+  &.isOpen + .item {
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+    margin-top: var(--spacing-sm);
+  }
+
+  &:has(+ .item.isOpen) {
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &.isOpen {
+    margin: var(--spacing-sm) 0;
+    transform: translate(-2px, -2px);
+    border-radius: var(--radius);
+    z-index: 10;
+    box-shadow: var(--shadow-hard);
+
+    & + .item.isOpen {
+      margin-top: var(--spacing-sm);
+    }
+
+    .trigger.trigger {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+
+      &:hover {
+        background-color: var(--primary);
+        filter: brightness(1.1);
+      }
+    }
+
+    .contentBody {
+      border-top: var(--border-width) solid var(--card-border);
+      padding-top: var(--spacing-md);
+    }
   }
 }
 
 .header {
-  display: flex;
   margin: 0;
+  display: flex;
 }
 
-.trigger {
-  all: unset;
-  flex: 1;
-  display: flex;
-  align-items: center;
+/* Specificity bridge to override Button defaults without !important */
+.trigger.trigger {
+  width: 100%;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
   justify-content: space-between;
   padding: var(--spacing-md);
+  background-color: var(--card-bg);
+  color: var(--foreground);
+  text-transform: none;
+  letter-spacing: normal;
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: var(--text-base);
-  background-color: var(--card-bg);
-  color: var(--foreground);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+
+  &::after {
+    display: none;
+  }
 
   &:hover {
     background-color: color-mix(in srgb, var(--primary) 25%, transparent);
+    transform: none;
+    box-shadow: none;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary);
+    outline: none;
+    background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+    box-shadow: inset 0 0 0 2px var(--primary);
     position: relative;
     z-index: 1;
   }
 
+  &[aria-expanded="true"] {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
   .icon {
-    transition: transform 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform: rotate(0deg);
   }
 
