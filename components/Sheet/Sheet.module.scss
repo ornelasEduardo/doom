@@ -1,15 +1,19 @@
+@use "../../styles/mixins" as *;
+
 .overlay {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, var(--overlay-opacity));
   backdrop-filter: blur(4px);
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
   pointer-events: none;
-  z-index: var(--z-dropdown);
+  z-index: var(--z-overlay);
 
   &.isOpen {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
   }
 }
@@ -26,40 +30,136 @@
   border-right: var(--border-width) solid var(--card-border);
   border-top-left-radius: var(--radius);
   border-top-right-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+
+  /* Brutalist Hard Shadow - Top anchored */
+  @include brutalist-shadow("top", 8px);
+
   display: flex;
   flex-direction: column;
-  z-index: var(--z-modal);
+  z-index: var(--z-drawer);
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--duration-slow) var(--ease-out);
+  visibility: hidden;
 
   &.isOpen {
+    visibility: visible;
     transform: translateY(0);
   }
+
+  &.solid {
+    /* 
+      SCALABLE CONTEXTUAL REMAPPING
+      Save original values then swap semantic tokens to auto-invert content.
+    */
+    --solid-bg: var(--primary);
+    --solid-fg: var(--primary-foreground);
+
+    background-color: var(--solid-bg);
+    color: var(--solid-fg);
+
+    /* Swap Semantics & Remap Content on CHILDREN only */
+    & > * {
+      --primary: var(--solid-fg);
+      --primary-foreground: var(--solid-bg);
+      --foreground: var(--solid-fg);
+      --muted-foreground: var(--solid-fg);
+    }
+
+    .header {
+      background-color: transparent !important;
+      color: var(--solid-fg);
+
+      button {
+        background-color: var(--error) !important;
+        color: var(--error-foreground) !important;
+        border-color: var(--border-strong) !important;
+      }
+    }
+
+    .handleBar {
+      background-color: var(--solid-fg);
+      opacity: 0.8;
+    }
+
+    .content {
+      background-color: transparent !important;
+    }
+
+    .footer {
+      background-color: transparent !important;
+    }
+  }
+}
+
+.header {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-bottom: var(--border-width) solid var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .handleBar {
   width: 48px;
   height: 6px;
   background-color: var(--card-border);
-  border-radius: 99px;
-  margin: 0.75rem auto;
-  opacity: 0.5;
+  border-radius: var(--radius-pill);
+  margin: 0.75rem auto 0.25rem auto;
+  opacity: 1;
+  border: var(--border-width) solid var(--border-strong);
+  flex-shrink: 0;
 }
 
-.header {
-  padding: 0 var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
+.headerBody {
+  padding: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Match Modal/Drawer's Close Button Styling */
+  button {
+    background-color: var(--error) !important;
+    color: var(--error-foreground) !important;
+    border: var(--border-width) solid var(--border-strong) !important;
+    box-shadow: var(--shadow-sm) !important;
+
+    &:hover {
+      background-color: var(--error) !important;
+      filter: brightness(1.1);
+      transform: translate(-2px, -2px);
+      box-shadow: var(--shadow-sm-hover) !important;
+    }
+
+    &:active {
+      transform: translate(2px, 2px);
+      box-shadow: var(--shadow-sm-checked) !important;
+    }
+  }
 }
 
 .title {
   margin: 0;
   font-family: var(--font-heading);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .content {
   flex: 1;
-  padding: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+  padding: var(--spacing-lg);
   overflow-y: auto;
+  background-color: var(--card-bg);
+}
+
+.footer {
+  padding: var(--spacing-lg);
+  border-top: var(--border-width) solid var(--border-strong);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  background-color: var(--card-bg);
+  flex-shrink: 0;
 }

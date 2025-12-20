@@ -363,4 +363,11 @@ body {
   .shadow-hard {
     box-shadow: var(--shadow-hard);
   }
+
+  /* Dynamically built directional shadows */
+  @each $dir in ("top", "bottom", "left", "right") {
+    .shadow-#{$dir}-hard {
+      @include m.brutalist-shadow($dir, 8px);
+    }
+  }
 }

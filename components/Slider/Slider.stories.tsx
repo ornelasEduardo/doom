@@ -19,7 +19,7 @@ type Story = StoryObj<typeof Slider>;
 
 export const Default: Story = {
   args: {
-    label: "Volume",
+    label: "System Volume",
     showValue: true,
     defaultValue: 50,
   },
@@ -46,7 +46,7 @@ export const Range: Story = {
     const [range, setRange] = useState<number | [number, number]>([20, 80]);
     return (
       <Slider
-        label="Price Range"
+        label="Power Distribution (kV)"
         value={range}
         onChange={setRange}
         showValue
@@ -59,7 +59,7 @@ export const Range: Story = {
 
 export const Steps: Story = {
   args: {
-    label: "Stepped (10)",
+    label: "Sector Alignment",
     step: 10,
     defaultValue: 0,
     showValue: true,

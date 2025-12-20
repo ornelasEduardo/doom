@@ -143,7 +143,9 @@ export const baseVariables = {
   "--z-header": "40",
   "--z-dropdown": "50",
   "--z-modal": "100",
-  "--z-tooltip": "200",
+  "--z-overlay": "150",
+  "--z-drawer": "200",
+  "--z-tooltip": "500",
 
   // Motion
   "--duration-fast": "150ms",

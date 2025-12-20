@@ -13,6 +13,8 @@ interface SheetProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
+  variant?: "default" | "solid";
   className?: string;
 }
 
@@ -21,6 +23,8 @@ export function Sheet({
   onClose,
   title,
   children,
+  footer,
+  variant = "default",
   className,
 }: SheetProps) {
   const reactId = React.useId();
@@ -57,29 +61,41 @@ export function Sheet({
         aria-hidden="true"
       />
       <div
-        className={clsx(styles.panel, isOpen && styles.isOpen, className)}
+        className={clsx(
+          styles.panel,
+          styles[variant],
+          isOpen && styles.isOpen,
+          className
+        )}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         aria-label={!title ? "Sheet" : undefined}
       >
-        <div className={styles.handleBar} />
-        <Flex align="center" justify="space-between" className={styles.header}>
-          {title && (
-            <h2 id={titleId} className={styles.title}>
-              {title}
-            </h2>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            aria-label="Close sheet"
+        <div className={styles.header}>
+          <div className={styles.handleBar} />
+          <Flex
+            align="center"
+            justify="space-between"
+            className={styles.headerBody}
           >
-            <X size={24} />
-          </Button>
-        </Flex>
+            {title && (
+              <h2 id={titleId} className={styles.title}>
+                {title}
+              </h2>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label="Close sheet"
+            >
+              <X size={24} />
+            </Button>
+          </Flex>
+        </div>
         <div className={styles.content}>{children}</div>
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </>,
     document.body
