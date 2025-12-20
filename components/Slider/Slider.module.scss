@@ -146,3 +146,20 @@
     cursor: not-allowed;
   }
 }
+
+.multiRangeInput {
+  @extend .rangeInput;
+  pointer-events: none !important;
+
+  &::-webkit-slider-thumb {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
+  }
+
+  &::-moz-range-thumb {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
+  }
+}

@@ -135,6 +135,7 @@ const CustomCompositionExample = () => {
             <div
               style={{
                 background: "var(--primary)",
+                color: "var(--primary-foreground)",
                 padding: "1rem",
                 border: "2px solid black",
                 fontWeight: "bold",
@@ -155,4 +156,52 @@ const CustomCompositionExample = () => {
 
 export const CustomComposition: Story = {
   render: () => <CustomCompositionExample />,
+};
+
+const SolidVariantExample = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
+      <Button onClick={() => setIsOpen(true)} variant="primary">
+        Open Solid Modal
+      </Button>
+      <Modal variant="solid" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <ModalHeader>
+          <Text variant="h3" as="h2" className="mb-0">
+            SOLID VARIANT
+          </Text>
+        </ModalHeader>
+        <ModalBody>
+          <Stack gap="1rem">
+            <Text>
+              This modal uses the <code>variant="solid"</code> prop to create a
+              unified, high-impact look.
+            </Text>
+            <div
+              style={{
+                background: "rgba(0, 0, 0, 0.25)",
+                padding: "1rem",
+                border: "2px solid var(--card-border)",
+                fontWeight: "bold",
+              }}
+            >
+              Perfect for announcements or critical alerts!
+            </div>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            DISMISS
+          </Button>
+          <Button variant="primary" onClick={() => setIsOpen(false)}>
+            Understood
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </Stack>
+  );
+};
+
+export const SolidVariant: Story = {
+  render: () => <SolidVariantExample />,
 };

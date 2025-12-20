@@ -33,13 +33,68 @@
 
 .modalCard {
   background-color: var(--primary);
+
+  &.solid {
+    /* 
+      SCALABLE CONTEXTUAL REMAPPING
+      Save original values then swap semantic tokens to auto-invert content.
+    */
+    --solid-bg: var(--primary);
+    --solid-fg: var(--primary-foreground);
+    --original-border: var(--card-border);
+
+    background-color: var(--solid-bg);
+    color: var(--solid-fg);
+
+    /* 
+       Swap Semantics & Remap Content on CHILDREN only.
+       This avoids circular dependency on the container's background-color.
+    */
+    & > * {
+      --primary: var(--solid-fg);
+      --primary-foreground: var(--solid-bg);
+      --card-border: var(--solid-fg);
+      --foreground: var(--solid-fg);
+      --muted-foreground: var(--solid-fg);
+    }
+
+    .header,
+    .body,
+    .footer,
+    .modalContent {
+      background-color: transparent !important;
+      color: var(--solid-fg);
+    }
+
+    /* In solid mode, we need to override the close button to ensure contrast */
+    .closeButton {
+      background-color: var(--error) !important;
+      color: var(--error-foreground) !important;
+      border-color: var(--border-strong) !important;
+      box-shadow: var(--shadow-hard) !important;
+
+      &:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: var(--shadow-hover) !important;
+      }
+
+      &:active {
+        transform: translate(2px, 2px);
+        box-shadow: none !important;
+      }
+    }
+  }
 }
 
 .header {
   padding: var(--spacing-lg);
   background-color: var(--primary);
   color: var(--primary-foreground);
-  border-bottom: none;
+  border-bottom: var(--border-width) solid var(--card-border);
+
+  /* Remap foreground variables so children (like Text) use the correct contrast color */
+  --foreground: var(--primary-foreground);
+  --muted-foreground: var(--primary-foreground);
 }
 
 .headerContent {
@@ -50,7 +105,7 @@
 .closeButton {
   flex-shrink: 0;
   background-color: var(--error) !important;
-  color: white !important;
+  color: var(--error-foreground) !important;
   border: var(--border-width) solid var(--card-border) !important;
   border-radius: var(--radius) !important;
   height: 36px !important;
@@ -61,20 +116,21 @@
   justify-content: center;
   padding: 0 !important;
 
-  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.4) !important;
+  /* Use standardized shadow-error mixed with black for depth */
+  box-shadow: var(--shadow-hard) !important;
 
   transition: all 0.2s ease;
   cursor: pointer;
 
   &:hover {
     filter: brightness(1.1);
-    transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.4) !important;
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hover) !important;
   }
 
   &:active {
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 0.4) !important;
+    transform: translate(2px, 2px);
+    box-shadow: none !important;
   }
 }
 

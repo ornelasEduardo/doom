@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
+import clsx from "clsx";
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,14 +10,14 @@ import {
   flexRender,
   ColumnDef,
   SortingState,
-} from '@tanstack/react-table';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { Input } from '../Input/Input';
-import { Select } from '../Select/Select';
-import { Flex } from '../Layout/Layout';
-import { Pagination } from '../Pagination/Pagination';
-import styles from './Table.module.scss';
-import React, { useState } from 'react';
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Input } from "../Input/Input";
+import { Select } from "../Select/Select";
+import { Flex } from "../Layout/Layout";
+import { Pagination } from "../Pagination/Pagination";
+import styles from "./Table.module.scss";
+import React, { useState } from "react";
 
 interface TableProps<T> {
   data: T[];
@@ -29,8 +29,8 @@ interface TableProps<T> {
   height?: string | number; // If provided, enables virtualization (simplified)
   className?: string;
   style?: React.CSSProperties;
-  variant?: 'default' | 'flat';
-  density?: 'compact' | 'standard' | 'relaxed';
+  variant?: "default" | "flat";
+  density?: "compact" | "standard" | "relaxed";
   toolbarContent?: React.ReactNode;
   striped?: boolean;
 }
@@ -45,13 +45,13 @@ export function Table<T>({
   height,
   className,
   style,
-  variant = 'default',
-  density = 'standard',
+  variant = "default",
+  density = "standard",
   toolbarContent,
   striped = false,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: pageSize,
@@ -71,15 +71,17 @@ export function Table<T>({
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(), // Always provide the model, enableSorting controls if it's used
-    getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+    getPaginationRowModel: enablePagination
+      ? getPaginationRowModel()
+      : undefined,
     getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
   });
 
   // Virtualization Logic (Simplified for rows)
   const parentRef = React.useRef<HTMLDivElement>(null);
-  
+
   const { rows } = table.getRowModel();
-  
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
@@ -90,16 +92,20 @@ export function Table<T>({
   const isVirtual = !!height;
 
   return (
-    <div 
-      className={clsx(styles.container, variant === 'flat' && styles.flat, className)} 
+    <div
+      className={clsx(
+        styles.container,
+        variant === "flat" && styles.flat,
+        className
+      )}
       style={style}
     >
       {enableFiltering && (
         <div className={styles.toolbar}>
-          <div style={{ width: '300px' }}>
+          <div style={{ width: "300px" }}>
             <Input
               placeholder="Search..."
-              value={globalFilter ?? ''}
+              value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
             />
           </div>
@@ -111,13 +117,14 @@ export function Table<T>({
         </div>
       )}
 
-      <div 
-        ref={parentRef} 
-        style={{ 
-          height: height ? height : 'auto', 
-          overflowY: height ? 'auto' : 'visible',
-          overflowX: 'auto',
-          width: '100%'
+      <div
+        ref={parentRef}
+        tabIndex={0}
+        style={{
+          height: height ? height : "auto",
+          overflowY: height ? "auto" : "visible",
+          overflowX: "auto",
+          width: "100%",
         }}
       >
         <table className={styles.table}>
@@ -129,11 +136,15 @@ export function Table<T>({
                   return (
                     <th
                       key={header.id}
-                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                      onClick={
+                        canSort
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
                       style={{ width: header.getSize() }}
                       className={clsx(
-                        styles.th, 
-                        styles[density], 
+                        styles.th,
+                        styles[density],
                         canSort && styles.sortable
                       )}
                     >
@@ -142,10 +153,12 @@ export function Table<T>({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        {canSort && ({
-                          asc: ' ▲',
-                          desc: ' ▼',
-                        }[header.column.getIsSorted() as string] ?? null)}
+                        {canSort &&
+                          ({
+                            asc: " ▲",
+                            desc: " ▼",
+                          }[header.column.getIsSorted() as string] ??
+                            null)}
                       </div>
                     </th>
                   );
@@ -153,32 +166,33 @@ export function Table<T>({
               </tr>
             ))}
           </thead>
-          
+
           {isVirtual ? (
-            <tbody
-              style={{
-                height: `${rowVirtualizer.getTotalSize()}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
+            <tbody>
+              {rowVirtualizer.getVirtualItems().length > 0 && (
+                <tr
+                  style={{
+                    height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
+                  }}
+                >
+                  <td
+                    colSpan={columns.length}
+                    style={{ border: 0, padding: 0 }}
+                  />
+                </tr>
+              )}
               {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 const row = rows[virtualRow.index];
                 return (
                   <tr
                     key={row.id}
                     className={clsx(styles.tr, striped && styles.striped)}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className={clsx(styles.td, styles[density])}>
+                      <td
+                        key={cell.id}
+                        className={clsx(styles.td, styles[density])}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -188,13 +202,40 @@ export function Table<T>({
                   </tr>
                 );
               })}
+              {rowVirtualizer.getVirtualItems().length > 0 && (
+                <tr
+                  style={{
+                    height: `${
+                      rowVirtualizer.getTotalSize() -
+                      rowVirtualizer.getVirtualItems()[
+                        rowVirtualizer.getVirtualItems().length - 1
+                      ].end
+                    }px`,
+                  }}
+                >
+                  <td
+                    colSpan={columns.length}
+                    style={{ border: 0, padding: 0 }}
+                  />
+                </tr>
+              )}
             </tbody>
           ) : (
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className={clsx(styles.tr, striped && styles.striped, 'group')}>
+                <tr
+                  key={row.id}
+                  className={clsx(
+                    styles.tr,
+                    striped && styles.striped,
+                    "group"
+                  )}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={clsx(styles.td, styles[density])}>
+                    <td
+                      key={cell.id}
+                      className={clsx(styles.td, styles[density])}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -206,17 +247,19 @@ export function Table<T>({
             </tbody>
           )}
         </table>
-        
+
         {table.getRowModel().rows.length === 0 && (
-          <div className={styles.noResults}>
-            No results found.
-          </div>
+          <div className={styles.noResults}>No results found.</div>
         )}
       </div>
 
       {enablePagination && !isVirtual && (
         <div className={styles.paginationContainer}>
-          <Flex gap="1rem" align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Flex
+            gap="1rem"
+            align="center"
+            style={{ width: "100%", justifyContent: "space-between" }}
+          >
             <div style={{ flexShrink: 0 }}>
               <Select
                 value={table.getState().pagination.pageSize}
@@ -224,10 +267,10 @@ export function Table<T>({
                   table.setPageSize(Number(e.target.value));
                 }}
                 options={[
-                  { value: 10, label: '10 rows' },
-                  { value: 20, label: '20 rows' },
-                  { value: 50, label: '50 rows' },
-                  { value: 100, label: '100 rows' },
+                  { value: 10, label: "10 rows" },
+                  { value: 20, label: "20 rows" },
+                  { value: 50, label: "50 rows" },
+                  { value: 100, label: "100 rows" },
                 ]}
               />
             </div>
