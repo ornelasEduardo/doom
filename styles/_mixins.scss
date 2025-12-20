@@ -7,10 +7,12 @@
 }
 
 @mixin focus {
-  &:focus, &:focus-visible, &[aria-expanded="true"] {
+  &:focus,
+  &:focus-visible,
+  &[aria-expanded="true"] {
     outline: none;
     transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0px 0px var(--shadow-primary);
+    box-shadow: 8px 8px 0px 0px var(--shadow-primary);
     border-color: var(--primary);
   }
 }
@@ -19,18 +21,42 @@
   border-color: var(--error);
   box-shadow: 5px 5px 0px 0px var(--shadow-error);
 
-  &:focus, &:focus-visible {
+  &:focus,
+  &:focus-visible {
     border-color: var(--error);
     box-shadow: 7px 7px 0px 0px var(--shadow-error);
   }
 }
 
+// Brutalist Directional Shadows
+@mixin brutalist-shadow(
+  $direction: "standard",
+  $size: 8px,
+  $color: var(--border-strong)
+) {
+  @if $direction == "standard" {
+    box-shadow: $size $size 0 0 $color;
+  } @else if $direction == "top" {
+    /* Top-Right heavy shadow */
+    box-shadow: $size (-$size) 0 0 $color;
+  } @else if $direction == "bottom" {
+    /* Standard Bottom-Right shadow */
+    box-shadow: $size $size 0 0 $color;
+  } @else if $direction == "left" {
+    /* Bottom-Left shadow for right-anchored elements */
+    box-shadow: (-$size) $size 0 0 $color;
+  } @else if $direction == "right" {
+    /* Bottom-Right shadow for left-anchored elements */
+    box-shadow: $size $size 0 0 $color;
+  }
+}
+
 // Breakpoints
 $breakpoints: (
-  'sm': 640px,
-  'md': 768px,
-  'lg': 1024px,
-  'xl': 1280px
+  "sm": 640px,
+  "md": 768px,
+  "lg": 1024px,
+  "xl": 1280px,
 );
 
 @mixin mq($breakpoint) {

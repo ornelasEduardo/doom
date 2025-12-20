@@ -53,7 +53,6 @@
     & > * {
       --primary: var(--solid-fg);
       --primary-foreground: var(--solid-bg);
-      --card-border: var(--solid-fg);
       --foreground: var(--solid-fg);
       --muted-foreground: var(--solid-fg);
     }
@@ -90,7 +89,7 @@
   padding: var(--spacing-lg);
   background-color: var(--primary);
   color: var(--primary-foreground);
-  border-bottom: var(--border-width) solid var(--card-border);
+  border-bottom: var(--border-width) solid var(--border-strong);
 
   /* Remap foreground variables so children (like Text) use the correct contrast color */
   --foreground: var(--primary-foreground);

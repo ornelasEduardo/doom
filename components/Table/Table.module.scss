@@ -69,7 +69,7 @@
 .td {
   padding: 1rem;
   border-bottom: 1px solid var(--card-border);
-  color: var(--foreground);
+  color: var(--on-surface);
 
   &.compact {
     padding: 0.5rem 1rem;
@@ -119,7 +119,7 @@
 .noResults {
   padding: 2rem;
   text-align: center;
-  color: var(--muted-foreground);
+  color: var(--on-surface-muted);
 }
 
 .headerContent {

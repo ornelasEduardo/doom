@@ -15,6 +15,7 @@ interface DrawerProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  variant?: "default" | "solid";
 }
 
 export function Drawer({
@@ -25,6 +26,7 @@ export function Drawer({
   children,
   footer,
   className,
+  variant = "default",
 }: DrawerProps) {
   const reactId = React.useId();
   const titleId = `drawer-title-${reactId}`;
@@ -63,6 +65,7 @@ export function Drawer({
         className={clsx(
           styles.panel,
           styles[side],
+          styles[variant],
           isOpen && styles.isOpen,
           className
         )}

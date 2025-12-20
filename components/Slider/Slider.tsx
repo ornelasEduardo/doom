@@ -17,6 +17,7 @@ interface SliderProps
 }
 
 import { Label } from "../Label/Label";
+import { Text } from "../Text/Text";
 
 export function Slider({
   label,
@@ -98,22 +99,24 @@ export function Slider({
         <div className={styles.labelRow}>
           {label && <Label htmlFor={inputId}>{label}</Label>}
           {showValue && (
-            <span className={styles.valueDisplay}>
+            <Text variant="small" weight="bold" className={styles.valueDisplay}>
               {isRange ? `${valArray[0]} - ${valArray[1]}` : valArray[0]}
-            </span>
+            </Text>
           )}
         </div>
       )}
       <div className={styles.trackWrapper}>
-        <div
-          className={styles.progressFill}
-          style={
-            {
-              left: `${startPercent}%`,
-              width: `${widthPercent}%`,
-            } as React.CSSProperties
-          }
-        />
+        <div className={styles.trackInner}>
+          <div
+            className={styles.progressFill}
+            style={
+              {
+                left: `${startPercent}%`,
+                width: `${widthPercent}%`,
+              } as React.CSSProperties
+            }
+          />
+        </div>
 
         {!isRange ? (
           <input
