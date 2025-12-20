@@ -2,7 +2,7 @@
   width: 100%;
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
-  background: var(--card-bg);
+  background: var(--surface-accent);
   box-shadow: var(--shadow-hard);
   overflow: hidden;
   display: flex;
@@ -19,17 +19,23 @@
 .toolbar {
   padding: var(--spacing-md);
   border-bottom: var(--border-width) solid var(--card-border);
-  background: var(--background);
+  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
 }
 
+.tableWrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-base);
+  background: var(--card-bg);
 }
 
 .th {
@@ -44,8 +50,12 @@
   white-space: nowrap;
   color: var(--secondary-foreground);
 
-  &.compact { padding: 0.5rem 1rem; }
-  &.relaxed { padding: 1.5rem 1rem; }
+  &.compact {
+    padding: 0.5rem 1rem;
+  }
+  &.relaxed {
+    padding: 1.5rem 1rem;
+  }
 
   &.sortable {
     cursor: pointer;
@@ -61,15 +71,19 @@
   border-bottom: 1px solid var(--card-border);
   color: var(--foreground);
 
-  &.compact { padding: 0.5rem 1rem; }
-  &.relaxed { padding: 1.5rem 1rem; }
+  &.compact {
+    padding: 0.5rem 1rem;
+  }
+  &.relaxed {
+    padding: 1.5rem 1rem;
+  }
 }
 
 .tr {
   &:last-child td {
     border-bottom: none;
   }
-  
+
   &:hover {
     background-color: rgba(113, 128, 150, 0.1);
   }
@@ -96,7 +110,7 @@
 .paginationContainer {
   padding: var(--spacing-md);
   border-top: var(--border-width) solid var(--card-border);
-  background: var(--background);
+  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;

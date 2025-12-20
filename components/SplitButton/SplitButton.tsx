@@ -34,7 +34,10 @@ export function SplitButton({
       onClose={() => setIsOpen(false)}
       placement="bottom-end"
       trigger={
-        <div className={clsx(styles.container, styles[variant], className)}>
+        <div
+          className={clsx(styles.container, styles[variant], className)}
+          data-state={isOpen ? "open" : "closed"}
+        >
           <button className={styles.mainButton} onClick={onPrimaryClick}>
             {primaryLabel}
           </button>

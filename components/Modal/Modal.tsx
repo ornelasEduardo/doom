@@ -17,13 +17,16 @@ interface ModalProps
   title?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  variant?: "default" | "solid";
 }
 
 const ModalContext = React.createContext<{
   onClose: () => void;
   titleId?: string;
+  variant: "default" | "solid";
 }>({
   onClose: () => {},
+  variant: "default",
 });
 
 interface ModalHeaderProps {
@@ -94,6 +97,7 @@ export function Modal({
   footer,
   className,
   style,
+  variant = "default",
   ...props
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -132,7 +136,7 @@ export function Modal({
   };
 
   return createPortal(
-    <ModalContext.Provider value={{ onClose, titleId }}>
+    <ModalContext.Provider value={{ onClose, titleId, variant }}>
       <div
         className={clsx(styles.overlay, isOpen && styles.isOpen, className)}
         ref={overlayRef}
@@ -143,11 +147,15 @@ export function Modal({
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? titleId : undefined}
+            aria-labelledby={title ? titleId : props["aria-labelledby"]}
+            aria-label={
+              props["aria-label"] ||
+              (!title && !props["aria-labelledby"] ? "Modal Window" : undefined)
+            }
             {...props}
           >
             <Card
-              className={styles.modalCard}
+              className={clsx(styles.modalCard, styles[variant])}
               style={{ padding: 0, overflow: "hidden" }}
             >
               {title ? (
