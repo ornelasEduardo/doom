@@ -42,20 +42,16 @@ describe("Select Component", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveAttribute("aria-haspopup", "listbox");
 
-    // Check if aria-controls points to something valid (even if listbox isn't rendered yet or is hidden)
-    const controlsId = trigger.getAttribute("aria-controls");
-    expect(controlsId).toBeTruthy();
+    // aria-controls should NOT be present when closed to avoid referencing non-existent element
+    expect(trigger).not.toHaveAttribute("aria-controls");
 
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(trigger).toHaveAttribute("aria-controls", "my-select-listbox");
     expect(screen.getByTestId("popover-content")).toBeInTheDocument();
 
     // Check listbox role inside popover
-    // Note: The mocked popover renders content directly.
-    // In our implementation, Select renders a <ul> with role="listbox"
-    // We need to ensure the mocked popover preserves that structure or we test what we can.
-    // The Select component passes the <ul> into the Popover content prop.
     expect(screen.getByRole("listbox")).toBeInTheDocument();
   });
 

@@ -8,9 +8,9 @@ import React, {
   useId,
 } from "react";
 import clsx from "clsx";
-import { Text } from "../Text/Text";
 import { Popover } from "../Popover/Popover";
 import { Check, ChevronDown } from "lucide-react";
+import { Label } from "../Label/Label";
 import styles from "./Select.module.scss";
 
 interface SelectProps
@@ -140,17 +140,9 @@ export function Select({
   return (
     <div className={clsx(styles.container, className)} style={style}>
       {label && (
-        <Text
-          as="label"
-          id={labelId}
-          variant="small"
-          weight="bold"
-          color="muted"
-          className="mb-1 block"
-          htmlFor={selectId}
-        >
+        <Label htmlFor={selectId} required={required}>
           {label}
-        </Text>
+        </Label>
       )}
       <Popover
         isOpen={isOpen}
@@ -167,8 +159,13 @@ export function Select({
             role="combobox"
             aria-haspopup="listbox"
             aria-expanded={isOpen}
-            aria-controls={listboxId}
+            aria-controls={isOpen ? listboxId : undefined}
             aria-labelledby={label ? labelId : undefined}
+            aria-label={
+              !label
+                ? selectedOption?.label || placeholder || "Select option"
+                : undefined
+            }
             aria-required={required}
             disabled={disabled}
             autoFocus={autoFocus}
@@ -183,6 +180,7 @@ export function Select({
               size={16}
               strokeWidth={2.5}
               style={{ marginLeft: "0.5rem" }}
+              aria-hidden="true"
             />
           </button>
         }
@@ -190,7 +188,7 @@ export function Select({
           <ul
             id={listboxId}
             role="listbox"
-            aria-labelledby={label ? labelId : undefined}
+            aria-labelledby={label ? labelId : selectId}
             className={styles.optionsList}
             style={{ width: triggerRef.current?.offsetWidth }}
           >
@@ -228,6 +226,7 @@ export function Select({
         value={currentValue}
         required={required}
         aria-hidden="true"
+        aria-labelledby={label ? labelId : undefined}
       />
     </div>
   );

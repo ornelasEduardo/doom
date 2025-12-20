@@ -6,8 +6,10 @@
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": false,
+    "noEmit": true,
     "declaration": true,
+    "baseUrl": ".",
+    "rootDir": ".",
     "outDir": "dist",
     "esModuleInterop": true,
     "module": "esnext",
@@ -17,12 +19,6 @@
     "jsx": "react-jsx",
     "incremental": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "tests",
-    "**/*.stories.tsx",
-    "**/*.test.tsx"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

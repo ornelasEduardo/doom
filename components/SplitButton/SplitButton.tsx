@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { Popover } from '../Popover/Popover';
-import { ChevronDown } from 'lucide-react';
-import styles from './SplitButton.module.scss';
-import React, { useState } from 'react';
+import clsx from "clsx";
+import { Popover } from "../Popover/Popover";
+import { ChevronDown } from "lucide-react";
+import styles from "./SplitButton.module.scss";
+import React, { useState } from "react";
 
 interface SplitButtonItem {
   label: string;
@@ -15,16 +15,16 @@ interface SplitButtonProps {
   primaryLabel: string;
   onPrimaryClick: () => void;
   items: SplitButtonItem[];
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
   className?: string; // Add className prop
 }
 
-export function SplitButton({ 
-  primaryLabel, 
-  onPrimaryClick, 
-  items, 
-  variant = 'primary',
-  className
+export function SplitButton({
+  primaryLabel,
+  onPrimaryClick,
+  items,
+  variant = "primary",
+  className,
 }: SplitButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -34,12 +34,18 @@ export function SplitButton({
       onClose={() => setIsOpen(false)}
       placement="bottom-end"
       trigger={
-        <div className={clsx(styles.container, styles[variant], className)} aria-expanded={isOpen}>
+        <div className={clsx(styles.container, styles[variant], className)}>
           <button className={styles.mainButton} onClick={onPrimaryClick}>
             {primaryLabel}
           </button>
-          <button className={styles.dropdownTrigger} onClick={() => setIsOpen(!isOpen)}>
-            <ChevronDown size={16} strokeWidth={3} />
+          <button
+            className={styles.dropdownTrigger}
+            onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
+            aria-label={`More ${primaryLabel} options`}
+          >
+            <ChevronDown size={16} strokeWidth={3} aria-hidden="true" />
           </button>
         </div>
       }

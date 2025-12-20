@@ -1,31 +1,43 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { createPortal } from 'react-dom';
-import styles from './Popover.module.scss';
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import clsx from "clsx";
+import { createPortal } from "react-dom";
+import styles from "./Popover.module.scss";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 
 interface PopoverProps {
   trigger: React.ReactNode;
   content: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-  placement?: 'bottom-start' | 'bottom-end' | 'bottom-center' | 'top-start' | 'top-end' | 'top-center';
+  placement?:
+    | "bottom-start"
+    | "bottom-end"
+    | "bottom-center"
+    | "top-start"
+    | "top-end"
+    | "top-center";
   offset?: number;
 }
 
-export function Popover({ 
-  trigger, 
-  content, 
-  isOpen, 
-  onClose, 
-  placement = 'bottom-start',
-  offset = 8 
+export function Popover({
+  trigger,
+  content,
+  isOpen,
+  onClose,
+  placement = "bottom-start",
+  offset = 8,
 }: PopoverProps) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [transformOrigin, setTransformOrigin] = useState('top left');
+  const [transformOrigin, setTransformOrigin] = useState("top left");
 
   const updatePosition = useCallback(() => {
     if (!isOpen || !triggerRef.current || !contentRef.current) return;
@@ -37,37 +49,49 @@ export function Popover({
 
     let top = 0;
     let left = 0;
-    let origin = 'top center';
-    
+    let origin = "top center";
+
     // Edge Config
     const padding = 16;
-    
-    const isTop = placement.startsWith('top');
-    
+
+    const isTop = placement.startsWith("top");
+
     if (isTop) {
       top = triggerRect.top - contentRect.height - offset;
-      origin = 'bottom';
+      origin = "bottom";
       if (top < 0) {
         top = triggerRect.bottom + offset;
-        origin = 'top';
+        origin = "top";
       }
     } else {
       top = triggerRect.bottom + offset;
-      origin = 'top';
+      origin = "top";
       if (top + contentRect.height > viewportHeight) {
         top = triggerRect.top - contentRect.height - offset;
-        origin = 'bottom';
+        origin = "bottom";
         if (top < 0) top = padding;
       }
     }
 
-    
     // Vertical Clamping (Fail-safe)
     if (top < padding) {
       top = padding;
     }
     if (top + contentRect.height > viewportHeight - padding) {
       top = viewportHeight - contentRect.height - padding;
+    }
+
+    const align = placement.split("-")[1];
+
+    if (align === "start") {
+      left = triggerRect.left;
+      origin += " left";
+    } else if (align === "end") {
+      left = triggerRect.right - contentRect.width;
+      origin += " right";
+    } else {
+      left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
+      origin += " center";
     }
 
     // Horizontal Clamping
@@ -78,19 +102,6 @@ export function Popover({
       left = padding;
     }
 
-    const align = placement.split('-')[1];
-    
-    if (align === 'start') {
-      left = triggerRect.left;
-      origin += ' left';
-    } else if (align === 'end') {
-      left = triggerRect.right - contentRect.width;
-      origin += ' right';
-    } else {
-      left = triggerRect.left + (triggerRect.width / 2) - (contentRect.width / 2);
-      origin += ' center';
-    }
-
     setPosition({ top, left });
     setTransformOrigin(origin);
   }, [isOpen, placement, offset]);
@@ -99,12 +110,12 @@ export function Popover({
   useLayoutEffect(() => {
     if (isOpen) {
       updatePosition();
-      window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      window.addEventListener("scroll", updatePosition, true);
     }
     return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
     };
   }, [isOpen, updatePosition]);
 
@@ -114,7 +125,7 @@ export function Popover({
 
     function handleClickOutside(event: MouseEvent) {
       if (
-        triggerRef.current && 
+        triggerRef.current &&
         !triggerRef.current.contains(event.target as Node) &&
         contentRef.current &&
         !contentRef.current.contains(event.target as Node)
@@ -123,8 +134,8 @@ export function Popover({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onClose]);
 
   return (
@@ -132,20 +143,22 @@ export function Popover({
       <div ref={triggerRef} className={styles.triggerWrapper}>
         {trigger}
       </div>
-      {isOpen && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={contentRef}
-          className={styles.popover}
-          style={{
-            top: position.top,
-            left: position.left,
-            transformOrigin: transformOrigin,
-          }}
-        >
-          {content}
-        </div>,
-        document.body
-      )}
+      {isOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={contentRef}
+            className={styles.popover}
+            style={{
+              top: position.top,
+              left: position.left,
+              transformOrigin: transformOrigin,
+            }}
+          >
+            {content}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

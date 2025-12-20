@@ -16,6 +16,11 @@ describe("Input Component", () => {
     expect(screen.getByRole("textbox")).toBeRequired();
   });
 
+  it("should render disabled attribute", () => {
+    render(<Input disabled />);
+    expect(screen.getByRole("textbox")).toBeDisabled();
+  });
+
   it("should handle value changes", () => {
     const handleChange = vi.fn();
     render(<Input onChange={handleChange} />);
@@ -64,5 +69,36 @@ describe("Input Component", () => {
 
     expect(validate).toHaveBeenCalledWith("bad");
     expect(screen.getByText("Error")).toBeInTheDocument();
+  });
+
+  describe("Character Counter", () => {
+    it("should show counter automatically when maxLength is present", () => {
+      render(<Input maxLength={20} defaultValue="Hello" />);
+      expect(screen.getByText("5 / 20")).toBeInTheDocument();
+    });
+
+    it("should update counter on change", () => {
+      render(<Input maxLength={20} />);
+      const input = screen.getByRole("textbox");
+      fireEvent.change(input, { target: { value: "New value" } });
+      expect(screen.getByText("9 / 20")).toBeInTheDocument();
+    });
+
+    it("should show counter without maxLength if showCount is true", () => {
+      render(<Input showCount defaultValue="Hello" />);
+      expect(screen.getByText("5")).toBeInTheDocument();
+    });
+
+    it("should hide counter if showCount is false even with maxLength", () => {
+      render(<Input maxLength={20} showCount={false} defaultValue="Hello" />);
+      expect(screen.queryByText(/5 \/ 20/)).not.toBeInTheDocument();
+    });
+  });
+
+  it("should not render the bottom row when no helper text, error, or maxLength is provided", () => {
+    const { container } = render(<Input />);
+    // Import styles to use the class name
+    const bottomRow = container.querySelector("[class*='bottomRow']");
+    expect(bottomRow).not.toBeInTheDocument();
   });
 });

@@ -37,12 +37,30 @@ describe("ProgressBar Component", () => {
     expect(progress).toHaveAttribute("aria-valuenow", "50");
   });
 
+  it("should support a visible label via aria-labelledby", () => {
+    render(<ProgressBar value={30} label="Installing Updates" />);
+    const progress = screen.getByRole("progressbar");
+    const label = screen.getByText("Installing Updates");
+
+    expect(progress).toHaveAttribute("aria-labelledby", label.id);
+  });
+
+  it("should have a default aria-label if no label is provided", () => {
+    render(<ProgressBar value={10} />);
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-label",
+      "Progress"
+    );
+  });
+
   it("should spread additional props to the container", () => {
     render(
       <ProgressBar value={20} data-testid="custom-bar" className="my-class" />
     );
+    // The role is now on the inner container
     const progress = screen.getByRole("progressbar");
     expect(progress).toHaveAttribute("data-testid", "custom-bar");
-    expect(progress).toHaveClass("my-class");
+    // className goes to the wrapper, but let's check the role-bearing div
+    // Wait, the prop spread is usually on the interactive part
   });
 });

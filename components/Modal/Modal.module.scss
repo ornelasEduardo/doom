@@ -1,13 +1,3 @@
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
 .overlay {
   position: fixed;
   inset: 0;
@@ -18,33 +8,91 @@
   padding: var(--spacing-md);
   backdrop-filter: blur(4px);
   background-color: rgba(0, 0, 0, var(--overlay-opacity));
-  animation: fadeIn 0.2s ease-out;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+
+  &.isOpen {
+    opacity: 1;
+    visibility: visible;
+
+    .contentContainer {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }
 
 .contentContainer {
   width: 100%;
-  max-width: 28rem;
-  animation: slideUp 0.3s ease-out;
+  max-width: 32rem;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.modalCard {
+  /* Prevent sub-pixel slivers by matching the card background to the header color */
+  background-color: var(--primary);
 }
 
 .header {
   padding: var(--spacing-lg);
-  border-bottom: var(--border-width) solid var(--card-border);
-  background: var(--background);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-bottom: none;
+}
 
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: bold;
-    margin: 0;
+.headerContent {
+  flex: 1;
+  max-width: 85%;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  background-color: var(--error) !important;
+  color: white !important;
+  border: var(--border-width) solid var(--card-border) !important;
+  border-radius: var(--radius) !important;
+  height: 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+
+  /* Use a semi-transparent black shadow instead of a theme variable to guarantee visibility on dark primary headers */
+  box-shadow: 2px 2px 0px 0px rgba(0, 0, 0, 0.4) !important;
+
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.1);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 0.4) !important;
   }
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0px 0px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+.modalContent {
+  background-color: var(--card-bg);
+  /* Slight bleed to bridge any sub-pixel gaps at the header junction */
+  padding-top: 1px;
+  margin-top: -1px;
 }
 
 .body {
   padding: var(--spacing-lg);
+  color: var(--foreground);
 }
 
 .footer {
   padding: var(--spacing-lg);
-  border-top: var(--border-width) solid var(--card-border);
-  background: var(--background);
+  padding-top: 0;
 }

@@ -9,12 +9,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: 
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
     box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+    background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
   border: var(--border-width) solid var(--card-border);
   box-shadow: var(--shadow-hard);
@@ -56,7 +53,7 @@
 
   background-color: var(--primary);
   color: var(--primary-foreground);
-  
+
   &:hover {
     filter: brightness(1.1);
   }
@@ -68,7 +65,7 @@
 
   background-color: var(--secondary);
   color: var(--secondary-foreground);
-  
+
   &:hover {
     filter: brightness(1.1);
   }
@@ -79,8 +76,8 @@
   --btn-focus-shadow: #000000;
 
   background-color: var(--success);
-  color: var(--card-bg);
-  
+  color: var(--success-foreground);
+
   &:hover {
     filter: brightness(1.1);
   }
@@ -94,8 +91,9 @@
   background-color: transparent;
   border-color: transparent;
   box-shadow: none;
-  
-  &:hover, &:focus {
+
+  &:hover,
+  &:focus {
     background-color: color-mix(in srgb, var(--primary), transparent 90%);
     color: var(--primary);
     transform: none;
@@ -103,7 +101,7 @@
     border-color: transparent;
     outline: none;
   }
-  
+
   &:active {
     transform: scale(0.95);
     transition: none;

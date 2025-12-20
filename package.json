@@ -13,7 +13,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
+    "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
     "verify": "npm run validate:build && npm run lint:package && npm run test:integration",
     "prepack": "npm run build && npm run verify",
     "storybook": "storybook dev -p 6006",

@@ -1,6 +1,12 @@
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tabsList {
@@ -17,11 +23,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  opacity: 0.6;
+  background-color: transparent;
+  color: var(--foreground);
   border: var(--border-width) solid var(--card-border);
-  border-bottom: var(--border-width) solid var(--card-border);
+  border-bottom: none;
   border-radius: var(--radius) var(--radius) 0 0;
   cursor: pointer;
   position: relative;
@@ -30,18 +35,21 @@
   transform: translateY(4px);
 
   &:hover {
-    opacity: 0.8;
+    background-color: color-mix(in srgb, var(--primary), transparent 90%);
     transform: translateY(2px);
   }
 
   &.active {
-    opacity: 1;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
     z-index: var(--z-elevated);
     transform: translateY(0);
 
     &:hover {
-      opacity: 1;
+      background-color: var(--primary);
+      color: var(--primary-foreground);
       transform: translateY(0);
+      filter: brightness(1.05);
     }
   }
 }

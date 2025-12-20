@@ -1,4 +1,11 @@
-@use '../../styles/mixins' as *;
+@use "../../styles/mixins" as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
 
 .textarea {
   width: 100%;
@@ -8,6 +15,7 @@
   color: var(--foreground);
   font-family: inherit;
   resize: vertical;
+  min-height: 100px;
 
   @include base-interactive;
   @include focus;
@@ -15,4 +23,77 @@
   &::placeholder {
     color: var(--muted);
   }
+
+  &.error {
+    @include error;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-color: var(--muted);
+    background-image: linear-gradient(
+      45deg,
+      transparent 25%,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.05) 50%,
+      transparent 50%,
+      transparent 75%,
+      rgba(0, 0, 0, 0.05) 75%,
+      rgba(0, 0, 0, 0.05)
+    );
+    background-size: 20px 20px;
+    box-shadow: none;
+    transform: none;
+    color: var(--muted-foreground);
+
+    &::placeholder {
+      color: var(--muted-foreground);
+    }
+  }
+}
+
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.messageArea {
+  flex: 1;
+}
+
+.helperText {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--muted-foreground);
+  display: block;
+
+  &.error {
+    color: var(--error);
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    animation: textarea-shake 0.3s ease-in-out;
+  }
+
+  @keyframes textarea-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-4px);
+    }
+    75% {
+      transform: translateX(4px);
+    }
+  }
+}
+
+.counter {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
