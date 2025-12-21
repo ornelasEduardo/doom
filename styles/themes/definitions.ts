@@ -5,11 +5,11 @@ export const themes = {
     name: "Default",
     variables: {
       ...baseVariables,
-      "--background": palette.gray[100],
+      "--background": palette.indigo[100],
       "--foreground": palette.common.black,
       "--card-bg": palette.common.white,
       "--card-border": palette.common.black,
-      "--surface-accent": palette.blue[100],
+      "--surface-accent": palette.slate[100],
       "--primary": palette.purple[500],
       "--primary-hover": palette.purple[600],
       "--primary-foreground": palette.common.black,
