@@ -87,8 +87,7 @@ const FeedbackFormExample = () => {
       >
         <Stack gap="var(--spacing-lg)">
           <Text>
-            Help us improve Bit Buddies! Your feedback creates a Linear issue
-            for our team.
+            Help us improve! Your feedback helps us build better products.
           </Text>
           <Input
             label="TITLE"
