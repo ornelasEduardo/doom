@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .container {
   display: inline-flex;
   border: var(--border-width) solid var(--card-border);
@@ -15,10 +17,7 @@
     color: var(--secondary-foreground);
   }
 
-  &:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover);
-  }
+  @include brutalist-hover;
 
   &[data-state="open"] {
     transform: translate(-2px, -2px);

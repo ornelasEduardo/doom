@@ -28,6 +28,14 @@
   }
 }
 
+@mixin brutalist-hover($lift: 2px, $shadow-color: var(--border-strong)) {
+  &:hover {
+    transform: translate(-$lift, -$lift);
+    // Shadow grows by 2px to compensate for the 2px lift, maintaining 4px visual gap
+    box-shadow: ($lift + 4px) ($lift + 4px) 0px 0px $shadow-color;
+  }
+}
+
 // Brutalist Directional Shadows
 @mixin brutalist-shadow(
   $direction: "standard",

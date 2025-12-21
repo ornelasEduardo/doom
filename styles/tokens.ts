@@ -195,7 +195,7 @@ export const baseVariables = {
   "--border-width": "2px",
   "--radius": "4px",
   "--shadow-hard": "4px 4px 0px 0px var(--border-strong)",
-  "--shadow-hover": "8px 8px 0px 0px var(--border-strong)",
+  "--shadow-hover": "6px 6px 0px 0px var(--border-strong)",
 
   // Typography Standards (Global)
   "--font-heading": "var(--font-montserrat)",
