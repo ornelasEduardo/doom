@@ -1,44 +1,59 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  ToastProvider, useToast  } from 'doom-design-system';
-import {  Button  } from 'doom-design-system';
-import {  Flex  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { ToastProvider, useToast } from "doom-design-system";
+import { Button } from "doom-design-system";
+import { Flex } from "doom-design-system";
 
 const meta: Meta<typeof ToastProvider> = {
-  title: 'Design System/Toast',
+  title: "Design System/Toast",
   component: ToastProvider,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
 type Story = StoryObj<typeof ToastProvider>;
 
-const ToastDemo = () => {
-  const { toastSuccess, toastError, toastWarning, toastInfo } = useToast();
-
-  return (
-    <Flex gap="1rem" wrap>
-      <Button variant="success" onClick={() => toastSuccess('Operation successful!')}>
-        Success Toast
-      </Button>
-      <Button variant="primary" onClick={() => toastError('Something went wrong!')}>
-        Error Toast
-      </Button>
-      <Button variant="secondary" onClick={() => toastWarning('Warning: Check this out.')}>
-        Warning Toast
-      </Button>
-      <Button variant="ghost" onClick={() => toastInfo('Just some information.')}>
-        Info Toast
-      </Button>
-    </Flex>
-  );
-};
-
 export const Default: Story = {
-  render: () => (
-    <ToastProvider>
-      <div style={{ height: '300px', padding: '2rem' }}>
-        <ToastDemo />
-      </div>
-    </ToastProvider>
-  ),
+  render: () => {
+    // Inner component to use the toast hook
+    const ToastButtons = () => {
+      const { toastSuccess, toastError, toastWarning, toastInfo } = useToast();
+
+      return (
+        <Flex gap="1rem" wrap>
+          <Button
+            variant="success"
+            onClick={() => toastSuccess("Operation successful!")}
+          >
+            Success Toast
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => toastError("Something went wrong!")}
+          >
+            Error Toast
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => toastWarning("Warning: Check this out.")}
+          >
+            Warning Toast
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => toastInfo("Just some information.")}
+          >
+            Info Toast
+          </Button>
+        </Flex>
+      );
+    };
+
+    return (
+      <ToastProvider>
+        <div style={{ height: "300px", padding: "2rem" }}>
+          <ToastButtons />
+        </div>
+      </ToastProvider>
+    );
+  },
 };
