@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { useArgs } from "storybook/preview-api";
 import { Popover } from "./Popover";
 import { Button, Card, Text, Page, Flex, Stack } from "doom-design-system";
 import { useState } from "react";
@@ -20,23 +19,17 @@ export default meta;
 type Story = StoryObj<typeof Popover>;
 
 export const Default: Story = {
-  args: {
-    isOpen: false,
-  },
-  render: function Render(args) {
-    const [{ isOpen }, updateArgs] = useArgs();
+  render: () => {
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
       <Page>
         <Flex align="center" justify="center" style={{ minHeight: "400px" }}>
           <Popover
-            {...args}
             isOpen={isOpen}
-            onClose={() => updateArgs({ isOpen: false })}
+            onClose={() => setIsOpen(false)}
             trigger={
-              <Button onClick={() => updateArgs({ isOpen: !isOpen })}>
-                Click me
-              </Button>
+              <Button onClick={() => setIsOpen(!isOpen)}>Click me</Button>
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
