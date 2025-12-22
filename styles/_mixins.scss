@@ -36,6 +36,15 @@
   }
 }
 
+// Inverts the theme context.
+// Useful when placing content on top of a 'primary' background color.
+@mixin invert-theme {
+  --primary: var(--primary-foreground);
+  --primary-foreground: var(--primary);
+  --foreground: var(--primary-foreground);
+  --muted-foreground: var(--primary-foreground);
+}
+
 // Brutalist Directional Shadows
 @mixin brutalist-shadow(
   $direction: "standard",

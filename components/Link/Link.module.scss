@@ -10,13 +10,22 @@
   cursor: pointer;
 
   &.default {
-    color: var(--foreground);
-    border-bottom: 2px solid transparent;
+    color: var(--primary);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
 
     &:hover {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-      transform: translateY(-1px);
+      filter: brightness(1.2);
+    }
+
+    &:visited {
+      color: var(--primary-dark, var(--primary));
+      filter: brightness(0.8);
+    }
+
+    &:active {
+      filter: brightness(0.9);
     }
   }
 
