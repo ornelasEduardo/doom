@@ -1,0 +1,81 @@
+@use "../../styles/mixins" as *;
+
+.slat {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  width: 100%;
+
+  &.danger {
+    background-color: var(--error);
+    color: var(--error-foreground);
+    border-color: var(--border-strong);
+
+    & > * {
+      @include invert-theme;
+    }
+  }
+
+  &.success {
+    background-color: var(--success);
+    color: var(--success-foreground);
+    border-color: var(--border-strong);
+
+    & > * {
+      @include invert-theme;
+    }
+  }
+
+  &.hoverable {
+    cursor: pointer;
+    &:hover {
+      background-color: var(--surface-accent);
+      color: var(--foreground);
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0px 0px var(--border-strong);
+    }
+
+    &:active {
+      transform: translate(0, 0);
+      box-shadow: none;
+    }
+
+    &.danger:hover {
+      background-color: var(--error);
+      filter: brightness(1.1);
+    }
+
+    &.success:hover {
+      background-color: var(--success);
+      filter: brightness(1.1);
+    }
+  }
+}
+
+.label {
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+}
+
+.secondaryLabel {
+  color: inherit;
+  opacity: 0.8;
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+.prepend,
+.append {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

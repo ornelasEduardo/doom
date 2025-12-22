@@ -226,24 +226,9 @@
 
 .fileList {
   width: 100%;
-}
-
-.fileItem {
-  background-color: var(--background);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: var(--spacing-sm) var(--spacing-md);
-}
-
-.fileName {
-  font-weight: 500;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-}
-
-.fileSize {
-  color: var(--muted-foreground);
-  font-size: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .removeButton {
