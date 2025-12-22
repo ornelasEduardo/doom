@@ -39,13 +39,18 @@
     transform: scale(1.02);
 
     .header {
-      background-color: var(--foreground);
+      background-color: var(--common-black);
       color: var(--background);
       border-bottom: none;
+
+      & > * {
+        --primary: var(--common-white);
+        --primary-foreground: var(--common-black);
+      }
     }
 
     .body {
-      background-color: #000;
+      background-color: var(--common-black);
       margin-top: -1px;
       overflow: hidden;
       margin-top: -1px;
@@ -88,7 +93,9 @@
     }
 
     .headerTitle {
-      animation: glitch 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease;
     }
 
     .voidIconWrapper,
@@ -261,30 +268,6 @@
   &:active {
     transform: translate(0, 0);
     box-shadow: var(--shadow-sm);
-  }
-}
-
-@keyframes glitch {
-  0% {
-    transform: translate(0);
-  }
-  2% {
-    transform: translate(-2px, 2px);
-  }
-  4% {
-    transform: translate(-2px, -2px);
-  }
-  6% {
-    transform: translate(2px, 2px);
-  }
-  8% {
-    transform: translate(2px, -2px);
-  }
-  10% {
-    transform: translate(0);
-  }
-  100% {
-    transform: translate(0);
   }
 }
 
