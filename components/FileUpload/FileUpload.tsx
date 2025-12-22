@@ -254,7 +254,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <Text className={styles.headerTitle}>
           <Flex align="flex-start">
             {status === Status.Error ? displayError : "Upload Files"}
-            {required && !displayError && <Asterisk size={16} />}
+            {required && !displayError && (
+              <Asterisk size={16} aria-label="required" />
+            )}
           </Flex>
         </Text>
         {status === Status.Error ? (
