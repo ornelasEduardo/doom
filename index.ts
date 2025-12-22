@@ -35,5 +35,6 @@ export * from "./DesignSystemProvider";
 export * from "./components/Icon";
 export * from "./components/Checkbox";
 export * from "./components/FileUpload";
+export * from "./components/Slat";
 export * from "./components/Spinner";
 export * from "./styles/themes";

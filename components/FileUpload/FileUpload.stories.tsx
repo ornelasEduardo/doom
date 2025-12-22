@@ -3,6 +3,7 @@ import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 import { Stack } from "../Layout/Layout";
 import { Page } from "../Page/Page";
+import { Text } from "../Text/Text";
 
 const meta: Meta<typeof FileUpload> = {
   title: "Design System/FileUpload",
@@ -185,6 +186,32 @@ export const UploadingState: Story = {
             label="Uploading State Debug"
             forceActive={true}
             onChange={setFiles}
+          />
+        </Stack>
+      </Page>
+    );
+  },
+};
+
+export const WithPreview: Story = {
+  render: () => {
+    // Simulate pre-selected image files
+    const mockImage = new File(["content"], "beach.jpg", {
+      type: "image/jpeg",
+    });
+    const mockDoc = new File(["content"], "resume.pdf", {
+      type: "application/pdf",
+    });
+
+    return (
+      <Page>
+        <Stack gap="var(--spacing-lg)" style={{ maxWidth: "600px" }}>
+          <FileUpload
+            label="Image Gallery Upload"
+            showPreview
+            defaultFiles={[mockImage, mockDoc]}
+            multiple
+            helperText="Images will show a thumbnail preview"
           />
         </Stack>
       </Page>

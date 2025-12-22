@@ -171,4 +171,26 @@ describe("FileUpload", () => {
 
     expect(clickSpy).toHaveBeenCalled();
   });
+
+  it("shows image preview when showPreview is true", async () => {
+    // Mock URL.createObjectURL
+    const createObjectURLSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("mock-url");
+
+    render(<FileUpload showPreview />);
+
+    const input = screen.getByLabelText("File upload input");
+    const imageFile = new File(["content"], "image.png", { type: "image/png" });
+
+    fireEvent.change(input, { target: { files: [imageFile] } });
+
+    // Wait for the file to be listed first
+    expect(await screen.findByText("image.png")).toBeInTheDocument();
+
+    const img = await screen.findByRole("img");
+    expect(img).toHaveAttribute("src", "mock-url");
+
+    createObjectURLSpy.mockRestore();
+  });
 });
