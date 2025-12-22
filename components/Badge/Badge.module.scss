@@ -33,4 +33,11 @@
     background-color: var(--secondary);
     color: var(--secondary-foreground);
   }
+
+  &.outline {
+    background-color: transparent;
+    color: var(--muted-foreground);
+    border-color: var(--border-strong);
+    box-shadow: none;
+  }
 }

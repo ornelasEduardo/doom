@@ -1,0 +1,303 @@
+@use "../../styles/mixins" as *;
+
+.window {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(1);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.05) 10px,
+        rgba(0, 0, 0, 0.05) 20px
+      );
+      pointer-events: none;
+      z-index: 20; // Ensure it sits on top of everything
+    }
+  }
+
+  &.void {
+    border-color: transparent;
+    box-shadow: 0 0 0 4px var(--foreground);
+    transform: scale(1.02);
+
+    .header {
+      background-color: var(--foreground);
+      color: var(--background);
+      border-bottom: none;
+    }
+
+    .body {
+      background-color: #000;
+      margin-top: -1px;
+      overflow: hidden;
+      margin-top: -1px;
+      overflow: hidden;
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -50%;
+        width: 200%;
+        height: 200%;
+        background-image: radial-gradient(
+            2px 2px at 20% 30%,
+            #fff 100%,
+            transparent
+          ),
+          radial-gradient(2px 2px at 40% 70%, #fff 100%, transparent),
+          radial-gradient(2px 2px at 60% 40%, #fff 100%, transparent),
+          radial-gradient(2px 2px at 80% 80%, #fff 100%, transparent),
+          radial-gradient(1px 1px at 10% 90%, #fff 100%, transparent),
+          radial-gradient(1px 1px at 90% 10%, #fff 100%, transparent);
+        background-size: 50% 50%;
+        opacity: 0;
+        z-index: 0;
+        animation: consume-stars 3s linear infinite;
+        pointer-events: none;
+      }
+
+      &::after {
+        animation-delay: -1.5s;
+        background-image: radial-gradient(
+            2px 2px at 15% 15%,
+            #fff 100%,
+            transparent
+          ),
+          radial-gradient(2px 2px at 85% 85%, #fff 100%, transparent),
+          radial-gradient(2px 2px at 45% 45%, #fff 100%, transparent);
+      }
+    }
+
+    .headerTitle {
+      animation: glitch 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+    }
+
+    .voidIconWrapper,
+    .voidText,
+    .secondary,
+    .helperText {
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+  }
+}
+
+.header {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--border-strong);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  min-height: 48px;
+  transition: background-color 0.4s ease, color 0.4s ease,
+    border-bottom-color 0.4s ease;
+
+  // Contextual Remapping for Header Content
+  // This ensures badges and other elements pop against the primary background
+  & > * {
+    @include invert-theme;
+  }
+
+  &.errorHeader {
+    background-color: var(--error);
+    color: var(--error-foreground);
+  }
+
+  &.disabledHeader {
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+    background-image: linear-gradient(
+      45deg,
+      transparent 25%,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.05) 50%,
+      transparent 50%,
+      transparent 75%,
+      rgba(0, 0, 0, 0.05) 75%,
+      rgba(0, 0, 0, 0.05)
+    );
+    background-size: 20px 20px;
+  }
+}
+
+.headerTitle {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.body {
+  padding: var(--spacing-lg);
+  background-color: var(--card-bg);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+
+  &.hasFiles {
+    justify-content: flex-start;
+    align-items: stretch;
+    cursor: default;
+
+    &:hover {
+      background-color: var(--card-bg);
+    }
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: var(--card-bg);
+    }
+  }
+}
+
+.emptyState {
+  width: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.voidIconWrapper {
+  transition: all 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  padding: var(--spacing-md);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.icon {
+  color: var(--muted-foreground);
+  transition: all 0.3s ease;
+}
+
+.secondary {
+  color: var(--muted-foreground);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.voidText,
+.helperText {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.fileList {
+  width: 100%;
+}
+
+.fileItem {
+  background-color: var(--background);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.fileName {
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.fileSize {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--error);
+  color: var(--error-foreground);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: var(--shadow-sm);
+  padding: 0;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px 0px var(--border-strong);
+    filter: brightness(1.1);
+  }
+
+  &:active {
+    transform: translate(0, 0);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  2% {
+    transform: translate(-2px, 2px);
+  }
+  4% {
+    transform: translate(-2px, -2px);
+  }
+  6% {
+    transform: translate(2px, 2px);
+  }
+  8% {
+    transform: translate(2px, -2px);
+  }
+  10% {
+    transform: translate(0);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+@keyframes consume-stars {
+  0% {
+    transform: scale(2) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0) rotate(90deg);
+    opacity: 0;
+  }
+}
