@@ -37,6 +37,7 @@
     border-color: transparent;
     box-shadow: 0 0 0 4px var(--foreground);
     transform: scale(1.02);
+    cursor: wait;
 
     .header {
       background-color: var(--common-black);
@@ -55,6 +56,7 @@
       overflow: hidden;
       margin-top: -1px;
       overflow: hidden;
+      cursor: wait;
 
       &::before,
       &::after {
