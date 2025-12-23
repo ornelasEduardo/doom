@@ -16,7 +16,15 @@
   min-width: 280px;
 
   &.disabled {
+    cursor: not-allowed;
     @include disabled-state;
+
+    /* 
+       .window should be able to override all children css and this is an example of that
+    */
+    * {
+      pointer-events: none;
+    }
 
     &::after {
       content: "";
@@ -233,10 +241,6 @@
     justify-content: flex-start;
     align-items: stretch;
     cursor: default;
-  }
-
-  &.disabled {
-    cursor: not-allowed;
   }
 
   &.dragging,
