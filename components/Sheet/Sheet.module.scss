@@ -68,12 +68,6 @@
     .header {
       background-color: transparent !important;
       color: var(--solid-fg);
-
-      button {
-        background-color: var(--error) !important;
-        color: var(--error-foreground) !important;
-        border-color: var(--border-strong) !important;
-      }
     }
 
     .handleBar {
@@ -116,26 +110,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  /* Match Modal/Drawer's Close Button Styling */
-  button {
-    background-color: var(--error) !important;
-    color: var(--error-foreground) !important;
-    border: var(--border-width) solid var(--border-strong) !important;
-    box-shadow: var(--shadow-sm) !important;
-
-    &:hover {
-      background-color: var(--error) !important;
-      filter: brightness(1.1);
-      transform: translate(-2px, -2px);
-      box-shadow: var(--shadow-sm-hover) !important;
-    }
-
-    &:active {
-      transform: translate(2px, 2px);
-      box-shadow: var(--shadow-sm-checked) !important;
-    }
-  }
 }
 
 .title {

@@ -85,7 +85,7 @@ export function Sheet({
               </h2>
             )}
             <Button
-              variant="ghost"
+              variant="danger"
               size="sm"
               onClick={onClose}
               aria-label="Close sheet"

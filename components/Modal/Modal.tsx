@@ -48,7 +48,7 @@ export function ModalHeader({ children, className, id }: ModalHeaderProps) {
         {children}
       </div>
       <Button
-        variant="ghost"
+        variant="danger"
         size="sm"
         onClick={onClose}
         aria-label="Close modal"

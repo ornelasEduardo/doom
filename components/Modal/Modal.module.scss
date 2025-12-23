@@ -71,16 +71,6 @@
       color: var(--error-foreground) !important;
       border-color: var(--border-strong) !important;
       box-shadow: var(--shadow-hard) !important;
-
-      &:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: var(--shadow-hover) !important;
-      }
-
-      &:active {
-        transform: translate(2px, 2px);
-        box-shadow: none !important;
-      }
     }
   }
 }
@@ -99,38 +89,6 @@
 .headerContent {
   flex: 1;
   max-width: 85%;
-}
-
-.closeButton {
-  flex-shrink: 0;
-  background-color: var(--error) !important;
-  color: var(--error-foreground) !important;
-  border: var(--border-width) solid var(--card-border) !important;
-  border-radius: var(--radius) !important;
-  height: 36px !important;
-  width: 36px !important;
-  min-width: 36px !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
-
-  /* Use standardized shadow-error mixed with black for depth */
-  box-shadow: var(--shadow-hard) !important;
-
-  transition: all 0.2s ease;
-  cursor: pointer;
-
-  &:hover {
-    filter: brightness(1.1);
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover) !important;
-  }
-
-  &:active {
-    transform: translate(2px, 2px);
-    box-shadow: none !important;
-  }
 }
 
 .modalContent {

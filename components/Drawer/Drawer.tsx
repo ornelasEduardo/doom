@@ -81,7 +81,7 @@ export function Drawer({
             </h2>
           )}
           <Button
-            variant="ghost"
+            variant="danger"
             size="sm"
             onClick={onClose}
             aria-label="Close drawer"
