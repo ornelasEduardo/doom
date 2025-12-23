@@ -129,8 +129,10 @@
 
 /* Sizes */
 .sm {
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem;
   font-size: var(--text-sm);
+  min-width: 24px;
+  justify-content: center;
 }
 
 .md {
