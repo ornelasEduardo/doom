@@ -38,8 +38,7 @@
   }
 
   &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    @include disabled-state;
     transform: none;
     box-shadow: var(--shadow-hard);
   }
@@ -54,7 +53,7 @@
   color: var(--primary-foreground);
   border-color: var(--border-strong);
 
-  &:hover {
+  &:hover:not(:disabled) {
     filter: brightness(1.1);
   }
 }
@@ -67,7 +66,7 @@
   color: var(--secondary-foreground);
   border-color: var(--border-strong);
 
-  &:hover {
+  &:hover:not(:disabled) {
     filter: brightness(1.1);
   }
 }
@@ -80,7 +79,20 @@
   color: var(--success-foreground);
   border-color: var(--border-strong);
 
-  &:hover {
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+}
+
+.danger {
+  --btn-focus-border: var(--card-border);
+  --btn-focus-shadow: #000000;
+
+  background-color: var(--error);
+  color: var(--error-foreground);
+  border-color: var(--border-strong);
+
+  &:hover:not(:disabled) {
     filter: brightness(1.1);
   }
 }
@@ -95,14 +107,18 @@
   border-color: transparent;
   box-shadow: none;
 
-  &:hover,
-  &:focus-visible {
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
     background-color: color-mix(in srgb, var(--primary), transparent 90%);
     color: var(--primary);
     transform: none;
     box-shadow: none;
     border-color: transparent;
     outline: none;
+  }
+
+  &:disabled {
+    box-shadow: none;
   }
 
   &:active {

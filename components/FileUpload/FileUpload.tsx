@@ -11,7 +11,7 @@ import React, {
 import styles from "./FileUpload.module.scss";
 import { Button } from "../Button/Button";
 import { Text } from "../Text/Text";
-import { Stack, Flex } from "../Layout/Layout";
+import { Stack, Flex, Switcher } from "../Layout/Layout";
 import { Badge } from "../Badge/Badge";
 import { Slat } from "../Slat/Slat";
 import {
@@ -27,6 +27,7 @@ import {
   Asterisk,
   X,
 } from "lucide-react";
+import { Skeleton } from "../Skeleton/Skeleton";
 import clsx from "clsx";
 
 const enum Status {
@@ -203,6 +204,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     onDragLeave: (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      // Check if we're moving to a child element
+      if (e.currentTarget.contains(e.relatedTarget as Node)) {
+        return;
+      }
       setIsDragging(false);
     },
     onDragOver: (e: DragEvent<HTMLDivElement>) => {
@@ -270,21 +275,28 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         [styles.void]: isVoid,
         [styles.disabled]: disabled,
       })}
+      {...handleDragHandlers}
     >
-      <div
+      <Switcher
+        threshold="xxs"
         className={clsx(styles.header, {
           [styles.errorHeader]: status === Status.Error,
           [styles.disabledHeader]: disabled,
         })}
+        justify="space-between"
+        align="center"
+        gap="var(--spacing-sm)"
       >
-        <Text className={styles.headerTitle}>
-          <Flex align="flex-start">
-            {status === Status.Error ? displayError : label || "Upload Files"}
-            {required && !displayError && (
-              <Asterisk size={16} aria-label="required" />
+        <div className={styles.headerContent}>
+          <Text className={styles.headerTitle} id="upload-title">
+            {label || "Upload Files"}
+            {required && (
+              <span className={styles.requiredMark}>
+                <Asterisk size={14} aria-label="required" />
+              </span>
             )}
-          </Flex>
-        </Text>
+          </Text>
+        </div>
         <Badge
           variant={
             status === Status.Error
@@ -295,16 +307,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               ? "primary"
               : "secondary"
           }
+          role="status"
+          aria-live="polite"
         >
-          {status === Status.HasFiles
+          {status === Status.Error
+            ? "Error"
+            : status === Status.HasFiles
             ? `${files.length} selected`
             : isVoid
-            ? "Awaiting upload..."
+            ? "Waiting..."
             : disabled
             ? "Disabled"
             : "Ready"}
         </Badge>
-      </div>
+      </Switcher>
 
       <div
         className={clsx(styles.body, {
@@ -313,9 +329,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           [styles.disabled]: disabled,
           [styles.error]: !!displayError,
         })}
-        onClick={handleClick}
-        {...handleDragHandlers}
       >
+        <div className={styles.starField} aria-hidden="true" />
         <input
           ref={inputRef}
           type="file"
@@ -325,33 +340,61 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           disabled={disabled}
           className={styles.hiddenInput}
           aria-label="File upload input"
+          aria-required={required}
+          aria-invalid={!!displayError}
+          aria-describedby={clsx({
+            "upload-helper": !!helperText,
+            "upload-error": !!displayError,
+          })}
         />
 
         {!hasFiles ? (
-          <Stack
-            gap="var(--spacing-md)"
-            align="center"
+          <div
             className={styles.emptyState}
+            onClick={handleClick}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleClick();
+              }
+            }}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
           >
-            <div className={styles.voidIconWrapper}>
-              <Upload className={styles.icon} size={48} strokeWidth={2} />
-            </div>
-            <Stack gap="var(--spacing-xs)" align="center">
-              <Text weight="bold" className={styles.voidText}>
-                {isDragging || isActive || forceActive
-                  ? "Drop files now"
-                  : "Drag and drop files"}
-              </Text>
-              <Text variant="small" className={styles.secondary}>
-                or click to browse
-              </Text>
+            <Stack gap="var(--spacing-md)" align="center">
+              <div className={styles.voidIconWrapper} aria-hidden="true">
+                <Upload className={styles.icon} size={48} strokeWidth={2} />
+              </div>
+              <Stack gap="var(--spacing-xs)" align="center">
+                <Text weight="bold" className={styles.voidText}>
+                  {isDragging || isActive || forceActive
+                    ? "Drop files now"
+                    : "Drag and drop files"}
+                </Text>
+                <Text variant="small" className={styles.secondary}>
+                  or click to browse
+                </Text>
+              </Stack>
+              {helperText && (
+                <Text
+                  variant="small"
+                  className={styles.helperText}
+                  id="upload-helper"
+                >
+                  {helperText}
+                </Text>
+              )}
+              {displayError && (
+                <Text
+                  variant="small"
+                  className={styles.errorText}
+                  id="upload-error"
+                >
+                  {displayError}
+                </Text>
+              )}
             </Stack>
-            {helperText && (
-              <Text variant="small" className={styles.helperText}>
-                {helperText}
-              </Text>
-            )}
-          </Stack>
+          </div>
         ) : (
           <Flex
             direction="column"
@@ -369,32 +412,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                     secondaryLabel={formatFileSize(file.size)}
                     prependContent={
                       previewUrl ? (
-                        <div
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 4,
-                            overflow: "hidden",
-                            border: "1px solid var(--border-strong)",
-                          }}
-                        >
-                          <img
-                            src={previewUrl}
-                            alt={file.name}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        </div>
+                        <PreviewImage src={previewUrl} alt={file.name} />
                       ) : (
                         getFileIcon(file.name)
                       )
                     }
                     appendContent={
-                      <button
+                      <Button
                         type="button"
+                        variant="danger"
+                        size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemoveFile(index);
@@ -402,8 +429,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                         className={styles.removeButton}
                         aria-label={`Remove ${file.name}`}
                       >
-                        <X size={16} />
-                      </button>
+                        <X size={16} aria-hidden="true" />
+                      </Button>
                     }
                   />
                 );
@@ -425,6 +452,33 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           </Flex>
         )}
       </div>
+    </div>
+  );
+};
+
+const PreviewImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className={styles.previewWrapper}>
+      {!loaded && (
+        <Skeleton
+          width="100%"
+          height="100%"
+          className={styles.previewSkeleton}
+        />
+      )}
+      <img
+        src={src}
+        alt={
+          alt
+            .replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, "")
+            .replace(/[-_]/g, " ") || "File preview"
+        }
+        className={clsx(styles.previewImg, { [styles.loaded]: loaded })}
+        onLoad={() => setLoaded(true)}
+        style={loaded ? {} : { position: "absolute", opacity: 0 }}
+      />
     </div>
   );
 };

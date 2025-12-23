@@ -1,18 +1,31 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Flex, Grid, Stack, Container } from './Layout';
-import { Text } from '../Text';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Flex, Grid, Stack, Container, Switcher } from "./Layout";
+import { Text } from "../Text";
 
 const meta: Meta<typeof Flex> = {
-  title: 'Design System/Layout',
+  title: "Design System/Layout",
   component: Flex,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
 type Story = StoryObj<typeof Flex>;
 
-const Box = ({ children, color = '#e0e7ff' }: { children: React.ReactNode, color?: string }) => (
-  <div style={{ padding: '1.5rem', background: color, border: '2px solid #000', borderRadius: '4px' }}>
+const Box = ({
+  children,
+  color = "#e0e7ff",
+}: {
+  children: React.ReactNode;
+  color?: string;
+}) => (
+  <div
+    style={{
+      padding: "1.5rem",
+      background: color,
+      border: "2px solid #000",
+      borderRadius: "4px",
+    }}
+  >
     <Text>{children}</Text>
   </div>
 );
@@ -24,7 +37,7 @@ export const FlexRow: Story = {
       <Box>Flex Item 2</Box>
       <Box>Flex Item 3</Box>
     </Flex>
-  )
+  ),
 };
 
 export const VerticalStack: Story = {
@@ -34,7 +47,7 @@ export const VerticalStack: Story = {
       <Box>Stack Item 2</Box>
       <Box>Stack Item 3</Box>
     </Stack>
-  )
+  ),
 };
 
 export const GridLayout: Story = {
@@ -52,18 +65,55 @@ export const GridLayout: Story = {
 
 export const ContainerExample: Story = {
   render: () => (
-    <Stack gap="2rem" style={{ background: '#eee', padding: '1rem' }}>
-      <Container maxWidth="sm" style={{ border: '2px dashed red' }}>
+    <Stack gap="2rem" style={{ background: "#eee", padding: "1rem" }}>
+      <Container maxWidth="sm" style={{ border: "2px dashed red" }}>
         <Box color="white">Small Container (sm)</Box>
       </Container>
-      
-      <Container maxWidth="md" style={{ border: '2px dashed blue' }}>
-         <Box color="white">Medium Container (md)</Box>
+
+      <Container maxWidth="md" style={{ border: "2px dashed blue" }}>
+        <Box color="white">Medium Container (md)</Box>
       </Container>
-      
-      <Container maxWidth="lg" style={{ border: '2px dashed green' }}>
-         <Box color="white">Large Container (lg)</Box>
+
+      <Container maxWidth="lg" style={{ border: "2px dashed green" }}>
+        <Box color="white">Large Container (lg)</Box>
       </Container>
     </Stack>
-  )
+  ),
+};
+
+export const SwitcherLayout: Story = {
+  render: () => (
+    <Stack gap="2rem">
+      <Stack gap="0.5rem">
+        <Text weight="bold">Switcher (Threshold: sm)</Text>
+        <Text color="muted">
+          Resize viewport to see layout switch from row to column below small
+          breakpoint.
+        </Text>
+        <Switcher
+          threshold="sm"
+          gap="1rem"
+          style={{ border: "2px dashed #ccc", padding: "1rem" }}
+        >
+          <Box>Item 1</Box>
+          <Box>Item 2</Box>
+          <Box>Item A Long Title</Box>
+        </Switcher>
+      </Stack>
+
+      <Stack gap="0.5rem">
+        <Text weight="bold">Switcher (Threshold: xs)</Text>
+        <Text color="muted">Switches at a smaller breakpoint (mobile).</Text>
+        <Switcher
+          threshold="xs"
+          gap="1rem"
+          style={{ border: "2px dashed #999", padding: "1rem" }}
+        >
+          <Box>Item 1</Box>
+          <Box>Item 2</Box>
+          <Box>Item 3</Box>
+        </Switcher>
+      </Stack>
+    </Stack>
+  ),
 };

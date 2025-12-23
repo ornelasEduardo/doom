@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { ElementType } from 'react';
-import clsx from 'clsx';
-import styles from './Layout.module.scss';
+import React, { ElementType } from "react";
+import clsx from "clsx";
+import styles from "./Layout.module.scss";
 
 // --- Types ---
 interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
@@ -16,24 +16,25 @@ export interface GridProps extends LayoutProps {
   gap?: string | number;
 }
 
-export function Grid({ 
-  children, 
-  columns = '1fr', 
-  gap = '1rem', 
-  className, 
-  style, 
-  as: Component = 'div',
-  ...props 
+export function Grid({
+  children,
+  columns = "1fr",
+  gap = "1rem",
+  className,
+  style,
+  as: Component = "div",
+  ...props
 }: GridProps) {
-  const gridTemplateColumns = typeof columns === 'number' ? `repeat(${columns}, 1fr)` : columns;
-  
+  const gridTemplateColumns =
+    typeof columns === "number" ? `repeat(${columns}, 1fr)` : columns;
+
   return (
-    <Component 
+    <Component
       className={clsx(styles.grid, className)}
-      style={{ 
+      style={{
         gridTemplateColumns,
         gap,
-        ...style 
+        ...style,
       }}
       {...props}
     >
@@ -44,31 +45,36 @@ export function Grid({
 
 // --- Flex ---
 export interface FlexProps extends LayoutProps {
-  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
-  justify?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-  align?: 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline';
+  direction?: "row" | "column" | "row-reverse" | "column-reverse";
+  justify?:
+    | "flex-start"
+    | "flex-end"
+    | "center"
+    | "space-between"
+    | "space-around"
+    | "space-evenly";
+  align?: "flex-start" | "flex-end" | "center" | "stretch" | "baseline";
   gap?: string | number;
-  wrap?: boolean | 'wrap' | 'nowrap' | 'wrap-reverse';
+  wrap?: boolean | "wrap" | "nowrap" | "wrap-reverse";
 }
 
-export function Flex({ 
-  children, 
-  direction = 'row', 
-  justify = 'flex-start', 
-  align = 'stretch', 
-  gap = '0', 
+export function Flex({
+  children,
+  direction = "row",
+  justify = "flex-start",
+  align = "stretch",
+  gap = "0",
   wrap = false,
   className,
   style,
-  as: Component = 'div',
-  ...props 
+  as: Component = "div",
+  ...props
 }: FlexProps) {
-  const flexWrap = typeof wrap === 'boolean' 
-    ? (wrap ? 'wrap' : 'nowrap') 
-    : wrap;
+  const flexWrap =
+    typeof wrap === "boolean" ? (wrap ? "wrap" : "nowrap") : wrap;
 
   return (
-    <Component 
+    <Component
       className={clsx(styles.flex, className)}
       style={{
         flexDirection: direction,
@@ -76,7 +82,7 @@ export function Flex({
         alignItems: align,
         gap,
         flexWrap,
-        ...style
+        ...style,
       }}
       {...props}
     >
@@ -86,22 +92,42 @@ export function Flex({
 }
 
 // --- Stack (Vertical Flex) ---
-export interface StackProps extends Omit<FlexProps, 'direction'> {
-  direction?: 'column' | 'column-reverse' | 'row' | 'row-reverse'; // Allow override but default to column
+export interface StackProps extends Omit<FlexProps, "direction"> {
+  direction?: "column" | "column-reverse" | "row" | "row-reverse"; // Allow override but default to column
 }
 
-export function Stack({ 
-  children, 
-  direction = 'column', 
-  gap = '1rem', 
-  align = 'stretch',
-  ...props 
+export function Stack({
+  children,
+  direction = "column",
+  gap = "1rem",
+  align = "stretch",
+  ...props
 }: StackProps) {
   return (
-    <Flex 
-      direction={direction} 
-      gap={gap} 
-      align={align}
+    <Flex direction={direction} gap={gap} align={align} {...props}>
+      {children}
+    </Flex>
+  );
+}
+
+// --- Switcher ---
+export interface SwitcherProps extends FlexProps {
+  threshold?: "xxs" | "xs" | "sm" | "md";
+}
+
+export function Switcher({
+  children,
+  threshold = "xs",
+  className,
+  ...props
+}: SwitcherProps) {
+  return (
+    <Flex
+      className={clsx(
+        styles.switcher,
+        styles[`switch-${threshold}`],
+        className
+      )}
       {...props}
     >
       {children}
@@ -111,23 +137,19 @@ export function Stack({
 
 // --- Container ---
 export interface ContainerProps extends LayoutProps {
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | 'fluid';
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "fluid";
 }
 
-export function Container({ 
-  children, 
-  maxWidth = 'xl', 
-  className, 
-  as: Component = 'div',
-  ...props 
+export function Container({
+  children,
+  maxWidth = "xl",
+  className,
+  as: Component = "div",
+  ...props
 }: ContainerProps) {
   return (
-    <Component 
-      className={clsx(
-        styles.container, 
-        styles[maxWidth],
-        className
-      )} 
+    <Component
+      className={clsx(styles.container, styles[maxWidth], className)}
       {...props}
     >
       {children}

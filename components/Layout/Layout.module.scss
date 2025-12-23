@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .grid {
   display: grid;
 }
@@ -12,10 +14,53 @@
   margin-right: auto;
   padding-left: var(--spacing-md);
   padding-right: var(--spacing-md);
-  
-  &.sm { max-width: 640px; }
-  &.md { max-width: 768px; }
-  &.lg { max-width: 1024px; }
-  &.xl { max-width: 1280px; }
-  &.fluid { max-width: 100%; }
+
+  &.sm {
+    max-width: 640px;
+  }
+  &.md {
+    max-width: 768px;
+  }
+  &.lg {
+    max-width: 1024px;
+  }
+  &.xl {
+    max-width: 1280px;
+  }
+  &.fluid {
+    max-width: 100%;
+  }
+}
+
+.switcher {
+  display: flex;
+  flex-direction: row;
+
+  &.switch-xxs {
+    @include mq("xxs", "max") {
+      flex-direction: column;
+      align-items: flex-start !important; // Force start alignment when stacked
+    }
+  }
+
+  &.switch-xs {
+    @include mq("xs", "max") {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+  }
+
+  &.switch-sm {
+    @include mq("sm", "max") {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+  }
+
+  &.switch-md {
+    @include mq("md", "max") {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+  }
 }

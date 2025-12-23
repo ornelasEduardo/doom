@@ -34,6 +34,8 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
     return (
       <div
         ref={ref}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
         className={clsx(
           styles.slat,
           styles[variant],
@@ -41,6 +43,12 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
           className
         )}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (onClick && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onClick(e as any);
+          }
+        }}
         {...props}
       >
         <Flex justify="space-between" align="center" gap="var(--spacing-sm)">
