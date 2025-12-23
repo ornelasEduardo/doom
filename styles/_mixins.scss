@@ -70,20 +70,38 @@
 
 // Breakpoints
 $breakpoints: (
+  "xxs": 360px,
+  "xs": 480px,
   "sm": 640px,
   "md": 768px,
   "lg": 1024px,
   "xl": 1280px,
 );
 
-@mixin mq($breakpoint) {
+@mixin mq($breakpoint, $type: "min") {
+  $width: $breakpoint;
   @if map-has-key($breakpoints, $breakpoint) {
-    @media (min-width: map-get($breakpoints, $breakpoint)) {
-      @content;
-    }
-  } @else {
-    @media (min-width: $breakpoint) {
-      @content;
-    }
+    $width: map-get($breakpoints, $breakpoint);
+  }
+
+  @media (#{$type}-width: $width) {
+    @content;
+  }
+}
+@mixin disabled-state {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.05) 10px,
+    rgba(0, 0, 0, 0.05) 20px
+  ) !important;
+
+  // Kill any hover effects (like lifts/shadows) from other mixins
+  &:hover {
+    transform: none !important;
+    filter: none !important;
   }
 }

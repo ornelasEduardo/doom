@@ -9,6 +9,14 @@
   user-select: none;
   width: 100%;
 
+  @include mq("sm", "max") {
+    padding: var(--spacing-sm);
+  }
+
+  @include mq("xxs", "max") {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
   &.danger {
     background-color: var(--error);
     color: var(--error-foreground);
@@ -63,6 +71,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: inherit;
+
+  @include mq("sm", "max") {
+    white-space: normal;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  @include mq("xxs", "max") {
+    -webkit-line-clamp: 2;
+  }
 }
 
 .secondaryLabel {

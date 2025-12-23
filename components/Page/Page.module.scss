@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .container {
   flex: 1;
   width: 100%;
@@ -9,7 +11,7 @@
   margin: 0 auto;
   padding: 2rem 1rem;
 
-  @media (max-width: 1024px) {
+  @include mq("lg", "max") {
     width: 95%;
     padding: 1rem;
   }

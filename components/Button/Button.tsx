@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
-import clsx from 'clsx';
-import { Spinner } from '../Spinner';
-import styles from './Button.module.scss';
+import React from "react";
+import clsx from "clsx";
+import { Spinner } from "../Spinner";
+import styles from "./Button.module.scss";
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'success';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "outline"
+  | "success"
+  | "danger";
+type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -14,14 +20,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
+export function Button({
+  children,
+  variant = "primary",
+  size = "md",
   loading = false,
   className,
   disabled,
-  ...props 
+  ...props
 }: ButtonProps) {
   const buttonClass = clsx(
     styles.button,
@@ -33,12 +39,7 @@ export function Button({
 
   return (
     <button className={buttonClass} disabled={disabled || loading} {...props}>
-      {loading && (
-        <Spinner 
-          size="sm" 
-          className={styles.spinnerIcon} 
-        />
-      )}
+      {loading && <Spinner size="sm" className={styles.spinnerIcon} />}
       {children}
     </button>
   );
