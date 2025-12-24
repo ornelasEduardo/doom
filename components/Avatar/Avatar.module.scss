@@ -57,8 +57,16 @@
   text-transform: uppercase;
 
   /* Font sizes mapped to parent sizes */
-  &.sm { font-size: var(--text-xs); }
-  &.md { font-size: var(--text-base); }
-  &.lg { font-size: var(--text-lg); }
-  &.xl { font-size: var(--text-2xl); }
+  &.sm {
+    font-size: var(--text-xs);
+  }
+  &.md {
+    font-size: var(--text-base);
+  }
+  &.lg {
+    font-size: var(--text-lg);
+  }
+  &.xl {
+    font-size: var(--text-2xl);
+  }
 }

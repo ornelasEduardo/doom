@@ -4,6 +4,7 @@ export * from "./components/Card";
 export * from "./components/Dropdown";
 export * from "./components/Form";
 export * from "./components/Input";
+export * from "./components/Image";
 export * from "./components/Layout";
 export * from "./components/Link";
 export * from "./components/Modal";

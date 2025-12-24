@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { Skeleton } from "../Skeleton/Skeleton";
+import { Image } from "../Image/Image";
 import clsx from "clsx";
 
 const enum Status {
@@ -457,27 +458,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 };
 
 const PreviewImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
-  const [loaded, setLoaded] = useState(false);
-
   return (
     <div className={styles.previewWrapper}>
-      {!loaded && (
-        <Skeleton
-          width="100%"
-          height="100%"
-          className={styles.previewSkeleton}
-        />
-      )}
-      <img
+      <Image
         src={src}
         alt={
           alt
             .replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, "")
             .replace(/[-_]/g, " ") || "File preview"
         }
-        className={clsx(styles.previewImg, { [styles.loaded]: loaded })}
-        onLoad={() => setLoaded(true)}
-        style={loaded ? {} : { position: "absolute", opacity: 0 }}
+        className={styles.previewImg}
+        fit="cover"
+        rounded={false}
       />
     </div>
   );

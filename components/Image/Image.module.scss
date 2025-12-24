@@ -1,0 +1,40 @@
+.image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+
+  &[data-loaded="false"] {
+    opacity: 0;
+  }
+
+  &.with-transition {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  // Object Fit Variants
+  &.fit-cover {
+    object-fit: cover;
+  }
+  &.fit-contain {
+    object-fit: contain;
+  }
+  &.fit-fill {
+    object-fit: fill;
+  }
+  &.fit-none {
+    object-fit: none;
+  }
+  &.fit-scale-down {
+    object-fit: scale-down;
+  }
+}
+
+.wrapper {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.rounded {
+  border-radius: var(--radius);
+}
