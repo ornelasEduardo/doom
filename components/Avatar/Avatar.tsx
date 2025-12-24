@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import clsx from "clsx";
 import styles from "./Avatar.module.scss";
+import { Image } from "../Image/Image";
 
 export type AvatarSize = "sm" | "md" | "lg" | "xl";
 export type AvatarShape = "circle" | "square";
@@ -31,11 +32,13 @@ export function Avatar({
       className={clsx(styles.avatar, styles[size], styles[shape], className)}
     >
       {src && !hasError ? (
-        <img
+        <Image
           src={src}
           alt={alt}
           className={styles.image}
           onError={() => setHasError(true)}
+          fit="cover"
+          rounded={false}
         />
       ) : (
         <span className={clsx(styles.fallback, styles[size])}>

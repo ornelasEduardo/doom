@@ -4,6 +4,7 @@ import { Text } from "../Text/Text";
 import { Stack, Flex } from "../Layout/Layout";
 import { Link } from "../Link/Link";
 import { Badge } from "../Badge/Badge";
+import { Image } from "../Image/Image";
 
 const meta: Meta<typeof Card> = {
   title: "Components/Card",
@@ -54,14 +55,13 @@ export const WithImage: Story = {
   args: {
     children: (
       <Stack gap="1rem">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Nature Landscape"
+          fit="cover"
           style={{
             width: "100%",
             height: "200px",
-            objectFit: "cover",
-            borderRadius: "var(--radius)",
           }}
         />
         <Stack gap="0.5rem" align="flex-start">
@@ -99,16 +99,16 @@ export const ImageOnly: Story = {
     ),
   ],
   args: {
-    className: "p-1",
+    className: "p-0", // Assuming we want 0 padding for image-only
+    style: { overflow: "hidden" },
     children: (
-      <img
+      <Image
         src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=300&h=450&q=80"
         alt="Forest Path"
+        fit="cover"
         style={{
           width: "100%",
           height: "450px",
-          objectFit: "cover",
-          display: "block",
         }}
       />
     ),
