@@ -99,7 +99,7 @@ export const ImageOnly: Story = {
     ),
   ],
   args: {
-    className: "p-0", // Assuming we want 0 padding for image-only
+    className: "p-0",
     style: { overflow: "hidden" },
     children: (
       <Image
