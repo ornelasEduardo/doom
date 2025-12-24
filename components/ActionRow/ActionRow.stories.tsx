@@ -1,16 +1,16 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { ActionRow } from './ActionRow';
-import { Banknote, Settings, User } from 'lucide-react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { ActionRow } from "./ActionRow";
+import { Banknote, Settings, User } from "lucide-react";
 
 const meta: Meta<typeof ActionRow> = {
-  title: 'Design System/ActionRow',
+  title: "Components/ActionRow",
   component: ActionRow,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    onClick: { action: 'clicked' },
+    onClick: { action: "clicked" },
   },
 };
 
@@ -20,27 +20,28 @@ type Story = StoryObj<typeof ActionRow>;
 export const Default: Story = {
   args: {
     icon: <Banknote size={24} strokeWidth={2.5} />,
-    title: 'Income Sources',
-    description: 'Manage your paychecks, bonuses, and other income streams',
+    title: "Income Sources",
+    description: "Manage your paychecks, bonuses, and other income streams",
   },
 };
 
 export const NoDescription: Story = {
   args: {
     icon: <Settings size={24} strokeWidth={2.5} />,
-    title: 'General Settings',
+    title: "General Settings",
   },
 };
 
 export const LongText: Story = {
   args: {
     icon: <User size={24} strokeWidth={2.5} />,
-    title: 'Account Information',
-    description: 'This is a very long description that might wrap to multiple lines depending on the container width. It is important to test how the component behaves with extensive text content.',
+    title: "Account Information",
+    description:
+      "This is a very long description that might wrap to multiple lines depending on the container width. It is important to test how the component behaves with extensive text content.",
   },
   decorators: [
     (Story) => (
-      <div style={{ width: '400px' }}>
+      <div style={{ width: "400px" }}>
         <Story />
       </div>
     ),
@@ -49,7 +50,14 @@ export const LongText: Story = {
 
 export const InList: Story = {
   render: () => (
-    <div style={{ width: '500px', border: 'var(--border-width) solid var(--card-border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
+    <div
+      style={{
+        width: "500px",
+        border: "var(--border-width) solid var(--card-border)",
+        borderRadius: "var(--radius)",
+        overflow: "hidden",
+      }}
+    >
       <ActionRow
         icon={<Banknote size={24} strokeWidth={2.5} />}
         title="Income Sources"

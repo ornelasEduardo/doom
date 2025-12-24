@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 const meta: Meta<typeof Sheet> = {
-  title: "Design System/Sheet",
+  title: "Components/Sheet",
   component: Sheet,
   tags: ["autodocs"],
   argTypes: {

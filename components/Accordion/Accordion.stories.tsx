@@ -9,7 +9,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { Badge } from "../Badge/Badge";
 
 const meta: Meta<typeof Accordion> = {
-  title: "Design System/Accordion",
+  title: "Components/Accordion",
   component: Accordion,
   tags: ["autodocs"],
   argTypes: {

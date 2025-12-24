@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  Dropdown  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Dropdown } from "doom-design-system";
 
 const meta: Meta<typeof Dropdown> = {
-  title: 'Design System/Dropdown',
+  title: "Components/Dropdown",
   component: Dropdown,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'secondary'],
+      control: "select",
+      options: ["primary", "secondary"],
     },
   },
 };
@@ -18,23 +18,23 @@ type Story = StoryObj<typeof Dropdown>;
 
 export const Default: Story = {
   args: {
-    triggerLabel: 'Options',
+    triggerLabel: "Options",
     items: [
-      { label: 'Edit', onClick: () => alert('Edit clicked') },
-      { label: 'Duplicate', onClick: () => alert('Duplicate clicked') },
-      { label: 'Delete', onClick: () => alert('Delete clicked') },
+      { label: "Edit", onClick: () => alert("Edit clicked") },
+      { label: "Duplicate", onClick: () => alert("Duplicate clicked") },
+      { label: "Delete", onClick: () => alert("Delete clicked") },
     ],
   },
 };
 
 export const Secondary: Story = {
   args: {
-    triggerLabel: 'Actions',
-    variant: 'secondary',
+    triggerLabel: "Actions",
+    variant: "secondary",
     items: [
-      { label: 'Profile', onClick: () => alert('Profile clicked') },
-      { label: 'Settings', onClick: () => alert('Settings clicked') },
-      { label: 'Logout', onClick: () => alert('Logout clicked') },
+      { label: "Profile", onClick: () => alert("Profile clicked") },
+      { label: "Settings", onClick: () => alert("Settings clicked") },
+      { label: "Logout", onClick: () => alert("Logout clicked") },
     ],
   },
 };

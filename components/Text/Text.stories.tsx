@@ -1,31 +1,42 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  Text  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Text } from "doom-design-system";
 
 const meta: Meta<typeof Text> = {
-  title: 'Design System/Text',
+  title: "Components/Text",
   component: Text,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'small', 'caption'],
+      control: "select",
+      options: ["h1", "h2", "h3", "h4", "h5", "h6", "body", "small", "caption"],
     },
     weight: {
-      control: 'select',
-      options: ['normal', 'medium', 'semibold', 'bold', 'black'],
+      control: "select",
+      options: ["normal", "medium", "semibold", "bold", "black"],
     },
     color: {
-      control: 'select',
-      options: ['primary', 'secondary', 'muted', 'error', 'success', 'warning'],
+      control: "select",
+      options: ["primary", "secondary", "muted", "error", "success", "warning"],
     },
     align: {
-      control: 'select',
-      options: ['left', 'center', 'right'],
+      control: "select",
+      options: ["left", "center", "right"],
     },
     as: {
-        control: 'select',
-        options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'div', 'label'],
-    }
+      control: "select",
+      options: [
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "p",
+        "span",
+        "div",
+        "label",
+      ],
+    },
   },
 };
 
@@ -34,13 +45,13 @@ type Story = StoryObj<typeof Text>;
 
 export const Default: Story = {
   args: {
-    children: 'Default Text',
+    children: "Default Text",
   },
 };
 
 export const Headings: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <Text variant="h1">Heading 1</Text>
       <Text variant="h2">Heading 2</Text>
       <Text variant="h3">Heading 3</Text>
@@ -53,28 +64,28 @@ export const Headings: Story = {
 
 export const Body: Story = {
   args: {
-    variant: 'body',
-    children: 'This is body text. It is the default text style.',
+    variant: "body",
+    children: "This is body text. It is the default text style.",
   },
 };
 
 export const Small: Story = {
   args: {
-    variant: 'small',
-    children: 'This is small text.',
+    variant: "small",
+    children: "This is small text.",
   },
 };
 
 export const Caption: Story = {
   args: {
-    variant: 'caption',
-    children: 'This is caption text.',
+    variant: "caption",
+    children: "This is caption text.",
   },
 };
 
 export const Colors: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <Text color="primary">Primary Color</Text>
       <Text color="secondary">Secondary Color</Text>
       <Text color="muted">Muted Color</Text>

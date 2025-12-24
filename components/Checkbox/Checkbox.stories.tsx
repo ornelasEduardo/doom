@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Checkbox } from './Checkbox';
-import { useState } from 'react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Checkbox } from "./Checkbox";
+import { useState } from "react";
 
 const meta: Meta<typeof Checkbox> = {
-  title: 'Design System/Checkbox',
+  title: "Components/Checkbox",
   component: Checkbox,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;
@@ -16,20 +16,20 @@ type Story = StoryObj<typeof Checkbox>;
 
 export const Default: Story = {
   args: {
-    label: 'Accept terms and conditions',
+    label: "Accept terms and conditions",
   },
 };
 
 export const Checked: Story = {
   args: {
-    label: 'Subscribed to newsletter',
+    label: "Subscribed to newsletter",
     defaultChecked: true,
   },
 };
 
 export const Disabled: Story = {
   args: {
-    label: 'Cannot uncheck this',
+    label: "Cannot uncheck this",
     disabled: true,
     defaultChecked: true,
   },
@@ -52,13 +52,13 @@ export const Controlled: Story = {
     const [checked, setChecked] = useState(false);
     return (
       <div className="flex flex-col gap-4">
-        <Checkbox 
-          label={`Value is: ${checked}`} 
-          checked={checked} 
-          onChange={(e) => setChecked(e.target.checked)} 
+        <Checkbox
+          label={`Value is: ${checked}`}
+          checked={checked}
+          onChange={(e) => setChecked(e.target.checked)}
         />
-        <button 
-          className="text-xs bg-primary text-primary-foreground px-2 py-1" 
+        <button
+          className="text-xs bg-primary text-primary-foreground px-2 py-1"
           onClick={() => setChecked(!checked)}
         >
           Toggle from outside

@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  Badge  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Badge } from "doom-design-system";
 
 const meta: Meta<typeof Badge> = {
-  title: 'Design System/Badge',
+  title: "Components/Badge",
   component: Badge,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'success', 'warning', 'error', 'secondary'],
+      control: "select",
+      options: ["primary", "success", "warning", "error", "secondary"],
     },
   },
 };
@@ -18,35 +18,35 @@ type Story = StoryObj<typeof Badge>;
 
 export const Primary: Story = {
   args: {
-    variant: 'primary',
-    children: 'Primary Badge',
+    variant: "primary",
+    children: "Primary Badge",
   },
 };
 
 export const Success: Story = {
   args: {
-    variant: 'success',
-    children: 'Success Badge',
+    variant: "success",
+    children: "Success Badge",
   },
 };
 
 export const Warning: Story = {
   args: {
-    variant: 'warning',
-    children: 'Warning Badge',
+    variant: "warning",
+    children: "Warning Badge",
   },
 };
 
 export const Error: Story = {
   args: {
-    variant: 'error',
-    children: 'Error Badge',
+    variant: "error",
+    children: "Error Badge",
   },
 };
 
 export const Secondary: Story = {
   args: {
-    variant: 'secondary',
-    children: 'Secondary Badge',
+    variant: "secondary",
+    children: "Secondary Badge",
   },
 };

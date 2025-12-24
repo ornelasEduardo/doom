@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  Select  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Select } from "doom-design-system";
 
 const meta: Meta<typeof Select> = {
-  title: 'Design System/Select',
+  title: "Components/Select",
   component: Select,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    label: { control: 'text' },
+    label: { control: "text" },
   },
 };
 
@@ -16,20 +16,20 @@ type Story = StoryObj<typeof Select>;
 export const Default: Story = {
   args: {
     options: [
-      { value: 'option1', label: 'Option 1' },
-      { value: 'option2', label: 'Option 2' },
-      { value: 'option3', label: 'Option 3' },
+      { value: "option1", label: "Option 1" },
+      { value: "option2", label: "Option 2" },
+      { value: "option3", label: "Option 3" },
     ],
   },
 };
 
 export const WithLabel: Story = {
   args: {
-    label: 'Select an Option',
+    label: "Select an Option",
     options: [
-      { value: 'option1', label: 'Option 1' },
-      { value: 'option2', label: 'Option 2' },
-      { value: 'option3', label: 'Option 3' },
+      { value: "option1", label: "Option 1" },
+      { value: "option2", label: "Option 2" },
+      { value: "option3", label: "Option 3" },
     ],
   },
 };

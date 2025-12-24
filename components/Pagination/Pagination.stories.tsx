@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Pagination } from './Pagination';
+import React, { useState } from "react";
+import type { Meta, StoryObj } from "@storybook/react";
+import { Pagination } from "./Pagination";
 
 const meta: Meta<typeof Pagination> = {
-  title: 'Design System/Pagination',
+  title: "Components/Pagination",
   component: Pagination,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    currentPage: { control: 'number' },
-    totalPages: { control: 'number' },
+    currentPage: { control: "number" },
+    totalPages: { control: "number" },
   },
 };
 
@@ -22,15 +22,15 @@ export const Default: Story = {
   },
   render: function Render(args) {
     const [page, setPage] = useState(args.currentPage);
-    
+
     return (
-      <Pagination 
-        {...args} 
-        currentPage={page} 
-        onPageChange={(p) => setPage(p)} 
+      <Pagination
+        {...args}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
       />
     );
-  }
+  },
 };
 
 export const Short: Story = {
@@ -47,13 +47,13 @@ export const ManyPages: Story = {
   },
   render: function Render(args) {
     const [page, setPage] = useState(args.currentPage);
-    
+
     return (
-      <Pagination 
-        {...args} 
-        currentPage={page} 
-        onPageChange={(p) => setPage(p)} 
+      <Pagination
+        {...args}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
       />
     );
-  }
+  },
 };

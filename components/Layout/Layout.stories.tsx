@@ -3,7 +3,7 @@ import { Flex, Grid, Stack, Container, Switcher } from "./Layout";
 import { Text } from "../Text";
 
 const meta: Meta<typeof Flex> = {
-  title: "Design System/Layout",
+  title: "Components/Layout",
   component: Flex,
   tags: ["autodocs"],
 };

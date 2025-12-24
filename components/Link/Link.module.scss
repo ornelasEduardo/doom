@@ -4,10 +4,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+
   text-decoration: none;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    outline: revert;
+  }
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    text-decoration: none;
+    cursor: not-allowed;
+  }
 
   &.default {
     color: var(--primary);

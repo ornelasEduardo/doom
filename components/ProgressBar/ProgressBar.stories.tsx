@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  ProgressBar  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import { ProgressBar } from "doom-design-system";
 
 const meta: Meta<typeof ProgressBar> = {
-  title: 'Design System/ProgressBar',
+  title: "Components/ProgressBar",
   component: ProgressBar,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    value: { control: { type: 'range', min: 0, max: 100 } },
-    color: { control: 'color' },
-    showStripes: { control: 'boolean' },
+    value: { control: { type: "range", min: 0, max: 100 } },
+    color: { control: "color" },
+    showStripes: { control: "boolean" },
   },
 };
 
@@ -24,7 +24,7 @@ export const Default: Story = {
 export const CustomColor: Story = {
   args: {
     value: 75,
-    color: '#ef4444',
+    color: "#ef4444",
   },
 };
 

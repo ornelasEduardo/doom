@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Spinner } from './Spinner';
-import { Flex, Stack } from '../Layout';
-import { Text } from '../Text';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Spinner } from "./Spinner";
+import { Flex, Stack } from "../Layout";
+import { Text } from "../Text";
 
 const meta: Meta<typeof Spinner> = {
-  title: 'Design System/Spinner',
+  title: "Components/Spinner",
   component: Spinner,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
 };
 
@@ -17,7 +17,7 @@ type Story = StoryObj<typeof Spinner>;
 
 export const Default: Story = {
   args: {
-    size: 'md',
+    size: "md",
   },
 };
 

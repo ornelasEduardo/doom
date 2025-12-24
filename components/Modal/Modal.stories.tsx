@@ -8,7 +8,7 @@ import { Textarea } from "../Textarea/Textarea";
 import { useState } from "react";
 
 const meta: Meta<typeof Modal> = {
-  title: "Design System/Modal",
+  title: "Components/Modal",
   component: Modal,
   parameters: {
     layout: "centered",

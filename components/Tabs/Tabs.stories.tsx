@@ -1,11 +1,17 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import {  Tabs, TabsList, TabsTrigger, TabsContent, TabsBody  } from 'doom-design-system';
-import {  Text  } from 'doom-design-system';
+import type { Meta, StoryObj } from "@storybook/react";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  TabsBody,
+} from "doom-design-system";
+import { Text } from "doom-design-system";
 
 const meta: Meta<typeof Tabs> = {
-  title: 'Design System/Tabs',
+  title: "Components/Tabs",
   component: Tabs,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 };
 
 export default meta;

@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Switch } from './Switch';
-import { useState } from 'react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Switch } from "./Switch";
+import { useState } from "react";
 
 const meta: Meta<typeof Switch> = {
-  title: 'Design System/Switch',
+  title: "Components/Switch",
   component: Switch,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    checked: { control: 'boolean' },
-    disabled: { control: 'boolean' },
-    label: { control: 'text' },
+    checked: { control: "boolean" },
+    disabled: { control: "boolean" },
+    label: { control: "text" },
   },
 };
 
@@ -22,7 +22,7 @@ export const Default: Story = {
     return <Switch {...args} checked={checked} onChange={setChecked} />;
   },
   args: {
-    label: 'Toggle me',
+    label: "Toggle me",
   },
 };
 
@@ -32,14 +32,14 @@ export const Checked: Story = {
     return <Switch {...args} checked={checked} onChange={setChecked} />;
   },
   args: {
-    label: 'Checked state',
+    label: "Checked state",
   },
 };
 
 export const Disabled: Story = {
   args: {
     disabled: true,
-    label: 'Disabled switch',
+    label: "Disabled switch",
   },
 };
 
@@ -47,6 +47,6 @@ export const DisabledChecked: Story = {
   args: {
     disabled: true,
     checked: true,
-    label: 'Disabled checked',
+    label: "Disabled checked",
   },
 };

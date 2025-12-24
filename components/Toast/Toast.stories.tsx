@@ -4,7 +4,7 @@ import { Button } from "doom-design-system";
 import { Flex } from "doom-design-system";
 
 const meta: Meta<typeof ToastProvider> = {
-  title: "Design System/Toast",
+  title: "Components/Toast",
   component: ToastProvider,
   tags: ["autodocs"],
 };

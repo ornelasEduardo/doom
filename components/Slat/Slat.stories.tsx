@@ -8,7 +8,7 @@ import { Text } from "../Text/Text";
 import { Button } from "../Button/Button";
 
 const meta: Meta<typeof Slat> = {
-  title: "Design System/Slat",
+  title: "Components/Slat",
   component: Slat,
   tags: ["autodocs"],
   parameters: {

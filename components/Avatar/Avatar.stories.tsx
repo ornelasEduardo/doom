@@ -3,7 +3,7 @@ import { Avatar } from "./Avatar";
 import { User } from "lucide-react";
 
 const meta: Meta<typeof Avatar> = {
-  title: "Design System/Avatar",
+  title: "Components/Avatar",
   component: Avatar,
   tags: ["autodocs"],
   argTypes: {

@@ -16,7 +16,7 @@ import {
 import React from "react";
 
 const meta: Meta<typeof Form> = {
-  title: "Design System/Form",
+  title: "Components/Form",
   component: Form,
   tags: ["autodocs"],
 };

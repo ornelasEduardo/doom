@@ -4,7 +4,7 @@ import { Button, Card, Text, Page, Flex, Stack } from "doom-design-system";
 import { useState } from "react";
 
 const meta: Meta<typeof Popover> = {
-  title: "Design System/Popover",
+  title: "Components/Popover",
   component: Popover,
   tags: ["autodocs"],
   argTypes: {

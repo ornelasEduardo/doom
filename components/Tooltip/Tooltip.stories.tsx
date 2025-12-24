@@ -1,26 +1,29 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Tooltip } from './Tooltip';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Tooltip } from "./Tooltip";
 
 const UnderlinedText = ({ children }: { children: React.ReactNode }) => (
-  <span style={{
-    textDecoration: 'underline',
-    textDecorationStyle: 'dotted',
-    textDecorationThickness: '2px',
-    textUnderlineOffset: '4px',
-    cursor: 'help',
-    fontWeight: 600
-  }} className="hover:text-primary hover:decoration-solid">
+  <span
+    style={{
+      textDecoration: "underline",
+      textDecorationStyle: "dotted",
+      textDecorationThickness: "2px",
+      textUnderlineOffset: "4px",
+      cursor: "help",
+      fontWeight: 600,
+    }}
+    className="hover:text-primary hover:decoration-solid"
+  >
     {children}
   </span>
 );
 
 const meta: Meta<typeof Tooltip> = {
-  title: 'Design System/Tooltip',
+  title: "Components/Tooltip",
   component: Tooltip,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
-    content: { control: 'text' },
-    delay: { control: 'number' },
+    content: { control: "text" },
+    delay: { control: "number" },
   },
 };
 
@@ -34,7 +37,7 @@ export const Default: Story = {
     </Tooltip>
   ),
   args: {
-    content: 'Explanation of the term',
+    content: "Explanation of the term",
   },
 };
 
@@ -45,30 +48,37 @@ export const Delayed: Story = {
     </Tooltip>
   ),
   args: {
-    content: 'Thank you for waiting!',
+    content: "Thank you for waiting!",
     delay: 1000,
   },
 };
 
 export const Edges: Story = {
   render: () => (
-    <div style={{ height: '300px', width: '100%', position: 'relative', border: '1px dashed #ccc' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0 }}>
+    <div
+      style={{
+        height: "300px",
+        width: "100%",
+        position: "relative",
+        border: "1px dashed #ccc",
+      }}
+    >
+      <div style={{ position: "absolute", top: 0, left: 0 }}>
         <Tooltip content="Top Left Flip -> Bottom">
           <UnderlinedText>Top Left</UnderlinedText>
         </Tooltip>
       </div>
-      <div style={{ position: 'absolute', top: 0, right: 0 }}>
+      <div style={{ position: "absolute", top: 0, right: 0 }}>
         <Tooltip content="Top Right Flip -> Bottom">
           <UnderlinedText>Top Right</UnderlinedText>
         </Tooltip>
       </div>
-      <div style={{ position: 'absolute', bottom: 0, left: 0 }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0 }}>
         <Tooltip content="Bottom Left -> Top" placement="bottom">
           <UnderlinedText>Bottom Left</UnderlinedText>
         </Tooltip>
       </div>
-      <div style={{ position: 'absolute', bottom: 0, right: 0 }}>
+      <div style={{ position: "absolute", bottom: 0, right: 0 }}>
         <Tooltip content="Bottom Right -> Top" placement="bottom">
           <UnderlinedText>Bottom Right</UnderlinedText>
         </Tooltip>

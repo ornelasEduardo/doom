@@ -9,7 +9,7 @@ import { Plus, Download } from "lucide-react";
 import React from "react";
 
 const meta: Meta<typeof Table> = {
-  title: "Design System/Table",
+  title: "Components/Table",
   component: Table,
   tags: ["autodocs"],
   argTypes: {

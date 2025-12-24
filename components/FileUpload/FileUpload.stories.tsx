@@ -3,7 +3,7 @@ import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 
 const meta: Meta<typeof FileUpload> = {
-  title: "Design System/FileUpload",
+  title: "Components/FileUpload",
   component: FileUpload,
   tags: ["autodocs"],
   parameters: {
