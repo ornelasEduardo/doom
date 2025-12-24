@@ -23,6 +23,8 @@ export function Link({
   isExternal,
   disabled,
   className,
+  onClick,
+  onMouseEnter,
   ...props
 }: LinkProps) {
   const [shouldPrefetch, setShouldPrefetch] = React.useState(false);
@@ -32,7 +34,7 @@ export function Link({
     if (prefetch && !shouldPrefetch) {
       setShouldPrefetch(true);
     }
-    props.onMouseEnter?.(e);
+    onMouseEnter?.(e);
   };
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -40,7 +42,7 @@ export function Link({
       e.preventDefault();
       return;
     }
-    props.onClick?.(e);
+    onClick?.(e);
   };
 
   const externalProps = isExternal

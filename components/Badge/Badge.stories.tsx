@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Badge } from "doom-design-system";
+import { Badge } from "./Badge";
+import { Flex } from "../Layout/Layout";
 
 const meta: Meta<typeof Badge> = {
   title: "Components/Badge",
@@ -8,7 +9,18 @@ const meta: Meta<typeof Badge> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["primary", "success", "warning", "error", "secondary"],
+      options: [
+        "primary",
+        "success",
+        "warning",
+        "error",
+        "secondary",
+        "outline",
+      ],
+    },
+    size: {
+      control: "select",
+      options: ["sm", "md", "lg"],
     },
   },
 };
@@ -49,4 +61,14 @@ export const Secondary: Story = {
     variant: "secondary",
     children: "Secondary Badge",
   },
+};
+
+export const Sizes: Story = {
+  render: () => (
+    <Flex gap="1rem" align="center">
+      <Badge size="sm">Small</Badge>
+      <Badge size="md">Medium</Badge>
+      <Badge size="lg">Large</Badge>
+    </Flex>
+  ),
 };

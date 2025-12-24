@@ -12,19 +12,26 @@ type BadgeVariant =
   | "secondary"
   | "outline";
 
+type BadgeSize = "sm" | "md" | "lg";
+
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
+  size?: BadgeSize;
   children: React.ReactNode;
 }
 
 export function Badge({
   variant = "primary",
+  size = "md",
   children,
   className,
   ...props
 }: BadgeProps) {
   return (
-    <span className={clsx(styles.badge, styles[variant], className)} {...props}>
+    <span
+      className={clsx(styles.badge, styles[variant], styles[size], className)}
+      {...props}
+    >
       {children}
     </span>
   );
