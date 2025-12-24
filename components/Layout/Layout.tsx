@@ -4,6 +4,28 @@ import React, { ElementType } from "react";
 import clsx from "clsx";
 import styles from "./Layout.module.scss";
 
+// --- Tokens ---
+const SPACING_MAP = {
+  0: "0",
+  1: "0.25rem",
+  2: "0.5rem",
+  3: "0.75rem",
+  4: "1rem",
+  5: "1.25rem",
+  6: "1.5rem",
+  8: "2rem",
+  10: "2.5rem",
+  12: "3rem",
+  16: "4rem",
+} as const;
+
+export type Spacing = keyof typeof SPACING_MAP;
+
+function resolveGap(gap?: Spacing): string | undefined {
+  if (gap === undefined) return undefined;
+  return SPACING_MAP[gap];
+}
+
 // --- Types ---
 interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
@@ -13,13 +35,13 @@ interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
 // --- Grid ---
 export interface GridProps extends LayoutProps {
   columns?: string | number;
-  gap?: string | number;
+  gap?: Spacing;
 }
 
 export function Grid({
   children,
   columns = "1fr",
-  gap = "1rem",
+  gap = 4,
   className,
   style,
   as: Component = "div",
@@ -33,7 +55,7 @@ export function Grid({
       className={clsx(styles.grid, className)}
       style={{
         gridTemplateColumns,
-        gap,
+        gap: resolveGap(gap),
         ...style,
       }}
       {...props}
@@ -54,7 +76,7 @@ export interface FlexProps extends LayoutProps {
     | "space-around"
     | "space-evenly";
   align?: "flex-start" | "flex-end" | "center" | "stretch" | "baseline";
-  gap?: string | number;
+  gap?: Spacing;
   wrap?: boolean | "wrap" | "nowrap" | "wrap-reverse";
 }
 
@@ -63,7 +85,7 @@ export function Flex({
   direction = "row",
   justify = "flex-start",
   align = "stretch",
-  gap = "0",
+  gap = 0,
   wrap = false,
   className,
   style,
@@ -80,7 +102,7 @@ export function Flex({
         flexDirection: direction,
         justifyContent: justify,
         alignItems: align,
-        gap,
+        gap: resolveGap(gap),
         flexWrap,
         ...style,
       }}
@@ -99,7 +121,7 @@ export interface StackProps extends Omit<FlexProps, "direction"> {
 export function Stack({
   children,
   direction = "column",
-  gap = "1rem",
+  gap = 4,
   align = "stretch",
   ...props
 }: StackProps) {
