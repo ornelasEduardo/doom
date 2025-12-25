@@ -81,7 +81,7 @@ export function ModalFooter({
     <Flex
       justify="flex-end"
       align="center"
-      gap="var(--spacing-md)"
+      gap={4}
       className={clsx(styles.footer, className)}
     >
       {children}

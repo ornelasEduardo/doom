@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Text } from '../Text/Text';
-import { Flex } from '../Layout/Layout';
-import { ChevronRight } from 'lucide-react';
-import clsx from 'clsx';
-import styles from './ActionRow.module.scss';
+import React from "react";
+import { Text } from "../Text/Text";
+import { Flex } from "../Layout/Layout";
+import { ChevronRight } from "lucide-react";
+import clsx from "clsx";
+import styles from "./ActionRow.module.scss";
 
 interface ActionRowProps extends React.HTMLAttributes<HTMLDivElement> {
   icon: React.ReactNode;
@@ -14,19 +14,24 @@ interface ActionRowProps extends React.HTMLAttributes<HTMLDivElement> {
   onClick?: () => void;
 }
 
-export function ActionRow({ icon, title, description, onClick, className, ...props }: ActionRowProps) {
+export function ActionRow({
+  icon,
+  title,
+  description,
+  onClick,
+  className,
+  ...props
+}: ActionRowProps) {
   return (
-    <Flex 
-      align="center" 
-      gap="1.5rem" 
-      onClick={onClick} 
+    <Flex
+      align="center"
+      gap={6}
+      onClick={onClick}
       className={clsx(styles.actionRow, className)}
       {...props}
     >
-      <div className={styles.iconWrapper}>
-        {icon}
-      </div>
-      <Flex direction="column" gap="0.25rem" style={{ flex: 1 }}>
+      <div className={styles.iconWrapper}>{icon}</div>
+      <Flex direction="column" gap={1} style={{ flex: 1 }}>
         <Text variant="h6" weight="bold">
           {title}
         </Text>
@@ -36,7 +41,11 @@ export function ActionRow({ icon, title, description, onClick, className, ...pro
           </Text>
         )}
       </Flex>
-      <ChevronRight size={20} strokeWidth={2.5} style={{ color: 'var(--muted-foreground)' }} />
+      <ChevronRight
+        size={20}
+        strokeWidth={2.5}
+        style={{ color: "var(--muted-foreground)" }}
+      />
     </Flex>
   );
 }
