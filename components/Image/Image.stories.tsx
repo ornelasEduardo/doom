@@ -30,7 +30,7 @@ export const Default: Story = {
 
 export const FitVariants: Story = {
   render: () => (
-    <Grid columns="3" gap="1rem">
+    <Grid columns="3" gap={4}>
       <Stack>
         <Text>Cover (200x200)</Text>
         <Image
@@ -85,7 +85,7 @@ export const WithSkeletonLoading: Story = {
     };
 
     return (
-      <Stack gap="1rem" align="flex-start">
+      <Stack gap={4} align="flex-start">
         <Text>
           Click reload to simulate a 2-second network delay. The skeleton will
           appear after 150ms, then the image will transition in.
@@ -116,7 +116,7 @@ export const WithFallback: Story = {
 
 export const WithAspectRatio: Story = {
   render: () => (
-    <Stack gap="1rem">
+    <Stack gap={4}>
       <Text>AspectRatio: 16/9 (Width: 400px)</Text>
       <Image
         src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=500&q=80"
@@ -139,7 +139,7 @@ export const WithAspectRatio: Story = {
 
 export const RoundedVariants: Story = {
   render: () => (
-    <Grid columns="2" gap="1rem">
+    <Grid columns="2" gap={4}>
       <Stack>
         <Text>Default (Rounded)</Text>
         <Image

@@ -32,7 +32,7 @@ const Box = ({
 
 export const FlexRow: Story = {
   render: () => (
-    <Flex gap="1rem" wrap>
+    <Flex gap={4} wrap>
       <Box>Flex Item 1</Box>
       <Box>Flex Item 2</Box>
       <Box>Flex Item 3</Box>
@@ -42,7 +42,7 @@ export const FlexRow: Story = {
 
 export const VerticalStack: Story = {
   render: () => (
-    <Stack gap="1rem">
+    <Stack gap={4}>
       <Box>Stack Item 1</Box>
       <Box>Stack Item 2</Box>
       <Box>Stack Item 3</Box>
@@ -52,7 +52,7 @@ export const VerticalStack: Story = {
 
 export const GridLayout: Story = {
   render: () => (
-    <Grid columns={3} gap="1rem">
+    <Grid columns={3} gap={4}>
       <Box>Grid 1</Box>
       <Box>Grid 2</Box>
       <Box>Grid 3</Box>
@@ -65,7 +65,7 @@ export const GridLayout: Story = {
 
 export const ContainerExample: Story = {
   render: () => (
-    <Stack gap="2rem" style={{ background: "#eee", padding: "1rem" }}>
+    <Stack gap={8} style={{ background: "#eee", padding: "1rem" }}>
       <Container maxWidth="sm" style={{ border: "2px dashed red" }}>
         <Box color="white">Small Container (sm)</Box>
       </Container>
@@ -83,8 +83,8 @@ export const ContainerExample: Story = {
 
 export const SwitcherLayout: Story = {
   render: () => (
-    <Stack gap="2rem">
-      <Stack gap="0.5rem">
+    <Stack gap={8}>
+      <Stack gap={2}>
         <Text weight="bold">Switcher (Threshold: sm)</Text>
         <Text color="muted">
           Resize viewport to see layout switch from row to column below small
@@ -92,7 +92,7 @@ export const SwitcherLayout: Story = {
         </Text>
         <Switcher
           threshold="sm"
-          gap="1rem"
+          gap={4}
           style={{ border: "2px dashed #ccc", padding: "1rem" }}
         >
           <Box>Item 1</Box>
@@ -101,12 +101,12 @@ export const SwitcherLayout: Story = {
         </Switcher>
       </Stack>
 
-      <Stack gap="0.5rem">
+      <Stack gap={2}>
         <Text weight="bold">Switcher (Threshold: xs)</Text>
         <Text color="muted">Switches at a smaller breakpoint (mobile).</Text>
         <Switcher
           threshold="xs"
-          gap="1rem"
+          gap={4}
           style={{ border: "2px dashed #999", padding: "1rem" }}
         >
           <Box>Item 1</Box>

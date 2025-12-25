@@ -110,7 +110,7 @@ export function Table<T>({
             />
           </div>
           {toolbarContent && (
-            <Flex gap="1rem" align="center">
+            <Flex gap={4} align="center">
               {toolbarContent}
             </Flex>
           )}
@@ -256,7 +256,7 @@ export function Table<T>({
       {enablePagination && !isVirtual && (
         <div className={styles.paginationContainer}>
           <Flex
-            gap="1rem"
+            gap={4}
             align="center"
             style={{ width: "100%", justifyContent: "space-between" }}
           >

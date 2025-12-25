@@ -51,12 +51,8 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
         }}
         {...props}
       >
-        <Flex justify="space-between" align="center" gap="var(--spacing-sm)">
-          <Flex
-            gap="var(--spacing-sm)"
-            align="center"
-            style={{ flex: 1, minWidth: 0 }}
-          >
+        <Flex justify="space-between" align="center" gap={2}>
+          <Flex gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
             {prependContent && (
               <div className={styles.prepend}>{prependContent}</div>
             )}
@@ -70,7 +66,7 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
             </Stack>
           </Flex>
 
-          <Flex align="center" gap="var(--spacing-sm)">
+          <Flex align="center" gap={2}>
             {appendContent && (
               <div className={styles.append}>{appendContent}</div>
             )}

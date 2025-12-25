@@ -286,7 +286,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         })}
         justify="space-between"
         align="center"
-        gap="var(--spacing-sm)"
+        gap={2}
       >
         <div className={styles.headerContent}>
           <Text className={styles.headerTitle} id="upload-title">
@@ -362,11 +362,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             role="button"
             tabIndex={disabled ? -1 : 0}
           >
-            <Stack gap="var(--spacing-md)" align="center">
+            <Stack gap={4} align="center">
               <div className={styles.voidIconWrapper} aria-hidden="true">
                 <Upload className={styles.icon} size={48} strokeWidth={2} />
               </div>
-              <Stack gap="var(--spacing-xs)" align="center">
+              <Stack gap={1} align="center">
                 <Text weight="bold" className={styles.voidText}>
                   {isDragging || isActive || forceActive
                     ? "Drop files now"
@@ -400,10 +400,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <Flex
             direction="column"
             justify="space-between"
-            gap="var(--spacing-md)"
+            gap={4}
             className={styles.fileList}
           >
-            <Stack gap="var(--spacing-sm)">
+            <Stack gap={2}>
               {files.map((file, index) => {
                 const previewUrl = previews[file.name];
                 return (

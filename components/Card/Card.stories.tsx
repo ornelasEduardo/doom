@@ -26,7 +26,7 @@ export const Default: Story = {
   args: {
     style: { height: "400px" },
     children: (
-      <Stack gap="0.5rem">
+      <Stack gap={1}>
         <Text variant="h3">Card Title</Text>
         <Stack style={{ maxHeight: "300px", overflow: "scroll" }}>
           <Text>
@@ -52,42 +52,47 @@ export const Default: Story = {
 };
 
 export const WithImage: Story = {
-  args: {
-    children: (
-      <Stack gap="1rem">
+  render: () => (
+    <Card className="w-full p-0" style={{ overflow: "hidden" }}>
+      <Stack gap={0}>
         <Image
-          src="https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-          alt="Nature Landscape"
+          src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=300&h=450&q=80"
+          alt="Forest Path"
           fit="cover"
+          rounded={false}
           style={{
             width: "100%",
-            height: "200px",
+            height: "250px",
           }}
         />
-        <Stack gap="0.5rem" align="flex-start">
-          <Flex gap="0.5rem">
+        <Stack gap={2} className="p-5">
+          <Flex justify="space-between" align="flex-end">
+            <Text variant="small" color="muted">
+              Dec 2025
+            </Text>
+          </Flex>
+          <Text variant="h3" className="mb-0">
+            Nature Card
+          </Text>
+          <Text>
+            Cards are excellent containers for showcasing images alongside
+            descriptive text.
+          </Text>
+          <Flex gap={2} wrap>
             <Badge variant="primary" size="sm">
+              Photography
+            </Badge>
+            <Badge variant="success" size="sm">
               Nature
             </Badge>
             <Badge variant="secondary" size="sm">
               Travel
             </Badge>
-            <Badge variant="warning" size="sm">
-              Photography
-            </Badge>
           </Flex>
-          <Text variant="h3">Nature Card</Text>
-          <Text>
-            Cards are excellent containers for showcasing images alongside
-            descriptive text.
-          </Text>
-          <Link href="https://unsplash.com/photos/KonWFWUaAuk" isExternal>
-            Photo by Ken Cheung on Unsplash
-          </Link>
         </Stack>
       </Stack>
-    ),
-  },
+    </Card>
+  ),
 };
 
 export const ImageOnly: Story = {
@@ -106,6 +111,7 @@ export const ImageOnly: Story = {
         src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=300&h=450&q=80"
         alt="Forest Path"
         fit="cover"
+        rounded={false}
         style={{
           width: "100%",
           height: "450px",
