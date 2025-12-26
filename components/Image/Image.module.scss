@@ -1,14 +1,19 @@
 .image {
   display: block;
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
 
-  &[data-loaded="false"] {
-    opacity: 0;
+  // Clean default bg to prevent double coloring
+  background-color: transparent;
+
+  &.visible {
+    opacity: 1;
   }
 
-  &.with-transition {
-    transition: opacity 0.3s ease-in-out;
+  &.hidden {
+    opacity: 0;
   }
 
   // Object Fit Variants
@@ -33,6 +38,30 @@
   position: relative;
   display: block;
   overflow: hidden;
+  background-color: var(--surface-accent);
+
+  // Ensures layers stack correctly
+  isolation: isolate;
+}
+
+.skeletonLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; // Skeleton sits below emerging image visually if needed, or above?
+  // Actually, we want skeleton visible until image is ready.
+  // Let's keep skeleton on top? No, image opaque over skeleton is smoother.
+  // Wait, if image fades in 0->1, it blends with skeleton.
+  // If skeleton is z-1, it stays visible through the semi-transparent image.
+  // Perfect.
+  pointer-events: none;
+  transition: opacity 0.5s ease-in-out;
+  opacity: 1;
+
+  &.fadeOut {
+    opacity: 0;
+  }
 }
 
 .rounded {

@@ -16,12 +16,12 @@ describe("Image Component", () => {
     render(<Image src="test.jpg" alt="Loading Test" />);
     const img = screen.getByRole("img");
 
-    expect(img).toHaveAttribute("data-loaded", "false");
+    expect(img).toHaveClass(/hidden/);
 
     fireEvent.load(img);
 
     await waitFor(() => {
-      expect(img).toHaveAttribute("data-loaded", "true");
+      expect(img).toHaveClass(/visible/);
     });
   });
 
@@ -45,12 +45,12 @@ describe("Image Component", () => {
     const img = screen.getByRole("img");
 
     expect(img.getAttribute("src")).toMatch(/^blob:/);
-    expect(img).toHaveAttribute("data-loaded", "false");
+    expect(img).toHaveClass(/hidden/);
 
     fireEvent.load(img);
 
     await waitFor(() => {
-      expect(img).toHaveAttribute("data-loaded", "true");
+      expect(img).toHaveClass(/visible/);
     });
   });
 });
