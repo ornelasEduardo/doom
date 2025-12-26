@@ -1,3 +1,5 @@
+@use "../../styles/mixins";
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -67,10 +69,11 @@
 
     /* In solid mode, we need to override the close button to ensure contrast */
     .closeButton {
+      @include mixins.brutalist-hover();
       background-color: var(--error) !important;
       color: var(--error-foreground) !important;
       border-color: var(--border-strong) !important;
-      box-shadow: var(--shadow-hard) !important;
+      box-shadow: var(--shadow-hard);
     }
   }
 }
