@@ -53,15 +53,21 @@ export function Tabs({
 
 interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  align?: "left" | "right";
 }
 
-export function TabsList({ children, className, ...props }: TabsListProps) {
+export function TabsList({
+  children,
+  className,
+  align = "left",
+  ...props
+}: TabsListProps) {
   return (
     <div
       role="tablist"
       aria-orientation="horizontal"
       aria-label={props["aria-label"] || "Tabs"}
-      className={clsx(styles.tabsList, className)}
+      className={clsx(styles.tabsList, styles[`align-${align}`], className)}
       {...props}
     >
       {children}

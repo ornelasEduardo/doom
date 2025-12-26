@@ -1,3 +1,5 @@
+@use "../../styles/mixins";
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -15,9 +17,36 @@
   padding-left: var(--spacing-md);
   position: relative;
   gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &.align-left {
+    justify-content: flex-start;
+  }
+
+  &.align-right {
+    justify-content: flex-end;
+    padding-right: var(--spacing-md);
+    padding-left: 0;
+  }
+}
+
+.tabsList {
+  @include mixins.mq("sm", "max") {
+    padding-left: 0;
+    padding-right: 0;
+    gap: 0.25rem;
+  }
 }
 
 .tabsTrigger {
+  flex-shrink: 0;
   padding: 0.75rem 1.5rem;
   font-size: 0.9rem;
   font-weight: 700;
@@ -33,6 +62,11 @@
   z-index: 1;
   transition: all 0.2s ease;
   transform: translateY(4px);
+  white-space: nowrap;
+
+  @include mixins.mq("sm", "max") {
+    padding: 0.75rem 1rem;
+  }
 
   &:hover {
     background-color: color-mix(in srgb, var(--primary), transparent 90%);
@@ -62,6 +96,10 @@
   box-shadow: var(--shadow-hard);
   position: relative;
   z-index: var(--z-elevated);
+
+  @include mixins.mq("sm", "max") {
+    padding: var(--spacing-md);
+  }
   min-height: 600px;
   margin-top: -3px;
 }
