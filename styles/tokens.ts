@@ -1,7 +1,29 @@
 export const palette = {
-  common: {
-    black: "#000000",
-    white: "#ffffff",
+  black: {
+    50: "rgba(0, 0, 0, 0.05)",
+    100: "rgba(0, 0, 0, 0.1)",
+    200: "rgba(0, 0, 0, 0.2)",
+    300: "rgba(0, 0, 0, 0.3)",
+    400: "rgba(0, 0, 0, 0.4)",
+    500: "rgba(0, 0, 0, 0.5)",
+    600: "rgba(0, 0, 0, 0.6)",
+    700: "rgba(0, 0, 0, 0.7)",
+    800: "rgba(0, 0, 0, 0.8)",
+    900: "rgba(0, 0, 0, 0.9)",
+    950: "#000000",
+  },
+  white: {
+    50: "rgba(255, 255, 255, 0.05)",
+    100: "rgba(255, 255, 255, 0.1)",
+    200: "rgba(255, 255, 255, 0.2)",
+    300: "rgba(255, 255, 255, 0.3)",
+    400: "rgba(255, 255, 255, 0.4)",
+    500: "rgba(255, 255, 255, 0.5)",
+    600: "rgba(255, 255, 255, 0.6)",
+    700: "rgba(255, 255, 255, 0.7)",
+    800: "rgba(255, 255, 255, 0.8)",
+    900: "rgba(255, 255, 255, 0.9)",
+    950: "#ffffff",
   },
   slate: {
     50: "#F8FAFC",
@@ -185,17 +207,17 @@ export const baseVariables = {
   "--size-touch-target": "44px",
 
   // Common Colors
-  "--common-black": palette.common.black,
-  "--common-white": palette.common.white,
+  "--common-black": palette.black[950],
+  "--common-white": palette.white[950],
 
   // Functional Tokens (Structure)
-  "--border-strong": palette.common.black,
+  "--border-strong": palette.black[950],
 
   // Structural Standards (Global)
   "--border-width": "2px",
   "--radius": "4px",
-  "--shadow-hard": "4px 4px 0px 0px var(--border-strong)",
-  "--shadow-hover": "6px 6px 0px 0px var(--border-strong)",
+  "--shadow-hard": "4px 4px 0px 0px var(--shadow-base)",
+  "--shadow-hover": "6px 6px 0px 0px var(--shadow-base)",
 
   // Typography Standards (Global)
   "--font-heading": "var(--font-montserrat)",

@@ -30,7 +30,7 @@
   }
 }
 
-@mixin brutalist-hover($lift: 2px, $shadow-color: var(--border-strong)) {
+@mixin brutalist-hover($lift: 2px, $shadow-color: var(--shadow-base)) {
   &:hover {
     transform: translate(-$lift, -$lift);
     // Shadow grows by 2px to compensate for the 2px lift, maintaining 4px visual gap
@@ -51,7 +51,7 @@
 @mixin brutalist-shadow(
   $direction: "standard",
   $size: 8px,
-  $color: var(--border-strong)
+  $color: var(--shadow-base)
 ) {
   @if $direction == "standard" {
     box-shadow: $size $size 0 0 $color;
