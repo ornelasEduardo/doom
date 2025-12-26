@@ -80,7 +80,7 @@ export const Default: Story = {
     return (
       <Flex justify="center" align="center" style={{ height: "200px" }}>
         <Button onClick={() => setOpen(true)}>
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <SlidersHorizontal size={18} />
             Open sheet
           </Flex>
@@ -91,7 +91,7 @@ export const Default: Story = {
           onClose={() => setOpen(false)}
           title="Tactical Operations Hub"
           footer={
-            <Flex gap="1rem" style={{ width: "100%" }}>
+            <Flex gap={4} style={{ width: "100%" }}>
               <Button
                 variant="ghost"
                 style={{ width: "100%" }}
@@ -109,15 +109,15 @@ export const Default: Story = {
             </Flex>
           }
         >
-          <Stack gap="2rem">
+          <Stack gap={8}>
             <Alert
               variant="info"
               title="System Synchronized"
               description="Biometric link established with Sector 7. Review real-time telemetry before core ignition."
             />
 
-            <Stack gap="0.75rem">
-              <Flex align="center" gap="0.5rem">
+            <Stack gap={3}>
+              <Flex align="center" gap={2}>
                 <Activity size={16} />
                 <Text
                   variant="small"
@@ -138,8 +138,8 @@ export const Default: Story = {
               />
             </Stack>
 
-            <Stack gap="1rem">
-              <Flex align="center" gap="0.5rem">
+            <Stack gap={4}>
+              <Flex align="center" gap={2}>
                 <Command size={16} />
                 <Text
                   variant="small"
@@ -153,8 +153,8 @@ export const Default: Story = {
                 </Text>
               </Flex>
               <Card style={{ padding: "var(--spacing-md)" }}>
-                <Stack gap="1rem">
-                  <Stack gap="0.5rem">
+                <Stack gap={4}>
+                  <Stack gap={2}>
                     <Text variant="small" color="muted">
                       Encryption Sub-Key
                     </Text>
@@ -163,7 +163,7 @@ export const Default: Story = {
                       defaultValue="X77-RADIATION-VOID"
                     />
                   </Stack>
-                  <Flex gap="0.5rem" wrap="wrap">
+                  <Flex gap={2} wrap="wrap">
                     <Badge variant="secondary">Sector 01</Badge>
                     <Badge variant="secondary">Sector 02</Badge>
                     <Badge variant="primary">Ignition Zone</Badge>
@@ -172,8 +172,8 @@ export const Default: Story = {
               </Card>
             </Stack>
 
-            <Stack gap="0.75rem">
-              <Flex align="center" gap="0.5rem">
+            <Stack gap={3}>
+              <Flex align="center" gap={2}>
                 <Terminal size={16} />
                 <Text
                   variant="small"
@@ -220,7 +220,7 @@ export const Solid: Story = {
     return (
       <Flex justify="center" align="center" style={{ height: "200px" }}>
         <Button variant="primary" onClick={() => setOpen(true)}>
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <Activity size={18} />
             View Deployment Summary
           </Flex>
@@ -232,7 +232,7 @@ export const Solid: Story = {
           onClose={() => setOpen(false)}
           title="Deployment: Phase-IV Complete"
           footer={
-            <Stack gap="1rem" style={{ width: "100%" }}>
+            <Stack gap={4} style={{ width: "100%" }}>
               <Button
                 variant="primary"
                 style={{ width: "100%" }}
@@ -250,8 +250,8 @@ export const Solid: Story = {
             </Stack>
           }
         >
-          <Stack gap="2.5rem">
-            <Stack gap="1rem">
+          <Stack gap={10}>
+            <Stack gap={4}>
               <Text
                 variant="h3"
                 weight="black"
@@ -278,8 +278,8 @@ export const Solid: Story = {
                 padding: "1.5rem",
               }}
             >
-              <Stack gap="1.5rem">
-                <Stack gap="0.5rem">
+              <Stack gap={6}>
+                <Stack gap={2}>
                   <Text
                     weight="black"
                     style={{
@@ -306,7 +306,7 @@ export const Solid: Story = {
                     </Text>
                   </Flex>
                 </Stack>
-                <Flex align="center" gap="0.5rem" wrap="wrap">
+                <Flex align="center" gap={2} wrap="wrap">
                   <Badge variant="secondary">us-east-1</Badge>
                   <Badge variant="secondary">eu-west-2</Badge>
                   <Badge variant="secondary">ap-south-1</Badge>
@@ -314,7 +314,7 @@ export const Solid: Story = {
               </Stack>
             </Card>
 
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text
                 variant="small"
                 weight="bold"

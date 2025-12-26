@@ -42,7 +42,7 @@ export const Default: Story = {
             </>
           }
         >
-          <Stack gap="var(--spacing-md)">
+          <Stack gap={4}>
             <Text>
               This is a simple modal demonstration using our neubrutalist design
               system.
@@ -83,7 +83,7 @@ export const FeedbackForm: Story = {
             </>
           }
         >
-          <Stack gap="var(--spacing-lg)">
+          <Stack gap={6}>
             <Text>
               Help us improve! Your feedback helps us build better products.
             </Text>
@@ -121,7 +121,7 @@ export const CustomComposition: Story = {
             </Text>
           </ModalHeader>
           <ModalBody>
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text>
                 This modal is built by composing <code>ModalHeader</code>,{" "}
                 <code>ModalBody</code>, and <code>ModalFooter</code> manually
@@ -165,7 +165,7 @@ export const SolidVariant: Story = {
             </Text>
           </ModalHeader>
           <ModalBody>
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text>
                 This modal uses the <code>variant="solid"</code> prop to create
                 a unified, high-impact look.

@@ -1,3 +1,5 @@
+@use "sass:map";
+
 @mixin base-interactive {
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
@@ -80,8 +82,8 @@ $breakpoints: (
 
 @mixin mq($breakpoint, $type: "min") {
   $width: $breakpoint;
-  @if map-has-key($breakpoints, $breakpoint) {
-    $width: map-get($breakpoints, $breakpoint);
+  @if map.has-key($breakpoints, $breakpoint) {
+    $width: map.get($breakpoints, $breakpoint);
   }
 
   @media (#{$type}-width: $width) {

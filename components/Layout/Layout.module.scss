@@ -8,6 +8,40 @@
   display: flex;
 }
 
+// --- Directions ---
+.direction-row {
+  flex-direction: row;
+}
+
+.direction-column {
+  flex-direction: column;
+}
+
+.direction-row-reverse {
+  flex-direction: row-reverse;
+}
+
+.direction-column-reverse {
+  flex-direction: column-reverse;
+}
+
+// --- Justify Content ---
+$justify-values: "flex-start", "flex-end", "center", "space-between",
+  "space-around", "space-evenly";
+@each $val in $justify-values {
+  .justify-#{$val} {
+    justify-content: #{$val};
+  }
+}
+
+// --- Align Items ---
+$align-values: "flex-start", "flex-end", "center", "stretch", "baseline";
+@each $val in $align-values {
+  .align-#{$val} {
+    align-items: #{$val};
+  }
+}
+
 .container {
   width: 100%;
   margin-left: auto;
@@ -34,33 +68,32 @@
 
 .switcher {
   display: flex;
-  flex-direction: row;
 
   &.switch-xxs {
     @include mq("xxs", "max") {
       flex-direction: column;
-      align-items: flex-start !important; // Force start alignment when stacked
+      align-items: flex-start;
     }
   }
 
   &.switch-xs {
     @include mq("xs", "max") {
       flex-direction: column;
-      align-items: flex-start !important;
+      align-items: flex-start;
     }
   }
 
   &.switch-sm {
     @include mq("sm", "max") {
       flex-direction: column;
-      align-items: flex-start !important;
+      align-items: flex-start;
     }
   }
 
   &.switch-md {
     @include mq("md", "max") {
       flex-direction: column;
-      align-items: flex-start !important;
+      align-items: flex-start;
     }
   }
 }

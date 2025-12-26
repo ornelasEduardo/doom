@@ -23,20 +23,20 @@ export const Default: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <Flex gap="2rem" align="center">
-      <Stack align="center" gap="0.5rem">
+    <Flex gap={8} align="center">
+      <Stack align="center" gap={2}>
         <Spinner size="sm" />
         <Text variant="small">Small</Text>
       </Stack>
-      <Stack align="center" gap="0.5rem">
+      <Stack align="center" gap={2}>
         <Spinner size="md" />
         <Text variant="small">Medium</Text>
       </Stack>
-      <Stack align="center" gap="0.5rem">
+      <Stack align="center" gap={2}>
         <Spinner size="lg" />
         <Text variant="small">Large</Text>
       </Stack>
-      <Stack align="center" gap="0.5rem">
+      <Stack align="center" gap={2}>
         <Spinner size="xl" />
         <Text variant="small">Extra Large</Text>
       </Stack>

@@ -19,7 +19,7 @@ export const Default: Story = {
       const { toastSuccess, toastError, toastWarning, toastInfo } = useToast();
 
       return (
-        <Flex gap="1rem" wrap>
+        <Flex gap={4} wrap="wrap">
           <Button
             variant="success"
             onClick={() => toastSuccess("Operation successful!")}

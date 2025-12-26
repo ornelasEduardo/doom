@@ -48,7 +48,7 @@ export const RightSideWithFooter: Story = {
     return (
       <>
         <Button onClick={() => setOpen(true)} variant="primary">
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <User size={18} />
             View Account
           </Flex>
@@ -68,22 +68,22 @@ export const RightSideWithFooter: Story = {
             </Button>
           }
         >
-          <Stack gap="2rem">
-            <Flex direction="column" align="center" gap="1rem">
+          <Stack gap={8}>
+            <Flex direction="column" align="center" gap={4}>
               <Avatar fallback="PP" size="xl" shape="circle" />
-              <Stack gap="0.25rem" style={{ textAlign: "center" }}>
+              <Stack gap={1} style={{ textAlign: "center" }}>
                 <Text variant="h4" weight="bold">
                   Peter Parker
                 </Text>
                 <Text color="muted">Lead Technical Researcher</Text>
               </Stack>
-              <Flex gap="0.5rem">
+              <Flex gap={2}>
                 <Badge variant="success">Active</Badge>
                 <Badge variant="primary">Pro Plan</Badge>
               </Flex>
             </Flex>
 
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text
                 variant="small"
                 weight="bold"
@@ -92,7 +92,7 @@ export const RightSideWithFooter: Story = {
               >
                 Performance Metrics
               </Text>
-              <Stack gap="0.5rem">
+              <Stack gap={2}>
                 <Flex justify="space-between">
                   <Text variant="small">Project Completion</Text>
                   <Text variant="small" weight="bold">
@@ -101,7 +101,7 @@ export const RightSideWithFooter: Story = {
                 </Flex>
                 <ProgressBar value={92} height="12px" color="var(--primary)" />
               </Stack>
-              <Stack gap="0.5rem">
+              <Stack gap={2}>
                 <Flex justify="space-between">
                   <Text variant="small">Code Quality Score</Text>
                   <Text variant="small" weight="bold">
@@ -116,7 +116,7 @@ export const RightSideWithFooter: Story = {
               </Stack>
             </Stack>
 
-            <Stack gap="0.75rem">
+            <Stack gap={3}>
               <Text
                 variant="small"
                 weight="bold"
@@ -152,7 +152,7 @@ export const Default: Story = {
     return (
       <>
         <Button onClick={() => setOpen(true)} variant="primary">
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <Settings2 size={18} />
             User Settings
           </Flex>
@@ -163,8 +163,8 @@ export const Default: Story = {
           onClose={() => setOpen(false)}
           title="Settings"
         >
-          <Stack gap="1.5rem">
-            <Stack gap="1rem">
+          <Stack gap={6}>
+            <Stack gap={4}>
               <Text
                 variant="small"
                 weight="bold"
@@ -185,7 +185,7 @@ export const Default: Story = {
               <Slider label="Interface Scale" defaultValue={100} />
             </Stack>
 
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text
                 variant="small"
                 weight="bold"
@@ -195,7 +195,7 @@ export const Default: Story = {
                 Preferences
               </Text>
               <Flex align="center" justify="space-between">
-                <Stack gap="0">
+                <Stack gap={0}>
                   <Text weight="medium">Push Notifications</Text>
                   <Text variant="small" color="muted">
                     Receive desktop alerts
@@ -207,7 +207,7 @@ export const Default: Story = {
                 />
               </Flex>
               <Flex align="center" justify="space-between">
-                <Stack gap="0">
+                <Stack gap={0}>
                   <Text weight="medium">Dark Mode</Text>
                   <Text variant="small" color="muted">
                     Use high-contrast theme
@@ -229,7 +229,7 @@ export const LeftSide: Story = {
     return (
       <>
         <Button onClick={() => setOpen(true)} variant="primary">
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <Bell size={18} />
             Notifications
           </Flex>
@@ -241,7 +241,7 @@ export const LeftSide: Story = {
           onClose={() => setOpen(false)}
           title="Activity Feed"
         >
-          <Stack gap="1rem" style={{ margin: "-1rem" }}>
+          <Stack gap={4} style={{ margin: "-1rem" }}>
             <ActionRow
               icon={<Shield size={20} style={{ color: "black" }} />}
               title="Identity Verified"
@@ -275,7 +275,7 @@ export const SolidVariant: Story = {
     return (
       <>
         <Button onClick={() => setOpen(true)} variant="primary">
-          <Flex align="center" gap="0.5rem">
+          <Flex align="center" gap={2}>
             <Shield size={18} />
             Security Overview
           </Flex>
@@ -292,9 +292,9 @@ export const SolidVariant: Story = {
             </Button>
           }
         >
-          <Stack gap="1.5rem">
+          <Stack gap={6}>
             <Stack
-              gap="0.25rem"
+              gap={1}
               style={{
                 padding: "1rem",
                 border: "2px solid currentColor",
@@ -309,7 +309,7 @@ export const SolidVariant: Story = {
               </Text>
             </Stack>
 
-            <Stack gap="1rem">
+            <Stack gap={4}>
               <Text
                 variant="small"
                 weight="bold"
@@ -323,7 +323,7 @@ export const SolidVariant: Story = {
               </Text>
             </Stack>
 
-            <Flex gap="1rem">
+            <Flex gap={4}>
               <Button variant="primary">Run Diagnostic</Button>
               <Button variant="ghost">View Action Logs</Button>
             </Flex>

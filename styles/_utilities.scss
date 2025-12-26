@@ -324,7 +324,10 @@ body {
 
       // Spacing (Simplified for responsive to avoid bloat)
       @for $i from 0 through 8 {
-        $val: if($i == 0, 0, #{$i * 0.25}rem);
+        $val: #{$i * 0.25}rem;
+        @if $i == 0 {
+          $val: 0;
+        }
         .#{$bp-name}\:p-#{$i} {
           padding: $val;
         }

@@ -50,7 +50,7 @@ export const Text: Story = {
 export const CardLoading: Story = {
   render: () => (
     <Card style={{ width: "350px" }}>
-      <Flex gap="1rem" align="center" style={{ marginBottom: "1rem" }}>
+      <Flex gap={4} align="center" style={{ marginBottom: "1rem" }}>
         <Skeleton variant="circular" width="48px" height="48px" />
         <div style={{ flex: 1 }}>
           <Skeleton

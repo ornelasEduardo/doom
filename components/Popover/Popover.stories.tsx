@@ -33,7 +33,7 @@ export const Default: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Popover Content</Text>
                   <Text variant="small">
                     This is some content inside the popover.
@@ -57,7 +57,7 @@ export const Placements: Story = {
     return (
       <Page>
         <Flex align="center" justify="center" style={{ minHeight: "400px" }}>
-          <Flex gap="2rem">
+          <Flex gap={8}>
             <Popover
               placement="bottom-start"
               isOpen={isOpen1}
@@ -69,7 +69,7 @@ export const Placements: Story = {
               }
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
-                  <Stack gap="0.5rem">
+                  <Stack gap={2}>
                     <Text weight="bold">Popover Content</Text>
                     <Text variant="small">Aligned to the start.</Text>
                   </Stack>
@@ -87,7 +87,7 @@ export const Placements: Story = {
               }
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
-                  <Stack gap="0.5rem">
+                  <Stack gap={2}>
                     <Text weight="bold">Popover Content</Text>
                     <Text variant="small">Centered alignment.</Text>
                   </Stack>
@@ -103,7 +103,7 @@ export const Placements: Story = {
               }
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
-                  <Stack gap="0.5rem">
+                  <Stack gap={2}>
                     <Text weight="bold">Popover Content</Text>
                     <Text variant="small">Aligned to the end.</Text>
                   </Stack>
@@ -136,7 +136,7 @@ export const EdgeDetection: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Edge Detection</Text>
                   <Text variant="small">
                     Flips down when too close to top edge.
@@ -155,7 +155,7 @@ export const EdgeDetection: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Edge Detection</Text>
                   <Text variant="small">Flips down and left when needed.</Text>
                 </Stack>
@@ -172,7 +172,7 @@ export const EdgeDetection: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Edge Detection</Text>
                   <Text variant="small">
                     Flips up when too close to bottom edge.
@@ -191,7 +191,7 @@ export const EdgeDetection: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Edge Detection</Text>
                   <Text variant="small">Flips up and left when needed.</Text>
                 </Stack>
@@ -215,7 +215,7 @@ export const EdgeDetection: Story = {
             }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
-                <Stack gap="0.5rem">
+                <Stack gap={2}>
                   <Text weight="bold">Edge Detection</Text>
                   <Text variant="small">
                     Scroll to edges to see flipping behavior!

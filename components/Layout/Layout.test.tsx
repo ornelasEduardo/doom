@@ -38,10 +38,10 @@ describe("Layout Components", () => {
         </Flex>
       );
       const element = screen.getByTestId("flex-styled");
+      expect(element).toHaveClass(/direction-column/);
+      expect(element).toHaveClass(/justify-center/);
+      expect(element).toHaveClass(/align-center/);
       expect(element).toHaveStyle({
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
         gap: "1.25rem",
       });
     });
@@ -75,9 +75,7 @@ describe("Layout Components", () => {
     it("renders as a vertical flex by default", () => {
       render(<Stack data-testid="stack-default">Stack Content</Stack>);
       const element = screen.getByTestId("stack-default");
-      expect(element).toHaveStyle({
-        flexDirection: "column",
-      });
+      expect(element).toHaveClass(/direction-column/);
     });
 
     it("allows overriding direction", () => {
@@ -87,9 +85,7 @@ describe("Layout Components", () => {
         </Stack>
       );
       const element = screen.getByTestId("stack-row");
-      expect(element).toHaveStyle({
-        flexDirection: "row",
-      });
+      expect(element).toHaveClass(/direction-row/);
     });
   });
 

@@ -62,15 +62,15 @@ export const SuccessVariant: Story = {
 export const InsideCard: Story = {
   render: () => (
     <Card style={{ width: "600px" }}>
-      <Stack gap="var(--spacing-md)">
-        <Stack gap="var(--spacing-xs)">
+      <Stack gap={4}>
+        <Stack gap={1}>
           <Text weight="bold">Attached Files</Text>
           <Text variant="small" style={{ color: "var(--muted-foreground)" }}>
             Documents for review
           </Text>
         </Stack>
 
-        <Stack gap="var(--spacing-sm)">
+        <Stack gap={2}>
           <Slat
             label="contract_v2.pdf"
             secondaryLabel="2.4 MB"

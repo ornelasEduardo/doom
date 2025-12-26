@@ -65,7 +65,7 @@ export const Secondary: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <Flex gap="1rem" align="center">
+    <Flex gap={4} align="center">
       <Badge size="sm">Small</Badge>
       <Badge size="md">Medium</Badge>
       <Badge size="lg">Large</Badge>

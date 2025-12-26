@@ -69,35 +69,35 @@ export const ProjectDashboard: Story = {
     <div style={{ width: "500px" }}>
       <Accordion {...args} type="single" defaultValue="item-1">
         <AccordionItem value="item-1" trigger="Mission Brief">
-          <Stack gap="1rem">
+          <Stack gap={4}>
             <Text>
               Objective: Secure the perimeter and establish a forward operating
               base. All agents are authorized to use necessary force.
             </Text>
-            <Stack direction="row" gap="0.5rem">
+            <Stack direction="row" gap={2}>
               <Badge variant="warning">Classified</Badge>
               <Badge variant="error">High Priority</Badge>
             </Stack>
           </Stack>
         </AccordionItem>
         <AccordionItem value="item-2" trigger="Active Squadron">
-          <Stack gap="1rem">
+          <Stack gap={4}>
             <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap="1rem" align="center">
+              <Stack direction="row" gap={4} align="center">
                 <Avatar fallback="DD" size="sm" />
                 <Text>Daredevil</Text>
               </Stack>
               <Badge variant="success">Online</Badge>
             </Stack>
             <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap="1rem" align="center">
+              <Stack direction="row" gap={4} align="center">
                 <Avatar fallback="SM" size="sm" />
                 <Text>Spiderman</Text>
               </Stack>
               <Badge variant="success">Online</Badge>
             </Stack>
             <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap="1rem" align="center">
+              <Stack direction="row" gap={4} align="center">
                 <Avatar fallback="RO" size="sm" />
                 <Text>Rogue</Text>
               </Stack>
@@ -106,7 +106,7 @@ export const ProjectDashboard: Story = {
           </Stack>
         </AccordionItem>
         <AccordionItem value="item-3" trigger="System Status">
-          <Stack gap="1rem">
+          <Stack gap={4}>
             <Stack direction="row" justify="space-between">
               <Text>Mainframe</Text>
               <Badge variant="success">Operational</Badge>
