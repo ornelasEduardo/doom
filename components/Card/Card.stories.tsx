@@ -56,8 +56,8 @@ export const WithImage: Story = {
     <Card className="w-full p-0" style={{ overflow: "hidden" }}>
       <Stack gap={0}>
         <Image
-          src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=300&h=450&q=80"
-          alt="Forest Path"
+          src="https://picsum.photos/600/500"
+          alt="Randomly generated image from picsum"
           fit="cover"
           rounded={false}
           style={{
@@ -72,7 +72,7 @@ export const WithImage: Story = {
             </Text>
           </Flex>
           <Text variant="h3" className="mb-0">
-            Nature Card
+            Randomly image Card
           </Text>
           <Text>
             Cards are excellent containers for showcasing images alongside
@@ -83,10 +83,10 @@ export const WithImage: Story = {
               Photography
             </Badge>
             <Badge variant="success" size="sm">
-              Nature
+              Random
             </Badge>
             <Badge variant="secondary" size="sm">
-              Travel
+              What could it be?
             </Badge>
           </Flex>
         </Stack>
@@ -108,8 +108,8 @@ export const ImageOnly: Story = {
     style: { overflow: "hidden" },
     children: (
       <Image
-        src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=300&h=450&q=80"
-        alt="Forest Path"
+        src="https://picsum.photos/300/450"
+        alt="Randomly generated image from picsum"
         fit="cover"
         rounded={false}
         style={{

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import clsx from "clsx";
 import styles from "./Image.module.scss";
-
 import { Skeleton } from "../Skeleton/Skeleton";
 
 export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -24,74 +23,130 @@ export function Image({
   fallbackSrc,
   aspectRatio,
   rounded = true,
+  width,
+  height,
   ...props
 }: ImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [showSkeleton, setShowSkeleton] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [status, setStatus] = useState<"loading" | "loaded" | "error">(
+    "loading"
+  );
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
+  // Helper to extract intrinsic numeric value and convert to CSS
+  const toCssValue = (val: string | number | undefined) => {
+    if (val === undefined || val === null) return undefined;
+    if (typeof val === "number") return `${val}px`;
+    return val;
+  };
+
+  const getIntrinsicSize = (
+    val: string | number | undefined
+  ): number | undefined => {
+    if (typeof val === "number") return val;
+    if (typeof val === "string" && !val.endsWith("%")) {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? undefined : parsed;
+    }
+    return undefined;
+  };
+
+  const computedAspectRatio = React.useMemo(() => {
+    if (aspectRatio) return aspectRatio;
+    const w = getIntrinsicSize(width);
+    const h = getIntrinsicSize(height);
+    return w && h ? `${w} / ${h}` : undefined;
+  }, [aspectRatio, width, height]);
+
+  // Reset state when source changes
   useEffect(() => {
-    setIsLoaded(false);
-    setHasError(false);
-    setShowSkeleton(false);
-
-    if (timerRef.current) clearTimeout(timerRef.current);
-
-    timerRef.current = setTimeout(() => {
-      setShowSkeleton(true);
-    }, 150);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    setStatus("loading");
+    setShowSkeleton(true);
   }, [src]);
 
-  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsLoaded(true);
-    onLoad?.(e);
-  };
-
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    if (fallbackSrc && !hasError) {
-      setHasError(true);
-      return;
+  // When loaded, keep skeleton for a moment to allow cross-fade
+  useEffect(() => {
+    if (status === "loaded") {
+      const timer = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 500); // 500ms delay to allow image to fade in completely
+      return () => clearTimeout(timer);
     }
+  }, [status]);
 
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setIsLoaded(true);
-    onError?.(e);
-  };
+  const handleLoad = useCallback(
+    async (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      onLoad?.(e);
+      const img = e.currentTarget;
+      try {
+        if (img.decode) {
+          await img.decode();
+        }
+      } catch (error) {
+        // ignore decode errors (e.g. invalid image data)
+      } finally {
+        setStatus("loaded");
+      }
+    },
+    [onLoad]
+  );
+
+  const handleError = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      if (fallbackSrc && status !== "error") {
+        // Prevents infinite loop if fallback also fails
+        if (e.currentTarget.src !== fallbackSrc) {
+          e.currentTarget.src = fallbackSrc;
+          return;
+        }
+      }
+      setStatus("error");
+      setShowSkeleton(false); // Remove skeleton immediately on error to show broken image icon or alt
+      onError?.(e);
+    },
+    [fallbackSrc, status, onError]
+  );
 
   return (
     <div
       className={clsx(styles.wrapper, rounded && styles.rounded, className)}
-      style={{ aspectRatio, ...style }}
+      style={{
+        aspectRatio: computedAspectRatio,
+        width: toCssValue(width),
+        height: toCssValue(height),
+        ...style,
+      }}
     >
-      {!isLoaded && showSkeleton && (
-        <Skeleton
-          className={styles.skeleton}
-          style={{
-            position: "absolute",
-            inset: 0,
-            height: "100%",
-            width: "100%",
-          }}
-        />
-      )}
+      {/* Skeleton Layer */}
+      <div
+        className={clsx(
+          styles.skeletonLayer,
+          status === "loaded" && styles.fadeOut
+        )}
+        aria-hidden="true"
+      >
+        {showSkeleton && (
+          <Skeleton
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          />
+        )}
+      </div>
+
+      {/* Image Layer */}
       <img
-        src={hasError ? fallbackSrc : src}
+        src={src}
         alt={alt}
         className={clsx(
           styles.image,
           fit && styles[`fit-${fit}`],
-          showSkeleton && styles["with-transition"]
+          status === "loaded" ? styles.visible : styles.hidden
         )}
         onLoad={handleLoad}
         onError={handleError}
-        data-loaded={isLoaded ? "true" : "false"}
-        style={{ width: "100%", height: "100%" }}
+        width={width}
+        height={height}
         {...props}
       />
     </div>
