@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import clsx from "clsx";
 import styles from "./Image.module.scss";
 import { Skeleton } from "../Skeleton/Skeleton";
@@ -57,10 +57,15 @@ export function Image({
     return w && h ? `${w} / ${h}` : undefined;
   }, [aspectRatio, width, height]);
 
+  const prevSrcRef = useRef(src);
+
   // Reset state when source changes
   useEffect(() => {
-    setStatus("loading");
-    setShowSkeleton(true);
+    if (prevSrcRef.current !== src) {
+      setStatus("loading");
+      setShowSkeleton(true);
+      prevSrcRef.current = src;
+    }
   }, [src]);
 
   // When loaded, keep skeleton for a moment to allow cross-fade
