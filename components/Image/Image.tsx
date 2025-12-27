@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import clsx from "clsx";
 import styles from "./Image.module.scss";
 import { Skeleton } from "../Skeleton/Skeleton";
@@ -11,6 +17,23 @@ export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   aspectRatio?: string | number;
   rounded?: boolean;
 }
+
+const toCssValue = (val: string | number | undefined) => {
+  if (val === undefined || val === null) return undefined;
+  if (typeof val === "number") return `${val}px`;
+  return val;
+};
+
+const getIntrinsicSize = (
+  val: string | number | undefined
+): number | undefined => {
+  if (typeof val === "number") return val;
+  if (typeof val === "string" && !val.endsWith("%")) {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? undefined : parsed;
+  }
+  return undefined;
+};
 
 export function Image({
   src,
@@ -32,25 +55,7 @@ export function Image({
   );
   const [showSkeleton, setShowSkeleton] = useState(true);
 
-  // Helper to extract intrinsic numeric value and convert to CSS
-  const toCssValue = (val: string | number | undefined) => {
-    if (val === undefined || val === null) return undefined;
-    if (typeof val === "number") return `${val}px`;
-    return val;
-  };
-
-  const getIntrinsicSize = (
-    val: string | number | undefined
-  ): number | undefined => {
-    if (typeof val === "number") return val;
-    if (typeof val === "string" && !val.endsWith("%")) {
-      const parsed = parseFloat(val);
-      return isNaN(parsed) ? undefined : parsed;
-    }
-    return undefined;
-  };
-
-  const computedAspectRatio = React.useMemo(() => {
+  const computedAspectRatio = useMemo(() => {
     if (aspectRatio) return aspectRatio;
     const w = getIntrinsicSize(width);
     const h = getIntrinsicSize(height);
@@ -58,6 +63,13 @@ export function Image({
   }, [aspectRatio, width, height]);
 
   const prevSrcRef = useRef(src);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setStatus("loaded");
+    }
+  }, []);
 
   // Reset state when source changes
   useEffect(() => {
@@ -141,6 +153,7 @@ export function Image({
 
       {/* Image Layer */}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         className={clsx(
