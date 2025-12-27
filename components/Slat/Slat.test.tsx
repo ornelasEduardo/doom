@@ -70,4 +70,21 @@ describe("Slat", () => {
     expect(screen.getByTestId("complex-label")).toBeInTheDocument();
     expect(screen.getByTestId("complex-sub")).toBeInTheDocument();
   });
+
+  it("supports keyboard interactions", () => {
+    const handleClick = vi.fn();
+    render(
+      <Slat label="Keyboard" onClick={handleClick} data-testid="slat-kb" />
+    );
+    const slat = screen.getByTestId("slat-kb");
+
+    expect(slat).toHaveAttribute("role", "button");
+    expect(slat).toHaveAttribute("tabIndex", "0");
+
+    fireEvent.keyDown(slat, { key: "Enter" });
+    expect(handleClick).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(slat, { key: " " });
+    expect(handleClick).toHaveBeenCalledTimes(2);
+  });
 });

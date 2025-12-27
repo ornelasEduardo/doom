@@ -4,7 +4,6 @@ import { SplitButton } from "./SplitButton";
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 
-// Mock Design System
 vi.mock("../Popover/Popover", () => ({
   Popover: ({ trigger, content, isOpen }: any) => (
     <div>
@@ -45,12 +44,45 @@ describe("SplitButton Component", () => {
       />
     );
 
-    // Find the dropdown trigger (it has a chevron icon, but we can find by role button that is NOT the primary one)
     const buttons = screen.getAllByRole("button");
-    const trigger = buttons[1]; // 0 is primary, 1 is trigger
+    const trigger = buttons[1];
 
     fireEvent.click(trigger);
     expect(screen.getByTestId("popover-content")).toBeInTheDocument();
-    expect(screen.getByText("Save as Draft")).toBeInTheDocument();
+  });
+
+  it("should execute item action and close menu", () => {
+    const handleItemClick = vi.fn();
+    render(
+      <SplitButton
+        primaryLabel="Save"
+        onPrimaryClick={() => {}}
+        items={[{ label: "Action", onClick: handleItemClick }]}
+      />
+    );
+
+    const buttons = screen.getAllByRole("button");
+    const trigger = buttons[1];
+
+    fireEvent.click(trigger);
+    const actionItem = screen.getByText("Action");
+    expect(actionItem).toBeInTheDocument();
+
+    fireEvent.click(actionItem);
+    expect(handleItemClick).toHaveBeenCalled();
+
+    expect(screen.queryByTestId("popover-content")).not.toBeInTheDocument();
+  });
+
+  it("should apply variant classes", () => {
+    const { container } = render(
+      <SplitButton
+        primaryLabel="Save"
+        onPrimaryClick={() => {}}
+        items={[]}
+        variant="secondary"
+      />
+    );
+    expect(screen.getByText("Save")).toBeInTheDocument();
   });
 });

@@ -4,7 +4,6 @@ import { Select } from "./Select";
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 
-// Mock next/font/google
 vi.mock("next/font/google", () => ({
   Montserrat: () => ({
     style: { fontFamily: "mocked" },
@@ -13,8 +12,6 @@ vi.mock("next/font/google", () => ({
   }),
 }));
 
-// Mock Popover since it might be complex or rely on portals
-// Mock Popover since it might be complex or rely on portals
 vi.mock("../Popover/Popover", () => ({
   Popover: ({ trigger, content, isOpen }: any) => (
     <div>
@@ -39,10 +36,10 @@ describe("Select Component", () => {
     const { container } = render(<Select options={options} id="my-select" />);
 
     const trigger = screen.getByRole("combobox");
+
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveAttribute("aria-haspopup", "listbox");
 
-    // aria-controls should NOT be present when closed to avoid referencing non-existent element
     expect(trigger).not.toHaveAttribute("aria-controls");
 
     fireEvent.click(trigger);
@@ -51,7 +48,6 @@ describe("Select Component", () => {
     expect(trigger).toHaveAttribute("aria-controls", "my-select-listbox");
     expect(screen.getByTestId("popover-content")).toBeInTheDocument();
 
-    // Check listbox role inside popover
     expect(screen.getByRole("listbox")).toBeInTheDocument();
   });
 
@@ -75,10 +71,41 @@ describe("Select Component", () => {
     const { container } = render(
       <Select options={options} required name="test-select" />
     );
-    // Select the input that has the name "test-select"
-    // Note: We changed type="hidden" to type="text" with opacity 0, so we query by name
     const input = container.querySelector('input[name="test-select"]');
     expect(input).toHaveAttribute("required");
     expect(input).toHaveAttribute("type", "hidden");
+  });
+
+  it("should handle keyboard navigation", () => {
+    const handleChange = vi.fn();
+    render(<Select options={options} onChange={handleChange} />);
+    const trigger = screen.getByRole("combobox");
+
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    fireEvent.keyDown(trigger, { key: "ArrowUp" });
+
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    expect(handleChange).toHaveBeenCalled();
+  });
+
+  it("should close on Escape", () => {
+    render(<Select options={options} />);
+    const trigger = screen.getByRole("combobox");
+
+    fireEvent.click(trigger);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("should be disabled when prop is set", () => {
+    render(<Select options={options} disabled />);
+    const trigger = screen.getByRole("combobox");
+
+    expect(trigger).toBeDisabled();
   });
 });
