@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import styles from "./Link.module.scss";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ExternalLink } from "lucide-react";
 
 export type LinkVariant = "default" | "button" | "subtle";
@@ -27,7 +27,7 @@ export function Link({
   onMouseEnter,
   ...props
 }: LinkProps) {
-  const [shouldPrefetch, setShouldPrefetch] = React.useState(false);
+  const [shouldPrefetch, setShouldPrefetch] = useState(false);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (disabled) return;
@@ -44,6 +44,20 @@ export function Link({
     }
     onClick?.(e);
   };
+
+  useEffect(() => {
+    if (shouldPrefetch && props.href && typeof document !== "undefined") {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = props.href;
+      link.as = "document";
+      document.head.appendChild(link);
+
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [shouldPrefetch, props.href]);
 
   const externalProps = isExternal
     ? { target: "_blank", rel: "noopener noreferrer" }
@@ -65,9 +79,6 @@ export function Link({
     >
       {children}
       {isExternal && <ExternalLink size={14} className="ml-1" />}
-      {shouldPrefetch && props.href && (
-        <link rel="prefetch" href={props.href} as="document" />
-      )}
     </a>
   );
 }

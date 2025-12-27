@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Link } from "./Link";
+import { Card } from "../Card/Card";
+import { Text } from "../Text/Text";
+import { Stack } from "../Layout/Layout";
 
 const meta: Meta<typeof Link> = {
   title: "Components/Link",
@@ -65,4 +68,39 @@ export const Disabled: Story = {
     disabled: true,
     children: "Disabled Link",
   },
+};
+
+export const Prefetch: Story = {
+  args: {
+    href: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?auto=format&fit=crop&w=1000&q=80",
+    prefetch: true,
+    children: "Hover to Prefetch Image",
+  },
+  render: (args) => (
+    <Card
+      className="p-5"
+      style={{
+        maxWidth: "400px",
+      }}
+    >
+      <Stack gap={4}>
+        <Stack gap={0}>
+          <Text variant="h5" className="mb-0">
+            Network Tab Demo
+          </Text>
+          <Text>
+            Hovering the link below will dynamically inject a prefetch tag for a
+            high-res image.
+          </Text>
+        </Stack>
+        <Text variant="caption">
+          Open your browser's Network tab (filter by "Other" or "Image") to
+          watch the resource load instantly on hover.
+        </Text>
+        <div>
+          <Link {...args} />
+        </div>
+      </Stack>
+    </Card>
+  ),
 };

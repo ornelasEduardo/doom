@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Link } from "./Link";
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
@@ -33,15 +33,69 @@ describe("Link Component", () => {
 
   it("should handle disabled state", () => {
     const handleClick = vi.fn();
+    const handleMouseEnter = vi.fn();
+
     render(
-      <Link href="#" disabled onClick={handleClick}>
+      <Link
+        href="#"
+        disabled
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+      >
         Disabled
       </Link>
     );
     const link = screen.getByText("Disabled");
 
     expect(link).toHaveAttribute("aria-disabled", "true");
+
     link.click();
     expect(handleClick).not.toHaveBeenCalled();
+
+    fireEvent.mouseEnter(link);
+    expect(handleMouseEnter).not.toHaveBeenCalled();
+  });
+
+  it("should handle prefetch functionality", async () => {
+    const { container } = render(
+      <Link href="/prefetch" prefetch>
+        Prefetch Link
+      </Link>
+    );
+    const link = screen.getByRole("link");
+
+    let prefetchTag = container.querySelector("link[rel='prefetch']");
+    expect(prefetchTag).toBeNull();
+
+    fireEvent.mouseEnter(link);
+
+    await waitFor(() => {
+      const prefetchTag = document.head.querySelector(
+        `link[rel='prefetch'][href='/prefetch']`
+      );
+      expect(prefetchTag).toBeInTheDocument();
+    });
+  });
+
+  it("should call onMouseEnter when not disabled", () => {
+    const handleMouseEnter = vi.fn();
+    render(
+      <Link href="#" onMouseEnter={handleMouseEnter}>
+        Hover Link
+      </Link>
+    );
+    const link = screen.getByRole("link");
+    fireEvent.mouseEnter(link);
+    expect(handleMouseEnter).toHaveBeenCalled();
+  });
+
+  it("should render external icon when isExternal is true", () => {
+    const { container } = render(
+      <Link href="https://example.com" isExternal>
+        External
+      </Link>
+    );
+    const icon = container.querySelector("svg");
+    expect(icon).toBeInTheDocument();
   });
 });
