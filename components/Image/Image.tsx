@@ -1,15 +1,16 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
 import clsx from "clsx";
-import styles from "./Image.module.scss";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import { Skeleton } from "../Skeleton/Skeleton";
+import styles from "./Image.module.scss";
 
 export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fit?: "cover" | "contain" | "fill" | "none" | "scale-down";
@@ -19,15 +20,21 @@ export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 }
 
 const toCssValue = (val: string | number | undefined) => {
-  if (val === undefined || val === null) return undefined;
-  if (typeof val === "number") return `${val}px`;
+  if (val === undefined || val === null) {
+    return undefined;
+  }
+  if (typeof val === "number") {
+    return `${val}px`;
+  }
   return val;
 };
 
 const getIntrinsicSize = (
-  val: string | number | undefined
+  val: string | number | undefined,
 ): number | undefined => {
-  if (typeof val === "number") return val;
+  if (typeof val === "number") {
+    return val;
+  }
   if (typeof val === "string" && !val.endsWith("%")) {
     const parsed = parseFloat(val);
     return isNaN(parsed) ? undefined : parsed;
@@ -51,12 +58,14 @@ export function Image({
   ...props
 }: ImageProps) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    "loading"
+    "loading",
   );
   const [showSkeleton, setShowSkeleton] = useState(true);
 
   const computedAspectRatio = useMemo(() => {
-    if (aspectRatio) return aspectRatio;
+    if (aspectRatio) {
+      return aspectRatio;
+    }
     const w = getIntrinsicSize(width);
     const h = getIntrinsicSize(height);
     return w && h ? `${w} / ${h}` : undefined;
@@ -104,7 +113,7 @@ export function Image({
         setStatus("loaded");
       }
     },
-    [onLoad]
+    [onLoad],
   );
 
   const handleError = useCallback(
@@ -120,7 +129,7 @@ export function Image({
       setShowSkeleton(false); // Remove skeleton immediately on error to show broken image icon or alt
       onError?.(e);
     },
-    [fallbackSrc, status, onError]
+    [fallbackSrc, status, onError],
   );
 
   return (
@@ -135,11 +144,11 @@ export function Image({
     >
       {/* Skeleton Layer */}
       <div
+        aria-hidden="true"
         className={clsx(
           styles.skeletonLayer,
-          status === "loaded" && styles.fadeOut
+          status === "loaded" && styles.fadeOut,
         )}
-        aria-hidden="true"
       >
         {showSkeleton && (
           <Skeleton
@@ -154,17 +163,17 @@ export function Image({
       {/* Image Layer */}
       <img
         ref={imgRef}
-        src={src}
         alt={alt}
         className={clsx(
           styles.image,
           fit && styles[`fit-${fit}`],
-          status === "loaded" ? styles.visible : styles.hidden
+          status === "loaded" ? styles.visible : styles.hidden,
         )}
-        onLoad={handleLoad}
-        onError={handleError}
-        width={width}
         height={height}
+        src={src}
+        width={width}
+        onError={handleError}
+        onLoad={handleLoad}
         {...props}
       />
     </div>

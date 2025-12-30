@@ -1,19 +1,21 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Popover } from "./Popover";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { Popover } from "./Popover";
 import styles from "./Popover.module.scss";
 
 describe("Popover Component", () => {
   it("should render trigger", () => {
     render(
       <Popover
-        isOpen={false}
-        onClose={() => {}}
-        trigger={<button>Trigger</button>}
         content={<div>Content</div>}
-      />
+        isOpen={false}
+        trigger={<button>Trigger</button>}
+        onClose={() => {}}
+      />,
     );
     expect(screen.getByText("Trigger")).toBeInTheDocument();
     expect(screen.queryByText("Content")).not.toBeInTheDocument();
@@ -22,11 +24,11 @@ describe("Popover Component", () => {
   it("should render content when open in a portal", () => {
     const { getByText } = render(
       <Popover
-        isOpen={true}
-        onClose={() => {}}
-        trigger={<button>Trigger</button>}
         content={<div>Content</div>}
-      />
+        isOpen={true}
+        trigger={<button>Trigger</button>}
+        onClose={() => {}}
+      />,
     );
     const content = getByText("Content");
     expect(content).toBeInTheDocument();
@@ -38,11 +40,11 @@ describe("Popover Component", () => {
     const onClose = vi.fn();
     render(
       <Popover
-        isOpen={true}
-        onClose={onClose}
-        trigger={<button>Trigger</button>}
         content={<div>Content</div>}
-      />
+        isOpen={true}
+        trigger={<button>Trigger</button>}
+        onClose={onClose}
+      />,
     );
 
     // Click outside
@@ -54,11 +56,11 @@ describe("Popover Component", () => {
     const onClose = vi.fn();
     render(
       <Popover
-        isOpen={true}
-        onClose={onClose}
-        trigger={<button>Trigger</button>}
         content={<div>Content</div>}
-      />
+        isOpen={true}
+        trigger={<button>Trigger</button>}
+        onClose={onClose}
+      />,
     );
 
     // Click inside
@@ -70,11 +72,11 @@ describe("Popover Component", () => {
     const removeSpy = vi.spyOn(window, "removeEventListener");
     const { unmount } = render(
       <Popover
-        isOpen={true}
-        onClose={() => {}}
-        trigger={<button>Trigger</button>}
         content={<div>Content</div>}
-      />
+        isOpen={true}
+        trigger={<button>Trigger</button>}
+        onClose={() => {}}
+      />,
     );
 
     unmount();
@@ -83,7 +85,7 @@ describe("Popover Component", () => {
     expect(removeSpy).toHaveBeenCalledWith(
       "scroll",
       expect.any(Function),
-      true
+      true,
     );
 
     removeSpy.mockRestore();
@@ -100,7 +102,7 @@ describe("Popover Component", () => {
       // Spy on prototype
       getBoundingClientRectSpy = vi.spyOn(
         HTMLElement.prototype,
-        "getBoundingClientRect"
+        "getBoundingClientRect",
       );
     });
 
@@ -151,16 +153,16 @@ describe("Popover Component", () => {
 
       render(
         <Popover
-          isOpen={true}
-          onClose={() => {}}
-          trigger={<button>Trigger</button>}
           content={<div>Content</div>}
+          isOpen={true}
           placement="bottom-start"
-        />
+          trigger={<button>Trigger</button>}
+          onClose={() => {}}
+        />,
       );
 
       const popover = document.body.querySelector(
-        `.${styles.popover}`
+        `.${styles.popover}`,
       ) as HTMLElement;
       expect(popover).toBeInTheDocument();
       expect(popover.style.left).toBe("784px");
@@ -204,16 +206,16 @@ describe("Popover Component", () => {
 
       render(
         <Popover
-          isOpen={true}
-          onClose={() => {}}
-          trigger={<button>Trigger</button>}
           content={<div>Content</div>}
+          isOpen={true}
           placement="bottom-start"
-        />
+          trigger={<button>Trigger</button>}
+          onClose={() => {}}
+        />,
       );
 
       const popover = document.body.querySelector(
-        `.${styles.popover}`
+        `.${styles.popover}`,
       ) as HTMLElement;
       expect(popover.style.left).toBe("16px");
     });
@@ -260,16 +262,16 @@ describe("Popover Component", () => {
 
       render(
         <Popover
-          isOpen={true}
-          onClose={() => {}}
-          trigger={<button>Trigger</button>}
           content={<div>Content</div>}
+          isOpen={true}
           placement="bottom-start"
-        />
+          trigger={<button>Trigger</button>}
+          onClose={() => {}}
+        />,
       );
 
       const popover = document.body.querySelector(
-        `.${styles.popover}`
+        `.${styles.popover}`,
       ) as HTMLElement;
       expect(popover.style.top).toBe("642px");
     });

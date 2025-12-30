@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import styles from "./Link.module.scss";
-import React, { useState, useEffect } from "react";
 import { ExternalLink } from "lucide-react";
+import React, { useEffect, useState } from "react";
+
+import styles from "./Link.module.scss";
 
 export type LinkVariant = "default" | "button" | "subtle";
 
@@ -30,7 +31,9 @@ export function Link({
   const [shouldPrefetch, setShouldPrefetch] = useState(false);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (disabled) return;
+    if (disabled) {
+      return;
+    }
     if (prefetch && !shouldPrefetch) {
       setShouldPrefetch(true);
     }
@@ -65,20 +68,20 @@ export function Link({
 
   return (
     <a
+      aria-disabled={disabled}
       className={clsx(
         styles.link,
         styles[variant],
         disabled && styles.disabled,
-        className
+        className,
       )}
-      onMouseEnter={handleMouseEnter}
       onClick={handleClick}
-      aria-disabled={disabled}
+      onMouseEnter={handleMouseEnter}
       {...externalProps}
       {...props}
     >
       {children}
-      {isExternal && <ExternalLink size={14} className="ml-1" />}
+      {isExternal && <ExternalLink className="ml-1" size={14} />}
     </a>
   );
 }

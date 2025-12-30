@@ -1,12 +1,14 @@
-import { describe, it, expect } from "vitest";
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it } from "vitest";
+
 import { Avatar } from "./Avatar";
 
 describe("Avatar Component", () => {
   it("renders image when src is valid", () => {
-    render(<Avatar src="valid.jpg" fallback="JD" alt="User Avatar" />);
+    render(<Avatar alt="User Avatar" fallback="JD" src="valid.jpg" />);
     const img = screen.getByRole("img");
     expect(img).toHaveAttribute("src", "valid.jpg");
     expect(img).toHaveAttribute("alt", "User Avatar");
@@ -18,7 +20,7 @@ describe("Avatar Component", () => {
   });
 
   it("renders fallback when image errors", () => {
-    render(<Avatar src="invalid.jpg" fallback="ER" />);
+    render(<Avatar fallback="ER" src="invalid.jpg" />);
     const img = screen.getByRole("img");
 
     // Simulate error

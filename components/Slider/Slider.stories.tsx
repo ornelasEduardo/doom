@@ -1,5 +1,6 @@
-import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
+import React, { useState } from "react";
+
 import { Slider } from "./Slider";
 
 const meta: Meta<typeof Slider> = {
@@ -32,10 +33,10 @@ export const Controlled: Story = {
 
     return (
       <Slider
+        showValue
         label="Controlled Value"
         value={val}
         onChange={(v) => setVal(v)} // Simple pass through
-        showValue
       />
     );
   },
@@ -46,12 +47,12 @@ export const Range: Story = {
     const [range, setRange] = useState<number | [number, number]>([20, 80]);
     return (
       <Slider
+        showValue
         label="Power Distribution (kV)"
+        max={100}
+        min={0}
         value={range}
         onChange={setRange}
-        showValue
-        min={0}
-        max={100}
       />
     );
   },

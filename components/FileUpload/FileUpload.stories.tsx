@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { FileUpload } from "./FileUpload";
 import { useState } from "react";
+
+import { FileUpload } from "./FileUpload";
 
 const meta: Meta<typeof FileUpload> = {
   title: "Components/FileUpload",
@@ -31,8 +32,8 @@ export const WithHelperText: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Profile Picture"
           helperText="Upload a profile picture. Recommended size: 400x400px"
+          label="Profile Picture"
           onChange={setFiles}
         />
       </div>
@@ -46,10 +47,10 @@ export const WithFileTypeRestriction: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Upload Images"
           accept="image/*"
-          onChange={setFiles}
           helperText="Only image files are accepted"
+          label="Upload Images"
+          onChange={setFiles}
         />
       </div>
     );
@@ -62,11 +63,11 @@ export const WithSizeLimit: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Upload Document"
           accept=".pdf,.doc,.docx"
+          helperText="Only PDF, DOC, and DOCX files are accepted. Maximum size: 5MB"
+          label="Upload Document"
           maxSize={5 * 1024 * 1024} // 5MB
           onChange={setFiles}
-          helperText="Only PDF, DOC, and DOCX files are accepted. Maximum size: 5MB"
         />
       </div>
     );
@@ -79,10 +80,10 @@ export const MultipleFiles: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Upload Multiple Files"
           multiple
-          onChange={setFiles}
           helperText="You can select or drag multiple files"
+          label="Upload Multiple Files"
+          onChange={setFiles}
         />
       </div>
     );
@@ -95,10 +96,10 @@ export const Required: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Required Upload"
           required
-          onChange={setFiles}
           helperText="This field is required"
+          label="Required Upload"
+          onChange={setFiles}
         />
       </div>
     );
@@ -111,10 +112,10 @@ export const WithError: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Upload Resume"
-          onChange={setFiles}
           error
           errorMessage="Please upload a valid file"
+          label="Upload Resume"
+          onChange={setFiles}
         />
       </div>
     );
@@ -124,7 +125,7 @@ export const WithError: Story = {
 export const Disabled: Story = {
   render: () => (
     <div style={{ width: "600px", maxWidth: "95vw" }}>
-      <FileUpload label="Disabled Upload" disabled />
+      <FileUpload disabled label="Disabled Upload" />
     </div>
   ),
 };
@@ -138,10 +139,10 @@ export const WithPreselectedFiles: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Edit Attachments"
-          defaultFiles={[mockFile]}
           multiple
+          defaultFiles={[mockFile]}
           helperText="You can add more files or remove existing ones"
+          label="Edit Attachments"
         />
       </div>
     );
@@ -161,11 +162,11 @@ export const WithPreview: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Image Gallery Upload"
+          multiple
           showPreview
           defaultFiles={[mockImage, mockDoc]}
-          multiple
           helperText="Images will show a thumbnail preview"
+          label="Image Gallery Upload"
         />
       </div>
     );
@@ -178,8 +179,8 @@ export const UploadingState: Story = {
     return (
       <div style={{ width: "600px", maxWidth: "95vw" }}>
         <FileUpload
-          label="Uploading State Debug"
           forceActive={true}
+          label="Uploading State Debug"
           onChange={setFiles}
         />
       </div>

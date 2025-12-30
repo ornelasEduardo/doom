@@ -1,11 +1,12 @@
 "use client";
 
 import clsx from "clsx";
-import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
 import { Button } from "../Button/Button";
 import styles from "./Drawer.module.scss";
-import React, { useEffect, useState } from "react";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -46,45 +47,51 @@ export function Drawer({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
-    if (isOpen) window.addEventListener("keydown", handleEsc);
+    if (isOpen) {
+      window.addEventListener("keydown", handleEsc);
+    }
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return null;
+  }
 
   return createPortal(
     <>
       <div
+        aria-hidden="true"
         className={clsx(styles.overlay, isOpen && styles.isOpen)}
         onClick={onClose}
-        aria-hidden="true"
       />
       <div
+        aria-label={!title ? "Drawer" : undefined}
+        aria-labelledby={title ? titleId : undefined}
+        aria-modal="true"
         className={clsx(
           styles.panel,
           styles[side],
           styles[variant],
           isOpen && styles.isOpen,
-          className
+          className,
         )}
         role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        aria-label={!title ? "Drawer" : undefined}
       >
         <div className={styles.header}>
           {title && (
-            <h2 id={titleId} className={styles.title}>
+            <h2 className={styles.title} id={titleId}>
               {title}
             </h2>
           )}
           <Button
-            variant="danger"
-            size="sm"
-            onClick={onClose}
             aria-label="Close drawer"
+            size="sm"
+            variant="danger"
+            onClick={onClose}
           >
             <X size={24} />
           </Button>
@@ -93,6 +100,6 @@ export function Drawer({
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

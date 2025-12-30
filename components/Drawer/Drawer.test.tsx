@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { Drawer } from "./Drawer";
 
 vi.mock("react-dom", async () => {
@@ -18,7 +20,7 @@ vi.mock("lucide-react", () => ({
 
 vi.mock("../Button", () => ({
   Button: ({ children, onClick, "aria-label": ariaLabel }: any) => (
-    <button onClick={onClick} aria-label={ariaLabel}>
+    <button aria-label={ariaLabel} onClick={onClick}>
       {children}
     </button>
   ),
@@ -27,9 +29,9 @@ vi.mock("../Button", () => ({
 describe("Drawer Component", () => {
   it("is hidden when closed", () => {
     const { container } = render(
-      <Drawer isOpen={false} onClose={() => {}} title="Test Drawer">
+      <Drawer isOpen={false} title="Test Drawer" onClose={() => {}}>
         Content
-      </Drawer>
+      </Drawer>,
     );
     // The component stays mounted for exit animations but should be hidden
     const panel = screen.getByRole("dialog", { hidden: true });
@@ -38,9 +40,9 @@ describe("Drawer Component", () => {
 
   it("renders when open", () => {
     render(
-      <Drawer isOpen={true} onClose={() => {}} title="Open Drawer">
+      <Drawer isOpen={true} title="Open Drawer" onClose={() => {}}>
         Content
-      </Drawer>
+      </Drawer>,
     );
     expect(screen.getByText("Open Drawer")).toBeInTheDocument();
   });
@@ -48,9 +50,9 @@ describe("Drawer Component", () => {
   it("calls onClose when clicking overlay", () => {
     const handleClose = vi.fn();
     render(
-      <Drawer isOpen={true} onClose={handleClose} title="Test">
+      <Drawer isOpen={true} title="Test" onClose={handleClose}>
         Content
-      </Drawer>
+      </Drawer>,
     );
 
     const closeBtn = screen.getByLabelText("Close drawer");

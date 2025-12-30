@@ -1,9 +1,10 @@
-import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Image } from "./Image";
-import { Flex, Grid, Stack } from "../Layout/Layout";
-import { Text } from "../Text/Text";
+import React, { useState } from "react";
+
 import { Button } from "../Button/Button";
+import { Grid, Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import { Image } from "./Image";
 
 const meta: Meta<typeof Image> = {
   title: "Components/Image",
@@ -35,34 +36,34 @@ export const FitVariants: Story = {
       <Stack>
         <Text>Cover (200x200)</Text>
         <Image
-          src="https://picsum.photos/300/300"
           alt="Randomly generated image from picsum"
           fit="cover"
-          width={200}
           height={200}
+          src="https://picsum.photos/300/300"
           style={{ border: "1px solid #ccc" }}
+          width={200}
         />
       </Stack>
       <Stack>
         <Text>Contain (200x200)</Text>
         <Image
-          src="https://picsum.photos/300/300"
           alt="Randomly generated image from picsum"
           fit="contain"
-          width={200}
           height={200}
+          src="https://picsum.photos/300/300"
           style={{ border: "1px solid #ccc" }}
+          width={200}
         />
       </Stack>
       <Stack>
         <Text>None (200x200)</Text>
         <Image
-          src="https://picsum.photos/300/300"
           alt="Randomly generated image from picsum"
           fit="none"
-          width={200}
           height={200}
+          src="https://picsum.photos/300/300"
           style={{ border: "1px solid #ccc" }}
+          width={200}
         />
       </Stack>
     </Grid>
@@ -88,21 +89,21 @@ export const WithSkeletonLoading: Story = {
     };
 
     return (
-      <Stack gap={4} align="flex-start">
+      <Stack align="flex-start" gap={4}>
         <Text>
           Click reload to simulate a 2-second network delay. The skeleton will
           appear after 150ms, then the image will transition in.
         </Text>
-        <Button onClick={reload} loading={isLoading}>
+        <Button loading={isLoading} onClick={reload}>
           {isLoading ? "Loading..." : "Reload with Delay"}
         </Button>
         <Image
           key={src} // Reset internal state completely when src changes
-          src={src}
           alt="Randomly generated image from picsum"
           fit="cover"
-          width={600}
           height={400}
+          src={src}
+          width={600}
         />
       </Stack>
     );
@@ -124,18 +125,18 @@ export const WithAspectRatio: Story = {
     <Stack gap={4}>
       <Text>AspectRatio: 16/9 (Width: 400px)</Text>
       <Image
-        src="https://picsum.photos/500/300"
         alt="Aspect Ratio Test"
         aspectRatio="16/9"
         fit="cover"
+        src="https://picsum.photos/500/300"
         style={{ width: "400px" }}
       />
       <Text>AspectRatio: 1/1 (Width: 200px)</Text>
       <Image
-        src="https://picsum.photos/500/300"
         alt="Square"
         aspectRatio={1}
         fit="cover"
+        src="https://picsum.photos/500/300"
         style={{ width: "200px" }}
       />
     </Stack>
@@ -148,22 +149,22 @@ export const RoundedVariants: Story = {
       <Stack>
         <Text>Default (Rounded)</Text>
         <Image
-          src="https://picsum.photos/300/300"
           alt="Randomly generated image from picsum"
           fit="cover"
-          width={200}
           height={200}
+          src="https://picsum.photos/300/300"
+          width={200}
         />
       </Stack>
       <Stack>
         <Text>Not Rounded (rounded=false)</Text>
         <Image
-          src="https://picsum.photos/300/300"
           alt="Randomly generated image from picsum"
           fit="cover"
-          rounded={false}
-          width={200}
           height={200}
+          rounded={false}
+          src="https://picsum.photos/300/300"
+          width={200}
         />
       </Stack>
     </Grid>

@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Link } from "./Link";
+
 import { Card } from "../Card/Card";
-import { Text } from "../Text/Text";
 import { Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import { Link } from "./Link";
 
 const meta: Meta<typeof Link> = {
   title: "Components/Link",
@@ -85,7 +86,7 @@ export const Prefetch: Story = {
     >
       <Stack gap={4}>
         <Stack gap={0}>
-          <Text variant="h5" className="mb-0">
+          <Text className="mb-0" variant="h5">
             Network Tab Demo
           </Text>
           <Text>
@@ -94,8 +95,8 @@ export const Prefetch: Story = {
           </Text>
         </Stack>
         <Text variant="caption">
-          Open your browser's Network tab (filter by "Other" or "Image") to
-          watch the resource load instantly on hover.
+          Open your browser&apos;s Network tab (filter by &quot;Other&quot; or
+          &quot;Image&quot;) to watch the resource load instantly on hover.
         </Text>
         <div>
           <Link {...args} />

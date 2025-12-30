@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
-import './styles/globals.scss';
-import { ThemeProvider, ThemeKey } from './styles/themes';
+import "./styles/globals.scss";
 
-export function DesignSystemProvider({ 
+import React from "react";
+
+import { ThemeKey, ThemeProvider } from "./styles/themes";
+
+export function DesignSystemProvider({
   children,
-  initialTheme = 'default',
+  initialTheme = "default",
   withBody = false,
-  className = '',
-  fontClassName = ''
-}: { 
+  className = "",
+  fontClassName = "",
+}: {
   children: React.ReactNode;
   initialTheme?: ThemeKey;
   withBody?: boolean;
@@ -18,23 +20,17 @@ export function DesignSystemProvider({
   fontClassName?: string;
 }) {
   const content = (
-    <ThemeProvider initialTheme={initialTheme}>
-      {children}
-    </ThemeProvider>
+    <ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider>
   );
 
   const combinedClassName = `${fontClassName} ${className}`.trim();
 
   if (withBody) {
-    return (
-      <body className={combinedClassName}>
-        {content}
-      </body>
-    );
+    return <body className={combinedClassName}>{content}</body>;
   }
 
   return (
-    <div className={combinedClassName} style={{ display: 'contents' }}>
+    <div className={combinedClassName} style={{ display: "contents" }}>
       {content}
     </div>
   );

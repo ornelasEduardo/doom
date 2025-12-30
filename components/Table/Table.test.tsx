@@ -1,9 +1,11 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, within } from "@testing-library/react";
-import { Table } from "./Table";
-import { describe, it, expect, vi, beforeAll } from "vitest";
-import React from "react";
+
 import { ColumnDef } from "@tanstack/react-table";
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it } from "vitest";
+
+import { Table } from "./Table";
 
 interface TestData {
   id: number;
@@ -30,14 +32,14 @@ const data: TestData[] = [
 
 describe("Table Component", () => {
   it("should render data", () => {
-    render(<Table data={data} columns={columns} />);
+    render(<Table columns={columns} data={data} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.getByText("Bob")).toBeInTheDocument();
     expect(screen.getByText("Charlie")).toBeInTheDocument();
   });
 
   it("should filter data", () => {
-    render(<Table data={data} columns={columns} />);
+    render(<Table columns={columns} data={data} />);
 
     const searchInput = screen.getByPlaceholderText("Search...");
     fireEvent.change(searchInput, { target: { value: "Alice" } });
@@ -47,7 +49,7 @@ describe("Table Component", () => {
   });
 
   it("should sort data", async () => {
-    render(<Table data={data} columns={columns} />);
+    render(<Table columns={columns} data={data} />);
 
     const nameHeader = screen.getByText("Name").closest("th");
 
@@ -67,7 +69,7 @@ describe("Table Component", () => {
   });
 
   it("should paginate data", () => {
-    render(<Table data={data} columns={columns} pageSize={1} />);
+    render(<Table columns={columns} data={data} pageSize={1} />);
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.queryByText("Bob")).not.toBeInTheDocument();
@@ -81,7 +83,7 @@ describe("Table Component", () => {
   });
 
   it("should render with striped prop", () => {
-    render(<Table data={data} columns={columns} striped={true} />);
+    render(<Table columns={columns} data={data} striped={true} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 });

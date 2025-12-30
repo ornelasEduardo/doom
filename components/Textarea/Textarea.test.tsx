@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Textarea } from "./Textarea";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Textarea } from "./Textarea";
 
 describe("Textarea Component", () => {
   it("should render with label", () => {
@@ -12,7 +14,7 @@ describe("Textarea Component", () => {
   });
 
   it("should render required attribute", () => {
-    render(<Textarea label="Required" required />);
+    render(<Textarea required label="Required" />);
     expect(screen.getByRole("textbox")).toBeRequired();
   });
 
@@ -38,7 +40,7 @@ describe("Textarea Component", () => {
     expect(textarea).toHaveAttribute("aria-invalid", "true");
     expect(textarea).toHaveAttribute(
       "aria-describedby",
-      expect.stringContaining("error")
+      expect.stringContaining("error"),
     );
   });
 
@@ -48,13 +50,13 @@ describe("Textarea Component", () => {
     expect(screen.getByText("Optional info")).toBeInTheDocument();
     expect(textarea).toHaveAttribute(
       "aria-describedby",
-      expect.stringContaining("helper")
+      expect.stringContaining("helper"),
     );
   });
 
   describe("Character Counter", () => {
     it("should show counter automatically when maxLength is present", () => {
-      render(<Textarea maxLength={100} defaultValue="Initial text" />);
+      render(<Textarea defaultValue="Initial text" maxLength={100} />);
       expect(screen.getByText("12 / 100")).toBeInTheDocument();
     });
 
@@ -72,7 +74,7 @@ describe("Textarea Component", () => {
 
     it("should hide counter if showCount is false even with maxLength", () => {
       render(
-        <Textarea maxLength={100} showCount={false} defaultValue="Hello" />
+        <Textarea defaultValue="Hello" maxLength={100} showCount={false} />,
       );
       expect(screen.queryByText(/5 \/ 100/)).not.toBeInTheDocument();
     });

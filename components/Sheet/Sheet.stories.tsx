@@ -1,21 +1,16 @@
-import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Sheet } from "./Sheet";
-import { Button } from "../Button/Button";
-import { Flex, Stack } from "../Layout/Layout";
-import { Text } from "../Text/Text";
-import { Input } from "../Input/Input";
-import { Badge } from "../Badge/Badge";
-import { Card } from "../Card/Card";
-import { Table } from "../Table/Table";
+import { Activity, Command, SlidersHorizontal, Terminal } from "lucide-react";
+import React, { useState } from "react";
+
 import { Alert } from "../Alert/Alert";
-import {
-  Activity,
-  Command,
-  ShieldAlert,
-  SlidersHorizontal,
-  Terminal,
-} from "lucide-react";
+import { Badge } from "../Badge/Badge";
+import { Button } from "../Button/Button";
+import { Card } from "../Card/Card";
+import { Input } from "../Input/Input";
+import { Flex, Stack } from "../Layout/Layout";
+import { Table } from "../Table/Table";
+import { Text } from "../Text/Text";
+import { Sheet } from "./Sheet";
 
 const meta: Meta<typeof Sheet> = {
   title: "Components/Sheet",
@@ -58,7 +53,7 @@ const telemetryColumns = [
     header: "Telemetry",
     accessorKey: "value",
     cell: ({ row }: any) => (
-      <Text weight="bold" style={{ fontFamily: "var(--font-mono)" }}>
+      <Text style={{ fontFamily: "var(--font-mono)" }} weight="bold">
         {row.original.value}
       </Text>
     ),
@@ -78,7 +73,7 @@ export const Default: Story = {
   render: (args) => {
     const [open, setOpen] = useState(false);
     return (
-      <Flex justify="center" align="center" style={{ height: "200px" }}>
+      <Flex align="center" justify="center" style={{ height: "200px" }}>
         <Button onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <SlidersHorizontal size={18} />
@@ -87,54 +82,54 @@ export const Default: Story = {
         </Button>
         <Sheet
           {...args}
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          title="Tactical Operations Hub"
           footer={
             <Flex gap={4} style={{ width: "100%" }}>
               <Button
-                variant="ghost"
                 style={{ width: "100%" }}
+                variant="ghost"
                 onClick={() => setOpen(false)}
               >
                 Standby
               </Button>
               <Button
-                variant="primary"
                 style={{ width: "100%" }}
+                variant="primary"
                 onClick={() => setOpen(false)}
               >
                 Synchronize
               </Button>
             </Flex>
           }
+          isOpen={open}
+          title="Tactical Operations Hub"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={8}>
             <Alert
-              variant="info"
-              title="System Synchronized"
               description="Biometric link established with Sector 7. Review real-time telemetry before core ignition."
+              title="System Synchronized"
+              variant="info"
             />
 
             <Stack gap={3}>
               <Flex align="center" gap={2}>
                 <Activity size={16} />
                 <Text
-                  variant="small"
-                  weight="black"
                   style={{
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
+                  variant="small"
+                  weight="black"
                 >
                   Reactor Telemetry
                 </Text>
               </Flex>
               <Table
-                data={telemetryData}
                 columns={telemetryColumns}
-                enablePagination={false}
+                data={telemetryData}
                 enableFiltering={false}
+                enablePagination={false}
               />
             </Stack>
 
@@ -142,12 +137,12 @@ export const Default: Story = {
               <Flex align="center" gap={2}>
                 <Command size={16} />
                 <Text
-                  variant="small"
-                  weight="black"
                   style={{
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
+                  variant="small"
+                  weight="black"
                 >
                   Targeted Override
                 </Text>
@@ -155,12 +150,12 @@ export const Default: Story = {
               <Card style={{ padding: "var(--spacing-md)" }}>
                 <Stack gap={4}>
                   <Stack gap={2}>
-                    <Text variant="small" color="muted">
+                    <Text color="muted" variant="small">
                       Encryption Sub-Key
                     </Text>
                     <Input
-                      placeholder="Alpha-Numeric Sequence"
                       defaultValue="X77-RADIATION-VOID"
+                      placeholder="Alpha-Numeric Sequence"
                     />
                   </Stack>
                   <Flex gap={2} wrap="wrap">
@@ -176,12 +171,12 @@ export const Default: Story = {
               <Flex align="center" gap={2}>
                 <Terminal size={16} />
                 <Text
-                  variant="small"
-                  weight="black"
                   style={{
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
+                  variant="small"
+                  weight="black"
                 >
                   Live System Logs
                 </Text>
@@ -218,7 +213,7 @@ export const Solid: Story = {
   render: (args) => {
     const [open, setOpen] = useState(false);
     return (
-      <Flex justify="center" align="center" style={{ height: "200px" }}>
+      <Flex align="center" justify="center" style={{ height: "200px" }}>
         <Button variant="primary" onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <Activity size={18} />
@@ -227,39 +222,39 @@ export const Solid: Story = {
         </Button>
         <Sheet
           {...args}
-          isOpen={open}
-          variant="solid"
-          onClose={() => setOpen(false)}
-          title="Deployment: Phase-IV Complete"
           footer={
             <Stack gap={4} style={{ width: "100%" }}>
               <Button
-                variant="primary"
                 style={{ width: "100%" }}
+                variant="primary"
                 onClick={() => setOpen(false)}
               >
                 Return to Dashboard
               </Button>
               <Button
-                variant="ghost"
                 style={{ width: "100%" }}
+                variant="ghost"
                 onClick={() => setOpen(false)}
               >
                 Download Manifest (JSON)
               </Button>
             </Stack>
           }
+          isOpen={open}
+          title="Deployment: Phase-IV Complete"
+          variant="solid"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={10}>
             <Stack gap={4}>
               <Text
+                style={{ textTransform: "uppercase", lineHeight: 1.1 }}
                 variant="h3"
                 weight="black"
-                style={{ textTransform: "uppercase", lineHeight: 1.1 }}
               >
                 Global Cluster Update Successful
               </Text>
-              <Text variant="body" style={{ opacity: 0.9 }}>
+              <Text style={{ opacity: 0.9 }} variant="body">
                 Your updated build signature has been successfully propagated to
                 all 12 edge nodes. Traffic is currently being routed through the
                 primary gateway.
@@ -267,9 +262,9 @@ export const Solid: Story = {
             </Stack>
 
             <Alert
-              variant="success"
-              title="Integrity Verified"
               description="Checksum validation completed across all regional clusters with zero regressions."
+              title="Integrity Verified"
+              variant="success"
             />
 
             <Card
@@ -281,20 +276,20 @@ export const Solid: Story = {
               <Stack gap={6}>
                 <Stack gap={2}>
                   <Text
-                    weight="black"
                     style={{
                       textTransform: "uppercase",
                       fontSize: "var(--text-xs)",
                     }}
+                    weight="black"
                   >
                     Build Metadata & Source
                   </Text>
                   <Flex justify="space-between">
                     <Text variant="small">Commit Hash</Text>
                     <Text
+                      style={{ fontFamily: "var(--font-mono)" }}
                       variant="small"
                       weight="bold"
-                      style={{ fontFamily: "var(--font-mono)" }}
                     >
                       b7f2a8c
                     </Text>
@@ -316,30 +311,13 @@ export const Solid: Story = {
 
             <Stack gap={4}>
               <Text
+                style={{ textTransform: "uppercase", opacity: 0.8 }}
                 variant="small"
                 weight="bold"
-                style={{ textTransform: "uppercase", opacity: 0.8 }}
               >
                 Regional Health Readout
               </Text>
               <Table
-                data={[
-                  {
-                    region: "North America",
-                    status: "STABLE",
-                    latency: "12ms",
-                  },
-                  {
-                    region: "European Union",
-                    status: "STABLE",
-                    latency: "45ms",
-                  },
-                  {
-                    region: "Asia Pacific",
-                    status: "SYNCING",
-                    latency: "120ms",
-                  },
-                ]}
                 columns={[
                   { header: "Cloud Region", accessorKey: "region" },
                   {
@@ -359,8 +337,25 @@ export const Solid: Story = {
                   },
                   { header: "Latency", accessorKey: "latency" },
                 ]}
-                enablePagination={false}
+                data={[
+                  {
+                    region: "North America",
+                    status: "STABLE",
+                    latency: "12ms",
+                  },
+                  {
+                    region: "European Union",
+                    status: "STABLE",
+                    latency: "45ms",
+                  },
+                  {
+                    region: "Asia Pacific",
+                    status: "SYNCING",
+                    latency: "120ms",
+                  },
+                ]}
                 enableFiltering={false}
+                enablePagination={false}
               />
             </Stack>
           </Stack>

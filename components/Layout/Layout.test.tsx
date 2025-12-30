@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
+
 import { render, screen } from "@testing-library/react";
-import { Flex, Grid, Stack, Container } from "./Layout";
-import { describe, it, expect } from "vitest";
 import React from "react";
+import { describe, expect, it } from "vitest";
+
+import { Container, Flex, Grid, Stack } from "./Layout";
 
 describe("Layout Components", () => {
   describe("Flex", () => {
@@ -10,7 +12,7 @@ describe("Layout Components", () => {
       render(
         <Flex>
           <div>Flex Child</div>
-        </Flex>
+        </Flex>,
       );
       expect(screen.getByText("Flex Child")).toBeInTheDocument();
     });
@@ -19,7 +21,7 @@ describe("Layout Components", () => {
       render(
         <Flex as="section" data-testid="flex-section">
           Content
-        </Flex>
+        </Flex>,
       );
       const element = screen.getByTestId("flex-section");
       expect(element.tagName).toBe("SECTION");
@@ -28,14 +30,14 @@ describe("Layout Components", () => {
     it("applies style props correctly", () => {
       render(
         <Flex
-          direction="column"
-          justify="center"
           align="center"
-          gap={5}
           data-testid="flex-styled"
+          direction="column"
+          gap={5}
+          justify="center"
         >
           Styled Flex
-        </Flex>
+        </Flex>,
       );
       const element = screen.getByTestId("flex-styled");
       expect(element).toHaveClass(/direction-column/);
@@ -52,16 +54,16 @@ describe("Layout Components", () => {
       render(
         <Grid>
           <div>Grid Child</div>
-        </Grid>
+        </Grid>,
       );
       expect(screen.getByText("Grid Child")).toBeInTheDocument();
     });
 
     it("applies grid styles", () => {
       render(
-        <Grid columns={3} gap={8} data-testid="grid-styled">
+        <Grid columns={3} data-testid="grid-styled" gap={8}>
           Grid Item
-        </Grid>
+        </Grid>,
       );
       const element = screen.getByTestId("grid-styled");
       expect(element).toHaveStyle({
@@ -80,9 +82,9 @@ describe("Layout Components", () => {
 
     it("allows overriding direction", () => {
       render(
-        <Stack direction="row" data-testid="stack-row">
+        <Stack data-testid="stack-row" direction="row">
           Row Stack
-        </Stack>
+        </Stack>,
       );
       const element = screen.getByTestId("stack-row");
       expect(element).toHaveClass(/direction-row/);
@@ -105,7 +107,7 @@ describe("Layout Components", () => {
       render(
         <Container as="article" data-testid="container-article">
           Article Container
-        </Container>
+        </Container>,
       );
       const element = screen.getByTestId("container-article");
       expect(element.tagName).toBe("ARTICLE");

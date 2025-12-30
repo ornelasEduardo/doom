@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext } from 'react';
-import clsx from 'clsx';
-import styles from './RadioGroup.module.scss';
+import clsx from "clsx";
+import React, { createContext, useContext } from "react";
 
+import styles from "./RadioGroup.module.scss";
 
 interface RadioGroupContextValue {
   name?: string;
@@ -12,7 +12,9 @@ interface RadioGroupContextValue {
   disabled?: boolean;
 }
 
-const RadioGroupContext = createContext<RadioGroupContextValue | undefined>(undefined);
+const RadioGroupContext = createContext<RadioGroupContextValue | undefined>(
+  undefined,
+);
 
 interface RadioGroupProps {
   name?: string;
@@ -24,17 +26,17 @@ interface RadioGroupProps {
   className?: string;
 }
 
-export function RadioGroup({ 
-  name, 
-  value: controlledValue, 
-  defaultValue, 
-  onValueChange, 
-  disabled, 
-  children, 
-  className 
+export function RadioGroup({
+  name,
+  value: controlledValue,
+  defaultValue,
+  onValueChange,
+  disabled,
+  children,
+  className,
 }: RadioGroupProps) {
-  const [internalValue, setInternalValue] = React.useState(defaultValue || '');
-  
+  const [internalValue, setInternalValue] = React.useState(defaultValue || "");
+
   const isControlled = controlledValue !== undefined;
   const currentValue = isControlled ? controlledValue : internalValue;
 
@@ -46,8 +48,10 @@ export function RadioGroup({
   };
 
   return (
-    <RadioGroupContext.Provider value={{ name, value: currentValue, onChange: handleChange, disabled }}>
-      <div role="radiogroup" className={clsx(styles.group, className)}>
+    <RadioGroupContext.Provider
+      value={{ name, value: currentValue, onChange: handleChange, disabled }}
+    >
+      <div className={clsx(styles.group, className)} role="radiogroup">
         {children}
       </div>
     </RadioGroupContext.Provider>
@@ -61,30 +65,41 @@ interface RadioGroupItemProps {
   className?: string;
 }
 
-export function RadioGroupItem({ value, children, disabled, className }: RadioGroupItemProps) {
+export function RadioGroupItem({
+  value,
+  children,
+  disabled,
+  className,
+}: RadioGroupItemProps) {
   const context = useContext(RadioGroupContext);
-  if (!context) throw new Error('RadioGroupItem must be used within RadioGroup');
+  if (!context) {
+    throw new Error("RadioGroupItem must be used within RadioGroup");
+  }
 
   const checked = context.value === value;
   const isDisabled = disabled || context.disabled;
 
   return (
-    <label 
-      className={clsx(styles.itemLabel, isDisabled && styles.disabled, className)}
-      aria-disabled={isDisabled} 
+    <label
+      aria-disabled={isDisabled}
+      className={clsx(
+        styles.itemLabel,
+        isDisabled && styles.disabled,
+        className,
+      )}
     >
-      <input 
+      <input
+        checked={checked}
         className={styles.hiddenInput}
-        type="radio" 
-        name={context.name} 
-        value={value} 
-        checked={checked} 
-        onChange={() => !isDisabled && context.onChange(value)}
         disabled={isDisabled}
+        name={context.name}
+        type="radio"
+        value={value}
+        onChange={() => !isDisabled && context.onChange(value)}
       />
-      <div 
-        className={clsx(styles.radioCircle, checked && styles.checked)} 
+      <div
         aria-hidden="true"
+        className={clsx(styles.radioCircle, checked && styles.checked)}
       >
         {checked && <div className={styles.innerDot} />}
       </div>

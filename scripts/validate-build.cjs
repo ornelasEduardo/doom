@@ -39,7 +39,7 @@ if (missingExtensions === 0) {
   console.log("   ✅ All imports have proper extensions\n");
 } else {
   console.error(
-    `   ❌ Found ${missingExtensions} imports without extensions\n`
+    `   ❌ Found ${missingExtensions} imports without extensions\n`,
   );
 }
 
@@ -99,7 +99,7 @@ if (pkg.exports) {
     if (typeof value === "string" && !value.startsWith("./package.json")) {
       if (!fs.existsSync(value)) {
         console.error(
-          `   ❌ Export "${key}" points to non-existent "${value}"`
+          `   ❌ Export "${key}" points to non-existent "${value}"`,
         );
         exportErrors++;
         hasErrors = true;

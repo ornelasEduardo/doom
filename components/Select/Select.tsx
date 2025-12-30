@@ -1,23 +1,23 @@
 "use client";
 
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  KeyboardEvent,
-  useId,
-} from "react";
 import clsx from "clsx";
-import { Popover } from "../Popover/Popover";
 import { Check, ChevronDown } from "lucide-react";
+import React, {
+  KeyboardEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+
 import { Label } from "../Label/Label";
+import { Popover } from "../Popover/Popover";
 import styles from "./Select.module.scss";
 
-interface SelectProps
-  extends Omit<
-    React.ButtonHTMLAttributes<HTMLButtonElement>,
-    "onChange" | "value" | "defaultValue"
-  > {
+interface SelectProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "onChange" | "value" | "defaultValue"
+> {
   options: { value: string | number; label: string }[];
   label?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -56,14 +56,14 @@ export function Select({
 
   const currentValue = value !== undefined ? value : internalValue;
   const selectedOption = options.find(
-    (opt) => String(opt.value) === String(currentValue)
+    (opt) => String(opt.value) === String(currentValue),
   );
 
   // Reset highlighted index when opening
   useEffect(() => {
     if (isOpen) {
       const index = options.findIndex(
-        (opt) => String(opt.value) === String(currentValue)
+        (opt) => String(opt.value) === String(currentValue),
       );
       setHighlightedIndex(index >= 0 ? index : 0);
     }
@@ -108,7 +108,7 @@ export function Select({
           setIsOpen(true);
         } else {
           setHighlightedIndex((prev) =>
-            prev < options.length - 1 ? prev + 1 : 0
+            prev < options.length - 1 ? prev + 1 : 0,
           );
         }
         break;
@@ -118,7 +118,7 @@ export function Select({
           setIsOpen(true);
         } else {
           setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : options.length - 1
+            prev > 0 ? prev - 1 : options.length - 1,
           );
         }
         break;
@@ -145,51 +145,12 @@ export function Select({
         </Label>
       )}
       <Popover
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        placement="bottom-start"
-        trigger={
-          <button
-            ref={triggerRef}
-            className={styles.trigger}
-            type="button"
-            id={selectId}
-            onClick={() => setIsOpen(!isOpen)}
-            onKeyDown={handleKeyDown}
-            role="combobox"
-            aria-haspopup="listbox"
-            aria-expanded={isOpen}
-            aria-controls={isOpen ? listboxId : undefined}
-            aria-labelledby={label ? labelId : undefined}
-            aria-label={
-              !label
-                ? selectedOption?.label || placeholder || "Select option"
-                : undefined
-            }
-            aria-required={required}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            {...props}
-          >
-            <span>
-              {selectedOption
-                ? selectedOption.label
-                : placeholder || "Select..."}
-            </span>
-            <ChevronDown
-              size={16}
-              strokeWidth={2.5}
-              style={{ marginLeft: "0.5rem" }}
-              aria-hidden="true"
-            />
-          </button>
-        }
         content={
           <ul
-            id={listboxId}
-            role="listbox"
             aria-labelledby={label ? labelId : selectId}
             className={styles.optionsList}
+            id={listboxId}
+            role="listbox"
             style={{ width: triggerRef.current?.offsetWidth }}
           >
             {options.map((opt, index) => {
@@ -199,34 +160,73 @@ export function Select({
               return (
                 <li
                   key={opt.value}
-                  id={`${listboxId}-option-${index}`}
-                  role="option"
                   aria-selected={isSelected}
                   className={clsx(
                     styles.optionItem,
                     isSelected && styles.selected,
-                    isHighlighted && styles.highlighted
+                    isHighlighted && styles.highlighted,
                   )}
+                  id={`${listboxId}-option-${index}`}
+                  role="option"
                   onClick={() => handleSelect(opt.value)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   <span>{opt.label}</span>
                   {isSelected && (
-                    <Check size={14} strokeWidth={3} aria-hidden="true" />
+                    <Check aria-hidden="true" size={14} strokeWidth={3} />
                   )}
                 </li>
               );
             })}
           </ul>
         }
+        isOpen={isOpen}
+        placement="bottom-start"
+        trigger={
+          <button
+            ref={triggerRef}
+            aria-controls={isOpen ? listboxId : undefined}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-label={
+              !label
+                ? selectedOption?.label || placeholder || "Select option"
+                : undefined
+            }
+            aria-labelledby={label ? labelId : undefined}
+            aria-required={required}
+            autoFocus={autoFocus}
+            className={styles.trigger}
+            disabled={disabled}
+            id={selectId}
+            role="combobox"
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            onKeyDown={handleKeyDown}
+            {...props}
+          >
+            <span>
+              {selectedOption
+                ? selectedOption.label
+                : placeholder || "Select..."}
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              size={16}
+              strokeWidth={2.5}
+              style={{ marginLeft: "0.5rem" }}
+            />
+          </button>
+        }
+        onClose={() => setIsOpen(false)}
       />
       <input
-        type="hidden"
-        name={name}
-        value={currentValue}
-        required={required}
         aria-hidden="true"
         aria-labelledby={label ? labelId : undefined}
+        name={name}
+        required={required}
+        type="hidden"
+        value={currentValue}
       />
     </div>
   );

@@ -1,10 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { Popover } from "../Popover/Popover";
 import { ChevronDown } from "lucide-react";
-import styles from "./SplitButton.module.scss";
 import React, { useState } from "react";
+
+import { Popover } from "../Popover/Popover";
+import styles from "./SplitButton.module.scss";
 
 interface SplitButtonItem {
   label: string;
@@ -30,28 +31,6 @@ export function SplitButton({
 
   return (
     <Popover
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      placement="bottom-end"
-      trigger={
-        <div
-          className={clsx(styles.container, styles[variant], className)}
-          data-state={isOpen ? "open" : "closed"}
-        >
-          <button className={styles.mainButton} onClick={onPrimaryClick}>
-            {primaryLabel}
-          </button>
-          <button
-            className={styles.dropdownTrigger}
-            onClick={() => setIsOpen(!isOpen)}
-            aria-expanded={isOpen}
-            aria-haspopup="menu"
-            aria-label={`More ${primaryLabel} options`}
-          >
-            <ChevronDown size={16} strokeWidth={3} aria-hidden="true" />
-          </button>
-        </div>
-      }
       content={
         <div className={styles.menu}>
           {items.map((item, index) => (
@@ -68,6 +47,28 @@ export function SplitButton({
           ))}
         </div>
       }
+      isOpen={isOpen}
+      placement="bottom-end"
+      trigger={
+        <div
+          className={clsx(styles.container, styles[variant], className)}
+          data-state={isOpen ? "open" : "closed"}
+        >
+          <button className={styles.mainButton} onClick={onPrimaryClick}>
+            {primaryLabel}
+          </button>
+          <button
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
+            aria-label={`More ${primaryLabel} options`}
+            className={styles.dropdownTrigger}
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <ChevronDown aria-hidden="true" size={16} strokeWidth={3} />
+          </button>
+        </div>
+      }
+      onClose={() => setIsOpen(false)}
     />
   );
 }

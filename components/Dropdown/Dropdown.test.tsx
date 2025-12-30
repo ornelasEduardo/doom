@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Dropdown } from "./Dropdown";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Dropdown } from "./Dropdown";
 
 // Mock Design System
 // Mock Design System
@@ -25,16 +27,16 @@ vi.mock("../Popover/Popover", () => ({
 
 describe("Dropdown Component", () => {
   it("should render trigger", () => {
-    render(<Dropdown triggerLabel="Menu" items={[]} />);
+    render(<Dropdown items={[]} triggerLabel="Menu" />);
     expect(screen.getByText("Menu")).toBeInTheDocument();
   });
 
   it("should open menu on click", () => {
     render(
       <Dropdown
-        triggerLabel="Menu"
         items={[{ label: "Item 1", onClick: () => {} }]}
-      />
+        triggerLabel="Menu"
+      />,
     );
 
     fireEvent.click(screen.getByText("Menu"));
@@ -46,9 +48,9 @@ describe("Dropdown Component", () => {
     const handleItemClick = vi.fn();
     render(
       <Dropdown
-        triggerLabel="Menu"
         items={[{ label: "Item 1", onClick: handleItemClick }]}
-      />
+        triggerLabel="Menu"
+      />,
     );
 
     fireEvent.click(screen.getByText("Menu"));

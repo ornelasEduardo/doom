@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { SplitButton } from "./SplitButton";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { SplitButton } from "./SplitButton";
 
 vi.mock("../Popover/Popover", () => ({
   Popover: ({ trigger, content, isOpen }: any) => (
@@ -16,7 +18,7 @@ vi.mock("../Popover/Popover", () => ({
 describe("SplitButton Component", () => {
   it("should render primary button", () => {
     render(
-      <SplitButton primaryLabel="Save" onPrimaryClick={() => {}} items={[]} />
+      <SplitButton items={[]} primaryLabel="Save" onPrimaryClick={() => {}} />,
     );
     expect(screen.getByText("Save")).toBeInTheDocument();
   });
@@ -25,10 +27,10 @@ describe("SplitButton Component", () => {
     const handlePrimaryClick = vi.fn();
     render(
       <SplitButton
+        items={[]}
         primaryLabel="Save"
         onPrimaryClick={handlePrimaryClick}
-        items={[]}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByText("Save"));
@@ -38,10 +40,10 @@ describe("SplitButton Component", () => {
   it("should open menu on trigger click", () => {
     render(
       <SplitButton
+        items={[{ label: "Save as Draft", onClick: () => {} }]}
         primaryLabel="Save"
         onPrimaryClick={() => {}}
-        items={[{ label: "Save as Draft", onClick: () => {} }]}
-      />
+      />,
     );
 
     const buttons = screen.getAllByRole("button");
@@ -55,10 +57,10 @@ describe("SplitButton Component", () => {
     const handleItemClick = vi.fn();
     render(
       <SplitButton
+        items={[{ label: "Action", onClick: handleItemClick }]}
         primaryLabel="Save"
         onPrimaryClick={() => {}}
-        items={[{ label: "Action", onClick: handleItemClick }]}
-      />
+      />,
     );
 
     const buttons = screen.getAllByRole("button");
@@ -77,11 +79,11 @@ describe("SplitButton Component", () => {
   it("should apply variant classes", () => {
     const { container } = render(
       <SplitButton
-        primaryLabel="Save"
-        onPrimaryClick={() => {}}
         items={[]}
+        primaryLabel="Save"
         variant="secondary"
-      />
+        onPrimaryClick={() => {}}
+      />,
     );
     expect(screen.getByText("Save")).toBeInTheDocument();
   });

@@ -1,4 +1,4 @@
-import { palette, baseVariables } from "../tokens";
+import { baseVariables, palette } from "../tokens";
 
 export const themes = {
   default: {

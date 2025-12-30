@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useEffect, useRef, useId } from "react";
-import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 import clsx from "clsx";
-import { Card } from "../Card/Card";
+import { X } from "lucide-react";
+import React, { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
+
 import { Button } from "../Button/Button";
-import { Stack, Flex } from "../Layout/Layout";
-import { Text } from "../Text/Text";
+import { Card } from "../Card/Card";
+import { Flex, Stack } from "../Layout/Layout";
 import styles from "./Modal.module.scss";
 
-interface ModalProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+interface ModalProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title"
+> {
   isOpen: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -41,18 +43,18 @@ export function ModalHeader({ children, className, id }: ModalHeaderProps) {
   return (
     <Flex
       align="center"
-      justify="space-between"
       className={clsx(styles.header, className)}
+      justify="space-between"
     >
-      <div id={id || titleId} className={styles.headerContent}>
+      <div className={styles.headerContent} id={id || titleId}>
         {children}
       </div>
       <Button
-        variant="danger"
-        size="sm"
-        onClick={onClose}
         aria-label="Close modal"
         className={styles.closeButton}
+        size="sm"
+        variant="danger"
+        onClick={onClose}
       >
         <X size={20} strokeWidth={2.5} />
       </Button>
@@ -79,10 +81,10 @@ export function ModalFooter({
 }) {
   return (
     <Flex
-      justify="flex-end"
       align="center"
-      gap={4}
       className={clsx(styles.footer, className)}
+      gap={4}
+      justify="flex-end"
     >
       {children}
     </Flex>
@@ -111,7 +113,9 @@ export function Modal({
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+      }
     };
 
     if (isOpen) {
@@ -127,7 +131,9 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return null;
+  }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) {
@@ -138,20 +144,20 @@ export function Modal({
   return createPortal(
     <ModalContext.Provider value={{ onClose, titleId, variant }}>
       <div
-        className={clsx(styles.overlay, isOpen && styles.isOpen, className)}
         ref={overlayRef}
-        onClick={handleOverlayClick}
+        className={clsx(styles.overlay, isOpen && styles.isOpen, className)}
         style={style}
+        onClick={handleOverlayClick}
       >
         <div className={styles.contentContainer}>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={title ? titleId : props["aria-labelledby"]}
             aria-label={
               props["aria-label"] ||
               (!title && !props["aria-labelledby"] ? "Modal Window" : undefined)
             }
+            aria-labelledby={title ? titleId : props["aria-labelledby"]}
+            aria-modal="true"
+            role="dialog"
             {...props}
           >
             <Card
@@ -161,7 +167,7 @@ export function Modal({
               {title ? (
                 <>
                   <ModalHeader>{title}</ModalHeader>
-                  <Stack gap={0} className={styles.modalContent}>
+                  <Stack className={styles.modalContent} gap={0}>
                     <ModalBody>{children}</ModalBody>
                     {footer && <ModalFooter>{footer}</ModalFooter>}
                   </Stack>
@@ -174,6 +180,6 @@ export function Modal({
         </div>
       </div>
     </ModalContext.Provider>,
-    document.body
+    document.body,
   );
 }

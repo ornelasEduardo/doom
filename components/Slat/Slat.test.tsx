@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Slat } from "./Slat";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Slat } from "./Slat";
 
 describe("Slat", () => {
   it("renders with label", () => {
@@ -17,10 +18,10 @@ describe("Slat", () => {
   it("renders prepend and append content", () => {
     render(
       <Slat
+        appendContent={<span data-testid="append">App</span>}
         label="Slat Content"
         prependContent={<span data-testid="prepend">Pre</span>}
-        appendContent={<span data-testid="append">App</span>}
-      />
+      />,
     );
     expect(screen.getByTestId("prepend")).toBeInTheDocument();
     expect(screen.getByTestId("append")).toBeInTheDocument();
@@ -29,7 +30,7 @@ describe("Slat", () => {
   it("calls onClick when clicked", () => {
     const handleClick = vi.fn();
     render(
-      <Slat label="Clickable Slat" onClick={handleClick} data-testid="slat" />
+      <Slat data-testid="slat" label="Clickable Slat" onClick={handleClick} />,
     );
 
     const slat = screen.getByTestId("slat");
@@ -46,7 +47,7 @@ describe("Slat", () => {
 
   it("applies hoverable class when onClick is provided", () => {
     const { container } = render(
-      <Slat label="Interactive" onClick={() => {}} />
+      <Slat label="Interactive" onClick={() => {}} />,
     );
     const slatElement = container.firstChild as HTMLElement;
     expect(slatElement.className).toContain("hoverable");
@@ -54,7 +55,7 @@ describe("Slat", () => {
 
   it("applies custom className", () => {
     const { container } = render(
-      <Slat label="Custom" className="custom-class" />
+      <Slat className="custom-class" label="Custom" />,
     );
     const slatElement = container.firstChild as HTMLElement;
     expect(slatElement.className).toContain("custom-class");
@@ -65,7 +66,7 @@ describe("Slat", () => {
       <Slat
         label={<span data-testid="complex-label">Complex</span>}
         secondaryLabel={<span data-testid="complex-sub">Sub</span>}
-      />
+      />,
     );
     expect(screen.getByTestId("complex-label")).toBeInTheDocument();
     expect(screen.getByTestId("complex-sub")).toBeInTheDocument();
@@ -74,7 +75,7 @@ describe("Slat", () => {
   it("supports keyboard interactions", () => {
     const handleClick = vi.fn();
     render(
-      <Slat label="Keyboard" onClick={handleClick} data-testid="slat-kb" />
+      <Slat data-testid="slat-kb" label="Keyboard" onClick={handleClick} />,
     );
     const slat = screen.getByTestId("slat-kb");
 

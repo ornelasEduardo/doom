@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useId } from "react";
 import clsx from "clsx";
+import React, { useId, useState } from "react";
+
 import { Label } from "../Label/Label";
 import styles from "./Textarea.module.scss";
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -34,12 +34,14 @@ export function Textarea({
   const errorId = `${textareaId}-error`;
 
   const [charCount, setCharCount] = useState(
-    (value?.toString() || defaultValue?.toString() || "").length
+    (value?.toString() || defaultValue?.toString() || "").length,
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCharCount(e.target.value.length);
-    if (onChange) onChange(e);
+    if (onChange) {
+      onChange(e);
+    }
   };
 
   // Sync charCount if value is updated externally (controlled)
@@ -61,15 +63,15 @@ export function Textarea({
       )}
 
       <textarea
-        className={clsx(styles.textarea, error && styles.error)}
-        id={textareaId}
-        required={required}
-        maxLength={maxLength}
-        value={value}
-        defaultValue={defaultValue}
-        onChange={handleChange}
-        aria-invalid={!!error}
         aria-describedby={describedBy}
+        aria-invalid={!!error}
+        className={clsx(styles.textarea, error && styles.error)}
+        defaultValue={defaultValue}
+        id={textareaId}
+        maxLength={maxLength}
+        required={required}
+        value={value}
+        onChange={handleChange}
         {...props}
       />
 
@@ -78,15 +80,15 @@ export function Textarea({
           <div className={styles.messageArea}>
             {error ? (
               <span
-                id={errorId}
                 className={clsx(styles.helperText, styles.error)}
+                id={errorId}
                 role="alert"
               >
                 {error}
               </span>
             ) : (
               helperText && (
-                <span id={helperId} className={styles.helperText}>
+                <span className={styles.helperText} id={helperId}>
                   {helperText}
                 </span>
               )

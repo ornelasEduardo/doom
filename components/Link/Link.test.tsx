@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { Link } from "./Link";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Link } from "./Link";
 
 describe("Link Component", () => {
   it("should render children", () => {
@@ -15,16 +17,16 @@ describe("Link Component", () => {
     render(
       <Link href="/test" variant="button">
         Button Link
-      </Link>
+      </Link>,
     );
     expect(screen.getByText("Button Link")).toBeInTheDocument();
   });
 
   it("should handle external links", () => {
     render(
-      <Link href="https://example.com" isExternal>
+      <Link isExternal href="https://example.com">
         External
-      </Link>
+      </Link>,
     );
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("target", "_blank");
@@ -37,13 +39,13 @@ describe("Link Component", () => {
 
     render(
       <Link
-        href="#"
         disabled
+        href="#"
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
       >
         Disabled
-      </Link>
+      </Link>,
     );
     const link = screen.getByText("Disabled");
 
@@ -58,20 +60,20 @@ describe("Link Component", () => {
 
   it("should handle prefetch functionality", async () => {
     const { container } = render(
-      <Link href="/prefetch" prefetch>
+      <Link prefetch href="/prefetch">
         Prefetch Link
-      </Link>
+      </Link>,
     );
     const link = screen.getByRole("link");
 
-    let prefetchTag = container.querySelector("link[rel='prefetch']");
+    const prefetchTag = container.querySelector("link[rel='prefetch']");
     expect(prefetchTag).toBeNull();
 
     fireEvent.mouseEnter(link);
 
     await waitFor(() => {
       const prefetchTag = document.head.querySelector(
-        `link[rel='prefetch'][href='/prefetch']`
+        `link[rel='prefetch'][href='/prefetch']`,
       );
       expect(prefetchTag).toBeInTheDocument();
     });
@@ -82,7 +84,7 @@ describe("Link Component", () => {
     render(
       <Link href="#" onMouseEnter={handleMouseEnter}>
         Hover Link
-      </Link>
+      </Link>,
     );
     const link = screen.getByRole("link");
     fireEvent.mouseEnter(link);
@@ -91,9 +93,9 @@ describe("Link Component", () => {
 
   it("should render external icon when isExternal is true", () => {
     const { container } = render(
-      <Link href="https://example.com" isExternal>
+      <Link isExternal href="https://example.com">
         External
-      </Link>
+      </Link>,
     );
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();

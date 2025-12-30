@@ -1,8 +1,8 @@
-import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { ThemeProvider, useTheme } from './ThemeProvider';
-import { themes } from './definitions';
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { ThemeProvider, useTheme } from "./ThemeProvider";
 
 // Helper component to consume theme context
 const ThemeConsumer = () => {
@@ -10,55 +10,55 @@ const ThemeConsumer = () => {
   return (
     <div>
       <span data-testid="current-theme">{theme}</span>
-      <button onClick={() => setTheme('doom')}>Set Doom Theme</button>
-      <button onClick={() => setTheme('default')}>Set Default Theme</button>
+      <button onClick={() => setTheme("doom")}>Set Doom Theme</button>
+      <button onClick={() => setTheme("default")}>Set Default Theme</button>
     </div>
   );
 };
 
-describe('ThemeProvider', () => {
-  it('renders with default theme', () => {
+describe("ThemeProvider", () => {
+  it("renders with default theme", () => {
     render(
       <ThemeProvider initialTheme="default">
         <ThemeConsumer />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
-    expect(screen.getByTestId('current-theme').textContent).toBe('default');
+    expect(screen.getByTestId("current-theme").textContent).toBe("default");
   });
 
-  it('renders with provided initial theme', () => {
+  it("renders with provided initial theme", () => {
     render(
       <ThemeProvider initialTheme="doom">
         <ThemeConsumer />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
-    expect(screen.getByTestId('current-theme').textContent).toBe('doom');
+    expect(screen.getByTestId("current-theme").textContent).toBe("doom");
   });
 
-  it('updates theme when setTheme is called', () => {
+  it("updates theme when setTheme is called", () => {
     render(
       <ThemeProvider initialTheme="default">
         <ThemeConsumer />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
-    const button = screen.getByText('Set Doom Theme');
+    const button = screen.getByText("Set Doom Theme");
     fireEvent.click(button);
 
-    expect(screen.getByTestId('current-theme').textContent).toBe('doom');
+    expect(screen.getByTestId("current-theme").textContent).toBe("doom");
   });
 
-  it('calls onThemeChange when theme is updated', () => {
+  it("calls onThemeChange when theme is updated", () => {
     const handleThemeChange = vi.fn();
     render(
       <ThemeProvider initialTheme="default" onThemeChange={handleThemeChange}>
         <ThemeConsumer />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
-    const button = screen.getByText('Set Doom Theme');
+    const button = screen.getByText("Set Doom Theme");
     fireEvent.click(button);
 
-    expect(handleThemeChange).toHaveBeenCalledWith('doom');
+    expect(handleThemeChange).toHaveBeenCalledWith("doom");
   });
 });

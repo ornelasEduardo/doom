@@ -1,23 +1,24 @@
 "use client";
 
-import clsx from "clsx";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  flexRender,
   ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   SortingState,
+  useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import clsx from "clsx";
+import React, { useState } from "react";
+
 import { Input } from "../Input/Input";
-import { Select } from "../Select/Select";
 import { Flex } from "../Layout/Layout";
 import { Pagination } from "../Pagination/Pagination";
+import { Select } from "../Select/Select";
 import styles from "./Table.module.scss";
-import React, { useState } from "react";
 
 interface TableProps<T> {
   data: T[];
@@ -96,7 +97,7 @@ export function Table<T>({
       className={clsx(
         styles.container,
         variant === "flat" && styles.flat,
-        className
+        className,
       )}
       style={style}
     >
@@ -110,7 +111,7 @@ export function Table<T>({
             />
           </div>
           {toolbarContent && (
-            <Flex gap={4} align="center">
+            <Flex align="center" gap={4}>
               {toolbarContent}
             </Flex>
           )}
@@ -119,13 +120,13 @@ export function Table<T>({
 
       <div
         ref={parentRef}
-        tabIndex={0}
         style={{
           height: height ? height : "auto",
           overflowY: height ? "auto" : "visible",
           overflowX: "auto",
           width: "100%",
         }}
+        tabIndex={0}
       >
         <table className={styles.table}>
           <thead>
@@ -136,22 +137,22 @@ export function Table<T>({
                   return (
                     <th
                       key={header.id}
+                      className={clsx(
+                        styles.th,
+                        styles[density],
+                        canSort && styles.sortable,
+                      )}
+                      style={{ width: header.getSize() }}
                       onClick={
                         canSort
                           ? header.column.getToggleSortingHandler()
                           : undefined
                       }
-                      style={{ width: header.getSize() }}
-                      className={clsx(
-                        styles.th,
-                        styles[density],
-                        canSort && styles.sortable
-                      )}
                     >
                       <div className={styles.headerContent}>
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                         {canSort &&
                           ({
@@ -195,7 +196,7 @@ export function Table<T>({
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </td>
                     ))}
@@ -228,7 +229,7 @@ export function Table<T>({
                   className={clsx(
                     styles.tr,
                     striped && styles.striped,
-                    "group"
+                    "group",
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -238,7 +239,7 @@ export function Table<T>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}
@@ -256,22 +257,22 @@ export function Table<T>({
       {enablePagination && !isVirtual && (
         <div className={styles.paginationContainer}>
           <Flex
-            gap={4}
             align="center"
+            gap={4}
             style={{ width: "100%", justifyContent: "space-between" }}
           >
             <div style={{ flexShrink: 0 }}>
               <Select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => {
-                  table.setPageSize(Number(e.target.value));
-                }}
                 options={[
                   { value: 10, label: "10 rows" },
                   { value: 20, label: "20 rows" },
                   { value: 50, label: "50 rows" },
                   { value: 100, label: "100 rows" },
                 ]}
+                value={table.getState().pagination.pageSize}
+                onChange={(e) => {
+                  table.setPageSize(Number(e.target.value));
+                }}
               />
             </div>
             <Pagination

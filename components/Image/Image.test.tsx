@@ -1,19 +1,21 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { Image } from "./Image";
-import { describe, it, expect } from "vitest";
+
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it } from "vitest";
+
+import { Image } from "./Image";
 
 describe("Image Component", () => {
   it("renders with proper attributes", () => {
-    render(<Image src="test.jpg" alt="Test Image" fit="cover" />);
+    render(<Image alt="Test Image" fit="cover" src="test.jpg" />);
     const img = screen.getByRole("img");
     expect(img).toHaveAttribute("src", "test.jpg");
     expect(img).toHaveAttribute("alt", "Test Image");
   });
 
   it("handles loading state correctly", async () => {
-    render(<Image src="test.jpg" alt="Loading Test" />);
+    render(<Image alt="Loading Test" src="test.jpg" />);
     const img = screen.getByRole("img");
 
     expect(img).toHaveClass(/hidden/);
@@ -27,7 +29,7 @@ describe("Image Component", () => {
 
   it("switches to fallbackSrc on error", async () => {
     render(
-      <Image src="broken.jpg" fallbackSrc="fallback.jpg" alt="Fallback Test" />
+      <Image alt="Fallback Test" fallbackSrc="fallback.jpg" src="broken.jpg" />,
     );
     const img = screen.getByRole("img");
 
@@ -41,7 +43,7 @@ describe("Image Component", () => {
     const blob = new Blob(["test"], { type: "image/png" });
     const url = URL.createObjectURL(blob);
 
-    render(<Image src={url} alt="Blob Test" />);
+    render(<Image alt="Blob Test" src={url} />);
     const img = screen.getByRole("img");
 
     expect(img.getAttribute("src")).toMatch(/^blob:/);

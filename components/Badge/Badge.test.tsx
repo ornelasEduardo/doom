@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
+
 import { render, screen } from "@testing-library/react";
-import { Badge } from "./Badge";
-import { describe, it, expect } from "vitest";
 import React from "react";
+import { describe, expect, it } from "vitest";
+
+import { Badge } from "./Badge";
 
 describe("Badge Component", () => {
   it("should render children", () => {

@@ -1,26 +1,27 @@
-import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Drawer } from "./Drawer";
-import { Button } from "../Button/Button";
-import { Text } from "../Text/Text";
-import { Stack, Flex } from "../Layout/Layout";
+import {
+  Bell,
+  History,
+  Power,
+  Settings2,
+  Shield,
+  Target,
+  User,
+  Zap,
+} from "lucide-react";
+import React, { useState } from "react";
+
+import { ActionRow } from "../ActionRow/ActionRow";
 import { Avatar } from "../Avatar/Avatar";
 import { Badge } from "../Badge/Badge";
+import { Button } from "../Button/Button";
+import { Flex, Stack } from "../Layout/Layout";
 import { ProgressBar } from "../ProgressBar/ProgressBar";
-import { Switch } from "../Switch/Switch";
-import { Slider } from "../Slider/Slider";
 import { Select } from "../Select/Select";
-import { ActionRow } from "../ActionRow/ActionRow";
-import {
-  User,
-  Bell,
-  Shield,
-  Settings2,
-  Power,
-  Zap,
-  Target,
-  History,
-} from "lucide-react";
+import { Slider } from "../Slider/Slider";
+import { Switch } from "../Switch/Switch";
+import { Text } from "../Text/Text";
+import { Drawer } from "./Drawer";
 
 const meta: Meta<typeof Drawer> = {
   title: "Components/Drawer",
@@ -47,7 +48,7 @@ export const RightSideWithFooter: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)} variant="primary">
+        <Button variant="primary" onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <User size={18} />
             View Account
@@ -55,22 +56,22 @@ export const RightSideWithFooter: Story = {
         </Button>
         <Drawer
           {...args}
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          title="Account Profile"
           footer={
             <Button
-              variant="outline"
               style={{ width: "100%" }}
+              variant="outline"
               onClick={() => setOpen(false)}
             >
               Sign Out
             </Button>
           }
+          isOpen={open}
+          title="Account Profile"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={8}>
-            <Flex direction="column" align="center" gap={4}>
-              <Avatar fallback="PP" size="xl" shape="circle" />
+            <Flex align="center" direction="column" gap={4}>
+              <Avatar fallback="PP" shape="circle" size="xl" />
               <Stack gap={1} style={{ textAlign: "center" }}>
                 <Text variant="h4" weight="bold">
                   Peter Parker
@@ -85,10 +86,10 @@ export const RightSideWithFooter: Story = {
 
             <Stack gap={4}>
               <Text
-                variant="small"
-                weight="bold"
                 color="muted"
                 style={{ textTransform: "uppercase" }}
+                variant="small"
+                weight="bold"
               >
                 Performance Metrics
               </Text>
@@ -99,7 +100,7 @@ export const RightSideWithFooter: Story = {
                     92%
                   </Text>
                 </Flex>
-                <ProgressBar value={92} height="12px" color="var(--primary)" />
+                <ProgressBar color="var(--primary)" height="12px" value={92} />
               </Stack>
               <Stack gap={2}>
                 <Flex justify="space-between">
@@ -109,31 +110,31 @@ export const RightSideWithFooter: Story = {
                   </Text>
                 </Flex>
                 <ProgressBar
-                  value={98}
-                  height="12px"
                   color="var(--secondary)"
+                  height="12px"
+                  value={98}
                 />
               </Stack>
             </Stack>
 
             <Stack gap={3}>
               <Text
-                variant="small"
-                weight="bold"
                 color="muted"
                 style={{ textTransform: "uppercase" }}
+                variant="small"
+                weight="bold"
               >
                 Recent Contributions
               </Text>
               <ActionRow
+                description="Merged 12 components into main branch."
                 icon={<Target size={20} />}
                 title="Design System"
-                description="Merged 12 components into main branch."
               />
               <ActionRow
+                description="Reduced bundle size by 15%."
                 icon={<Zap size={20} />}
                 title="Performance Optimization"
-                description="Reduced bundle size by 15%."
               />
             </Stack>
           </Stack>
@@ -151,7 +152,7 @@ export const Default: Story = {
 
     return (
       <>
-        <Button onClick={() => setOpen(true)} variant="primary">
+        <Button variant="primary" onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <Settings2 size={18} />
             User Settings
@@ -160,44 +161,44 @@ export const Default: Story = {
         <Drawer
           {...args}
           isOpen={open}
-          onClose={() => setOpen(false)}
           title="Settings"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={6}>
             <Stack gap={4}>
               <Text
-                variant="small"
-                weight="bold"
                 color="muted"
                 style={{ textTransform: "uppercase" }}
+                variant="small"
+                weight="bold"
               >
                 Regional
               </Text>
               <Select
+                defaultValue="en-us"
+                label="Language"
                 options={[
                   { label: "English (US)", value: "en-us" },
                   { label: "Spanish (ES)", value: "es" },
                   { label: "French (FR)", value: "fr" },
                 ]}
-                defaultValue="en-us"
-                label="Language"
               />
-              <Slider label="Interface Scale" defaultValue={100} />
+              <Slider defaultValue={100} label="Interface Scale" />
             </Stack>
 
             <Stack gap={4}>
               <Text
-                variant="small"
-                weight="bold"
                 color="muted"
                 style={{ textTransform: "uppercase" }}
+                variant="small"
+                weight="bold"
               >
                 Preferences
               </Text>
               <Flex align="center" justify="space-between">
                 <Stack gap={0}>
                   <Text weight="medium">Push Notifications</Text>
-                  <Text variant="small" color="muted">
+                  <Text color="muted" variant="small">
                     Receive desktop alerts
                   </Text>
                 </Stack>
@@ -209,7 +210,7 @@ export const Default: Story = {
               <Flex align="center" justify="space-between">
                 <Stack gap={0}>
                   <Text weight="medium">Dark Mode</Text>
-                  <Text variant="small" color="muted">
+                  <Text color="muted" variant="small">
                     Use high-contrast theme
                   </Text>
                 </Stack>
@@ -228,7 +229,7 @@ export const LeftSide: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)} variant="primary">
+        <Button variant="primary" onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <Bell size={18} />
             Notifications
@@ -236,31 +237,31 @@ export const LeftSide: Story = {
         </Button>
         <Drawer
           {...args}
-          side="left"
           isOpen={open}
-          onClose={() => setOpen(false)}
+          side="left"
           title="Activity Feed"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={4} style={{ margin: "-1rem" }}>
             <ActionRow
+              description="Your account was successfully verified."
               icon={<Shield size={20} style={{ color: "black" }} />}
               title="Identity Verified"
-              description="Your account was successfully verified."
             />
             <ActionRow
+              description="Last cloud sync 5 minutes ago."
               icon={<History size={20} style={{ color: "black" }} />}
               title="Security Backup"
-              description="Last cloud sync 5 minutes ago."
             />
             <ActionRow
+              description="You have reached 80% of your api limit."
               icon={<Zap size={20} style={{ color: "black" }} />}
               title="Usage Alert"
-              description="You have reached 80% of your api limit."
             />
             <ActionRow
+              description="Scheduled downtime at 2:00 AM UTC."
               icon={<Power size={20} style={{ color: "black" }} />}
               title="System Maintenance"
-              description="Scheduled downtime at 2:00 AM UTC."
             />
           </Stack>
         </Drawer>
@@ -274,7 +275,7 @@ export const SolidVariant: Story = {
     const [open, setOpen] = useState(false);
     return (
       <>
-        <Button onClick={() => setOpen(true)} variant="primary">
+        <Button variant="primary" onClick={() => setOpen(true)}>
           <Flex align="center" gap={2}>
             <Shield size={18} />
             Security Overview
@@ -282,15 +283,15 @@ export const SolidVariant: Story = {
         </Button>
         <Drawer
           {...args}
-          variant="solid"
-          isOpen={open}
-          onClose={() => setOpen(false)}
-          title="System Integrity"
           footer={
             <Button variant="outline" onClick={() => setOpen(false)}>
               Back to Dashboard
             </Button>
           }
+          isOpen={open}
+          title="System Integrity"
+          variant="solid"
+          onClose={() => setOpen(false)}
         >
           <Stack gap={6}>
             <Stack
@@ -301,7 +302,7 @@ export const SolidVariant: Story = {
                 borderRadius: "4px",
               }}
             >
-              <Text weight="bold" variant="h6">
+              <Text variant="h6" weight="bold">
                 STATUS: PROTECTED
               </Text>
               <Text variant="small">
@@ -311,13 +312,13 @@ export const SolidVariant: Story = {
 
             <Stack gap={4}>
               <Text
+                style={{ opacity: 0.8, textTransform: "uppercase" }}
                 variant="small"
                 weight="bold"
-                style={{ opacity: 0.8, textTransform: "uppercase" }}
               >
                 Network Health
               </Text>
-              <ProgressBar value={100} color="var(--success)" height="12px" />
+              <ProgressBar color="var(--success)" height="12px" value={100} />
               <Text variant="small">
                 Enterprise-grade encryption is active across all channels.
               </Text>

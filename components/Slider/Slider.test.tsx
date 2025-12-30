@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { Slider } from "./Slider";
 
 describe("Slider Component", () => {
@@ -13,7 +15,7 @@ describe("Slider Component", () => {
   });
 
   it("renders with single value and displays it", () => {
-    render(<Slider label="Test" value={50} showValue onChange={() => {}} />);
+    render(<Slider showValue label="Test" value={50} onChange={() => {}} />);
     expect(screen.getByText("50")).toBeInTheDocument();
     const input = screen.getByLabelText("Test");
     expect(input).toHaveValue("50");
@@ -21,7 +23,7 @@ describe("Slider Component", () => {
 
   it("calls onChange when single slider changed", () => {
     const handleChange = vi.fn();
-    render(<Slider label="Test" defaultValue={0} onChange={handleChange} />);
+    render(<Slider defaultValue={0} label="Test" onChange={handleChange} />);
 
     const input = screen.getByLabelText("Test");
     fireEvent.change(input, { target: { value: "75" } });
@@ -32,7 +34,7 @@ describe("Slider Component", () => {
   describe("Range Mode", () => {
     it("renders two inputs when value is an array", () => {
       render(
-        <Slider label="Range" value={[20, 80]} showValue onChange={() => {}} />
+        <Slider showValue label="Range" value={[20, 80]} onChange={() => {}} />,
       );
 
       expect(screen.getByText("20 - 80")).toBeInTheDocument();

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { ElementType } from "react";
 import clsx from "clsx";
+import React, { ElementType } from "react";
+
 import styles from "./Layout.module.scss";
 
 const SPACING_MAP = {
@@ -21,7 +22,9 @@ const SPACING_MAP = {
 export type Spacing = keyof typeof SPACING_MAP;
 
 function resolveGap(gap?: Spacing): string | undefined {
-  if (gap === undefined) return undefined;
+  if (gap === undefined) {
+    return undefined;
+  }
   return SPACING_MAP[gap];
 }
 
@@ -143,7 +146,7 @@ export function Flex({
     styles[`direction-${direction}`],
     justify && styles[`justify-${justify}`],
     align && styles[`align-${align}`],
-    className
+    className,
   );
 
   return (
@@ -184,7 +187,7 @@ export function Stack({
   ...props
 }: StackProps) {
   return (
-    <Flex direction={direction} gap={gap} align={align} {...props}>
+    <Flex align={align} direction={direction} gap={gap} {...props}>
       {children}
     </Flex>
   );
@@ -214,7 +217,7 @@ export function Switcher({
   const switcherClasses = clsx(
     styles.switcher,
     styles[`switch-${threshold}`],
-    className
+    className,
   );
 
   return (

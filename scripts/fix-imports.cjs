@@ -49,7 +49,7 @@ const fixImports = () => {
         // If we can't determine, assume it's a file and add .js
         modified = true;
         return `${prefix}${importPath}.js${suffix}`;
-      }
+      },
     );
 
     if (modified) {
@@ -63,7 +63,7 @@ try {
   const scssResults = replace.replaceInFileSync(scssOptions);
   console.log(
     "SCSS replacement results:",
-    scssResults.filter((r) => r.hasChanged).map((r) => r.file)
+    scssResults.filter((r) => r.hasChanged).map((r) => r.file),
   );
 
   console.log("\nFixing ESM imports...");

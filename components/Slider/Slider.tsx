@@ -1,14 +1,14 @@
 "use client";
 
 import clsx from "clsx";
-import styles from "./Slider.module.scss";
 import React from "react";
 
-interface SliderProps
-  extends Omit<
-    React.InputHTMLAttributes<HTMLInputElement>,
-    "onChange" | "value" | "defaultValue"
-  > {
+import styles from "./Slider.module.scss";
+
+interface SliderProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value" | "defaultValue"
+> {
   label?: string;
   showValue?: boolean;
   value?: number | [number, number];
@@ -40,8 +40,8 @@ export function Slider({
     defaultValue !== undefined
       ? defaultValue
       : Array.isArray(value)
-      ? value
-      : (min as number);
+        ? value
+        : (min as number);
 
   const [internalValue, setInternalValue] = React.useState<
     number | [number, number]
@@ -60,12 +60,14 @@ export function Slider({
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    index?: 0 | 1
+    index?: 0 | 1,
   ) => {
     const newVal = Number(e.target.value);
 
     if (!isRange) {
-      if (!isControlled) setInternalValue(newVal);
+      if (!isControlled) {
+        setInternalValue(newVal);
+      }
       onChange?.(newVal);
     } else {
       const newArray = [...valArray] as [number, number];
@@ -78,7 +80,9 @@ export function Slider({
         newArray[1] = Math.max(newVal, valArray[0]);
       }
 
-      if (!isControlled) setInternalValue(newArray);
+      if (!isControlled) {
+        setInternalValue(newArray);
+      }
       onChange?.(newArray);
     }
   };
@@ -99,7 +103,7 @@ export function Slider({
         <div className={styles.labelRow}>
           {label && <Label htmlFor={inputId}>{label}</Label>}
           {showValue && (
-            <Text variant="small" weight="bold" className={styles.valueDisplay}>
+            <Text className={styles.valueDisplay} variant="small" weight="bold">
               {isRange ? `${valArray[0]} - ${valArray[1]}` : valArray[0]}
             </Text>
           )}
@@ -120,47 +124,47 @@ export function Slider({
 
         {!isRange ? (
           <input
-            id={inputId}
+            aria-label={!label ? props["aria-label"] || "Slider" : undefined}
+            aria-valuemax={maxLimit}
+            aria-valuemin={minLimit}
+            aria-valuenow={valArray[0]}
             className={styles.rangeInput}
-            type="range"
-            min={min}
+            id={inputId}
             max={max}
+            min={min}
             step={step}
+            type="range"
             value={valArray[0]}
             onChange={(e) => handleChange(e)}
-            aria-label={!label ? props["aria-label"] || "Slider" : undefined}
-            aria-valuenow={valArray[0]}
-            aria-valuemin={minLimit}
-            aria-valuemax={maxLimit}
             {...props}
           />
         ) : (
           <>
             {/* Min Thumb */}
             <input
-              id={`${inputId}-min`}
+              aria-label="Minimum value"
               className={styles.multiRangeInput}
-              type="range"
-              min={min}
+              id={`${inputId}-min`}
               max={max}
+              min={min}
               step={step}
+              style={{ zIndex: valArray[0] > maxLimit - 10 ? 21 : 20 }}
+              type="range"
               value={valArray[0]}
               onChange={(e) => handleChange(e, 0)}
-              aria-label="Minimum value"
-              style={{ zIndex: valArray[0] > maxLimit - 10 ? 21 : 20 }}
             />
             {/* Max Thumb */}
             <input
-              id={`${inputId}-max`}
+              aria-label="Maximum value"
               className={styles.multiRangeInput}
-              type="range"
-              min={min}
+              id={`${inputId}-max`}
               max={max}
+              min={min}
               step={step}
+              style={{ zIndex: 20 }}
+              type="range"
               value={valArray[1]}
               onChange={(e) => handleChange(e, 1)}
-              aria-label="Maximum value"
-              style={{ zIndex: 20 }}
             />
           </>
         )}

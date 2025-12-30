@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Input } from "./Input";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Input } from "./Input";
 
 describe("Input Component", () => {
   it("should render with label", () => {
@@ -12,7 +14,7 @@ describe("Input Component", () => {
   });
 
   it("should render required attribute", () => {
-    render(<Input label="Required" required />);
+    render(<Input required label="Required" />);
     expect(screen.getByRole("textbox")).toBeRequired();
   });
 
@@ -38,7 +40,7 @@ describe("Input Component", () => {
     expect(input).toHaveAttribute("aria-invalid", "true");
     expect(input).toHaveAttribute(
       "aria-describedby",
-      expect.stringContaining("error")
+      expect.stringContaining("error"),
     );
   });
 
@@ -48,12 +50,12 @@ describe("Input Component", () => {
     expect(screen.getByText("Enter your name")).toBeInTheDocument();
     expect(input).toHaveAttribute(
       "aria-describedby",
-      expect.stringContaining("helper")
+      expect.stringContaining("helper"),
     );
   });
 
   it("should render adornments", () => {
-    render(<Input startAdornment="$" endAdornment="kg" />);
+    render(<Input endAdornment="kg" startAdornment="$" />);
     expect(screen.getByText("$")).toBeInTheDocument();
     expect(screen.getByText("kg")).toBeInTheDocument();
   });
@@ -73,7 +75,7 @@ describe("Input Component", () => {
 
   describe("Character Counter", () => {
     it("should show counter automatically when maxLength is present", () => {
-      render(<Input maxLength={20} defaultValue="Hello" />);
+      render(<Input defaultValue="Hello" maxLength={20} />);
       expect(screen.getByText("5 / 20")).toBeInTheDocument();
     });
 
@@ -90,7 +92,7 @@ describe("Input Component", () => {
     });
 
     it("should hide counter if showCount is false even with maxLength", () => {
-      render(<Input maxLength={20} showCount={false} defaultValue="Hello" />);
+      render(<Input defaultValue="Hello" maxLength={20} showCount={false} />);
       expect(screen.queryByText(/5 \/ 20/)).not.toBeInTheDocument();
     });
   });

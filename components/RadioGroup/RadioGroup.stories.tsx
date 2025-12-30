@@ -1,5 +1,6 @@
-import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
+import React, { useState } from "react";
+
 import { RadioGroup, RadioGroupItem } from "./RadioGroup";
 
 const meta: Meta<typeof RadioGroup> = {
@@ -15,10 +16,10 @@ export const Default: Story = {
   render: () => {
     const [value, setValue] = useState("option-1");
     return (
-      <RadioGroup value={value} onValueChange={setValue} name="example">
+      <RadioGroup name="example" value={value} onValueChange={setValue}>
         <RadioGroupItem value="option-1">Default Option</RadioGroupItem>
         <RadioGroupItem value="option-2">Second Option</RadioGroupItem>
-        <RadioGroupItem value="option-3" disabled>
+        <RadioGroupItem disabled value="option-3">
           Disabled Option
         </RadioGroupItem>
       </RadioGroup>

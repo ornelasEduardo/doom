@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent, within } from "@testing-library/react";
-import { Select } from "./Select";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Select } from "./Select";
 
 vi.mock("next/font/google", () => ({
   Montserrat: () => ({
@@ -33,7 +35,7 @@ describe("Select Component", () => {
   });
 
   it("should open options when clicked and update aria attributes", () => {
-    const { container } = render(<Select options={options} id="my-select" />);
+    const { container } = render(<Select id="my-select" options={options} />);
 
     const trigger = screen.getByRole("combobox");
 
@@ -54,7 +56,7 @@ describe("Select Component", () => {
   it("should select an option", () => {
     const handleChange = vi.fn();
     const { container } = render(
-      <Select options={options} onChange={handleChange} />
+      <Select options={options} onChange={handleChange} />,
     );
 
     const trigger = container.querySelector("button") as HTMLElement;
@@ -69,7 +71,7 @@ describe("Select Component", () => {
 
   it("should have required attribute on hidden input when required prop is true", () => {
     const { container } = render(
-      <Select options={options} required name="test-select" />
+      <Select required name="test-select" options={options} />,
     );
     const input = container.querySelector('input[name="test-select"]');
     expect(input).toHaveAttribute("required");
@@ -103,7 +105,7 @@ describe("Select Component", () => {
   });
 
   it("should be disabled when prop is set", () => {
-    render(<Select options={options} disabled />);
+    render(<Select disabled options={options} />);
     const trigger = screen.getByRole("combobox");
 
     expect(trigger).toBeDisabled();
