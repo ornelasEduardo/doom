@@ -28,7 +28,7 @@ export default [
   js.configs.recommended,
   ...compat.extends(
     "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
   ),
   {
     plugins: {
