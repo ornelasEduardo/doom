@@ -1,0 +1,188 @@
+.chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+
+  :global {
+    .domain {
+      stroke: var(--card-border);
+      stroke-width: var(--border-width);
+
+      &.hideDomain {
+        stroke: none;
+      }
+    }
+
+    .tick {
+      line {
+        stroke: var(--card-border);
+        stroke-width: var(--border-width);
+        opacity: 1;
+      }
+      text {
+        fill: var(--card-border);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+    }
+  }
+}
+
+.grid {
+  :global(.tick) line {
+    stroke: var(--muted, #ddd);
+    stroke-opacity: 0.5;
+  }
+
+  path {
+    display: none;
+  }
+}
+
+.path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: calc(var(--border-width) * 1.5);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.area {
+  fill: var(--primary);
+  stroke: none;
+}
+
+.bar {
+  fill: var(--primary);
+  stroke: var(--card-border);
+  stroke-width: var(--border-width);
+  stroke-linejoin: round;
+  transition: opacity 0.2s;
+
+  &:hover {
+    fill: var(--primary-hover);
+    opacity: 0.8;
+  }
+}
+
+.cursorLine {
+  stroke: var(--muted-foreground);
+
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+.cursorPoint {
+  fill: var(--primary);
+  stroke: var(--border-strong, #000);
+  stroke-width: var(--border-width);
+  pointer-events: none;
+}
+
+.dot {
+  fill: var(--primary);
+  stroke: var(--border-strong);
+  stroke-width: var(--border-width);
+  transition: r 0.2s;
+  z-index: var(--z-overlay);
+
+  &:hover {
+    r: 8;
+    stroke-width: calc(var(--border-width) * 1.5);
+  }
+}
+
+.chartContainer {
+  position: relative;
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+  padding: 1rem;
+  overflow: visible;
+
+  display: flex;
+  flex-direction: column;
+
+  &.flat {
+    box-shadow: none;
+  }
+
+  &.solid {
+    --solid-bg: var(--primary);
+    --solid-fg: var(--primary-foreground);
+
+    background-color: var(--solid-bg);
+    color: var(--solid-fg);
+    border-color: var(--border-strong);
+
+    --text-primary: var(--solid-fg);
+    --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
+    --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
+    --background: var(--solid-bg);
+
+    --foreground: var(--solid-fg);
+
+    & > * {
+      --primary: var(--solid-fg);
+      --primary-hover: color-mix(in srgb, var(--solid-fg) 80%, transparent);
+    }
+
+    :global(.tick) text {
+      fill: var(--solid-fg);
+    }
+
+    :global(.domain),
+    :global(.tick) line {
+      stroke: var(--solid-fg);
+    }
+
+    .tooltipCard {
+      background-color: var(--solid-bg);
+      border-color: var(--solid-fg);
+    }
+  }
+}
+
+.responsiveWrapper {
+  width: 100%;
+  flex: 1;
+
+  height: auto;
+  min-height: 0;
+
+  position: relative;
+
+  overflow: visible;
+}
+
+.tooltipWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%, -120%);
+
+  transition: transform 0.1s ease-out;
+}
+
+.tooltipCard {
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.axisLabel {
+  fill: var(--foreground);
+
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-anchor: middle;
+}
