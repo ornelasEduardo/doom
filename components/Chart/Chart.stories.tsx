@@ -11,6 +11,12 @@ const meta: Meta<typeof Chart> = {
   component: Chart,
   parameters: {
     layout: "centered",
+    docs: {
+      source: {
+        type: "code",
+        language: "tsx",
+      },
+    },
   },
   tags: ["autodocs"],
 };
@@ -229,7 +235,6 @@ export const CustomRender: Story = {
     },
     render: (ctx: DrawContext<any>) => {
       ctx.g
-
         .selectAll(".custom-dot")
         .data(ctx.data)
         .enter()
@@ -277,7 +282,7 @@ export const PieChart: Story = {
         .append("g")
         .attr(
           "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
+          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`
         );
 
       const colorScale = [
