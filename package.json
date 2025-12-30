@@ -22,7 +22,7 @@
     "test": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:package": "publint",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "validate:build": "node scripts/validate-build.cjs"
   },
   "keywords": [
@@ -56,6 +56,8 @@
     "@vitest/mocker": "^4.0.15",
     "copyfiles": "^2.4.1",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-storybook": "^10.1.4",
@@ -63,6 +65,7 @@
     "globals": "^16.5.0",
     "happy-dom": "^20.0.11",
     "next": "^15.5.7",
+    "prettier": "^3.7.4",
     "publint": "^0.3.16",
     "replace-in-file": "^8.4.0",
     "rimraf": "^6.1.2",

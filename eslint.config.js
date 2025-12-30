@@ -1,6 +1,8 @@
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
+import prettierRecommended from "eslint-plugin-prettier/recommended";
+import globals from "globals";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -13,7 +15,14 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["dist/**", ".next/**", "storybook-static/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      ".next/**",
+      "storybook-static/**",
+      "node_modules/**",
+    ],
   },
   js.configs.recommended,
   ...compat.extends(
@@ -23,6 +32,13 @@ export default [
   {
     plugins: {
       "simple-import-sort": simpleImportSort,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+      },
     },
     settings: {
       react: {
@@ -50,4 +66,12 @@ export default [
       ],
     },
   },
+  {
+    files: ["**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-var-requires": "off",
+    },
+  },
+  prettierRecommended,
 ];
