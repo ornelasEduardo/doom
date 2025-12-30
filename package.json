@@ -22,6 +22,7 @@
     "test": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:package": "publint",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "validate:build": "node scripts/validate-build.cjs"
   },
   "keywords": [

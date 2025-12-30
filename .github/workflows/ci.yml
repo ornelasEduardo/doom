@@ -27,6 +27,9 @@ jobs:
       - name: Run Vitest
         run: npm test
 
+      - name: Run Lint
+        run: npm run lint
+
   build:
     name: Build Design System
     runs-on: ubuntu-latest
