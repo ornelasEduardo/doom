@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { Link } from '../Link/Link';
-import styles from './Breadcrumbs.module.scss';
-import React from 'react';
+import clsx from "clsx";
+import React from "react";
+
+import { Link } from "../Link/Link";
+import styles from "./Breadcrumbs.module.scss";
 
 interface BreadcrumbsProps {
   children: React.ReactNode;
@@ -13,9 +14,7 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ children, className }: BreadcrumbsProps) {
   return (
     <nav aria-label="breadcrumb" className={clsx(styles.nav, className)}>
-      <ol className={styles.list}>
-        {children}
-      </ol>
+      <ol className={styles.list}>{children}</ol>
     </nav>
   );
 }
@@ -26,10 +25,14 @@ interface BreadcrumbItemProps {
   children: React.ReactNode;
 }
 
-export function BreadcrumbItem({ href, isCurrent, children }: BreadcrumbItemProps) {
+export function BreadcrumbItem({
+  href,
+  isCurrent,
+  children,
+}: BreadcrumbItemProps) {
   if (isCurrent) {
     return (
-      <li className={styles.li} aria-current="page">
+      <li aria-current="page" className={styles.li}>
         <span className={styles.currentPage}>{children}</span>
       </li>
     );
@@ -38,7 +41,7 @@ export function BreadcrumbItem({ href, isCurrent, children }: BreadcrumbItemProp
   return (
     <li className={styles.li}>
       {href ? (
-        <Link href={href} variant="default" style={{ fontSize: 'inherit' }}>
+        <Link href={href} style={{ fontSize: "inherit" }} variant="default">
           {children}
         </Link>
       ) : (

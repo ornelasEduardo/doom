@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Spinner } from "./Spinner";
+
 import { Flex, Stack } from "../Layout";
 import { Text } from "../Text";
+import { Spinner } from "./Spinner";
 
 const meta: Meta<typeof Spinner> = {
   title: "Components/Spinner",
@@ -23,7 +24,7 @@ export const Default: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <Flex gap={8} align="center">
+    <Flex align="center" gap={8}>
       <Stack align="center" gap={2}>
         <Spinner size="sm" />
         <Text variant="small">Small</Text>

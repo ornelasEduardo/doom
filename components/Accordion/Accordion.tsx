@@ -2,11 +2,12 @@
 
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
-import { Stack } from "../Layout/Layout";
+import React, { useState } from "react";
+
 import { Button } from "../Button/Button";
+import { Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 import styles from "./Accordion.module.scss";
-import React, { useState } from "react";
 
 const AccordionContext = React.createContext<{
   value: string | string[];
@@ -28,7 +29,9 @@ export function AccordionItem({
   className,
 }: AccordionItemProps) {
   const context = React.useContext(AccordionContext);
-  if (!context) throw new Error("AccordionItem must be used within Accordion");
+  if (!context) {
+    throw new Error("AccordionItem must be used within Accordion");
+  }
 
   const reactId = React.useId();
   const triggerId = `accordion-trigger-${reactId}`;
@@ -39,25 +42,25 @@ export function AccordionItem({
 
   return (
     <div className={clsx(styles.item, isOpen && styles.isOpen, className)}>
-      <Text variant="h3" className={styles.header}>
+      <Text className={styles.header} variant="h3">
         <Button
+          aria-controls={contentId}
+          aria-expanded={isOpen}
+          className={styles.trigger}
           id={triggerId}
           variant="ghost"
-          className={styles.trigger}
           onClick={() => context.onToggle(value)}
-          aria-expanded={isOpen}
-          aria-controls={contentId}
         >
           {trigger}
-          <ChevronDown size={20} strokeWidth={2.5} className={styles.icon} />
+          <ChevronDown className={styles.icon} size={20} strokeWidth={2.5} />
         </Button>
       </Text>
       <div
-        id={contentId}
-        className={styles.contentWrapper}
         aria-hidden={!isOpen}
-        role="region"
         aria-labelledby={triggerId}
+        className={styles.contentWrapper}
+        id={contentId}
+        role="region"
       >
         <div className={styles.contentBody}>{children}</div>
       </div>
@@ -83,7 +86,7 @@ export function Accordion({
   className,
 }: AccordionProps) {
   const [internalValue, setInternalValue] = useState<string | string[]>(
-    defaultValue || (type === "multiple" ? [] : "")
+    defaultValue || (type === "multiple" ? [] : ""),
   );
 
   const isControlled = controlledValue !== undefined;
@@ -110,7 +113,7 @@ export function Accordion({
     <AccordionContext.Provider
       value={{ value: currentValue, onToggle: handleToggle, type }}
     >
-      <Stack gap={0} className={clsx(styles.root, className)}>
+      <Stack className={clsx(styles.root, className)} gap={0}>
         {children}
       </Stack>
     </AccordionContext.Provider>

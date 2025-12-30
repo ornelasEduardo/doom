@@ -3,7 +3,7 @@
  * This catches issues that static analysis might miss
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("Package ESM Integration", () => {
   it("should be able to import the main entry point", async () => {

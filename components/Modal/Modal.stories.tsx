@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "./Modal";
-import { Button } from "../Button/Button";
-import { Text } from "../Text/Text";
-import { Stack } from "../Layout/Layout";
-import { Input } from "../Input/Input";
-import { Textarea } from "../Textarea/Textarea";
 import { useState } from "react";
+
+import { Button } from "../Button/Button";
+import { Input } from "../Input/Input";
+import { Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import { Textarea } from "../Textarea/Textarea";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "./Modal";
 
 const meta: Meta<typeof Modal> = {
   title: "Components/Modal",
@@ -26,13 +27,6 @@ export const Default: Story = {
       <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
         <Button onClick={() => setIsOpen(true)}>Open Default Modal</Button>
         <Modal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title={
-            <Text variant="h4" as="h2" className="mb-0">
-              Example Modal
-            </Text>
-          }
           footer={
             <>
               <Button variant="ghost" onClick={() => setIsOpen(false)}>
@@ -41,6 +35,13 @@ export const Default: Story = {
               <Button onClick={() => setIsOpen(false)}>Confirm</Button>
             </>
           }
+          isOpen={isOpen}
+          title={
+            <Text as="h2" className="mb-0" variant="h4">
+              Example Modal
+            </Text>
+          }
+          onClose={() => setIsOpen(false)}
         >
           <Stack gap={4}>
             <Text>
@@ -63,17 +64,10 @@ export const FeedbackForm: Story = {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
-        <Button onClick={() => setIsOpen(true)} color="secondary">
+        <Button color="secondary" onClick={() => setIsOpen(true)}>
           Send Feedback
         </Button>
         <Modal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          title={
-            <Text variant="h4" as="h2" className="mb-0">
-              Send Feedback
-            </Text>
-          }
           footer={
             <>
               <Button variant="ghost" onClick={() => setIsOpen(false)}>
@@ -82,22 +76,29 @@ export const FeedbackForm: Story = {
               <Button onClick={() => setIsOpen(false)}>SUBMIT FEEDBACK</Button>
             </>
           }
+          isOpen={isOpen}
+          title={
+            <Text as="h2" className="mb-0" variant="h4">
+              Send Feedback
+            </Text>
+          }
+          onClose={() => setIsOpen(false)}
         >
           <Stack gap={6}>
             <Text>
               Help us improve! Your feedback helps us build better products.
             </Text>
             <Input
-              label="TITLE"
-              placeholder="Brief summary of your feedback..."
-              maxLength={200}
               required
+              label="TITLE"
+              maxLength={200}
+              placeholder="Brief summary of your feedback..."
             />
             <Textarea
-              label="DESCRIPTION"
-              placeholder="Share your thoughts, ideas, or issues in detail..."
-              maxLength={5000}
               required
+              label="DESCRIPTION"
+              maxLength={5000}
+              placeholder="Share your thoughts, ideas, or issues in detail..."
             />
           </Stack>
         </Modal>
@@ -111,12 +112,12 @@ export const CustomComposition: Story = {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
-        <Button onClick={() => setIsOpen(true)} variant="outline">
+        <Button variant="outline" onClick={() => setIsOpen(true)}>
           Open Custom Modal
         </Button>
         <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <ModalHeader>
-            <Text variant="h3" as="h2" className="mb-0">
+            <Text as="h2" className="mb-0" variant="h3">
               Custom Composition
             </Text>
           </ModalHeader>
@@ -155,20 +156,20 @@ export const SolidVariant: Story = {
     const [isOpen, setIsOpen] = useState(false);
     return (
       <Stack align="center" justify="center" style={{ minHeight: "200px" }}>
-        <Button onClick={() => setIsOpen(true)} variant="primary">
+        <Button variant="primary" onClick={() => setIsOpen(true)}>
           Open Solid Modal
         </Button>
-        <Modal variant="solid" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        <Modal isOpen={isOpen} variant="solid" onClose={() => setIsOpen(false)}>
           <ModalHeader>
-            <Text variant="h3" as="h2" className="mb-0">
+            <Text as="h2" className="mb-0" variant="h3">
               SOLID VARIANT
             </Text>
           </ModalHeader>
           <ModalBody>
             <Stack gap={4}>
               <Text>
-                This modal uses the <code>variant="solid"</code> prop to create
-                a unified, high-impact look.
+                This modal uses the <code>variant=&quot;solid&quot;</code> prop
+                to create a unified, high-impact look.
               </Text>
               <div
                 style={{

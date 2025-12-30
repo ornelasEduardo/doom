@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Badge } from "./Badge";
+
 import { Flex } from "../Layout/Layout";
+import { Badge } from "./Badge";
 
 const meta: Meta<typeof Badge> = {
   title: "Components/Badge",
@@ -65,7 +66,7 @@ export const Secondary: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <Flex gap={4} align="center">
+    <Flex align="center" gap={4}>
       <Badge size="sm">Small</Badge>
       <Badge size="md">Medium</Badge>
       <Badge size="lg">Large</Badge>

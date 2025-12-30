@@ -1,17 +1,27 @@
-'use client';
+"use client";
 
-import React from 'react';
-import clsx from 'clsx';
-import styles from './Text.module.scss';
+import clsx from "clsx";
+import React from "react";
+
+import styles from "./Text.module.scss";
 
 // Use ComponentPropsWithoutRef for better type safety with HTML attributes
-type BaseProps = Omit<React.ComponentPropsWithoutRef<'span'>, 'color'>;
+type BaseProps = Omit<React.ComponentPropsWithoutRef<"span">, "color">;
 
 interface CustomTextProps {
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'body' | 'small' | 'caption';
-  weight?: 'normal' | 'medium' | 'semibold' | 'bold' | 'black';
-  color?: 'primary' | 'secondary' | 'muted' | 'error' | 'success' | 'warning';
-  align?: 'left' | 'center' | 'right';
+  variant?:
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "h6"
+    | "body"
+    | "small"
+    | "caption";
+  weight?: "normal" | "medium" | "semibold" | "bold" | "black";
+  color?: "primary" | "secondary" | "muted" | "error" | "success" | "warning";
+  align?: "left" | "center" | "right";
   as?: React.ElementType; // Allow any valid React element type
   htmlFor?: string;
 }
@@ -20,7 +30,7 @@ interface CustomTextProps {
 export interface TextProps extends BaseProps, CustomTextProps {}
 
 export function Text({
-  variant = 'body',
+  variant = "body",
   weight,
   color,
   align,
@@ -31,7 +41,11 @@ export function Text({
   ...props
 }: TextProps) {
   // Determine the HTML element to use
-  const Component = as || (variant?.startsWith('h') ? variant as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' : 'span');
+  const Component =
+    as ||
+    (variant?.startsWith("h")
+      ? (variant as "h1" | "h2" | "h3" | "h4" | "h5" | "h6")
+      : "span");
 
   return (
     <Component
@@ -39,9 +53,11 @@ export function Text({
         styles.text,
         styles[variant],
         weight && styles[`weight-${weight}`],
-        color ? styles[`color-${color}`] : (!variant?.startsWith('caption') && styles['color-foreground']),
+        color
+          ? styles[`color-${color}`]
+          : !variant?.startsWith("caption") && styles["color-foreground"],
         align && styles[`align-${align}`],
-        className
+        className,
       )}
       style={style}
       {...props}

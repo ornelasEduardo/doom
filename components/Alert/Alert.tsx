@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
-import styles from './Alert.module.scss';
-import React from 'react';
+import clsx from "clsx";
+import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
+import React from "react";
 
-export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
+import styles from "./Alert.module.scss";
+
+export type AlertVariant = "info" | "success" | "warning" | "error";
 
 interface AlertProps {
   variant?: AlertVariant;
@@ -22,11 +23,20 @@ const icons = {
   error: XCircle,
 };
 
-export function Alert({ variant = 'info', title, description, icon, className }: AlertProps) {
+export function Alert({
+  variant = "info",
+  title,
+  description,
+  icon,
+  className,
+}: AlertProps) {
   const IconComponent = icons[variant];
 
   return (
-    <div className={clsx(styles.alert, styles[variant], className)} role="alert">
+    <div
+      className={clsx(styles.alert, styles[variant], className)}
+      role="alert"
+    >
       <div className={clsx(styles.iconWrapper, styles[variant])}>
         {icon || <IconComponent size={20} strokeWidth={2.5} />}
       </div>

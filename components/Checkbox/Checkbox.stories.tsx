@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Checkbox } from "./Checkbox";
 import { useState } from "react";
+
+import { Checkbox } from "./Checkbox";
 
 const meta: Meta<typeof Checkbox> = {
   title: "Components/Checkbox",
@@ -40,8 +41,8 @@ export const Uncontrolled: Story = {
     return (
       <div className="flex flex-col gap-4">
         <Checkbox label="Option 1" />
-        <Checkbox label="Option 2" defaultChecked />
-        <Checkbox label="Option 3" disabled />
+        <Checkbox defaultChecked label="Option 2" />
+        <Checkbox disabled label="Option 3" />
       </div>
     );
   },
@@ -53,8 +54,8 @@ export const Controlled: Story = {
     return (
       <div className="flex flex-col gap-4">
         <Checkbox
-          label={`Value is: ${checked}`}
           checked={checked}
+          label={`Value is: ${checked}`}
           onChange={(e) => setChecked(e.target.checked)}
         />
         <button

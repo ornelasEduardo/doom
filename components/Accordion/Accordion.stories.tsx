@@ -1,12 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Accordion, AccordionItem } from "./Accordion";
-import { Button } from "../Button/Button";
-import { Input } from "../Input/Input";
-import { Label } from "../Label/Label";
-import { Text } from "../Text/Text";
-import { Stack } from "../Layout/Layout";
+
 import { Avatar } from "../Avatar/Avatar";
 import { Badge } from "../Badge/Badge";
+import { Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import { Accordion, AccordionItem } from "./Accordion";
 
 const meta: Meta<typeof Accordion> = {
   title: "Components/Accordion",
@@ -26,15 +24,15 @@ type Story = StoryObj<typeof Accordion>;
 export const Single: Story = {
   render: (args) => (
     <div style={{ width: "400px" }}>
-      <Accordion {...args} type="single" defaultValue="item-1">
-        <AccordionItem value="item-1" trigger="Is it accessible?">
+      <Accordion {...args} defaultValue="item-1" type="single">
+        <AccordionItem trigger="Is it accessible?" value="item-1">
           Yes. It adheres to the WAI-ARIA design pattern.
         </AccordionItem>
-        <AccordionItem value="item-2" trigger="Is it styled?">
+        <AccordionItem trigger="Is it styled?" value="item-2">
           Yes. It adheres to the neubrutalist design system with hard borders
           and high contrast.
         </AccordionItem>
-        <AccordionItem value="item-3" trigger="Is it filterable?">
+        <AccordionItem trigger="Is it filterable?" value="item-3">
           Not inherently. This leads into the Combobox pattern for searchable
           lists.
         </AccordionItem>
@@ -46,17 +44,17 @@ export const Single: Story = {
 export const Multiple: Story = {
   render: (args) => (
     <div style={{ width: "400px" }}>
-      <Accordion {...args} type="multiple" defaultValue={["item-1", "item-2"]}>
-        <AccordionItem value="item-1" trigger="Notifications">
+      <Accordion {...args} defaultValue={["item-1", "item-2"]} type="multiple">
+        <AccordionItem trigger="Notifications" value="item-1">
           Manage your email and push notification settings.
         </AccordionItem>
-        <AccordionItem value="item-2" trigger="Privacy">
+        <AccordionItem trigger="Privacy" value="item-2">
           Choose what data you share with the community.
         </AccordionItem>
-        <AccordionItem value="item-3" trigger="Security">
+        <AccordionItem trigger="Security" value="item-3">
           Update your password and 2FA settings.
         </AccordionItem>
-        <AccordionItem value="item-4" trigger="Billing">
+        <AccordionItem trigger="Billing" value="item-4">
           Manage your subscription and payment methods.
         </AccordionItem>
       </Accordion>
@@ -67,8 +65,8 @@ export const Multiple: Story = {
 export const ProjectDashboard: Story = {
   render: (args) => (
     <div style={{ width: "500px" }}>
-      <Accordion {...args} type="single" defaultValue="item-1">
-        <AccordionItem value="item-1" trigger="Mission Brief">
+      <Accordion {...args} defaultValue="item-1" type="single">
+        <AccordionItem trigger="Mission Brief" value="item-1">
           <Stack gap={4}>
             <Text>
               Objective: Secure the perimeter and establish a forward operating
@@ -80,24 +78,24 @@ export const ProjectDashboard: Story = {
             </Stack>
           </Stack>
         </AccordionItem>
-        <AccordionItem value="item-2" trigger="Active Squadron">
+        <AccordionItem trigger="Active Squadron" value="item-2">
           <Stack gap={4}>
-            <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap={4} align="center">
+            <Stack align="center" direction="row" justify="space-between">
+              <Stack align="center" direction="row" gap={4}>
                 <Avatar fallback="DD" size="sm" />
                 <Text>Daredevil</Text>
               </Stack>
               <Badge variant="success">Online</Badge>
             </Stack>
-            <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap={4} align="center">
+            <Stack align="center" direction="row" justify="space-between">
+              <Stack align="center" direction="row" gap={4}>
                 <Avatar fallback="SM" size="sm" />
                 <Text>Spiderman</Text>
               </Stack>
               <Badge variant="success">Online</Badge>
             </Stack>
-            <Stack direction="row" align="center" justify="space-between">
-              <Stack direction="row" gap={4} align="center">
+            <Stack align="center" direction="row" justify="space-between">
+              <Stack align="center" direction="row" gap={4}>
                 <Avatar fallback="RO" size="sm" />
                 <Text>Rogue</Text>
               </Stack>
@@ -105,7 +103,7 @@ export const ProjectDashboard: Story = {
             </Stack>
           </Stack>
         </AccordionItem>
-        <AccordionItem value="item-3" trigger="System Status">
+        <AccordionItem trigger="System Status" value="item-3">
           <Stack gap={4}>
             <Stack direction="row" justify="space-between">
               <Text>Mainframe</Text>

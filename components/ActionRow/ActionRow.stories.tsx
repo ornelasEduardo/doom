@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ActionRow } from "./ActionRow";
 import { Banknote, Settings, User } from "lucide-react";
+
+import { ActionRow } from "./ActionRow";
 
 const meta: Meta<typeof ActionRow> = {
   title: "Components/ActionRow",
@@ -59,19 +60,19 @@ export const InList: Story = {
       }}
     >
       <ActionRow
+        description="Manage your paychecks and bonuses"
         icon={<Banknote size={24} strokeWidth={2.5} />}
         title="Income Sources"
-        description="Manage your paychecks and bonuses"
       />
       <ActionRow
+        description="Customize your dashboard experience"
         icon={<Settings size={24} strokeWidth={2.5} />}
         title="Preferences"
-        description="Customize your dashboard experience"
       />
       <ActionRow
+        description="Update your personal information"
         icon={<User size={24} strokeWidth={2.5} />}
         title="Profile"
-        description="Update your personal information"
       />
     </div>
   ),

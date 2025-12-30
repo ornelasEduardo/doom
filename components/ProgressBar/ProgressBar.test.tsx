@@ -1,12 +1,14 @@
 import "@testing-library/jest-dom";
+
 import { render, screen } from "@testing-library/react";
-import { ProgressBar } from "./ProgressBar";
-import { describe, it, expect } from "vitest";
 import React from "react";
+import { describe, expect, it } from "vitest";
+
+import { ProgressBar } from "./ProgressBar";
 
 describe("ProgressBar Component", () => {
   it("should render with correct accessibility attributes", () => {
-    render(<ProgressBar value={50} aria-label="Loading progress" />);
+    render(<ProgressBar aria-label="Loading progress" value={50} />);
     const progress = screen.getByRole("progressbar");
 
     expect(progress).toBeInTheDocument();
@@ -20,25 +22,25 @@ describe("ProgressBar Component", () => {
     const { rerender } = render(<ProgressBar value={150} />);
     expect(screen.getByRole("progressbar")).toHaveAttribute(
       "aria-valuenow",
-      "100"
+      "100",
     );
 
     rerender(<ProgressBar value={-50} />);
     expect(screen.getByRole("progressbar")).toHaveAttribute(
       "aria-valuenow",
-      "0"
+      "0",
     );
   });
 
   it("should support custom max value", () => {
-    render(<ProgressBar value={50} max={200} />);
+    render(<ProgressBar max={200} value={50} />);
     const progress = screen.getByRole("progressbar");
     expect(progress).toHaveAttribute("aria-valuemax", "200");
     expect(progress).toHaveAttribute("aria-valuenow", "50");
   });
 
   it("should support a visible label via aria-labelledby", () => {
-    render(<ProgressBar value={30} label="Installing Updates" />);
+    render(<ProgressBar label="Installing Updates" value={30} />);
     const progress = screen.getByRole("progressbar");
     const label = screen.getByText("Installing Updates");
 
@@ -49,13 +51,13 @@ describe("ProgressBar Component", () => {
     render(<ProgressBar value={10} />);
     expect(screen.getByRole("progressbar")).toHaveAttribute(
       "aria-label",
-      "Progress"
+      "Progress",
     );
   });
 
   it("should spread additional props to the container", () => {
     render(
-      <ProgressBar value={20} data-testid="custom-bar" className="my-class" />
+      <ProgressBar className="my-class" data-testid="custom-bar" value={20} />,
     );
     // The role is now on the inner container
     const progress = screen.getByRole("progressbar");

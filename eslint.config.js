@@ -1,7 +1,8 @@
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
-import simpleImportSort from "eslint-plugin-simple-import-sort";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import unusedImports from "eslint-plugin-unused-imports";
 import globals from "globals";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -32,6 +33,7 @@ export default [
   {
     plugins: {
       "simple-import-sort": simpleImportSort,
+      "unused-imports": unusedImports,
     },
     languageOptions: {
       globals: {
@@ -60,9 +62,17 @@ export default [
       ],
       "react/react-in-jsx-scope": "off",
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": [
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
       ],
     },
   },

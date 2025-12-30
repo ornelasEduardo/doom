@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { themes, ThemeKey } from './definitions';
+import React, { createContext, useContext, useEffect, useState } from "react";
+
+import { ThemeKey, themes } from "./definitions";
 
 interface ThemeContextType {
   theme: ThemeKey;
@@ -11,12 +12,12 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ 
-  children, 
+export function ThemeProvider({
+  children,
   initialTheme,
-  onThemeChange
-}: { 
-  children: React.ReactNode; 
+  onThemeChange,
+}: {
+  children: React.ReactNode;
   initialTheme: ThemeKey;
   onThemeChange?: (theme: ThemeKey) => void;
 }) {
@@ -37,17 +38,19 @@ export function ThemeProvider({
   // Generate CSS variables string
   const cssVariables = Object.entries(themeVars)
     .map(([key, value]) => `${key}: ${value};`)
-    .join('\n');
+    .join("\n");
 
   return (
-    <ThemeContext.Provider 
-      value={{ 
-        theme: currentTheme, 
+    <ThemeContext.Provider
+      value={{
+        theme: currentTheme,
         setTheme: handleSetTheme,
-        availableThemes: themes
+        availableThemes: themes,
       }}
     >
-      <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVariables} }` }} />
+      <style
+        dangerouslySetInnerHTML={{ __html: `:root { ${cssVariables} }` }}
+      />
       {children}
     </ThemeContext.Provider>
   );
@@ -56,7 +59,7 @@ export function ThemeProvider({
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }

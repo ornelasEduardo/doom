@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
+
 import { Tooltip } from "./Tooltip";
 
 const UnderlinedText = ({ children }: { children: React.ReactNode }) => (
   <span
+    className="hover:text-primary hover:decoration-solid"
     style={{
       textDecoration: "underline",
       textDecorationStyle: "dotted",
@@ -11,7 +13,6 @@ const UnderlinedText = ({ children }: { children: React.ReactNode }) => (
       cursor: "help",
       fontWeight: 600,
     }}
-    className="hover:text-primary hover:decoration-solid"
   >
     {children}
   </span>

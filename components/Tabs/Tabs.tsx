@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
+import React, { createContext, useContext, useId, useState } from "react";
+
 import styles from "./Tabs.module.scss";
-import React, { createContext, useContext, useState, useId } from "react";
 
 interface TabsContextType {
   activeTab: string;
@@ -28,7 +29,7 @@ export function Tabs({
   ...props
 }: TabsProps) {
   const [internalActiveTab, setInternalActiveTab] = useState(
-    defaultValue || ""
+    defaultValue || "",
   );
   const reactId = useId();
 
@@ -64,10 +65,10 @@ export function TabsList({
 }: TabsListProps) {
   return (
     <div
-      role="tablist"
-      aria-orientation="horizontal"
       aria-label={props["aria-label"] || "Tabs"}
+      aria-orientation="horizontal"
       className={clsx(styles.tabsList, styles[`align-${align}`], className)}
+      role="tablist"
       {...props}
     >
       {children}
@@ -75,8 +76,7 @@ export function TabsList({
   );
 }
 
-interface TabsTriggerProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
   children: React.ReactNode;
 }
@@ -89,7 +89,9 @@ export function TabsTrigger({
   ...props
 }: TabsTriggerProps) {
   const context = useContext(TabsContext);
-  if (!context) throw new Error("TabsTrigger must be used within Tabs");
+  if (!context) {
+    throw new Error("TabsTrigger must be used within Tabs");
+  }
 
   const isActive = context.activeTab === value;
   const triggerId = `tabs-trigger-${context.baseId}-${value}`;
@@ -97,17 +99,17 @@ export function TabsTrigger({
 
   return (
     <button
+      aria-controls={isActive ? contentId : undefined}
+      aria-selected={isActive}
+      className={clsx(styles.tabsTrigger, isActive && styles.active, className)}
       id={triggerId}
       role="tab"
+      tabIndex={isActive ? 0 : -1}
       type="button"
-      aria-selected={isActive}
-      aria-controls={isActive ? contentId : undefined}
-      className={clsx(styles.tabsTrigger, isActive && styles.active, className)}
       onClick={(e) => {
         context.setActiveTab(value);
         onClick?.(e);
       }}
-      tabIndex={isActive ? 0 : -1}
       {...props}
     >
       {children}
@@ -144,21 +146,25 @@ export function TabsContent({
   ...props
 }: TabsContentProps) {
   const context = useContext(TabsContext);
-  if (!context) throw new Error("TabsContent must be used within Tabs");
+  if (!context) {
+    throw new Error("TabsContent must be used within Tabs");
+  }
 
   const isActive = context.activeTab === value;
   const triggerId = `tabs-trigger-${context.baseId}-${value}`;
   const contentId = `tabs-content-${context.baseId}-${value}`;
 
-  if (!isActive) return null;
+  if (!isActive) {
+    return null;
+  }
 
   return (
     <div
+      aria-labelledby={triggerId}
+      className={clsx(styles.tabsContent, className)}
       id={contentId}
       role="tabpanel"
-      aria-labelledby={triggerId}
       tabIndex={0}
-      className={clsx(styles.tabsContent, className)}
       {...props}
     >
       {children}

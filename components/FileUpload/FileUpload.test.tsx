@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
 import { FileUpload } from "./FileUpload";
 
 describe("FileUpload", () => {
@@ -14,7 +15,7 @@ describe("FileUpload", () => {
   });
 
   it("shows required indicator when required", () => {
-    render(<FileUpload label="Upload" required />);
+    render(<FileUpload required label="Upload" />);
     expect(screen.getByLabelText("required")).toBeInTheDocument();
   });
 

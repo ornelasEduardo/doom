@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Modal } from "./Modal";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Modal } from "./Modal";
 
 // Mock Design System components
 vi.mock("../..", () => ({
@@ -16,9 +18,9 @@ vi.mock("../..", () => ({
 describe("Modal Component", () => {
   it("should be hidden when isOpen is false", () => {
     render(
-      <Modal isOpen={false} onClose={() => {}} title="Test Modal">
+      <Modal isOpen={false} title="Test Modal" onClose={() => {}}>
         Content
-      </Modal>
+      </Modal>,
     );
     // The component stays mounted for exit animations but should be hidden
     const dialog = screen.getByRole("dialog", { hidden: true });
@@ -27,9 +29,9 @@ describe("Modal Component", () => {
 
   it("should render when isOpen is true with accessibility attributes", () => {
     render(
-      <Modal isOpen={true} onClose={() => {}} title="Test Modal">
+      <Modal isOpen={true} title="Test Modal" onClose={() => {}}>
         Content
-      </Modal>
+      </Modal>,
     );
     const dialog = screen.getByRole("dialog", { name: "Test Modal" });
     expect(dialog).toBeInTheDocument();
@@ -37,16 +39,16 @@ describe("Modal Component", () => {
     expect(screen.getByText("Content")).toBeInTheDocument();
     expect(dialog).toHaveAttribute(
       "aria-labelledby",
-      expect.stringMatching(/modal-title/)
+      expect.stringMatching(/modal-title/),
     );
   });
 
   it("should render content inside modal body", () => {
     render(
-      <Modal isOpen={true} onClose={() => {}} title="Test Modal">
+      <Modal isOpen={true} title="Test Modal" onClose={() => {}}>
         <p>My Description</p>
         <div>Content</div>
-      </Modal>
+      </Modal>,
     );
 
     expect(screen.getByText("My Description")).toBeInTheDocument();
@@ -56,9 +58,9 @@ describe("Modal Component", () => {
   it("should call onClose when close button is clicked", () => {
     const handleClose = vi.fn();
     render(
-      <Modal isOpen={true} onClose={handleClose} title="Test Modal">
+      <Modal isOpen={true} title="Test Modal" onClose={handleClose}>
         Content
-      </Modal>
+      </Modal>,
     );
 
     // The close button is the only button in our mock
@@ -69,9 +71,9 @@ describe("Modal Component", () => {
   it("should call onClose when Escape key is pressed", () => {
     const handleClose = vi.fn();
     render(
-      <Modal isOpen={true} onClose={handleClose} title="Test Modal">
+      <Modal isOpen={true} title="Test Modal" onClose={handleClose}>
         Content
-      </Modal>
+      </Modal>,
     );
 
     fireEvent.keyDown(document, { key: "Escape" });

@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
 import clsx from "clsx";
+import React from "react";
+
 import { Spinner } from "../Spinner";
 import styles from "./Button.module.scss";
 
@@ -34,12 +35,12 @@ export function Button({
     styles[variant],
     styles[size],
     loading && styles.loading,
-    className
+    className,
   );
 
   return (
     <button className={buttonClass} disabled={disabled || loading} {...props}>
-      {loading && <Spinner size="sm" className={styles.spinnerIcon} />}
+      {loading && <Spinner className={styles.spinnerIcon} size="sm" />}
       {children}
     </button>
   );

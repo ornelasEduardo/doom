@@ -1,17 +1,23 @@
-'use client';
+"use client";
 
-import { Popover } from '../Popover/Popover';
-import styles from './Tooltip.module.scss';
-import React, { useState } from 'react';
+import React, { useState } from "react";
+
+import { Popover } from "../Popover/Popover";
+import styles from "./Tooltip.module.scss";
 
 interface TooltipProps {
   content: string;
   children: React.ReactNode;
   delay?: number;
-  placement?: 'top' | 'bottom';
+  placement?: "top" | "bottom";
 }
 
-export function Tooltip({ content, children, delay = 200, placement = 'top' }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  delay = 200,
+  placement = "top",
+}: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
@@ -21,35 +27,37 @@ export function Tooltip({ content, children, delay = 200, placement = 'top' }: T
   };
 
   const hide = () => {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     setIsVisible(false);
   };
 
   // Map simplified placement to Popover placement
-  const popoverPlacement = placement === 'top' ? 'top-center' : 'bottom-center';
+  const popoverPlacement = placement === "top" ? "top-center" : "bottom-center";
 
   return (
     <Popover
-      isOpen={isVisible}
-      onClose={hide}
-      placement={popoverPlacement}
-      offset={8}
-      trigger={
-        <div 
-          className={styles.triggerWrapper}
-          onMouseEnter={show} 
-          onMouseLeave={hide} 
-          onFocus={show} 
-          onBlur={hide}
-        >
-          {children}
-        </div>
-      }
       content={
         <div className={styles.tooltipBody} role="tooltip">
           {content}
         </div>
       }
+      isOpen={isVisible}
+      offset={8}
+      placement={popoverPlacement}
+      trigger={
+        <div
+          className={styles.triggerWrapper}
+          onBlur={hide}
+          onFocus={show}
+          onMouseEnter={show}
+          onMouseLeave={hide}
+        >
+          {children}
+        </div>
+      }
+      onClose={hide}
     />
   );
 }

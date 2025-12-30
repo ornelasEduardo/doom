@@ -1,8 +1,9 @@
-import React from "react";
-import styles from "./Slat.module.scss";
-import { Text } from "../Text/Text";
-import { Stack, Flex } from "../Layout/Layout";
 import clsx from "clsx";
+import React from "react";
+
+import { Flex, Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import styles from "./Slat.module.scss";
 
 export interface SlatProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Main label (e.g. filename) */
@@ -29,19 +30,19 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
       onClick,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <div
         ref={ref}
-        role={onClick ? "button" : undefined}
-        tabIndex={onClick ? 0 : undefined}
         className={clsx(
           styles.slat,
           styles[variant],
           { [styles.hoverable]: onClick },
-          className
+          className,
         )}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
         onClick={onClick}
         onKeyDown={(e) => {
           if (onClick && (e.key === "Enter" || e.key === " ")) {
@@ -51,15 +52,15 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
         }}
         {...props}
       >
-        <Flex justify="space-between" align="center" gap={2}>
-          <Flex gap={2} align="center" style={{ flex: 1, minWidth: 0 }}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2} style={{ flex: 1, minWidth: 0 }}>
             {prependContent && (
               <div className={styles.prepend}>{prependContent}</div>
             )}
             <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
               <Text className={styles.label}>{label}</Text>
               {secondaryLabel && (
-                <Text variant="small" className={styles.secondaryLabel}>
+                <Text className={styles.secondaryLabel} variant="small">
                   {secondaryLabel}
                 </Text>
               )}
@@ -74,7 +75,7 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
         </Flex>
       </div>
     );
-  }
+  },
 );
 
 Slat.displayName = "Slat";

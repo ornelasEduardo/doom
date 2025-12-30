@@ -1,35 +1,35 @@
 "use client";
 
-import React, {
-  useRef,
-  useState,
-  DragEvent,
-  useCallback,
-  useMemo,
-  useEffect,
-} from "react";
-import styles from "./FileUpload.module.scss";
-import { Button } from "../Button/Button";
-import { Text } from "../Text/Text";
-import { Stack, Flex, Switcher } from "../Layout/Layout";
-import { Badge } from "../Badge/Badge";
-import { Slat } from "../Slat/Slat";
+import clsx from "clsx";
 import {
-  Upload,
+  Asterisk,
   File as FileIcon,
-  FileImage,
-  FileVideo,
+  FileArchive,
   FileAudio,
   FileCode,
-  FileArchive,
-  FileText,
+  FileImage,
   FileSpreadsheet,
-  Asterisk,
+  FileText,
+  FileVideo,
+  Upload,
   X,
 } from "lucide-react";
-import { Skeleton } from "../Skeleton/Skeleton";
+import React, {
+  DragEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import { Badge } from "../Badge/Badge";
+import { Button } from "../Button/Button";
 import { Image } from "../Image/Image";
-import clsx from "clsx";
+import { Flex, Stack, Switcher } from "../Layout/Layout";
+import { Slat } from "../Slat/Slat";
+import { Text } from "../Text/Text";
+import styles from "./FileUpload.module.scss";
 
 const enum Status {
   Disabled = "disabled",
@@ -104,7 +104,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   useEffect(() => {
     return () => {
       Object.values(previewsRef.current).forEach((url) =>
-        URL.revokeObjectURL(url)
+        URL.revokeObjectURL(url),
       );
     };
   }, []);
@@ -113,12 +113,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     const ext = fileName.split(".").pop()?.toLowerCase();
     const size = 20;
 
-    if (["jpg", "jpeg", "png", "gif", "svg", "webp"].includes(ext || ""))
+    if (["jpg", "jpeg", "png", "gif", "svg", "webp"].includes(ext || "")) {
       return <FileImage size={size} />;
-    if (["mp4", "mov", "avi", "mkv", "webm", "flv"].includes(ext || ""))
+    }
+    if (["mp4", "mov", "avi", "mkv", "webm", "flv"].includes(ext || "")) {
       return <FileVideo size={size} />;
-    if (["mp3", "wav", "ogg", "m4a", "flac"].includes(ext || ""))
+    }
+    if (["mp3", "wav", "ogg", "m4a", "flac"].includes(ext || "")) {
       return <FileAudio size={size} />;
+    }
     if (
       [
         "js",
@@ -134,19 +137,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         "c",
         "go",
       ].includes(ext || "")
-    )
+    ) {
       return <FileCode size={size} />;
-    if (["zip", "rar", "7z", "tar", "gz"].includes(ext || ""))
+    }
+    if (["zip", "rar", "7z", "tar", "gz"].includes(ext || "")) {
       return <FileArchive size={size} />;
-    if (["pdf"].includes(ext || "")) return <FileText size={size} />;
-    if (["xls", "xlsx", "csv", "ods"].includes(ext || ""))
+    }
+    if (["pdf"].includes(ext || "")) {
+      return <FileText size={size} />;
+    }
+    if (["xls", "xlsx", "csv", "ods"].includes(ext || "")) {
       return <FileSpreadsheet size={size} />;
+    }
 
     return <FileIcon size={size} />;
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) {
+      return "0 Bytes";
+    }
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -163,11 +173,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         }));
       }
     },
-    [showPreview]
+    [showPreview],
   );
 
   const validateFiles = (fileList: FileList | null): File[] => {
-    if (!fileList) return [];
+    if (!fileList) {
+      return [];
+    }
     const validFiles: File[] = [];
     setUploadError("");
 
@@ -175,8 +187,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       if (maxSize && file.size > maxSize) {
         setUploadError(
           `File "${file.name}" exceeds maximum size of ${formatFileSize(
-            maxSize
-          )}`
+            maxSize,
+          )}`,
         );
         return;
       }
@@ -200,7 +212,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     onDragEnter: (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (!disabled) setIsDragging(true);
+      if (!disabled) {
+        setIsDragging(true);
+      }
     },
     onDragLeave: (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -219,7 +233,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
-      if (disabled) return;
+      if (disabled) {
+        return;
+      }
       const validFiles = validateFiles(e.dataTransfer.files);
       if (validFiles.length > 0) {
         const newFiles = multiple ? [...files, ...validFiles] : validFiles;
@@ -243,7 +259,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
     onChange?.(newFiles);
-    if (inputRef.current) inputRef.current.value = "";
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
   };
 
   const handleClick = () => {
@@ -263,10 +281,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const isVoid = (isDragging || isActive || forceActive) && !hasFiles;
 
   const status = useMemo(() => {
-    if (disabled) return Status.Disabled;
-    if (displayError) return Status.Error;
-    if (isVoid) return Status.Void;
-    if (hasFiles) return Status.HasFiles;
+    if (disabled) {
+      return Status.Disabled;
+    }
+    if (displayError) {
+      return Status.Error;
+    }
+    if (isVoid) {
+      return Status.Void;
+    }
+    if (hasFiles) {
+      return Status.HasFiles;
+    }
     return Status.Idle;
   }, [disabled, displayError, isVoid, hasFiles]);
 
@@ -279,47 +305,47 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       {...handleDragHandlers}
     >
       <Switcher
-        threshold="xxs"
+        align="center"
         className={clsx(styles.header, {
           [styles.errorHeader]: status === Status.Error,
           [styles.disabledHeader]: disabled,
         })}
-        justify="space-between"
-        align="center"
         gap={2}
+        justify="space-between"
+        threshold="xxs"
       >
         <div className={styles.headerContent}>
           <Text className={styles.headerTitle} id="upload-title">
             {label || "Upload Files"}
             {required && (
               <span className={styles.requiredMark}>
-                <Asterisk size={14} aria-label="required" />
+                <Asterisk aria-label="required" size={14} />
               </span>
             )}
           </Text>
         </div>
         <Badge
+          aria-live="polite"
+          role="status"
           variant={
             status === Status.Error
               ? "error"
               : status === Status.HasFiles
-              ? "success"
-              : isVoid
-              ? "primary"
-              : "secondary"
+                ? "success"
+                : isVoid
+                  ? "primary"
+                  : "secondary"
           }
-          role="status"
-          aria-live="polite"
         >
           {status === Status.Error
             ? "Error"
             : status === Status.HasFiles
-            ? `${files.length} selected`
-            : isVoid
-            ? "Waiting..."
-            : disabled
-            ? "Disabled"
-            : "Ready"}
+              ? `${files.length} selected`
+              : isVoid
+                ? "Waiting..."
+                : disabled
+                  ? "Disabled"
+                  : "Ready"}
         </Badge>
       </Switcher>
 
@@ -331,27 +357,29 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           [styles.error]: !!displayError,
         })}
       >
-        <div className={styles.starField} aria-hidden="true" />
+        <div aria-hidden="true" className={styles.starField} />
         <input
           ref={inputRef}
-          type="file"
           accept={accept}
-          multiple={multiple}
-          onChange={handleFileChange}
-          disabled={disabled}
-          className={styles.hiddenInput}
-          aria-label="File upload input"
-          aria-required={required}
-          aria-invalid={!!displayError}
           aria-describedby={clsx({
             "upload-helper": !!helperText,
             "upload-error": !!displayError,
           })}
+          aria-invalid={!!displayError}
+          aria-label="File upload input"
+          aria-required={required}
+          className={styles.hiddenInput}
+          disabled={disabled}
+          multiple={multiple}
+          type="file"
+          onChange={handleFileChange}
         />
 
         {!hasFiles ? (
           <div
             className={styles.emptyState}
+            role="button"
+            tabIndex={disabled ? -1 : 0}
             onClick={handleClick}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -359,37 +387,35 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 handleClick();
               }
             }}
-            role="button"
-            tabIndex={disabled ? -1 : 0}
           >
-            <Stack gap={4} align="center">
-              <div className={styles.voidIconWrapper} aria-hidden="true">
+            <Stack align="center" gap={4}>
+              <div aria-hidden="true" className={styles.voidIconWrapper}>
                 <Upload className={styles.icon} size={48} strokeWidth={2} />
               </div>
-              <Stack gap={1} align="center">
-                <Text weight="bold" className={styles.voidText}>
+              <Stack align="center" gap={1}>
+                <Text className={styles.voidText} weight="bold">
                   {isDragging || isActive || forceActive
                     ? "Drop files now"
                     : "Drag and drop files"}
                 </Text>
-                <Text variant="small" className={styles.secondary}>
+                <Text className={styles.secondary} variant="small">
                   or click to browse
                 </Text>
               </Stack>
               {helperText && (
                 <Text
-                  variant="small"
                   className={styles.helperText}
                   id="upload-helper"
+                  variant="small"
                 >
                   {helperText}
                 </Text>
               )}
               {displayError && (
                 <Text
-                  variant="small"
                   className={styles.errorText}
                   id="upload-error"
+                  variant="small"
                 >
                   {displayError}
                 </Text>
@@ -398,10 +424,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           </div>
         ) : (
           <Flex
-            direction="column"
-            justify="space-between"
-            gap={4}
             className={styles.fileList}
+            direction="column"
+            gap={4}
+            justify="space-between"
           >
             <Stack gap={2}>
               {files.map((file, index) => {
@@ -409,30 +435,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 return (
                   <Slat
                     key={`${file.name}-${index}`}
-                    label={file.name}
-                    secondaryLabel={formatFileSize(file.size)}
-                    prependContent={
-                      previewUrl ? (
-                        <PreviewImage src={previewUrl} alt={file.name} />
-                      ) : (
-                        getFileIcon(file.name)
-                      )
-                    }
                     appendContent={
                       <Button
+                        aria-label={`Remove ${file.name}`}
+                        className={styles.removeButton}
+                        size="sm"
                         type="button"
                         variant="danger"
-                        size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemoveFile(index);
                         }}
-                        className={styles.removeButton}
-                        aria-label={`Remove ${file.name}`}
                       >
-                        <X size={16} aria-hidden="true" />
+                        <X aria-hidden="true" size={16} />
                       </Button>
                     }
+                    label={file.name}
+                    prependContent={
+                      previewUrl ? (
+                        <PreviewImage alt={file.name} src={previewUrl} />
+                      ) : (
+                        getFileIcon(file.name)
+                      )
+                    }
+                    secondaryLabel={formatFileSize(file.size)}
                   />
                 );
               })}
@@ -461,7 +487,6 @@ const PreviewImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
   return (
     <div className={styles.previewWrapper}>
       <Image
-        src={src}
         alt={
           alt
             .replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, "")
@@ -470,6 +495,7 @@ const PreviewImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
         className={styles.previewImg}
         fit="cover"
         rounded={false}
+        src={src}
       />
     </div>
   );

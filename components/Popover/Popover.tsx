@@ -1,15 +1,15 @@
 "use client";
 
-import clsx from "clsx";
-import { createPortal } from "react-dom";
-import styles from "./Popover.module.scss";
 import React, {
-  useState,
-  useRef,
-  useEffect,
   useCallback,
+  useEffect,
   useLayoutEffect,
+  useRef,
+  useState,
 } from "react";
+import { createPortal } from "react-dom";
+
+import styles from "./Popover.module.scss";
 
 interface PopoverProps {
   trigger: React.ReactNode;
@@ -40,7 +40,9 @@ export function Popover({
   const [transformOrigin, setTransformOrigin] = useState("top left");
 
   const updatePosition = useCallback(() => {
-    if (!isOpen || !triggerRef.current || !contentRef.current) return;
+    if (!isOpen || !triggerRef.current || !contentRef.current) {
+      return;
+    }
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const contentRect = contentRef.current.getBoundingClientRect();
@@ -69,7 +71,9 @@ export function Popover({
       if (top + contentRect.height > viewportHeight) {
         top = triggerRect.top - contentRect.height - offset;
         origin = "bottom";
-        if (top < 0) top = padding;
+        if (top < 0) {
+          top = padding;
+        }
       }
     }
 
@@ -121,7 +125,9 @@ export function Popover({
 
   // Handle click outside
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -157,7 +163,7 @@ export function Popover({
           >
             {content}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

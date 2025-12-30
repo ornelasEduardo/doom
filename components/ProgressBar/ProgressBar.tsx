@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import styles from "./ProgressBar.module.scss";
 import React from "react";
+
 import { Label } from "../Label/Label";
+import styles from "./ProgressBar.module.scss";
 
 interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
   value: number; // 0 to 100
@@ -38,14 +39,14 @@ export function ProgressBar({
     <div className={clsx(styles.wrapper, className)}>
       {label && <Label id={labelId}>{label}</Label>}
       <div
+        aria-label={!label ? props["aria-label"] || "Progress" : undefined}
+        aria-labelledby={label ? labelId : undefined}
+        aria-valuemax={max}
+        aria-valuemin={0}
+        aria-valuenow={clampedValue}
+        className={styles.container}
         id={barId}
         role="progressbar"
-        aria-valuenow={clampedValue}
-        aria-valuemin={0}
-        aria-valuemax={max}
-        aria-labelledby={label ? labelId : undefined}
-        aria-label={!label ? props["aria-label"] || "Progress" : undefined}
-        className={styles.container}
         style={
           {
             "--height": heightStyle,
@@ -56,13 +57,13 @@ export function ProgressBar({
       >
         <div
           className={styles.fill}
+          data-complete={percentage >= 100}
           style={
             {
               "--percentage": `${percentage}%`,
               "--color": color,
             } as React.CSSProperties
           }
-          data-complete={percentage >= 100}
         />
         {showStripes && <div className={styles.stripes} />}
       </div>

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Skeleton } from "./Skeleton";
+
 import { Card } from "../Card";
 import { Flex } from "../Layout";
+import { Skeleton } from "./Skeleton";
 
 const meta: Meta<typeof Skeleton> = {
   title: "Components/Skeleton",
@@ -50,21 +51,21 @@ export const Text: Story = {
 export const CardLoading: Story = {
   render: () => (
     <Card style={{ width: "350px" }}>
-      <Flex gap={4} align="center" style={{ marginBottom: "1rem" }}>
-        <Skeleton variant="circular" width="48px" height="48px" />
+      <Flex align="center" gap={4} style={{ marginBottom: "1rem" }}>
+        <Skeleton height="48px" variant="circular" width="48px" />
         <div style={{ flex: 1 }}>
           <Skeleton
+            style={{ marginBottom: "0.5rem" }}
             variant="text"
             width="60%"
-            style={{ marginBottom: "0.5rem" }}
           />
           <Skeleton variant="text" width="40%" />
         </div>
       </Flex>
       <Skeleton
-        variant="rectangular"
         height="120px"
         style={{ marginBottom: "1rem" }}
+        variant="rectangular"
       />
       <Skeleton variant="text" width="100%" />
       <Skeleton variant="text" width="90%" />

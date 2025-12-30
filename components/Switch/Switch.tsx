@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import styles from './Switch.module.scss';
-import React from 'react';
+import clsx from "clsx";
+import React from "react";
+
+import styles from "./Switch.module.scss";
 
 export interface SwitchProps {
   checked?: boolean;
@@ -15,32 +16,43 @@ export interface SwitchProps {
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ checked = false, onChange, disabled, label, id, className, ...props }, ref) => {
+  (
+    { checked = false, onChange, disabled, label, id, className, ...props },
+    ref,
+  ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (disabled) return;
+      if (disabled) {
+        return;
+      }
       onChange?.(e.target.checked);
     };
 
     return (
-      <label className={clsx(styles.switchContainer, disabled && styles.disabled, className)}>
+      <label
+        className={clsx(
+          styles.switchContainer,
+          disabled && styles.disabled,
+          className,
+        )}
+      >
         <input
-          className={styles.input}
-          type="checkbox"
-          role="switch"
-          id={id}
           ref={ref}
-          checked={checked}
-          onChange={handleChange}
-          disabled={disabled}
-          readOnly={props.readOnly}
           aria-checked={checked}
+          checked={checked}
+          className={styles.input}
+          disabled={disabled}
+          id={id}
+          readOnly={props.readOnly}
+          role="switch"
+          type="checkbox"
+          onChange={handleChange}
           {...props}
         />
         <div className={clsx(styles.toggle, checked && styles.checked)} />
         {label && <span className={styles.label}>{label}</span>}
       </label>
     );
-  }
+  },
 );
 
-Switch.displayName = 'Switch';
+Switch.displayName = "Switch";

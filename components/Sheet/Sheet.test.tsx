@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { Sheet } from "./Sheet";
 
 vi.mock("react-dom", async () => {
@@ -18,7 +20,7 @@ vi.mock("lucide-react", () => ({
 
 vi.mock("../Button", () => ({
   Button: ({ children, onClick, "aria-label": ariaLabel }: any) => (
-    <button onClick={onClick} aria-label={ariaLabel}>
+    <button aria-label={ariaLabel} onClick={onClick}>
       {children}
     </button>
   ),
@@ -27,9 +29,9 @@ vi.mock("../Button", () => ({
 describe("Sheet Component", () => {
   it("renders when open", () => {
     render(
-      <Sheet isOpen={true} onClose={() => {}} title="Test Sheet">
+      <Sheet isOpen={true} title="Test Sheet" onClose={() => {}}>
         Content
-      </Sheet>
+      </Sheet>,
     );
     expect(screen.getByText("Test Sheet")).toBeInTheDocument();
   });
@@ -37,9 +39,9 @@ describe("Sheet Component", () => {
   it("calls onClose when close button clicked", () => {
     const handleClose = vi.fn();
     render(
-      <Sheet isOpen={true} onClose={handleClose} title="Test">
+      <Sheet isOpen={true} title="Test" onClose={handleClose}>
         Content
-      </Sheet>
+      </Sheet>,
     );
     const closeBtn = screen.getByLabelText("Close sheet");
     fireEvent.click(closeBtn);
@@ -48,9 +50,9 @@ describe("Sheet Component", () => {
 
   it("links title to dialog via aria-labelledby", () => {
     const { getByRole, getByText } = render(
-      <Sheet isOpen={true} onClose={() => {}} title="Linked Title">
+      <Sheet isOpen={true} title="Linked Title" onClose={() => {}}>
         Content
-      </Sheet>
+      </Sheet>,
     );
     const dialog = getByRole("dialog");
     const title = getByText("Linked Title");

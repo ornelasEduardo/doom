@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Table } from "./Table";
+import { createColumnHelper } from "@tanstack/react-table";
+import { Download, Plus } from "lucide-react";
+import React from "react";
+
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { ProgressBar } from "../ProgressBar/ProgressBar";
-import { Flex } from "../Layout/Layout";
-import { createColumnHelper } from "@tanstack/react-table";
-import { Plus, Download } from "lucide-react";
-import React from "react";
+import { Table } from "./Table";
 
 const meta: Meta<typeof Table> = {
   title: "Components/Table",
@@ -69,10 +69,15 @@ const columns = [
       const status = info.getValue();
       let variant: "success" | "error" | "warning" | "secondary" = "secondary";
 
-      if (status === "Active") variant = "success";
-      else if (status === "Rogue") variant = "error";
-      else if (status === "MIA") variant = "warning";
-      else if (status === "Retired") variant = "secondary";
+      if (status === "Active") {
+        variant = "success";
+      } else if (status === "Rogue") {
+        variant = "error";
+      } else if (status === "MIA") {
+        variant = "warning";
+      } else if (status === "Retired") {
+        variant = "secondary";
+      }
 
       return <Badge variant={variant}>{status.toUpperCase()}</Badge>;
     },
@@ -89,16 +94,16 @@ const columns = [
         }}
       >
         <ProgressBar
-          value={info.getValue()}
-          max={100}
-          height={24}
           color={
             info.getValue() > 90
               ? "var(--success)"
               : info.getValue() > 70
-              ? "var(--warning)"
-              : "var(--error)"
+                ? "var(--warning)"
+                : "var(--error)"
           }
+          height={24}
+          max={100}
+          value={info.getValue()}
         />
         <span style={{ fontSize: "0.75rem", fontWeight: "bold" }}>
           {info.getValue()}%
@@ -284,7 +289,7 @@ export const WithToolbarActions: Story = {
     enableFiltering: true,
     toolbarContent: (
       <>
-        <Button variant="outline" size="sm">
+        <Button size="sm" variant="outline">
           <Download size={16} style={{ marginRight: "8px" }} />
           Export
         </Button>

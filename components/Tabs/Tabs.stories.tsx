@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Tabs, TabsList, TabsTrigger, TabsContent, TabsBody } from "./index"; // Importing relatively to ensure we use the local changes immediately
+
 import { Text } from "../Text/Text"; // Importing relatively to avoid circular deps if package alias is tricky
+import { Tabs, TabsBody, TabsContent, TabsList, TabsTrigger } from "./index"; // Importing relatively to ensure we use the local changes immediately
 
 const meta: Meta<typeof Tabs> = {
   title: "Components/Tabs",

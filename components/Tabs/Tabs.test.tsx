@@ -1,8 +1,10 @@
 import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Tabs, TabsList, TabsTrigger, TabsContent, TabsBody } from "./Tabs";
-import { describe, it, expect, vi } from "vitest";
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { Tabs, TabsBody, TabsContent, TabsList, TabsTrigger } from "./Tabs";
 
 describe("Tabs Component", () => {
   it("should render default tab with correct roles", () => {
@@ -16,7 +18,7 @@ describe("Tabs Component", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
           <TabsContent value="tab2">Content 2</TabsContent>
         </TabsBody>
-      </Tabs>
+      </Tabs>,
     );
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
@@ -43,7 +45,7 @@ describe("Tabs Component", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
           <TabsContent value="tab2">Content 2</TabsContent>
         </TabsBody>
-      </Tabs>
+      </Tabs>,
     );
 
     fireEvent.click(screen.getByText("Tab 2"));
@@ -63,7 +65,7 @@ describe("Tabs Component", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
           <TabsContent value="tab2">Content 2</TabsContent>
         </TabsBody>
-      </Tabs>
+      </Tabs>,
     );
 
     expect(screen.getByText("Content 1")).toBeInTheDocument();
@@ -85,7 +87,7 @@ describe("Tabs Component", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
           <TabsContent value="tab2">Content 2</TabsContent>
         </TabsBody>
-      </Tabs>
+      </Tabs>,
     );
 
     expect(screen.getByText("Content 2")).toBeInTheDocument();

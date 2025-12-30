@@ -1,7 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { Accordion, AccordionItem } from "./Accordion";
 import styles from "./Accordion.module.scss";
 
@@ -9,13 +11,13 @@ describe("Accordion Component", () => {
   it("renders triggers visible", () => {
     render(
       <Accordion>
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-        <AccordionItem value="2" trigger="Trigger 2">
+        <AccordionItem trigger="Trigger 2" value="2">
           Content 2
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
     expect(screen.getByText("Trigger 1")).toBeInTheDocument();
     expect(screen.getByText("Trigger 2")).toBeInTheDocument();
@@ -24,10 +26,10 @@ describe("Accordion Component", () => {
   it("toggles content on click (single)", () => {
     render(
       <Accordion type="single">
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
     // Initially closed (unless default)
     const trigger = screen.getByRole("button", { name: /Trigger 1/i });
@@ -53,13 +55,13 @@ describe("Accordion Component", () => {
   it("allows multiple items open in multiple mode", () => {
     render(
       <Accordion type="multiple">
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-        <AccordionItem value="2" trigger="Trigger 2">
+        <AccordionItem trigger="Trigger 2" value="2">
           Content 2
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     const trigger1 = screen.getByRole("button", { name: /Trigger 1/i });
@@ -76,10 +78,10 @@ describe("Accordion Component", () => {
     const onValueChange = vi.fn();
     render(
       <Accordion type="single" onValueChange={onValueChange}>
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Trigger 1/i }));
@@ -89,38 +91,38 @@ describe("Accordion Component", () => {
   it("works in controlled mode", () => {
     const { rerender } = render(
       <Accordion type="single" value="1">
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-        <AccordionItem value="2" trigger="Trigger 2">
+        <AccordionItem trigger="Trigger 2" value="2">
           Content 2
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     expect(screen.getByRole("button", { name: /Trigger 1/i })).toHaveAttribute(
       "aria-expanded",
-      "true"
+      "true",
     );
 
     rerender(
       <Accordion type="single" value="2">
-        <AccordionItem value="1" trigger="Trigger 1">
+        <AccordionItem trigger="Trigger 1" value="1">
           Content 1
         </AccordionItem>
-        <AccordionItem value="2" trigger="Trigger 2">
+        <AccordionItem trigger="Trigger 2" value="2">
           Content 2
         </AccordionItem>
-      </Accordion>
+      </Accordion>,
     );
 
     expect(screen.getByRole("button", { name: /Trigger 1/i })).toHaveAttribute(
       "aria-expanded",
-      "false"
+      "false",
     );
     expect(screen.getByRole("button", { name: /Trigger 2/i })).toHaveAttribute(
       "aria-expanded",
-      "true"
+      "true",
     );
   });
 });

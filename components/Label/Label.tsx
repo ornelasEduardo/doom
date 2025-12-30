@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import clsx from 'clsx';
-import styles from './Label.module.scss';
+import clsx from "clsx";
+import React from "react";
+
+import styles from "./Label.module.scss";
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
@@ -11,8 +12,8 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
 
 export function Label({ children, required, className, ...props }: LabelProps) {
   return (
-    <label 
-      className={clsx(styles.label, required && styles.required, className)} 
+    <label
+      className={clsx(styles.label, required && styles.required, className)}
       {...props}
     >
       {children}

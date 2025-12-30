@@ -1,29 +1,28 @@
-'use client';
+"use client";
 
-import React from 'react';
-import clsx from 'clsx';
-import { LoaderCircle } from 'lucide-react';
-import styles from './Spinner.module.scss';
+import clsx from "clsx";
+import { LoaderCircle } from "lucide-react";
+import React from "react";
 
-export interface SpinnerProps extends React.ComponentProps<typeof LoaderCircle> {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+import styles from "./Spinner.module.scss";
+
+export interface SpinnerProps extends React.ComponentProps<
+  typeof LoaderCircle
+> {
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-export function Spinner({ 
-  size = 'md', 
-  className, 
+export function Spinner({
+  size = "md",
+  className,
   strokeWidth = 2,
-  ...props 
+  ...props
 }: SpinnerProps) {
   return (
-    <LoaderCircle 
-      className={clsx(
-        styles.spinner, 
-        styles[size], 
-        className
-      )}
-      role="status"
+    <LoaderCircle
       aria-label="Loading"
+      className={clsx(styles.spinner, styles[size], className)}
+      role="status"
       strokeWidth={strokeWidth}
       {...props}
     />

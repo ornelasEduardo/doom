@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Slat } from "./Slat";
-import { File, Check, AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Check, File, X } from "lucide-react";
+
 import { Badge } from "../Badge/Badge";
-import { Card } from "../Card/Card";
-import { Stack, Flex } from "../Layout/Layout";
-import { Text } from "../Text/Text";
 import { Button } from "../Button/Button";
+import { Card } from "../Card/Card";
+import { Flex, Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import { Slat } from "./Slat";
 
 const meta: Meta<typeof Slat> = {
   title: "Components/Slat",
@@ -65,34 +66,34 @@ export const InsideCard: Story = {
       <Stack gap={4}>
         <Stack gap={1}>
           <Text weight="bold">Attached Files</Text>
-          <Text variant="small" style={{ color: "var(--muted-foreground)" }}>
+          <Text style={{ color: "var(--muted-foreground)" }} variant="small">
             Documents for review
           </Text>
         </Stack>
 
         <Stack gap={2}>
           <Slat
-            label="contract_v2.pdf"
-            secondaryLabel="2.4 MB"
-            prependContent={<File size={20} color="#3b82f6" />}
             appendContent={<X size={20} style={{ cursor: "pointer" }} />}
+            label="contract_v2.pdf"
+            prependContent={<File color="#3b82f6" size={20} />}
+            secondaryLabel="2.4 MB"
           />
           <Slat
-            label="budget_sheet.xlsx"
-            secondaryLabel="856 KB"
-            prependContent={<File size={20} color="#10b981" />}
             appendContent={<Badge variant="outline">Draft</Badge>}
+            label="budget_sheet.xlsx"
+            prependContent={<File color="#10b981" size={20} />}
+            secondaryLabel="856 KB"
           />
           <Slat
-            label="image_assets.zip"
-            secondaryLabel="124 MB"
-            prependContent={<File size={20} />}
-            variant="danger"
             appendContent={
               <Text variant="small" weight="bold">
                 Failed
               </Text>
             }
+            label="image_assets.zip"
+            prependContent={<File size={20} />}
+            secondaryLabel="124 MB"
+            variant="danger"
           />
         </Stack>
         <Flex justify="flex-end">

@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
-import { Text } from "../Text/Text";
-import { Flex } from "../Layout/Layout";
-import { ChevronRight } from "lucide-react";
 import clsx from "clsx";
+import { ChevronRight } from "lucide-react";
+import React from "react";
+
+import { Flex } from "../Layout/Layout";
+import { Text } from "../Text/Text";
 import styles from "./ActionRow.module.scss";
 
 interface ActionRowProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -25,9 +26,9 @@ export function ActionRow({
   return (
     <Flex
       align="center"
+      className={clsx(styles.actionRow, className)}
       gap={6}
       onClick={onClick}
-      className={clsx(styles.actionRow, className)}
       {...props}
     >
       <div className={styles.iconWrapper}>{icon}</div>

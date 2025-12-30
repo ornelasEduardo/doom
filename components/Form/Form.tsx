@@ -1,40 +1,48 @@
-'use client';
+"use client";
 
-import React from 'react';
-import clsx from 'clsx';
-import { Label } from '../Label/Label';
-import styles from './Form.module.scss';
+import clsx from "clsx";
+import React from "react";
+
+import { Label } from "../Label/Label";
+import styles from "./Form.module.scss";
 
 export interface FormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
 }
 
 export function Form({ children, className, ...props }: FormProps) {
-  return <form className={clsx(styles.form, className)} {...props}>{children}</form>;
+  return (
+    <form className={clsx(styles.form, className)} {...props}>
+      {children}
+    </form>
+  );
 }
-
 
 export interface FormMessageProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
-  variant?: 'error' | 'description';
+  variant?: "error" | "description";
 }
 
-export function FormMessage({ children, variant = 'description', className, ...props }: FormMessageProps) {
+export function FormMessage({
+  children,
+  variant = "description",
+  className,
+  ...props
+}: FormMessageProps) {
   return (
-    <span 
+    <span
       className={clsx(
-        styles.message, 
-        variant === 'error' && styles.error,
-        variant === 'description' && styles.description,
-        className
-      )} 
+        styles.message,
+        variant === "error" && styles.error,
+        variant === "description" && styles.description,
+        className,
+      )}
       {...props}
     >
       {children}
     </span>
   );
 }
-
 
 export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -45,15 +53,15 @@ export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
   required?: boolean;
 }
 
-export function Field({ 
-  children, 
-  label, 
-  error, 
-  description, 
-  htmlFor, 
+export function Field({
+  children,
+  label,
+  error,
+  description,
+  htmlFor,
   required,
   className,
-  ...props 
+  ...props
 }: FieldProps) {
   return (
     <div className={clsx(styles.field, className)} {...props}>
@@ -68,7 +76,7 @@ export function Field({
         <FormMessage variant="description">{description}</FormMessage>
       )}
 
-      {error && typeof error === 'string' && (
+      {error && typeof error === "string" && (
         <FormMessage variant="error">{error}</FormMessage>
       )}
     </div>

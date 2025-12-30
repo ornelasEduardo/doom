@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Flex, Grid, Stack, Container, Switcher } from "./Layout";
+
 import { Text } from "../Text";
+import { Container, Flex, Grid, Stack, Switcher } from "./Layout";
 
 const meta: Meta<typeof Flex> = {
   title: "Components/Layout",
@@ -32,7 +33,7 @@ const Box = ({
 
 export const FlexRow: Story = {
   render: () => (
-    <Flex gap={4} wrap>
+    <Flex wrap gap={4}>
       <Box>Flex Item 1</Box>
       <Box>Flex Item 2</Box>
       <Box>Flex Item 3</Box>
@@ -91,9 +92,9 @@ export const SwitcherLayout: Story = {
           breakpoint.
         </Text>
         <Switcher
-          threshold="sm"
           gap={4}
           style={{ border: "2px dashed #ccc", padding: "1rem" }}
+          threshold="sm"
         >
           <Box>Item 1</Box>
           <Box>Item 2</Box>
@@ -105,9 +106,9 @@ export const SwitcherLayout: Story = {
         <Text weight="bold">Switcher (Threshold: xs)</Text>
         <Text color="muted">Switches at a smaller breakpoint (mobile).</Text>
         <Switcher
-          threshold="xs"
           gap={4}
           style={{ border: "2px dashed #999", padding: "1rem" }}
+          threshold="xs"
         >
           <Box>Item 1</Box>
           <Box>Item 2</Box>

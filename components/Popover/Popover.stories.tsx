@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Popover } from "./Popover";
-import { Button, Card, Text, Page, Flex, Stack } from "doom-design-system";
+import { Button, Card, Flex, Page, Stack, Text } from "doom-design-system";
 import { useState } from "react";
+
+import { Popover } from "./Popover";
 
 const meta: Meta<typeof Popover> = {
   title: "Components/Popover",
@@ -26,11 +27,6 @@ export const Default: Story = {
       <Page>
         <Flex align="center" justify="center" style={{ minHeight: "400px" }}>
           <Popover
-            isOpen={isOpen}
-            onClose={() => setIsOpen(false)}
-            trigger={
-              <Button onClick={() => setIsOpen(!isOpen)}>Click me</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -41,6 +37,11 @@ export const Default: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen}
+            trigger={
+              <Button onClick={() => setIsOpen(!isOpen)}>Click me</Button>
+            }
+            onClose={() => setIsOpen(false)}
           />
         </Flex>
       </Page>
@@ -59,14 +60,6 @@ export const Placements: Story = {
         <Flex align="center" justify="center" style={{ minHeight: "400px" }}>
           <Flex gap={8}>
             <Popover
-              placement="bottom-start"
-              isOpen={isOpen1}
-              onClose={() => setIsOpen1(false)}
-              trigger={
-                <Button onClick={() => setIsOpen1(!isOpen1)}>
-                  Bottom Start
-                </Button>
-              }
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
                   <Stack gap={2}>
@@ -75,16 +68,16 @@ export const Placements: Story = {
                   </Stack>
                 </Card>
               }
-            />
-            <Popover
-              placement="bottom-center"
-              isOpen={isOpen2}
-              onClose={() => setIsOpen2(false)}
+              isOpen={isOpen1}
+              placement="bottom-start"
               trigger={
-                <Button onClick={() => setIsOpen2(!isOpen2)}>
-                  Bottom Center
+                <Button onClick={() => setIsOpen1(!isOpen1)}>
+                  Bottom Start
                 </Button>
               }
+              onClose={() => setIsOpen1(false)}
+            />
+            <Popover
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
                   <Stack gap={2}>
@@ -93,14 +86,16 @@ export const Placements: Story = {
                   </Stack>
                 </Card>
               }
+              isOpen={isOpen2}
+              placement="bottom-center"
+              trigger={
+                <Button onClick={() => setIsOpen2(!isOpen2)}>
+                  Bottom Center
+                </Button>
+              }
+              onClose={() => setIsOpen2(false)}
             />
             <Popover
-              placement="bottom-end"
-              isOpen={isOpen3}
-              onClose={() => setIsOpen3(false)}
-              trigger={
-                <Button onClick={() => setIsOpen3(!isOpen3)}>Bottom End</Button>
-              }
               content={
                 <Card style={{ padding: "1rem", width: "200px" }}>
                   <Stack gap={2}>
@@ -109,6 +104,12 @@ export const Placements: Story = {
                   </Stack>
                 </Card>
               }
+              isOpen={isOpen3}
+              placement="bottom-end"
+              trigger={
+                <Button onClick={() => setIsOpen3(!isOpen3)}>Bottom End</Button>
+              }
+              onClose={() => setIsOpen3(false)}
             />
           </Flex>
         </Flex>
@@ -129,11 +130,6 @@ export const EdgeDetection: Story = {
       <div style={{ height: "200vh", width: "200vw", position: "relative" }}>
         <div style={{ position: "absolute", top: "10px", left: "10px" }}>
           <Popover
-            isOpen={isOpen1}
-            onClose={() => setIsOpen1(false)}
-            trigger={
-              <Button onClick={() => setIsOpen1(!isOpen1)}>Top Left</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -144,15 +140,15 @@ export const EdgeDetection: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen1}
+            trigger={
+              <Button onClick={() => setIsOpen1(!isOpen1)}>Top Left</Button>
+            }
+            onClose={() => setIsOpen1(false)}
           />
         </div>
         <div style={{ position: "absolute", top: "10px", right: "10px" }}>
           <Popover
-            isOpen={isOpen2}
-            onClose={() => setIsOpen2(false)}
-            trigger={
-              <Button onClick={() => setIsOpen2(!isOpen2)}>Top Right</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -161,15 +157,15 @@ export const EdgeDetection: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen2}
+            trigger={
+              <Button onClick={() => setIsOpen2(!isOpen2)}>Top Right</Button>
+            }
+            onClose={() => setIsOpen2(false)}
           />
         </div>
         <div style={{ position: "absolute", bottom: "10px", left: "10px" }}>
           <Popover
-            isOpen={isOpen3}
-            onClose={() => setIsOpen3(false)}
-            trigger={
-              <Button onClick={() => setIsOpen3(!isOpen3)}>Bottom Left</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -180,15 +176,15 @@ export const EdgeDetection: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen3}
+            trigger={
+              <Button onClick={() => setIsOpen3(!isOpen3)}>Bottom Left</Button>
+            }
+            onClose={() => setIsOpen3(false)}
           />
         </div>
         <div style={{ position: "absolute", bottom: "10px", right: "10px" }}>
           <Popover
-            isOpen={isOpen4}
-            onClose={() => setIsOpen4(false)}
-            trigger={
-              <Button onClick={() => setIsOpen4(!isOpen4)}>Bottom Right</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -197,6 +193,11 @@ export const EdgeDetection: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen4}
+            trigger={
+              <Button onClick={() => setIsOpen4(!isOpen4)}>Bottom Right</Button>
+            }
+            onClose={() => setIsOpen4(false)}
           />
         </div>
         <div
@@ -208,11 +209,6 @@ export const EdgeDetection: Story = {
           }}
         >
           <Popover
-            isOpen={isOpen5}
-            onClose={() => setIsOpen5(false)}
-            trigger={
-              <Button onClick={() => setIsOpen5(!isOpen5)}>Center</Button>
-            }
             content={
               <Card style={{ padding: "1rem", width: "200px" }}>
                 <Stack gap={2}>
@@ -223,6 +219,11 @@ export const EdgeDetection: Story = {
                 </Stack>
               </Card>
             }
+            isOpen={isOpen5}
+            trigger={
+              <Button onClick={() => setIsOpen5(!isOpen5)}>Center</Button>
+            }
+            onClose={() => setIsOpen5(false)}
           />
         </div>
       </div>

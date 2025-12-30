@@ -1,19 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Form, Field, FormMessage } from "./Form";
+import React from "react";
+
 import {
-  Input,
   Button,
-  Switch,
-  Select,
-  Textarea,
+  Card,
+  Checkbox,
+  Input,
+  Label,
   RadioGroup,
   RadioGroupItem,
+  Select,
   Slider,
-  Label,
-  Checkbox,
-  Card,
+  Switch,
+  Textarea,
 } from "../..";
-import React from "react";
+import { Field, Form, FormMessage } from "./Form";
 
 const meta: Meta<typeof Form> = {
   title: "Components/Form",
@@ -31,24 +32,24 @@ export const Default: Story = {
     return (
       <Form onSubmit={(e) => e.preventDefault()}>
         <Field
-          label="Email Address"
-          htmlFor="email"
           description="We'll never share your email."
+          htmlFor="email"
+          label="Email Address"
         >
           <Input
             id="email"
-            type="email"
             placeholder="Enter your email"
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
 
-        <Field label="Password" htmlFor="password" required>
+        <Field required htmlFor="password" label="Password">
           <Input
             id="password"
-            type="password"
             placeholder="Enter your password"
+            type="password"
           />
         </Field>
 
@@ -85,7 +86,7 @@ export const ComprehensiveForm: Story = {
       <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
         <Card style={{ padding: "2rem", width: "100%", maxWidth: "480px" }}>
           <Form onSubmit={handleSubmit}>
-            <Field label="Full Name" htmlFor="name" required>
+            <Field required htmlFor="name" label="Full Name">
               <Input
                 id="name"
                 placeholder="John Doe"
@@ -97,15 +98,15 @@ export const ComprehensiveForm: Story = {
             </Field>
 
             <Field
-              label="Email"
-              htmlFor="email"
-              description="Your primary contact email"
               required
+              description="Your primary contact email"
+              htmlFor="email"
+              label="Email"
             >
               <Input
                 id="email"
-                type="email"
                 placeholder="john@example.com"
+                type="email"
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -113,13 +114,9 @@ export const ComprehensiveForm: Story = {
               />
             </Field>
 
-            <Field label="Role" htmlFor="role" required>
+            <Field required htmlFor="role" label="Role">
               <Select
                 id="role"
-                value={formData.role}
-                onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value })
-                }
                 options={[
                   { value: "", label: "Select a role..." },
                   { value: "developer", label: "Developer" },
@@ -127,6 +124,10 @@ export const ComprehensiveForm: Story = {
                   { value: "manager", label: "Manager" },
                   { value: "other", label: "Other" },
                 ]}
+                value={formData.role}
+                onChange={(e) =>
+                  setFormData({ ...formData, role: e.target.value })
+                }
               />
             </Field>
 
@@ -146,38 +147,38 @@ export const ComprehensiveForm: Story = {
             </Field>
 
             <Field
-              label="Bio"
-              htmlFor="bio"
               description="Tell us about yourself"
+              htmlFor="bio"
+              label="Bio"
             >
               <Textarea
                 id="bio"
                 placeholder="I'm a developer who loves..."
+                rows={4}
                 value={formData.bio}
                 onChange={(e) =>
                   setFormData({ ...formData, bio: e.target.value })
                 }
-                rows={4}
               />
             </Field>
 
-            <Field label="Notification Volume" htmlFor="volume">
+            <Field htmlFor="volume" label="Notification Volume">
               <Slider
+                showValue
                 id="volume"
+                max={100}
+                min={0}
                 value={formData.volume}
                 onChange={(value) =>
                   setFormData({ ...formData, volume: value })
                 }
-                showValue
-                min={0}
-                max={100}
               />
             </Field>
 
             <Field>
               <Switch
-                label="Enable email notifications"
                 checked={formData.notifications}
+                label="Enable email notifications"
                 onChange={(checked) =>
                   setFormData({ ...formData, notifications: checked })
                 }
@@ -186,8 +187,8 @@ export const ComprehensiveForm: Story = {
 
             <Field>
               <Checkbox
-                label="I agree to the Terms and Conditions"
                 checked={formData.terms}
+                label="I agree to the Terms and Conditions"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, terms: e.target.checked })
                 }
@@ -244,8 +245,12 @@ export const WithValidation: Story = {
       const passwordError = validatePassword(password);
 
       const newErrors: Record<string, string> = {};
-      if (emailError) newErrors.email = emailError;
-      if (passwordError) newErrors.password = passwordError;
+      if (emailError) {
+        newErrors.email = emailError;
+      }
+      if (passwordError) {
+        newErrors.password = passwordError;
+      }
 
       setErrors(newErrors);
 
@@ -255,12 +260,12 @@ export const WithValidation: Story = {
     };
 
     return (
-      <Form onSubmit={handleSubmit} style={{ maxWidth: "500px" }}>
+      <Form style={{ maxWidth: "500px" }} onSubmit={handleSubmit}>
         <Field
-          label="Email Address"
-          htmlFor="email-validation"
-          error={errors.email}
           required
+          error={errors.email}
+          htmlFor="email-validation"
+          label="Email Address"
         >
           <Input
             id="email-validation"
@@ -271,8 +276,11 @@ export const WithValidation: Story = {
               const error = validateEmail(e.target.value);
               setErrors((prev) => {
                 const next = { ...prev };
-                if (error) next.email = error;
-                else delete next.email;
+                if (error) {
+                  next.email = error;
+                } else {
+                  delete next.email;
+                }
                 return next;
               });
             }}
@@ -280,11 +288,11 @@ export const WithValidation: Story = {
         </Field>
 
         <Field
-          label="Password"
-          htmlFor="password-validation"
-          error={errors.password}
-          description="Must be at least 8 characters with one uppercase letter"
           required
+          description="Must be at least 8 characters with one uppercase letter"
+          error={errors.password}
+          htmlFor="password-validation"
+          label="Password"
         >
           <Input
             id="password-validation"
@@ -295,8 +303,11 @@ export const WithValidation: Story = {
               const error = validatePassword(e.target.value);
               setErrors((prev) => {
                 const next = { ...prev };
-                if (error) next.password = error;
-                else delete next.password;
+                if (error) {
+                  next.password = error;
+                } else {
+                  delete next.password;
+                }
                 return next;
               });
             }}
@@ -328,7 +339,7 @@ export const CustomLayout: Story = {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <Label htmlFor="first-name" required>
+            <Label required htmlFor="first-name">
               First Name
             </Label>
             <Input id="first-name" placeholder="John" />
@@ -338,22 +349,22 @@ export const CustomLayout: Story = {
           <div
             style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <Label htmlFor="last-name" required>
+            <Label required htmlFor="last-name">
               Last Name
             </Label>
             <Input id="last-name" placeholder="Doe" />
           </div>
         </div>
 
-        <Field label="Email" htmlFor="email-custom">
+        <Field htmlFor="email-custom" label="Email">
           <Input
             id="email-custom"
-            type="email"
             placeholder="john.doe@example.com"
+            type="email"
           />
         </Field>
 
-        <Field label="Bio" htmlFor="bio-custom">
+        <Field htmlFor="bio-custom" label="Bio">
           <Textarea
             id="bio-custom"
             placeholder="Tell us about yourself..."
