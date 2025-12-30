@@ -50,6 +50,7 @@
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/mocker": "^4.0.15",
     "copyfiles": "^2.4.1",
+    "eslint": "^9.39.2",
     "eslint-plugin-storybook": "^10.1.4",
     "glob": "^13.0.0",
     "happy-dom": "^20.0.11",
