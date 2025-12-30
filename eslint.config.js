@@ -1,0 +1,53 @@
+import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+export default [
+  {
+    ignores: ["dist/**", ".next/**", "storybook-static/**", "node_modules/**"],
+  },
+  js.configs.recommended,
+  ...compat.extends(
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended"
+  ),
+  {
+    plugins: {
+      "simple-import-sort": simpleImportSort,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+    rules: {
+      curly: ["error", "all"],
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
+      "react/jsx-sort-props": [
+        "error",
+        {
+          callbacksLast: true,
+          shorthandFirst: true,
+          ignoreCase: true,
+          reservedFirst: true,
+        },
+      ],
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
+      ],
+    },
+  },
+];
