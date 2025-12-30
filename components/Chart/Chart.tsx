@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo, useState } from "react";
 import clsx from "clsx";
-import styles from "./Chart.module.scss";
-import { Card } from "../Card/Card";
-import { Text } from "../Text/Text";
-import { Stack } from "../Layout/Layout";
-import { select, pointer } from "d3-selection";
+import { pointer, select } from "d3-selection";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import { ChartProps } from "./types";
+import { Card } from "../Card/Card";
+import { Stack } from "../Layout/Layout";
+import { Text } from "../Text/Text";
+import styles from "./Chart.module.scss";
 import {
   createScales,
   drawAxes,
@@ -17,6 +16,7 @@ import {
   drawLineArea,
   setupGradient,
 } from "./renderers";
+import { ChartProps } from "./types";
 
 // Re-export types for consumers
 export type { ChartConfig, ChartProps, DrawContext } from "./types";
@@ -61,7 +61,7 @@ export function Chart<T>({
       showDots: false,
       ...d3Config,
     }),
-    [d3Config, type]
+    [d3Config, type],
   );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -120,7 +120,7 @@ export function Chart<T>({
       margin,
       x,
       y,
-      type
+      type,
     );
 
     if (innerWidth <= 0 || innerHeight <= 0) return;
@@ -138,7 +138,7 @@ export function Chart<T>({
         innerHeight,
         margin,
         config,
-        styles
+        styles,
       );
     }
 
@@ -198,7 +198,7 @@ export function Chart<T>({
         styles.chartContainer,
         variant === "solid" && styles.solid,
         flat && styles.flat,
-        className
+        className,
       )}
       style={{
         minHeight: config.height || 400,
@@ -210,7 +210,7 @@ export function Chart<T>({
         {title && (
           <div>
             {typeof title === "string" ? (
-              <Text variant="h5" style={{ margin: 0 }}>
+              <Text style={{ margin: 0 }} variant="h5">
                 {title}
               </Text>
             ) : (
@@ -239,19 +239,19 @@ export function Chart<T>({
                 <Card className={styles.tooltipCard}>
                   <div style={{ marginBottom: 4 }}>
                     <Text
-                      variant="h6"
                       style={{
                         color: "var(--text-secondary)",
                         textTransform: "uppercase",
                         fontSize: "10px",
                         letterSpacing: "0.5px",
                       }}
+                      variant="h6"
                     >
                       {x(hoverState.data as any)}
                     </Text>
                   </div>
                   <div>
-                    <Text variant="h4" style={{ margin: 0 }}>
+                    <Text style={{ margin: 0 }} variant="h4">
                       {y(hoverState.data as any)}
                     </Text>
                   </div>

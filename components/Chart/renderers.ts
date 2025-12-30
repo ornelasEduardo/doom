@@ -3,6 +3,7 @@ import * as d3Axis from "d3-axis";
 import * as d3Scale from "d3-scale";
 import * as d3Selection from "d3-selection";
 import * as d3Shape from "d3-shape";
+
 import { ChartConfig, D3Selection, DrawContext, SVGSelection } from "./types";
 
 const d3 = {
@@ -20,7 +21,7 @@ export function createScales<T>(
   margin: { top: number; right: number; bottom: number; left: number },
   x: (d: T) => any,
   y: (d: T) => number,
-  type?: "line" | "area" | "bar"
+  type?: "line" | "area" | "bar",
 ) {
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
@@ -86,7 +87,7 @@ export function drawGrid(
   g: D3Selection,
   yScale: any,
   innerWidth: number,
-  className: string
+  className: string,
 ) {
   g.append("g")
     .attr("class", className)
@@ -94,7 +95,7 @@ export function drawGrid(
       d3
         .axisLeft(yScale)
         .tickSize(-innerWidth)
-        .tickFormat(() => "")
+        .tickFormat(() => ""),
     );
 }
 
@@ -106,7 +107,7 @@ export function drawAxes(
   innerHeight: number,
   margin: { top: number; right: number; bottom: number; left: number },
   config: ChartConfig,
-  styles: Record<string, string>
+  styles: Record<string, string>,
 ) {
   const xAxis = g
     .append("g")

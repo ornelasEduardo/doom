@@ -1,6 +1,7 @@
+import { act, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { render, screen, act, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+
 import { Chart } from "./Chart";
 
 // Mock ResizeObserver
@@ -16,7 +17,7 @@ class MockResizeObserver {
           contentRect: { width: 500, height: 300 },
         } as ResizeObserverEntry,
       ],
-      this
+      this,
     );
   }
   unobserve() {}
@@ -71,7 +72,7 @@ describe("Chart", () => {
   });
 
   it("renders bars for bar chart (using paths)", async () => {
-    const { container } = render(<Chart data={data} x={x} y={y} type="bar" />);
+    const { container } = render(<Chart data={data} type="bar" x={x} y={y} />);
     await waitFor(() => {
       const paths = container.querySelectorAll("path");
       expect(paths.length).toBeGreaterThan(0);
@@ -80,7 +81,7 @@ describe("Chart", () => {
 
   it("renders a custom visualization via render prop", async () => {
     const renderSpy = vi.fn();
-    render(<Chart data={data} x={x} y={y} render={renderSpy} />);
+    render(<Chart data={data} render={renderSpy} x={x} y={y} />);
 
     await waitFor(() => {
       expect(renderSpy).toHaveBeenCalled();
@@ -99,11 +100,11 @@ describe("Chart", () => {
   it("renders axes labels when configured", async () => {
     const { getByText } = render(
       <Chart
+        d3Config={{ xAxisLabel: "Time", yAxisLabel: "Value" }}
         data={data}
         x={x}
         y={y}
-        d3Config={{ xAxisLabel: "Time", yAxisLabel: "Value" }}
-      />
+      />,
     );
     await waitFor(() => {
       expect(getByText("Time")).toBeInTheDocument();
@@ -116,12 +117,12 @@ describe("Chart", () => {
     render(
       <Chart
         data={data}
-        x={x}
-        y={y}
         render={(ctx) => {
           capturedCtx = ctx;
         }}
-      />
+        x={x}
+        y={y}
+      />,
     );
 
     await waitFor(() => expect(capturedCtx).toBeDefined());
@@ -146,7 +147,7 @@ describe("Chart", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByRole("heading", { name: "10" })
+        screen.queryByRole("heading", { name: "10" }),
       ).not.toBeInTheDocument();
     });
   });

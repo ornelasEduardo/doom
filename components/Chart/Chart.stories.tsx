@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Chart, type DrawContext } from "./Chart";
+import { select } from "d3-selection";
+import * as d3Shape from "d3-shape";
 
 import { Card } from "../Card/Card";
 import { Text } from "../Text/Text";
-import * as d3Shape from "d3-shape";
-import { select, pointer } from "d3-selection";
+import { Chart, type DrawContext } from "./Chart";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -163,11 +163,11 @@ export const Showcase: Story = {
           }}
         >
           <Text
-            variant="h6"
             style={{
               color: "var(--text-secondary)",
               textTransform: "uppercase",
             }}
+            variant="h6"
           >
             {data.month} 2024
           </Text>
@@ -180,10 +180,10 @@ export const Showcase: Story = {
               alignItems: "center",
             }}
           >
-            <Text variant="body" style={{ color: "var(--text-secondary)" }}>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
               Revenue
             </Text>
-            <Text variant="h6" style={{ fontWeight: 800 }}>
+            <Text style={{ fontWeight: 800 }} variant="h6">
               ${data.revenue.toLocaleString()}
             </Text>
           </div>
@@ -194,7 +194,7 @@ export const Showcase: Story = {
               alignItems: "center",
             }}
           >
-            <Text variant="body" style={{ color: "var(--text-secondary)" }}>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
               Active Users
             </Text>
             <Text variant="h6">{data.users}</Text>
@@ -206,10 +206,10 @@ export const Showcase: Story = {
               alignItems: "center",
             }}
           >
-            <Text variant="body" style={{ color: "var(--text-secondary)" }}>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
               Churn Rate
             </Text>
-            <Text variant="h6" style={{ color: "var(--error)" }}>
+            <Text style={{ color: "var(--error)" }} variant="h6">
               {data.churn}
             </Text>
           </div>
@@ -277,7 +277,7 @@ export const PieChart: Story = {
         .append("g")
         .attr(
           "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`
+          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
         );
 
       const colorScale = [
