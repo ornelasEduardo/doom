@@ -260,7 +260,7 @@ export const CustomRender2: Story = {
         .text((d) => d.data.name)
         .style("font-size", "12px")
         .style("font-weight", 600)
-        .style("fill", "#fff")
+        .style("fill", "var(--primary-foreground)")
         .style("pointer-events", "none");
 
       nodes
@@ -269,7 +269,8 @@ export const CustomRender2: Story = {
         .attr("y", 36)
         .text((d) => String(d.value))
         .style("font-size", "10px")
-        .style("fill", "rgba(255,255,255,0.8)")
+        .style("fill", "var(--primary-foreground)")
+        .style("opacity", "0.8")
         .style("pointer-events", "none");
     },
   },

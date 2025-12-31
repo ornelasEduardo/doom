@@ -21,7 +21,7 @@
         opacity: 1;
       }
       text {
-        fill: var(--card-border);
+        fill: var(--foreground);
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
@@ -32,7 +32,7 @@
 
 .grid {
   :global(.tick) line {
-    stroke: var(--muted, #ddd);
+    stroke: var(--muted);
     stroke-opacity: 0.5;
   }
 
@@ -79,7 +79,7 @@
 
 .cursorPoint {
   fill: var(--primary);
-  stroke: var(--border-strong, #000);
+  stroke: var(--border-strong);
   stroke-width: var(--border-width);
   pointer-events: none;
 }
