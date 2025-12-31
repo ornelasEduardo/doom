@@ -75,7 +75,7 @@ export function setupGradient(svg: SVGSelection, gradientId: string) {
     .append("stop")
     .attr("offset", "0%")
     .attr("stop-color", "var(--primary, #6366f1)")
-    .attr("stop-opacity", 0.2);
+    .attr("stop-opacity", 0.5);
   gradient
     .append("stop")
     .attr("offset", "100%")
@@ -108,15 +108,37 @@ export function drawAxes(
   margin: { top: number; right: number; bottom: number; left: number },
   config: ChartConfig,
   styles: Record<string, string>,
+  isMobile: boolean,
 ) {
+  const tickWidth = 40; // Approx max width of a label "SEPT"
+  const maxTicks = Math.floor(innerWidth / tickWidth);
+
+  const axisBottom = d3.axisBottom(xScale);
+
+  // If discrete scale (has domain array), reduce ticks to prevent overlap
+  if (xScale.domain && Array.isArray(xScale.domain())) {
+    const domain = xScale.domain();
+    if (domain.length > maxTicks) {
+      const step = Math.ceil(domain.length / maxTicks);
+      axisBottom.tickValues(
+        domain.filter((_: any, i: number) => i % step === 0),
+      );
+    }
+  } else {
+    axisBottom.ticks(Math.min(5, maxTicks));
+  }
+
   const xAxis = g
     .append("g")
     .attr("transform", `translate(0,${innerHeight})`)
-    .call(d3.axisBottom(xScale).ticks(5));
+    .call(axisBottom);
 
-  const yAxis = g
-    .append("g")
-    .call(d3.axisLeft(yScale).ticks(5).tickPadding(10));
+  const yAxis = g.append("g").call(
+    d3
+      .axisLeft(yScale)
+      .ticks(isMobile ? 3 : 5)
+      .tickPadding(10),
+  );
 
   if (config.hideYAxisDomain) {
     yAxis.select(".domain").remove();
@@ -221,7 +243,11 @@ export function drawLineArea<T>({
     .attr("r", 6)
     .style("opacity", 0);
 
-  overlay.on("mousemove", (event: any) => {
+  const interactionHandler = (event: any) => {
+    if (event.type.startsWith("touch")) {
+      event.preventDefault();
+    }
+
     const [pointerX, pointerY] = d3.pointer(event);
     let selectedData: T | null = null;
 
@@ -256,18 +282,20 @@ export function drawLineArea<T>({
       cursorDot.attr("cx", cx).attr("cy", cy).style("opacity", 1);
 
       setHoverState({
-        x: pointerX + margin.left + 20,
+        x: pointerX + margin.left,
         y: pointerY + margin.top,
         data: selectedData,
       });
     }
-  });
+  };
 
-  overlay.on("mouseleave", () => {
-    cursorLine.style("opacity", 0);
-    cursorDot.style("opacity", 0);
-    setHoverState(null);
-  });
+  overlay
+    .on("mousemove touchmove touchstart", interactionHandler)
+    .on("mouseleave touchend", () => {
+      cursorLine.style("opacity", 0);
+      cursorDot.style("opacity", 0);
+      setHoverState(null);
+    });
 }
 
 export function drawBars<T>({
@@ -308,13 +336,17 @@ export function drawBars<T>({
       `;
     })
 
-    .on("mouseenter", (event: any, d) => {
+    .on("mouseenter mousemove touchstart", (event: any, d) => {
+      if (event.type === "touchstart") event.preventDefault();
+
+      const [px, py] = d3Selection.pointer(event, g.node());
+
       setHoverState({
-        x: (xScale(x(d)) || 0) + xScale.bandwidth() / 2 + margin.left,
-        y: yScale(y(d)) + margin.top,
+        x: px + margin.left,
+        y: py + margin.top,
         data: d,
       });
     })
 
-    .on("mouseleave", () => setHoverState(null));
+    .on("mouseleave touchend", () => setHoverState(null));
 }

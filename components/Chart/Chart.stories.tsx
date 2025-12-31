@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { select } from "d3-selection";
 import * as d3Shape from "d3-shape";
+import { useState } from "react";
 
+import { Badge } from "../Badge/Badge";
+import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
+import { Flex, Stack } from "../Layout/Layout";
+import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
 import { Chart, type DrawContext } from "./Chart";
 
@@ -10,7 +15,7 @@ const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
   component: Chart,
   parameters: {
-    layout: "centered",
+    layout: "padded",
     docs: {
       source: {
         type: "code",
@@ -19,6 +24,9 @@ const meta: Meta<typeof Chart> = {
     },
   },
   tags: ["autodocs"],
+  argTypes: {
+    onValueChange: { action: "onValueChange" },
+  },
 };
 
 export default meta;
@@ -34,6 +42,8 @@ const data = [
   { label: "Jun", value: 45 },
 ];
 
+// --- TYPES ---
+
 export const LineChart: Story = {
   args: {
     data,
@@ -41,7 +51,11 @@ export const LineChart: Story = {
     y: (d: any) => d.value,
     type: "line",
     title: "Monthly Trends",
-    style: { width: 800, height: 400 },
+    style: {
+      width: "100%",
+      maxWidth: 800,
+      height: 400,
+    },
 
     d3Config: {
       grid: true,
@@ -51,22 +65,6 @@ export const LineChart: Story = {
       yAxisLabel: "Net Worth",
       curve: d3Shape.curveMonotoneX,
     },
-  },
-};
-
-export const Flat: Story = {
-  args: {
-    ...LineChart.args,
-    title: "Flat Mode (No Shadow)",
-    flat: true,
-  },
-};
-
-export const Solid: Story = {
-  args: {
-    ...LineChart.args,
-    title: "Solid Variant",
-    variant: "solid",
   },
 };
 
@@ -85,11 +83,315 @@ export const BarChart: Story = {
     y: (d: any) => d.value,
     type: "bar",
     title: "Revenue by Month",
-    style: { width: 800, height: 400 },
+    style: { width: "100%", maxWidth: 800, height: 400 },
     d3Config: {
       grid: true,
       yAxisLabel: "Revenue",
     },
+  },
+};
+
+export const CustomRender1: Story = {
+  args: {
+    data: [
+      { label: "Chrome", value: 400 },
+      { label: "Safari", value: 300 },
+      { label: "Firefox", value: 300 },
+      { label: "Edge", value: 200 },
+    ],
+    title: "Browser Share (Custom Pie)",
+    x: (d: any) => d.label,
+    y: (d: any) => d.value,
+    style: {
+      width: "100%",
+      maxWidth: 800,
+      height: 500,
+    },
+    d3Config: {
+      grid: false,
+      showAxes: false,
+    },
+    render: (ctx: DrawContext<any>) => {
+      const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
+
+      const g = ctx.g
+        .append("g")
+        .attr(
+          "transform",
+          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
+        );
+
+      const colorScale = [
+        "var(--primary)",
+        "var(--secondary)",
+        "var(--accent)",
+        "var(--muted-foreground)",
+      ];
+
+      const pie = d3Shape
+        .pie<any>()
+        .value((d) => d.value)
+        .sort(null);
+
+      const arc = d3Shape
+        .arc<any>()
+        .innerRadius(radius * 0.5)
+        .outerRadius(radius * 0.8)
+        .cornerRadius(4);
+
+      const arcs = g
+        .selectAll(".arc")
+        .data(pie(ctx.data))
+        .enter()
+        .append("g")
+        .attr("class", "arc");
+
+      arcs
+        .append("path")
+        .attr("d", arc)
+        .attr("fill", (_, i) => colorScale[i % colorScale.length])
+        .attr("stroke", "var(--card-bg)")
+        .attr("stroke-width", "2px")
+        .style("cursor", "pointer")
+        .on("mouseenter", (event) => {
+          select(event.currentTarget).style("opacity", 0.8);
+        })
+        .on("mousemove", (event, d) => ctx.showTooltip(event, d.data))
+        .on("mouseleave", (event) => {
+          select(event.currentTarget).style("opacity", 1);
+          ctx.hideTooltip();
+        });
+
+      arcs
+
+        .append("text")
+        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .text((d) => d.data.label)
+        .style("fill", "var(--card-bg)")
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .style("pointer-events", "none");
+    },
+  },
+};
+
+export const CustomRender2: Story = {
+  args: {
+    data: [
+      { name: "Root", value: 0, parent: null },
+      { name: "Tech", value: 0, parent: "Root" },
+      { name: "Design", value: 0, parent: "Root" },
+      { name: "Sales", value: 0, parent: "Root" },
+      { name: "React", value: 400, parent: "Tech" },
+      { name: "Svelte", value: 300, parent: "Tech" },
+      { name: "Vue", value: 200, parent: "Tech" },
+      { name: "Figma", value: 450, parent: "Design" },
+      { name: "Sketch", value: 100, parent: "Design" },
+      { name: "Q4", value: 600, parent: "Sales" },
+    ],
+    title: "Skills Distribution (Custom Treemap)",
+    x: (d: any) => d.name,
+
+    y: (d: any) => d.value,
+    style: {
+      width: "100%",
+      maxWidth: 800,
+      height: 500,
+    },
+    d3Config: {
+      grid: false,
+      showAxes: false,
+    },
+    render: async (ctx: DrawContext<any>) => {
+      const d3Hierarchy = await import("d3-hierarchy");
+
+      const root = d3Hierarchy
+        .stratify<any>()
+        .id((d) => d.name)
+        .parentId((d) => d.parent)(ctx.data)
+        .sum((d) => d.value)
+        .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+      d3Hierarchy
+        .treemap<any>()
+        .size([ctx.innerWidth, ctx.innerHeight])
+        .padding(4)(root);
+
+      const colors = [
+        "var(--primary)",
+        "var(--secondary)",
+        "var(--accent)",
+        "var(--success)",
+        "var(--warning)",
+      ];
+
+      const nodes = ctx.g
+        .selectAll("g")
+        .data(root.leaves())
+        .enter()
+        .append("g")
+        .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
+
+      nodes
+        .append("rect")
+        .attr("width", (d: any) => d.x1 - d.x0)
+        .attr("height", (d: any) => d.y1 - d.y0)
+        .attr("fill", (_, i) => colors[i % colors.length])
+        .attr("stroke", "var(--card-bg)")
+        .attr("fill-opacity", 0.8)
+        .style("rx", "var(--radius)")
+        .style("ry", "var(--radius)")
+        .style("cursor", "pointer")
+        .on("mouseenter", (event) => {
+          select(event.currentTarget).attr("fill-opacity", 1);
+        })
+        .on("mousemove", (event, d: any) => ctx.showTooltip(event, d.data))
+        .on("mouseleave", (event) => {
+          select(event.currentTarget).attr("fill-opacity", 0.8);
+          ctx.hideTooltip();
+        });
+
+      nodes
+        .append("text")
+        .attr("x", 8)
+        .attr("y", 20)
+        .text((d) => d.data.name)
+        .style("font-size", "12px")
+        .style("font-weight", 600)
+        .style("fill", "#fff")
+        .style("pointer-events", "none");
+
+      nodes
+        .append("text")
+        .attr("x", 8)
+        .attr("y", 36)
+        .text((d) => String(d.value))
+        .style("font-size", "10px")
+        .style("fill", "rgba(255,255,255,0.8)")
+        .style("pointer-events", "none");
+    },
+  },
+};
+
+// --- VARIANTS ---
+
+export const Solid: Story = {
+  args: {
+    ...LineChart.args,
+    title: "Solid Variant",
+    variant: "solid",
+  },
+};
+
+export const Flat: Story = {
+  args: {
+    ...LineChart.args,
+    title: "Flat Mode (No Shadow)",
+    flat: true,
+  },
+};
+
+export const IntegratedChart: Story = {
+  args: {
+    ...LineChart.args,
+    title: null,
+    type: "area",
+    withFrame: false,
+    d3Config: {
+      grid: false,
+      withGradient: true,
+      showDots: false,
+      showAxes: false,
+      curve: d3Shape.curveMonotoneX,
+    },
+    style: {
+      width: "100%",
+      maxWidth: 800,
+      height: 200,
+    },
+  },
+  render: (args: any) => {
+    const [activeData, setActiveData] = useState<any>(null);
+    const currentData = activeData || args.data[args.data.length - 1];
+
+    const currentIndex = args.data.indexOf(currentData);
+    const prevData = args.data[currentIndex - 1];
+    let percentChange = 0;
+
+    if (prevData && prevData.value !== 0) {
+      percentChange =
+        ((currentData.value - prevData.value) / prevData.value) * 100;
+    }
+
+    const isPositive = percentChange >= 0;
+
+    return (
+      <Card
+        style={{
+          padding: 0,
+          overflow: "hidden",
+          maxWidth: 400,
+        }}
+      >
+        <Stack
+          className="pt-5 pl-5"
+          gap={0}
+          style={{ marginBottom: "-1.5rem" }}
+        >
+          <Text style={{ color: "var(--text-secondary)" }} variant="h6">
+            Total Balance
+          </Text>
+          <Flex align="center" gap={2}>
+            <Text className="mb-0" variant="h3">
+              ${currentData.value.toLocaleString()}
+            </Text>
+            <Badge variant={isPositive ? "success" : "error"}>
+              {isPositive ? "+" : ""}
+              {percentChange.toFixed(1)}%
+            </Badge>
+          </Flex>
+        </Stack>
+        <Chart
+          {...args}
+          renderTooltip={() => null}
+          onValueChange={setActiveData}
+        />
+        <Stack gap={4} style={{ padding: "0 20px 20px" }}>
+          <Stack gap={2}>
+            {[
+              { label: "Incoming", value: "+$4,200", color: "var(--success)" },
+              {
+                label: "Outgoing",
+                value: "-$1,150",
+                color: "var(--text-primary)",
+              },
+              { label: "Investments", value: "+$850", color: "var(--primary)" },
+            ].map((item) => (
+              <Slat
+                key={item.label}
+                appendContent={
+                  <Text
+                    style={{
+                      fontWeight: 600,
+                      color: item.color,
+                    }}
+                    variant="body"
+                  >
+                    {item.value}
+                  </Text>
+                }
+                label={item.label}
+              />
+            ))}
+          </Stack>
+          <Button style={{ width: "100%" }} variant="secondary">
+            View Full Report
+          </Button>
+        </Stack>
+      </Card>
+    );
   },
 };
 
@@ -109,26 +411,7 @@ export const WithD3Config: Story = {
   },
 };
 
-export const NoAxes: Story = {
-  args: {
-    data: Array.from({ length: 50 }, (_, i) => ({
-      x: i,
-      y: Math.sin(i / 5) * 20 + 50 + Math.random() * 10,
-    })),
-    x: (d: any) => d.x,
-    y: (d: any) => d.y,
-    type: "line",
-    title: "Real-time Signal",
-    style: { width: 800, height: 400 },
-    d3Config: {
-      showAxes: false,
-      curve: d3Shape.curveMonotoneX,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    },
-  },
-};
-
-export const Showcase: Story = {
+export const DetailedTooltip: Story = {
   args: {
     data: [
       { month: "Jan", revenue: 4500, users: 120, churn: "2.1%" },
@@ -149,7 +432,11 @@ export const Showcase: Story = {
     type: "area",
     variant: "default",
     title: "Fiscal Year Report",
-    style: { width: 800, height: 450 },
+    style: {
+      width: "100%",
+      maxWidth: 800,
+      height: 450,
+    },
     d3Config: {
       xAxisLabel: "Fiscal Year 2024",
       yAxisLabel: "Monthly Revenue (USD)",
@@ -222,218 +509,5 @@ export const Showcase: Story = {
         </div>
       </Card>
     ),
-  },
-};
-
-export const CustomRender: Story = {
-  args: {
-    ...LineChart.args,
-    title: "Custom Scatter Plot (Generic Render)",
-    d3Config: {
-      grid: true,
-      showDots: false,
-    },
-    render: (ctx: DrawContext<any>) => {
-      ctx.g
-        .selectAll(".custom-dot")
-        .data(ctx.data)
-        .enter()
-        .append("circle")
-        .attr("class", "custom-dot")
-        .attr("cx", (d) => ctx.xScale(ctx.x(d)) || 0)
-        .attr("cy", (d) => ctx.yScale(ctx.y(d)))
-        .attr("r", (d) => Math.max(6, ctx.y(d) / 2))
-        .attr("fill", "var(--secondary)")
-        .attr("stroke", "var(--card-border)")
-        .attr("stroke-width", 2)
-        .style("cursor", "pointer")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).attr("fill", "var(--primary)");
-        })
-        .on("mousemove", (event, d) => ctx.showTooltip(event, d))
-        .on("mouseleave", (event) => {
-          ctx.hideTooltip();
-          select(event.currentTarget).attr("fill", "var(--secondary)");
-        });
-    },
-  },
-};
-
-export const PieChart: Story = {
-  args: {
-    data: [
-      { label: "Chrome", value: 400 },
-      { label: "Safari", value: 300 },
-      { label: "Firefox", value: 300 },
-      { label: "Edge", value: 200 },
-    ],
-    title: "Browser Share (Custom Pie)",
-    x: (d: any) => d.label,
-    y: (d: any) => d.value,
-    style: { width: 800, height: 500 },
-    d3Config: {
-      grid: false,
-      showAxes: false,
-    },
-    render: (ctx: DrawContext<any>) => {
-      const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
-
-      const g = ctx.g
-        .append("g")
-        .attr(
-          "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
-        );
-
-      const colorScale = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--muted-foreground)",
-      ];
-
-      const pie = d3Shape
-        .pie<any>()
-        .value((d) => d.value)
-        .sort(null);
-
-      const arc = d3Shape
-        .arc<any>()
-        .innerRadius(radius * 0.5) // Donut
-        .outerRadius(radius * 0.8)
-        .cornerRadius(4); // Rounded corners
-
-      const arcs = g
-        .selectAll(".arc")
-        .data(pie(ctx.data))
-        .enter()
-        .append("g")
-        .attr("class", "arc");
-
-      arcs
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", (_, i) => colorScale[i % colorScale.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("stroke-width", "2px")
-        .style("cursor", "pointer")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).style("opacity", 0.8);
-        })
-        .on("mousemove", (event, d) => ctx.showTooltip(event, d.data))
-        .on("mouseleave", (event) => {
-          select(event.currentTarget).style("opacity", 1);
-          ctx.hideTooltip();
-        });
-
-      arcs
-
-        .append("text")
-        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-        .attr("text-anchor", "middle")
-        .attr("dy", "0.35em")
-        .text((d) => d.data.label)
-        .style("fill", "var(--card-bg)")
-        .style("font-size", "12px")
-        .style("font-weight", "bold")
-        .style("pointer-events", "none");
-    },
-  },
-};
-
-export const Treemap: Story = {
-  args: {
-    data: [
-      { name: "Root", value: 0, parent: null },
-      { name: "Tech", value: 0, parent: "Root" },
-      { name: "Design", value: 0, parent: "Root" },
-      { name: "Sales", value: 0, parent: "Root" },
-      { name: "React", value: 400, parent: "Tech" },
-      { name: "Svelte", value: 300, parent: "Tech" },
-      { name: "Vue", value: 200, parent: "Tech" },
-      { name: "Figma", value: 450, parent: "Design" },
-      { name: "Sketch", value: 100, parent: "Design" },
-      { name: "Q4", value: 600, parent: "Sales" },
-    ],
-    title: "Skills Distribution (Treemap)",
-    x: (d: any) => d.name,
-
-    y: (d: any) => d.value,
-    style: { width: 800, height: 500 },
-    d3Config: {
-      grid: false,
-      showAxes: false,
-    },
-    render: async (ctx: DrawContext<any>) => {
-      // Dynamic import to avoid SSR issues or assumption of bundle presence
-
-      const d3Hierarchy = await import("d3-hierarchy");
-
-      // Transform flat data to hierarchy
-      const root = d3Hierarchy
-        .stratify<any>()
-        .id((d) => d.name)
-        .parentId((d) => d.parent)(ctx.data)
-        .sum((d) => d.value)
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
-
-      d3Hierarchy
-        .treemap<any>()
-        .size([ctx.innerWidth, ctx.innerHeight])
-        .padding(4)(root);
-
-      const colors = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--success)",
-        "var(--warning)",
-      ];
-
-      const nodes = ctx.g
-        .selectAll("g")
-        .data(root.leaves())
-        .enter()
-        .append("g")
-        .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
-
-      nodes
-        .append("rect")
-        .attr("width", (d: any) => d.x1 - d.x0)
-        .attr("height", (d: any) => d.y1 - d.y0)
-        .attr("fill", (_, i) => colors[i % colors.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("fill-opacity", 0.8)
-        .style("rx", "var(--radius)")
-        .style("ry", "var(--radius)")
-        .style("cursor", "pointer")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 1);
-        })
-        .on("mousemove", (event, d: any) => ctx.showTooltip(event, d.data))
-        .on("mouseleave", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 0.8);
-          ctx.hideTooltip();
-        });
-
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 20)
-        .text((d) => d.data.name)
-        .style("font-size", "12px")
-        .style("font-weight", 600)
-        .style("fill", "#fff")
-        .style("pointer-events", "none");
-
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 36)
-        .text((d) => String(d.value))
-        .style("font-size", "10px")
-        .style("fill", "rgba(255,255,255,0.8)")
-        .style("pointer-events", "none");
-    },
   },
 };

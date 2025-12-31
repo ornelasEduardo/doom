@@ -30,7 +30,8 @@ export interface DrawContext<T> {
   setHoverState: (state: { x: number; y: number; data: T } | null) => void;
   showTooltip: (event: any, data: T) => void;
   hideTooltip: () => void;
-  type?: "line" | "area" | "bar";
+  type: ChartProps<T>["type"];
+  isMobile: boolean;
 }
 
 export interface ChartConfig {
@@ -51,6 +52,8 @@ export interface ChartProps<T = any> {
   data: T[];
   type?: "line" | "area" | "bar";
   render?: (context: DrawContext<T>) => void;
+  withFrame?: boolean;
+  onValueChange?: (data: T | null) => void;
   variant?: "default" | "solid";
   x: (d: T) => any;
   y: (d: T) => number;
