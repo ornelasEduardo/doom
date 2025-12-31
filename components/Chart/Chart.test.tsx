@@ -151,4 +151,98 @@ describe("Chart", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  it("shows tooltip on mouse interaction", async () => {
+    const { container } = render(<Chart data={data} x={x} y={y} />);
+
+    await waitFor(() => {
+      expect(container.querySelector(".overlay")).toBeInTheDocument();
+    });
+
+    const svg = container.querySelector("svg");
+    const overlay = container.querySelector(".overlay");
+
+    // Mock getBoundingClientRect for coordinate calculation
+    vi.spyOn(svg!, "getBoundingClientRect").mockReturnValue({
+      left: 100,
+      top: 100,
+      width: 500,
+      height: 300,
+      x: 100,
+      y: 100,
+      bottom: 400,
+      right: 600,
+      toJSON: () => {},
+    } as DOMRect);
+
+    // Simulate mouse move
+    // Chart dimensions: 500x300. Margins: left~55, top~20.
+    // We want to hit the first data point ("A", value 10).
+    // Domain is "A", "B". Point scale distributes them.
+    // "A" should be near the start (or spread depending on scale type handling of strings).
+    // Let's rely on finding *any* tooltip content.
+
+    act(() => {
+      // clientX 160 -> relative x = 60. With left margin 55, this is inside chart area.
+      const event = new MouseEvent("mousemove", {
+        bubbles: true,
+        clientX: 160,
+        clientY: 150,
+      });
+      overlay!.dispatchEvent(event);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "A" })).toBeInTheDocument();
+    });
+  });
+
+  it("shows tooltip on touch interaction", async () => {
+    const { container } = render(<Chart data={data} x={x} y={y} />);
+
+    await waitFor(() => {
+      expect(container.querySelector(".overlay")).toBeInTheDocument();
+    });
+
+    const svg = container.querySelector("svg");
+    const overlay = container.querySelector(".overlay");
+
+    vi.spyOn(svg!, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 500,
+      height: 300,
+      x: 0,
+      y: 0,
+      bottom: 300,
+      right: 500,
+      toJSON: () => {},
+    } as DOMRect);
+
+    act(() => {
+      // Simulate touch move
+      const event = new TouchEvent("touchmove", {
+        bubbles: true,
+        touches: [
+          {
+            clientX: 60, // Relative x = 60 (after 0 offset) - margin (~55) = ~5px inside chart
+            clientY: 50,
+            force: 1,
+            identifier: 0,
+            target: overlay!,
+            pageX: 60,
+            pageY: 50,
+            radiusX: 1,
+            radiusY: 1,
+            rotationAngle: 0,
+          } as unknown as Touch,
+        ],
+      });
+      overlay!.dispatchEvent(event);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "A" })).toBeInTheDocument();
+    });
+  });
 });
