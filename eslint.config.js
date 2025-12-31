@@ -84,4 +84,19 @@ export default [
     },
   },
   prettierRecommended,
+  {
+    rules: {
+      curly: ["error", "all"],
+      "max-len": [
+        "error",
+        {
+          code: 80,
+          ignoreUrls: true,
+          ignoreStrings: true,
+          ignoreTemplateLiterals: true,
+          ignoreRegExpLiterals: true,
+        },
+      ],
+    },
+  },
 ];
