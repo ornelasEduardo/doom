@@ -14,7 +14,8 @@
   &[aria-expanded="true"] {
     outline: none;
     transform: translate(-2px, -2px);
-    box-shadow: 8px 8px 0px 0px var(--shadow-primary);
+    // Shadow compensates for 2px lift: 4px base + 2px = 6px offset
+    box-shadow: 6px 6px 0px 0px var(--shadow-primary);
     border-color: var(--primary);
   }
 }
@@ -26,7 +27,7 @@
   &:focus,
   &:focus-visible {
     border-color: var(--error);
-    box-shadow: 7px 7px 0px 0px var(--shadow-error);
+    box-shadow: 6px 6px 0px 0px var(--shadow-error);
   }
 }
 
