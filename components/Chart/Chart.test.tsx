@@ -297,4 +297,48 @@ describe("Chart", () => {
     // Cleanup
     document.elementFromPoint = originalElementFromPoint;
   });
+
+  it("renders area chart with fill path", async () => {
+    const { container } = render(<Chart data={data} type="area" x={x} y={y} />);
+
+    await waitFor(() => {
+      // Area charts should have both a fill path and a line path
+      const paths = container.querySelectorAll("path");
+      expect(paths.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("renders area chart with gradient when configured", async () => {
+    const { container } = render(
+      <Chart
+        d3Config={{ withGradient: true }}
+        data={data}
+        type="area"
+        x={x}
+        y={y}
+      />,
+    );
+
+    await waitFor(() => {
+      // Should have a gradient definition
+      const defs = container.querySelector("defs");
+      expect(defs).toBeInTheDocument();
+
+      const gradient = container.querySelector("linearGradient");
+      expect(gradient).toBeInTheDocument();
+    });
+  });
+
+  it("renders grid lines when configured", async () => {
+    const { container } = render(
+      <Chart d3Config={{ grid: true }} data={data} x={x} y={y} />,
+    );
+
+    await waitFor(() => {
+      // Grid renders a group with multiple line elements
+      // The grid group has lines with x2 attribute spanning the width
+      const gridLines = container.querySelectorAll("g.tick line[x2]");
+      expect(gridLines.length).toBeGreaterThan(0);
+    });
+  });
 });

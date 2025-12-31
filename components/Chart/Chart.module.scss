@@ -155,14 +155,14 @@
     }
   }
   &.mobile {
-    padding: 0.5rem;
+    padding: 0.75rem;
 
     .axisLabel {
-      font-size: 9px;
+      font-size: 0.75rem;
     }
 
     :global(.tick) text {
-      font-size: 9px;
+      font-size: 0.75rem;
     }
   }
 }
@@ -201,4 +201,54 @@
   font-weight: 700;
   text-transform: uppercase;
   text-anchor: middle;
+}
+
+// Header area (title/subtitle on left, legend on right)
+.chartHeader {
+  // Layout handled by Flex component
+  // Left padding set dynamically via style prop to match chart margin
+  padding-right: 0; // Account for container padding on right side
+}
+
+.subtitle {
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+// Legend styles
+.legend {
+  align-items: center;
+  // Default: left-aligned with header
+  justify-content: flex-start;
+
+  // When at bottom, center the legend
+  &.legendBottom {
+    justify-content: center;
+  }
+}
+
+.legendItem {
+  align-items: center;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  border: var(--border-width) solid var(--border-strong);
+}
+
+.legendLabel {
+  color: var(--foreground);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.legendVertical {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: 8px;
+  padding: 0 8px;
 }
