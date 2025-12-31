@@ -382,9 +382,10 @@ export function drawLineArea<T>({
       cursorLine.attr("x1", cx).attr("x2", cx).style("opacity", 1);
       cursorDot.attr("cx", cx).attr("cy", cy).style("opacity", 1);
 
+      const isTouch = event.type.startsWith("touch");
       setHoverState({
-        x: pointerX + margin.left,
-        y: pointerY + margin.top,
+        x: (isTouch ? cx : pointerX) + margin.left,
+        y: (isTouch ? cy : pointerY) + margin.top, // Snap Y to point on touch, cursor on mouse
         data: selectedData,
       });
     }
@@ -470,9 +471,19 @@ export function drawBars<T>({
     if (selectedData) {
       bars.style("opacity", (d) => (d === selectedData ? 1 : 0.6));
 
+      let hoverX = pointerX;
+      let hoverY = pointerY;
+
+      if (event.type.startsWith("touch")) {
+        const xVal = xScale(x(selectedData)) || 0;
+        const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
+        hoverX = xVal + bandwidth / 2;
+        hoverY = yScale(y(selectedData));
+      }
+
       setHoverState({
-        x: pointerX + margin.left,
-        y: pointerY + margin.top,
+        x: hoverX + margin.left,
+        y: hoverY + margin.top,
         data: selectedData,
       });
     }
