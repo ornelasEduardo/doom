@@ -36,14 +36,23 @@ export function Chart<T>({
   withFrame = true,
   onValueChange,
 }: ChartProps<T>) {
+  const TOOLTIP_OFFSET = 20;
+  const TOOLTIP_EDGE_THRESHOLD = 220;
+  const HIDE_DELAY_MS = 16;
+  const MOBILE_BREAKPOINT = 480;
+
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const tooltipPosRef = useRef({ x: 0, y: 0 });
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gradientId = React.useId().replace(/:/g, "");
 
   const [activeData, setActiveData] = useState<T | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  const isMobile = dimensions.width > 0 && dimensions.width < MOBILE_BREAKPOINT;
 
   useEffect(() => {
     onValueChange?.(activeData ?? null);
@@ -58,7 +67,6 @@ export function Chart<T>({
         left: d3Config?.yAxisLabel ? 65 : 55,
       },
       curve: undefined,
-
       showAxes: true,
       grid: false,
       withGradient: type === "area",
@@ -68,18 +76,14 @@ export function Chart<T>({
     [d3Config, type],
   );
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const isMobile = dimensions.width > 0 && dimensions.width < 480;
-
   React.useLayoutEffect(() => {
     if (activeData && tooltipRef.current && wrapperRef.current) {
       const { x, y } = tooltipPosRef.current;
       const rect = wrapperRef.current.getBoundingClientRect();
       const absX = rect.left + x;
-      const isRightEdge = absX > window.innerWidth - 220;
-      const offsetX = isRightEdge ? x - 20 : x + 20;
-      tooltipRef.current.style.transform = `translate3d(${offsetX}px, calc(${y}px - 50%), 0)`;
+      const isRightEdge = absX > window.innerWidth - TOOLTIP_EDGE_THRESHOLD;
+      const xOffset = isRightEdge ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
+      tooltipRef.current.style.transform = `translate3d(${x + xOffset}px, calc(${y}px - 50%), 0)`;
     }
   }, [activeData]);
 
@@ -92,7 +96,9 @@ export function Chart<T>({
   }, []);
 
   useEffect(() => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current) {
+      return;
+    }
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -132,7 +138,9 @@ export function Chart<T>({
       left: isMobile ? (d3Config?.yAxisLabel ? 50 : 30) : config.margin.left,
     };
 
-    if (width <= 0 || height <= 0) return;
+    if (width <= 0 || height <= 0) {
+      return;
+    }
 
     const svg = select(svgRef.current);
     svg.selectAll("*").remove();
@@ -157,7 +165,9 @@ export function Chart<T>({
       type,
     );
 
-    if (innerWidth <= 0 || innerHeight <= 0) return;
+    if (innerWidth <= 0 || innerHeight <= 0) {
+      return;
+    }
 
     if (config.grid) {
       drawGrid(g, yScale, innerWidth, styles.grid);
@@ -188,9 +198,9 @@ export function Chart<T>({
       if (tooltipRef.current && wrapperRef.current) {
         const rect = wrapperRef.current.getBoundingClientRect();
         const absX = rect.left + tx;
-        const isRightEdge = absX > window.innerWidth - 220;
-        const offsetX = isRightEdge ? tx - 20 : tx + 20;
-        tooltipRef.current.style.transform = `translate3d(${offsetX}px, calc(${ty}px - 50%), 0)`;
+        const isRightEdge = absX > window.innerWidth - TOOLTIP_EDGE_THRESHOLD;
+        const xOffset = isRightEdge ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
+        tooltipRef.current.style.transform = `translate3d(${tx + xOffset}px, calc(${ty}px - 50%), 0)`;
       }
 
       setActiveData((prev) => (prev === data ? prev : data));
@@ -201,15 +211,17 @@ export function Chart<T>({
         ? [0, 0]
         : pointer(event, g.node());
 
-      const tx = px + margin.left + 20;
+      const tx = px + margin.left;
       const ty = py + margin.top;
 
       updateTooltip(tx, ty, data);
     };
 
     const hideTooltip = () => {
-      // Delay prevents flickering when moving between adjacent elements
-      hideTimeoutRef.current = setTimeout(() => setActiveData(null), 16);
+      hideTimeoutRef.current = setTimeout(
+        () => setActiveData(null),
+        HIDE_DELAY_MS,
+      );
     };
 
     const ctx = {

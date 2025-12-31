@@ -1,3 +1,11 @@
+/**
+ * Chart Renderers
+ *
+ * D3-based rendering functions for charts. Each renderer handles
+ * drawing a specific chart type (line, area, bar) and managing
+ * user interactions (hover, touch).
+ */
+
 import * as d3Array from "d3-array";
 import * as d3Axis from "d3-axis";
 import * as d3Scale from "d3-scale";
@@ -14,12 +22,83 @@ const d3 = {
   ...d3Array,
 };
 
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
+/**
+ * Extracts pointer coordinates from mouse or touch events.
+ * Uses the parent SVG as reference for accurate positioning across all devices.
+ */
+function getPointerCoords(
+  event: TouchEvent | MouseEvent,
+  gElement: SVGGElement | null,
+  margin: { left: number; top: number },
+): [number, number] {
+  if (!gElement) {
+    return [0, 0];
+  }
+
+  const svg = gElement.ownerSVGElement;
+  if (!svg) {
+    return [0, 0];
+  }
+
+  const rect = svg.getBoundingClientRect();
+  let clientX: number;
+  let clientY: number;
+
+  if ("touches" in event && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else if ("changedTouches" in event && event.changedTouches.length > 0) {
+    clientX = event.changedTouches[0].clientX;
+    clientY = event.changedTouches[0].clientY;
+  } else {
+    clientX = (event as MouseEvent).clientX;
+    clientY = (event as MouseEvent).clientY;
+  }
+
+  return [clientX - rect.left - margin.left, clientY - rect.top - margin.top];
+}
+
+/**
+ * Creates an SVG path for a rectangle with rounded top corners.
+ * Used for bar charts to create a softer, modern look.
+ */
+function createRoundedTopBarPath(
+  xPos: number,
+  yPos: number,
+  width: number,
+  height: number,
+  radius: number,
+): string {
+  const r = Math.min(radius, width / 2, height);
+  return `
+    M ${xPos},${yPos + height}
+    L ${xPos},${yPos + r}
+    A ${r},${r} 0 0 1 ${xPos + r},${yPos}
+    L ${xPos + width - r},${yPos}
+    A ${r},${r} 0 0 1 ${xPos + width},${yPos + r}
+    L ${xPos + width},${yPos + height}
+    Z
+  `;
+}
+
+// ============================================================================
+// SCALE & AXIS SETUP
+// ============================================================================
+
+/**
+ * Creates X and Y scales based on data and chart dimensions.
+ * Automatically selects appropriate scale type (linear, point, band).
+ */
 export function createScales<T>(
   data: T[],
   width: number,
   height: number,
   margin: { top: number; right: number; bottom: number; left: number },
-  x: (d: T) => any,
+  x: (d: T) => string | number,
   y: (d: T) => number,
   type?: "line" | "area" | "bar",
 ) {
@@ -27,7 +106,10 @@ export function createScales<T>(
   const innerHeight = height - margin.top - margin.bottom;
 
   const xValues = data.map(x);
-  let xScale: any;
+  let xScale:
+    | d3Scale.ScaleLinear<number, number>
+    | d3Scale.ScalePoint<string>
+    | d3Scale.ScaleBand<string>;
 
   if (typeof xValues[0] === "number") {
     xScale = d3
@@ -51,7 +133,6 @@ export function createScales<T>(
   }
 
   const yValues = data.map(y);
-
   const yScale = d3
     .scaleLinear()
     .domain([0, (d3.max(yValues) || 0) * 1.1])
@@ -61,6 +142,9 @@ export function createScales<T>(
   return { xScale, yScale, innerWidth, innerHeight };
 }
 
+/**
+ * Sets up an SVG gradient for area chart fills.
+ */
 export function setupGradient(svg: SVGSelection, gradientId: string) {
   const defs = svg.append("defs");
   const gradient = defs
@@ -76,6 +160,7 @@ export function setupGradient(svg: SVGSelection, gradientId: string) {
     .attr("offset", "0%")
     .attr("stop-color", "var(--primary)")
     .attr("stop-opacity", 0.5);
+
   gradient
     .append("stop")
     .attr("offset", "100%")
@@ -83,9 +168,12 @@ export function setupGradient(svg: SVGSelection, gradientId: string) {
     .attr("stop-opacity", 0);
 }
 
+/**
+ * Draws horizontal grid lines behind the chart.
+ */
 export function drawGrid(
   g: D3Selection,
-  yScale: any,
+  yScale: d3Scale.ScaleLinear<number, number>,
   innerWidth: number,
   className: string,
 ) {
@@ -99,10 +187,17 @@ export function drawGrid(
     );
 }
 
+/**
+ * Draws X and Y axes with labels.
+ * Automatically adjusts tick count to prevent label overlap.
+ */
 export function drawAxes(
   g: D3Selection,
-  xScale: any,
-  yScale: any,
+  xScale:
+    | d3Scale.ScaleLinear<number, number>
+    | d3Scale.ScalePoint<string>
+    | d3Scale.ScaleBand<string>,
+  yScale: d3Scale.ScaleLinear<number, number>,
   innerWidth: number,
   innerHeight: number,
   margin: { top: number; right: number; bottom: number; left: number },
@@ -110,26 +205,22 @@ export function drawAxes(
   styles: Record<string, string>,
   isMobile: boolean,
 ) {
-  const tickWidth = 40; // Approx max width of a label "SEPT"
-  const maxTicks = Math.floor(innerWidth / tickWidth);
+  const TICK_WIDTH = 40; // Approximate width of a tick label
+  const maxTicks = Math.floor(innerWidth / TICK_WIDTH);
 
-  const axisBottom = d3.axisBottom(xScale);
+  const axisBottom = d3.axisBottom(xScale as any);
 
-  // If discrete scale (has domain array), reduce ticks to prevent overlap
-  if (xScale.domain && Array.isArray(xScale.domain())) {
-    const domain = xScale.domain();
+  if ("domain" in xScale && Array.isArray(xScale.domain())) {
+    const domain = xScale.domain() as string[];
     if (domain.length > maxTicks) {
       const step = Math.ceil(domain.length / maxTicks);
-      axisBottom.tickValues(
-        domain.filter((_: any, i: number) => i % step === 0),
-      );
+      axisBottom.tickValues(domain.filter((_, i) => i % step === 0));
     }
   } else {
     axisBottom.ticks(Math.min(5, maxTicks));
   }
 
-  const xAxis = g
-    .append("g")
+  g.append("g")
     .attr("transform", `translate(0,${innerHeight})`)
     .call(axisBottom);
 
@@ -162,6 +253,13 @@ export function drawAxes(
   }
 }
 
+// ============================================================================
+// CHART RENDERERS
+// ============================================================================
+
+/**
+ * Renders line and area charts with interactive cursor tracking.
+ */
 export function drawLineArea<T>({
   g,
   data,
@@ -221,14 +319,14 @@ export function drawLineArea<T>({
       .attr("r", 5);
   }
 
-  // Interaction Overlay
   const overlay = g
     .append("rect")
     .attr("class", "overlay")
     .attr("width", innerWidth)
     .attr("height", innerHeight)
     .style("fill", "transparent")
-    .style("cursor", "crosshair");
+    .style("cursor", "crosshair")
+    .style("touch-action", "none");
 
   const cursorLine = g
     .append("line")
@@ -243,15 +341,8 @@ export function drawLineArea<T>({
     .attr("r", 6)
     .style("opacity", 0);
 
-  const interactionHandler = (event: any) => {
-    if (event.type.startsWith("touch")) {
-      event.preventDefault();
-    }
-
-    const [pointerX, pointerY] = d3.pointer(event);
-    let selectedData: T | null = null;
-
-    if (xScale.invert) {
+  const findNearestPoint = (pointerX: number): T | null => {
+    if ("invert" in xScale && typeof xScale.invert === "function") {
       const x0 = xScale.invert(pointerX);
       const bisect = d3.bisector(x).left;
       const i = bisect(data, x0, 1);
@@ -259,20 +350,30 @@ export function drawLineArea<T>({
       const d1 = data[i];
 
       if (!d0) {
-        selectedData = d1;
-      } else if (!d1) {
-        selectedData = d0;
-      } else {
-        const d0Dist = (x0 as number) - (x(d0) as number);
-        const d1Dist = (x(d1) as number) - (x0 as number);
-
-        selectedData = d0Dist > d1Dist ? d1 : d0;
+        return d1;
       }
-    } else {
+      if (!d1) {
+        return d0;
+      }
+
+      const d0Dist = (x0 as number) - (x(d0) as number);
+      const d1Dist = (x(d1) as number) - (x0 as number);
+      return d0Dist > d1Dist ? d1 : d0;
+    } else if ("step" in xScale && typeof xScale.step === "function") {
       const step = xScale.step();
       const index = Math.round(pointerX / step);
-      selectedData = data[Math.min(Math.max(0, index), data.length - 1)];
+      return data[Math.min(Math.max(0, index), data.length - 1)];
     }
+    return null;
+  };
+
+  const handleInteraction = (event: any) => {
+    if (event.type.startsWith("touch") && event.cancelable) {
+      event.preventDefault();
+    }
+
+    const [pointerX, pointerY] = getPointerCoords(event, g.node(), margin);
+    const selectedData = findNearestPoint(pointerX);
 
     if (selectedData) {
       const cx = xScale(x(selectedData)) ?? 0;
@@ -290,14 +391,17 @@ export function drawLineArea<T>({
   };
 
   overlay
-    .on("mousemove touchmove touchstart", interactionHandler)
-    .on("mouseleave touchend", () => {
+    .on("mousemove touchmove touchstart", handleInteraction)
+    .on("mouseleave touchend touchcancel", () => {
       cursorLine.style("opacity", 0);
       cursorDot.style("opacity", 0);
       setHoverState(null);
     });
 }
 
+/**
+ * Renders bar charts with hover highlighting.
+ */
 export function drawBars<T>({
   g,
   data,
@@ -305,14 +409,16 @@ export function drawBars<T>({
   yScale,
   x,
   y,
+  innerWidth,
   innerHeight,
   styles,
   setHoverState,
   margin,
 }: DrawContext<T>) {
-  const radius = 4; // Matching --radius token
+  const BAR_RADIUS = 4;
 
-  g.selectAll(".bar")
+  const bars = g
+    .selectAll(".bar")
     .data(data)
     .enter()
     .append("path")
@@ -320,33 +426,62 @@ export function drawBars<T>({
     .attr("d", (d) => {
       const xVal = xScale(x(d)) || 0;
       const yVal = yScale(y(d));
-      const w = xScale.bandwidth ? xScale.bandwidth() : 10;
+      const w = "bandwidth" in xScale ? xScale.bandwidth() : 10;
       const h = innerHeight - yVal;
+      return createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS);
+    });
 
-      const r = Math.min(radius, w / 2, h);
+  const overlay = g
+    .append("rect")
+    .attr("class", "overlay")
+    .attr("width", innerWidth)
+    .attr("height", innerHeight)
+    .style("fill", "transparent")
+    .style("cursor", "crosshair")
+    .style("touch-action", "none");
 
-      return `
-        M ${xVal},${yVal + h}
-        L ${xVal},${yVal + r}
-        A ${r},${r} 0 0 1 ${xVal + r},${yVal}
-        L ${xVal + w - r},${yVal}
-        A ${r},${r} 0 0 1 ${xVal + w},${yVal + r}
-        L ${xVal + w},${yVal + h}
-        Z
-      `;
-    })
+  const findNearestBar = (pointerX: number): T | null => {
+    const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
+    let nearestData: T | null = null;
+    let minDist = Infinity;
 
-    .on("mouseenter mousemove touchstart", (event: any, d) => {
-      if (event.type === "touchstart") event.preventDefault();
+    for (const d of data) {
+      const barX = xScale(x(d)) || 0;
+      const barCenter = barX + bandwidth / 2;
+      const dist = Math.abs(pointerX - barCenter);
 
-      const [px, py] = d3Selection.pointer(event, g.node());
+      if (dist < minDist) {
+        minDist = dist;
+        nearestData = d;
+      }
+    }
+
+    return nearestData;
+  };
+
+  const handleInteraction = (event: any) => {
+    if (event.type.startsWith("touch") && event.cancelable) {
+      event.preventDefault();
+    }
+
+    const [pointerX, pointerY] = getPointerCoords(event, g.node(), margin);
+    const selectedData = findNearestBar(pointerX);
+
+    if (selectedData) {
+      bars.style("opacity", (d) => (d === selectedData ? 1 : 0.6));
 
       setHoverState({
-        x: px + margin.left,
-        y: py + margin.top,
-        data: d,
+        x: pointerX + margin.left,
+        y: pointerY + margin.top,
+        data: selectedData,
       });
-    })
+    }
+  };
 
-    .on("mouseleave touchend", () => setHoverState(null));
+  overlay
+    .on("mousemove touchmove touchstart", handleInteraction)
+    .on("mouseleave touchend touchcancel", () => {
+      bars.style("opacity", 1);
+      setHoverState(null);
+    });
 }
