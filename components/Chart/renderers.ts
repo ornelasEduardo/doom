@@ -74,12 +74,12 @@ export function setupGradient(svg: SVGSelection, gradientId: string) {
   gradient
     .append("stop")
     .attr("offset", "0%")
-    .attr("stop-color", "var(--primary, #6366f1)")
+    .attr("stop-color", "var(--primary)")
     .attr("stop-opacity", 0.5);
   gradient
     .append("stop")
     .attr("offset", "100%")
-    .attr("stop-color", "var(--primary, #6366f1)")
+    .attr("stop-color", "var(--primary)")
     .attr("stop-opacity", 0);
 }
 
