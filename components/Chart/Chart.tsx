@@ -37,7 +37,7 @@ export function Chart<T>({
   onValueChange,
 }: ChartProps<T>) {
   const TOOLTIP_OFFSET = 20;
-  const TOOLTIP_EDGE_THRESHOLD = 220;
+
   const HIDE_DELAY_MS = 16;
   const MOBILE_BREAKPOINT = 480;
 
@@ -64,7 +64,7 @@ export function Chart<T>({
         top: 20,
         right: 20,
         bottom: d3Config?.xAxisLabel ? 60 : 50,
-        left: d3Config?.yAxisLabel ? 65 : 55,
+        left: d3Config?.yAxisLabel ? 85 : 55,
       },
       curve: undefined,
       showAxes: true,
@@ -80,9 +80,16 @@ export function Chart<T>({
     if (activeData && tooltipRef.current && wrapperRef.current) {
       const { x, y } = tooltipPosRef.current;
       const rect = wrapperRef.current.getBoundingClientRect();
+      const tooltipWidth = tooltipRef.current.offsetWidth;
       const absX = rect.left + x;
-      const isRightEdge = absX > window.innerWidth - TOOLTIP_EDGE_THRESHOLD;
-      const xOffset = isRightEdge ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
+
+      const isRightEdge =
+        absX + tooltipWidth + TOOLTIP_OFFSET > window.innerWidth - 10;
+
+      const xOffset = isRightEdge
+        ? -TOOLTIP_OFFSET - tooltipWidth
+        : TOOLTIP_OFFSET;
+
       tooltipRef.current.style.transform = `translate3d(${x + xOffset}px, calc(${y}px - 50%), 0)`;
     }
   }, [activeData]);
@@ -135,7 +142,7 @@ export function Chart<T>({
           ? 50
           : 30
         : config.margin.bottom,
-      left: isMobile ? (d3Config?.yAxisLabel ? 50 : 30) : config.margin.left,
+      left: isMobile ? (d3Config?.yAxisLabel ? 65 : 30) : config.margin.left,
     };
 
     if (width <= 0 || height <= 0) {
@@ -197,9 +204,16 @@ export function Chart<T>({
 
       if (tooltipRef.current && wrapperRef.current) {
         const rect = wrapperRef.current.getBoundingClientRect();
+        const tooltipWidth = tooltipRef.current.offsetWidth;
         const absX = rect.left + tx;
-        const isRightEdge = absX > window.innerWidth - TOOLTIP_EDGE_THRESHOLD;
-        const xOffset = isRightEdge ? -TOOLTIP_OFFSET : TOOLTIP_OFFSET;
+
+        const isRightEdge =
+          absX + tooltipWidth + TOOLTIP_OFFSET > window.innerWidth - 10;
+
+        const xOffset = isRightEdge
+          ? -TOOLTIP_OFFSET - tooltipWidth
+          : TOOLTIP_OFFSET;
+
         tooltipRef.current.style.transform = `translate3d(${tx + xOffset}px, calc(${ty}px - 50%), 0)`;
       }
 
