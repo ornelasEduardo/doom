@@ -28,16 +28,6 @@ function resolveGap(gap?: Spacing): string | undefined {
   return SPACING_MAP[gap];
 }
 
-export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  /** The content to be rendered inside the layout container. */
-  children?: React.ReactNode;
-  /**
-   * The HTML element or React component to render as the root node.
-   * @default "div"
-   */
-  as?: ElementType;
-}
-
 export interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
   /** The content to be rendered inside the layout container. */
   children?: React.ReactNode;
