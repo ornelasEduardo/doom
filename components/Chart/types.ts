@@ -27,7 +27,9 @@ export interface DrawContext<T> {
   config: ChartConfig;
   styles: Record<string, string>;
   gradientId: string;
-  setHoverState: (state: { x: number; y: number; data: T } | null) => void;
+  setHoverState: (
+    state: { x: number; y: number; data: T; isTouch?: boolean } | null,
+  ) => void;
   showTooltip: (event: any, data: T) => void;
   hideTooltip: () => void;
   type: ChartProps<T>["type"];

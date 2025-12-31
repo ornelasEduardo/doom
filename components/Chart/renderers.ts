@@ -443,17 +443,35 @@ export function drawBars<T>({
       bars.style("opacity", (d) => (d === result.data ? 1 : 0.6));
 
       const d = result.data;
-      const xVal = xScale(x(d)) || 0;
-      const yVal = yScale(y(d));
-      const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
+      const svgNode = g.node()?.ownerSVGElement;
+      if (!svgNode) {
+        return;
+      }
 
-      const hoverX = xVal + bandwidth / 2;
-      const hoverY = yVal;
+      // Calculate coordinates manually for reliability
+      const svgRect = svgNode.getBoundingClientRect();
+      let clientX: number;
+      let clientY: number;
+
+      if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        clientX = event.changedTouches[0].clientX;
+        clientY = event.changedTouches[0].clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+
+      const hoverX = clientX - svgRect.left;
+      const hoverY = clientY - svgRect.top;
 
       setHoverState({
-        x: hoverX + margin.left,
-        y: hoverY + margin.top,
+        x: hoverX,
+        y: hoverY,
         data: d,
+        isTouch: event.type.startsWith("touch"),
       });
     }
   };

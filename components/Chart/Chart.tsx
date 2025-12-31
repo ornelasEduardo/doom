@@ -51,7 +51,7 @@ export function Chart<T>({
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const tooltipPosRef = useRef({ x: 0, y: 0 });
+  const tooltipPosRef = useRef({ x: 0, y: 0, isTouch: false });
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gradientId = React.useId().replace(/:/g, "");
 
@@ -82,7 +82,11 @@ export function Chart<T>({
     [d3Config, type],
   );
 
-  const calculateTooltipTransform = (tx: number, ty: number) => {
+  const calculateTooltipTransform = (
+    tx: number,
+    ty: number,
+    isTouch: boolean = false,
+  ) => {
     if (!tooltipRef.current || !wrapperRef.current) {
       return "";
     }
@@ -102,13 +106,17 @@ export function Chart<T>({
       xOffset = 10 - (rect.left + tx);
     }
 
-    return `translate3d(${tx + xOffset}px, calc(${ty}px - 50%), 0)`;
+    // Apply Y offset for touch to avoid finger occlusion
+    // Shift tooltip 50px above touch point to clear the finger
+    const effectiveY = isTouch ? ty - 50 : ty;
+
+    return `translate3d(${tx + xOffset}px, calc(${effectiveY}px - 50%), 0)`;
   };
 
   useLayoutEffect(() => {
     if (activeData && tooltipRef.current && wrapperRef.current) {
-      const { x, y } = tooltipPosRef.current;
-      const transform = calculateTooltipTransform(x, y);
+      const { x, y, isTouch } = tooltipPosRef.current;
+      const transform = calculateTooltipTransform(x, y, !!isTouch);
       if (transform) {
         tooltipRef.current.style.transform = transform;
       }
@@ -215,16 +223,21 @@ export function Chart<T>({
       );
     }
 
-    const updateTooltip = (tx: number, ty: number, data: T) => {
+    const updateTooltip = (
+      tx: number,
+      ty: number,
+      data: T,
+      isTouch: boolean = false,
+    ) => {
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
         hideTimeoutRef.current = null;
       }
 
-      tooltipPosRef.current = { x: tx, y: ty };
+      tooltipPosRef.current = { x: tx, y: ty, isTouch };
 
       if (tooltipRef.current && wrapperRef.current) {
-        const transform = calculateTooltipTransform(tx, ty);
+        const transform = calculateTooltipTransform(tx, ty, isTouch);
         if (transform) {
           tooltipRef.current.style.transform = transform;
         }
@@ -264,11 +277,13 @@ export function Chart<T>({
       config,
       styles,
       gradientId,
-      setHoverState: (state: { x: number; y: number; data: T } | null) => {
+      setHoverState: (
+        state: { x: number; y: number; data: T; isTouch?: boolean } | null,
+      ) => {
         if (!state) {
           hideTooltip();
         } else {
-          updateTooltip(state.x, state.y, state.data);
+          updateTooltip(state.x, state.y, state.data, state.isTouch ?? false);
         }
       },
       showTooltip,
