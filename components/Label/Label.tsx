@@ -3,6 +3,7 @@ import clsx from "clsx";
 import React from "react";
 
 import styles from "./Label.module.scss";
+
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
   required?: boolean;
