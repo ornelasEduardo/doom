@@ -62,8 +62,8 @@
   transition: opacity 0.2s;
 
   &:hover {
-    fill: var(--primary-hover);
-    opacity: 0.8;
+    cursor: crosshair;
+    filter: brightness(1.1);
   }
 }
 
@@ -113,6 +113,13 @@
     box-shadow: none;
   }
 
+  &.frameless {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
   &.solid {
     --solid-bg: var(--primary);
     --solid-fg: var(--primary-foreground);
@@ -147,6 +154,17 @@
       border-color: var(--solid-fg);
     }
   }
+  &.mobile {
+    padding: 0.5rem;
+
+    .axisLabel {
+      font-size: 9px;
+    }
+
+    :global(.tick) text {
+      font-size: 9px;
+    }
+  }
 }
 
 .responsiveWrapper {
@@ -167,9 +185,7 @@
   left: 0;
   pointer-events: none;
   z-index: 20;
-  transform: translate(-50%, -120%);
-
-  transition: transform 0.1s ease-out;
+  will-change: transform;
 }
 
 .tooltipCard {

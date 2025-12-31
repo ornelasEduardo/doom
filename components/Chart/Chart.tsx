@@ -18,7 +18,6 @@ import {
 } from "./renderers";
 import { ChartProps } from "./types";
 
-// Re-export types for consumers
 export type { ChartConfig, ChartProps, DrawContext } from "./types";
 
 export function Chart<T>({
@@ -34,16 +33,21 @@ export function Chart<T>({
   flat,
   title,
   render,
+  withFrame = true,
+  onValueChange,
 }: ChartProps<T>) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipPosRef = useRef({ x: 0, y: 0 });
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gradientId = React.useId().replace(/:/g, "");
 
-  const [hoverState, setHoverState] = useState<{
-    x: number;
-    y: number;
-    data: T;
-  } | null>(null);
+  const [activeData, setActiveData] = useState<T | null>(null);
+
+  useEffect(() => {
+    onValueChange?.(activeData ?? null);
+  }, [activeData, onValueChange]);
 
   const config = useMemo(
     () => ({
@@ -61,11 +65,31 @@ export function Chart<T>({
       showDots: false,
       ...d3Config,
     }),
-    [d3Config, type],
+    [d3Config, type]
   );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const isMobile = dimensions.width > 0 && dimensions.width < 480;
+
+  React.useLayoutEffect(() => {
+    if (activeData && tooltipRef.current && wrapperRef.current) {
+      const { x, y } = tooltipPosRef.current;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const absX = rect.left + x;
+      const isRightEdge = absX > window.innerWidth - 220;
+      const offsetX = isRightEdge ? x - 20 : x + 20;
+      tooltipRef.current.style.transform = `translate3d(${offsetX}px, calc(${y}px - 50%), 0)`;
+    }
+  }, [activeData]);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!wrapperRef.current) return;
@@ -96,7 +120,17 @@ export function Chart<T>({
     }
 
     const { width, height } = dimensions;
-    const { margin } = config;
+
+    const margin = {
+      ...config.margin,
+      right: isMobile ? 10 : config.margin.right,
+      bottom: isMobile
+        ? d3Config?.xAxisLabel
+          ? 50
+          : 30
+        : config.margin.bottom,
+      left: isMobile ? (d3Config?.yAxisLabel ? 50 : 30) : config.margin.left,
+    };
 
     if (width <= 0 || height <= 0) return;
 
@@ -120,7 +154,7 @@ export function Chart<T>({
       margin,
       x,
       y,
-      type,
+      type
     );
 
     if (innerWidth <= 0 || innerHeight <= 0) return;
@@ -139,29 +173,44 @@ export function Chart<T>({
         margin,
         config,
         styles,
+        isMobile
       );
     }
 
+    const updateTooltip = (tx: number, ty: number, data: T) => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+
+      tooltipPosRef.current = { x: tx, y: ty };
+
+      if (tooltipRef.current && wrapperRef.current) {
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const absX = rect.left + tx;
+        const isRightEdge = absX > window.innerWidth - 220;
+        const offsetX = isRightEdge ? tx - 20 : tx + 20;
+        tooltipRef.current.style.transform = `translate3d(${offsetX}px, calc(${ty}px - 50%), 0)`;
+      }
+
+      setActiveData((prev) => (prev === data ? prev : data));
+    };
+
     const showTooltip = (event: any, data: T) => {
-      // Use pointer relative to the full SVG or the group?
-      // If we use d3.pointer(event, g.node()), we get coords relative to g (inside margin).
-      // hoverState requires coords relative to the .responsiveWrapper (div).
-      // .responsiveWrapper contains SVG.
-      // g is translate(margin.left, margin.top).
-      // So px + margin.left is correct relative to wrapper.
-      // pointer(event, g.node()) returns [x_in_g, y_in_g].
       const [px, py] = select(svgRef.current).select("g").empty()
         ? [0, 0]
         : pointer(event, g.node());
 
-      setHoverState({
-        x: px + margin.left + 20,
-        y: py + margin.top, // margin.top is added because py is relative to g
-        data,
-      });
+      const tx = px + margin.left + 20;
+      const ty = py + margin.top;
+
+      updateTooltip(tx, ty, data);
     };
 
-    const hideTooltip = () => setHoverState(null);
+    const hideTooltip = () => {
+      // Delay prevents flickering when moving between adjacent elements
+      hideTimeoutRef.current = setTimeout(() => setActiveData(null), 16);
+    };
 
     const ctx = {
       g,
@@ -176,10 +225,17 @@ export function Chart<T>({
       config,
       styles,
       gradientId,
-      setHoverState,
+      setHoverState: (state: any) => {
+        if (!state) {
+          hideTooltip();
+        } else {
+          updateTooltip(state.x, state.y, state.data);
+        }
+      },
       showTooltip,
       hideTooltip,
       type,
+      isMobile,
     };
 
     if (render) {
@@ -189,7 +245,7 @@ export function Chart<T>({
     } else {
       drawLineArea(ctx);
     }
-  }, [data, config, type, gradientId, dimensions, render]);
+  }, [data, config, type, gradientId, dimensions, render, isMobile, x, y]);
 
   return (
     <div
@@ -198,11 +254,13 @@ export function Chart<T>({
         styles.chartContainer,
         variant === "solid" && styles.solid,
         flat && styles.flat,
-        className,
+        isMobile && styles.mobile,
+        !withFrame && styles.frameless,
+        className
       )}
       style={{
-        minHeight: config.height || 400,
-        minWidth: config.width || "100%",
+        height: config.height || 400,
+        width: config.width || "100%",
         ...style,
       }}
     >
@@ -226,15 +284,14 @@ export function Chart<T>({
             style={{ display: "block", width: "100%", height: "100%" }}
           />
 
-          {hoverState && (
+          {activeData && (
             <div
+              ref={tooltipRef}
               className={styles.tooltipWrapper}
-              style={{
-                transform: `translate(${hoverState.x}px, ${hoverState.y}px) translateY(-50%)`,
-              }}
+              style={{ pointerEvents: "none" }}
             >
               {renderTooltip ? (
-                renderTooltip(hoverState.data)
+                renderTooltip(activeData)
               ) : (
                 <Card className={styles.tooltipCard}>
                   <div style={{ marginBottom: 4 }}>
@@ -247,12 +304,12 @@ export function Chart<T>({
                       }}
                       variant="h6"
                     >
-                      {x(hoverState.data as any)}
+                      {x(activeData as any)}
                     </Text>
                   </div>
                   <div>
                     <Text style={{ margin: 0 }} variant="h4">
-                      {y(hoverState.data as any)}
+                      {y(activeData as any)}
                     </Text>
                   </div>
                 </Card>
