@@ -118,7 +118,7 @@ export const CustomRender1: Story = {
         .append("g")
         .attr(
           "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
+          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`
         );
 
       const colorScale = [
@@ -366,9 +366,9 @@ export const IntegratedChart: Story = {
               {
                 label: "Outgoing",
                 value: "-$1,150",
-                color: "var(--text-primary)",
+                color: "var(--error)",
               },
-              { label: "Investments", value: "+$850", color: "var(--primary)" },
+              { label: "Investments", value: "+$850", color: "var(--success)" },
             ].map((item) => (
               <Slat
                 key={item.label}
@@ -387,7 +387,7 @@ export const IntegratedChart: Story = {
               />
             ))}
           </Stack>
-          <Button style={{ width: "100%" }} variant="secondary">
+          <Button style={{ width: "100%" }} variant="primary">
             View Full Report
           </Button>
         </Stack>
