@@ -3,11 +3,13 @@ description: How to run Storybook for design system documentation
 ---
 
 1. Install dependencies (if not already done):
+
 ```bash
 npm install
 ```
 
 2. Run Storybook:
+
 ```bash
 npm run storybook
 ```

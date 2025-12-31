@@ -26,8 +26,9 @@
 }
 
 // --- Justify Content ---
-$justify-values: "flex-start", "flex-end", "center", "space-between",
-  "space-around", "space-evenly";
+$justify-values:
+  "flex-start", "flex-end", "center", "space-between", "space-around",
+  "space-evenly";
 @each $val in $justify-values {
   .justify-#{$val} {
     justify-content: #{$val};

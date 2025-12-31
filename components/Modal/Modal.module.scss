@@ -12,7 +12,9 @@
   background-color: rgba(0, 0, 0, var(--overlay-opacity));
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+  transition:
+    opacity 0.2s ease-out,
+    visibility 0.2s ease-out;
 
   &.isOpen {
     opacity: 1;
@@ -30,7 +32,9 @@
   max-width: 32rem;
   transform: translateY(20px);
   opacity: 0;
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out;
 }
 
 .modalCard {

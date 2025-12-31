@@ -5,7 +5,6 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Accordion, AccordionItem } from "./Accordion";
-import styles from "./Accordion.module.scss";
 
 describe("Accordion Component", () => {
   it("renders triggers visible", () => {
@@ -41,9 +40,10 @@ describe("Accordion Component", () => {
 
     // Verify styling class for animation
     // The closest div with class 'item' should have 'isOpen'
-    const item = trigger.closest(`.${styles.item}`);
-    // Since styles.item is a hashed class name, we can't search for it directly w/o import
-    // But we can check if it has the class that corresponds to isOpen in the DOM
+    // Since styles.item is a hashed class name, we can't search for it
+    // directly w/o import
+    // But we can check if it has the class that corresponds to isOpen in the
+    // DOM
     expect(trigger.parentElement?.parentElement).toHaveClass(/isOpen/);
 
     // Click again to close

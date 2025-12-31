@@ -17,7 +17,8 @@ describe("Spinner", () => {
   it("applies standard sizes", () => {
     render(<Spinner data-testid="spinner-lg" size="lg" />);
     const spinner = screen.getByTestId("spinner-lg");
-    // We can't check CSS class content in JSDOM easily, but we can verify it doesn't crash
+    // We can't check CSS class content in JSDOM easily, but we can verify it
+    // doesn't crash
     expect(spinner).toBeInTheDocument();
   });
 });

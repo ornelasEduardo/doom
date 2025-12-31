@@ -126,7 +126,7 @@ export function Image({
         }
       }
       setStatus("error");
-      setShowSkeleton(false); // Remove skeleton immediately on error to show broken image icon or alt
+      setShowSkeleton(false); // Remove skeleton immediately on error
       onError?.(e);
     },
     [fallbackSrc, status, onError],

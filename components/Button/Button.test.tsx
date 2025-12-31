@@ -27,7 +27,8 @@ describe("Button Component", () => {
 
   it("should render with different variants", () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    // Checking styles is hard with styled-components in unit tests without specific matchers or computing styles.
+    // Checking styles is hard with styled-components in unit tests without
+    // specific matchers or computing styles.
     // But we can check if it renders without crashing for now.
     expect(screen.getByText("Primary")).toBeInTheDocument();
 

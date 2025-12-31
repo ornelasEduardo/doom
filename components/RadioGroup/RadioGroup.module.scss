@@ -14,7 +14,7 @@
   border-radius: var(--radius);
   transition: all 0.15s ease;
   opacity: 1;
-  
+
   &:hover:not([aria-disabled="true"]) {
     background-color: var(--muted);
     background-color: color-mix(in srgb, var(--primary) 8%, transparent);

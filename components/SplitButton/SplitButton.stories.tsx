@@ -21,7 +21,10 @@ export const Default: Story = {
     primaryLabel: "Save",
     onPrimaryClick: () => alert("Save clicked"),
     items: [
-      { label: "Save as Draft", onClick: () => alert("Save as Draft clicked") },
+      {
+        label: "Save as Draft",
+        onClick: () => alert("Save as Draft clicked"),
+      },
       {
         label: "Save and Publish",
         onClick: () => alert("Save and Publish clicked"),
@@ -36,8 +39,14 @@ export const Secondary: Story = {
     variant: "secondary",
     onPrimaryClick: () => alert("Export clicked"),
     items: [
-      { label: "Export as PDF", onClick: () => alert("Export as PDF clicked") },
-      { label: "Export as CSV", onClick: () => alert("Export as CSV clicked") },
+      {
+        label: "Export as PDF",
+        onClick: () => alert("Export as PDF clicked"),
+      },
+      {
+        label: "Export as CSV",
+        onClick: () => alert("Export as CSV clicked"),
+      },
     ],
   },
 };

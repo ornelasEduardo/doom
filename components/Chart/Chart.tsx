@@ -237,7 +237,7 @@ export function Chart<T>({
       config,
       styles,
       gradientId,
-      setHoverState: (state: any) => {
+      setHoverState: (state: { x: number; y: number; data: T } | null) => {
         if (!state) {
           hideTooltip();
         } else {
@@ -316,12 +316,12 @@ export function Chart<T>({
                       }}
                       variant="h6"
                     >
-                      {x(activeData as any)}
+                      {x(activeData)}
                     </Text>
                   </div>
                   <div>
                     <Text style={{ margin: 0 }} variant="h4">
-                      {y(activeData as any)}
+                      {y(activeData)}
                     </Text>
                   </div>
                 </Card>

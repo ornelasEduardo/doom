@@ -71,7 +71,8 @@ export function Table<T>({
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(), // Always provide the model, enableSorting controls if it's used
+    // Always provide the model, enableSorting controls usage
+    getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: enablePagination
       ? getPaginationRowModel()
       : undefined,
