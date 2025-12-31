@@ -100,9 +100,10 @@ const fn = (x: number) => { ... };
 - **Separate with blank lines**: Use blank lines to separate semantic groups
 - **Declarations vs statements**: Separate variable declarations from control flow statements (if/for/while) with a blank line
 - **Logical ordering**: Declare variables at the top, then derived values, then handlers, then effects
+- **Within function bodies**: Separate variable declarations, conditional checks, and effect statements (function calls, state updates) with blank lines
 
 ```typescript
-// ✅ Good - semantic grouping
+// ✅ Good - semantic grouping in components
 function Component() {
   // State
   const [isOpen, setIsOpen] = useState(false);
@@ -121,6 +122,49 @@ function Component() {
 
   return ( ... );
 }
+
+// ✅ Good - separation within event handlers/functions
+const handleInteraction = (event: Event) => {
+  // Variables
+  const svgNode = element.ownerSVGElement;
+  const svgRect = svgNode.getBoundingClientRect();
+  let clientX: number;
+  let clientY: number;
+
+  // Conditionals
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  }
+
+  // Derived calculations
+  const px = clientX - svgRect.left;
+  const py = clientY - svgRect.top;
+
+  // Effect (state update, API call, etc.)
+  setHoverState({ x: px, y: py, data: d });
+};
+
+// ❌ Bad - no separation, hard to scan
+const handleInteraction = (event: Event) => {
+  const svgNode = element.ownerSVGElement;
+  const svgRect = svgNode.getBoundingClientRect();
+  let clientX: number;
+  let clientY: number;
+  if (event.touches && event.touches.length > 0) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  }
+  const px = clientX - svgRect.left;
+  const py = clientY - svgRect.top;
+  setHoverState({ x: px, y: py, data: d });
+};
 ```
 
 ### Cognitive Load Reduction

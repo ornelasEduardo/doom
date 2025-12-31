@@ -162,10 +162,26 @@ export const CustomRender1: Story = {
           const result = ctx.resolveInteraction(event);
           if (result && result.data && select(result.element).classed("arc")) {
             const d: any = result.data;
-            const [cx, cy] = arc.centroid(d);
-            const x = cx + ctx.innerWidth / 2 + ctx.margin.left;
-            const y = cy + ctx.innerHeight / 2 + ctx.margin.top;
-            ctx.setHoverState({ x, y, data: d.data });
+            const isTouch = event.type.startsWith("touch");
+            const svgNode = ctx.g.node()?.ownerSVGElement;
+
+            if (svgNode) {
+              const svgRect = svgNode.getBoundingClientRect();
+              let clientX: number;
+              let clientY: number;
+              if (event.touches && event.touches.length > 0) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+              } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+              }
+
+              const px = clientX - svgRect.left;
+              const py = clientY - svgRect.top;
+
+              ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
+            }
           }
         })
         .on("mouseleave touchend", (event) => {
@@ -264,11 +280,26 @@ export const CustomRender2: Story = {
           if (result && result.data) {
             const d: any = result.data;
             if (typeof d.x0 === "number") {
-              const width = d.x1 - d.x0;
-              const height = d.y1 - d.y0;
-              const x = d.x0 + width / 2 + ctx.margin.left;
-              const y = d.y0 + height / 2 + ctx.margin.top;
-              ctx.setHoverState({ x, y, data: d.data });
+              const isTouch = event.type.startsWith("touch");
+              const svgNode = ctx.g.node()?.ownerSVGElement;
+
+              if (svgNode) {
+                const svgRect = svgNode.getBoundingClientRect();
+                let clientX: number;
+                let clientY: number;
+                if (event.touches && event.touches.length > 0) {
+                  clientX = event.touches[0].clientX;
+                  clientY = event.touches[0].clientY;
+                } else {
+                  clientX = event.clientX;
+                  clientY = event.clientY;
+                }
+
+                const px = clientX - svgRect.left;
+                const py = clientY - svgRect.top;
+
+                ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
+              }
             }
           }
         })
