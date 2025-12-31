@@ -41,7 +41,8 @@ export interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
 export interface GridProps extends LayoutProps {
   /**
    * Defines the columns of the grid.
-   * Accepts a number (e.g., `3` for 3 equal columns) or a CSS string (e.g., `"1fr 2fr"`).
+   * Accepts a number (e.g., `3` for 3 equal columns) or a CSS string
+   * (e.g., `"1fr 2fr"`).
    * @default "1fr"
    */
   columns?: string | number;
@@ -55,7 +56,8 @@ export interface GridProps extends LayoutProps {
 
 /**
  * A CSS Grid container for creating two-dimensional layouts.
- * Use this when you need precise control over columns and rows, or complex grid placements.
+ * Use this when you need precise control over columns and rows, or complex
+ * grid placements.
  */
 export function Grid({
   children,
@@ -115,7 +117,8 @@ export interface FlexProps extends LayoutProps {
    */
   gap?: Spacing;
   /**
-   * Controls whether flex items are forced onto one line or can wrap onto multiple lines.
+   * Controls whether flex items are forced onto one line or can wrap onto
+   * multiple lines.
    * @default false
    */
   wrap?: boolean | "wrap" | "nowrap" | "wrap-reverse";
@@ -177,7 +180,8 @@ export interface StackProps extends Omit<FlexProps, "direction"> {
  * A specialized Flex container explicitly optimized for vertical stacking.
  * Use this for lists, form fields, card content, or any group of elements
  * that should be arranged vertically with consistent spacing.
- * Note: While it defaults to column, `direction="row"` is supported for semantic overrides.
+ * Note: While it defaults to column, `direction="row"` is supported for
+ * semantic overrides.
  */
 export function Stack({
   children,
@@ -195,16 +199,17 @@ export function Stack({
 
 export interface SwitcherProps extends FlexProps {
   /**
-   * The breakpoint threshold at which the layout switches from horizontal to vertical.
-   * e.g., "xs" means it will be horizontal on screens larger than "xs" (480px), and vertical below.
+   * The breakpoint threshold at which the layout switches from horizontal to
+   * vertical. e.g., "xs" means it will be horizontal on screens larger than
+   * "xs" (480px), and vertical below.
    * @default "xs"
    */
   threshold?: "xxs" | "xs" | "sm" | "md";
 }
 
 /**
- * A responsive layout component that switches from horizontal to vertical layout
- * based on a container query or breakpoint threshold.
+ * A responsive layout component that switches from horizontal to vertical
+ * layout based on a container query or breakpoint threshold.
  * Use this for "sidebar + main content" layouts or any pattern that needs
  * to stack on smaller screens but sit side-by-side on larger ones.
  */

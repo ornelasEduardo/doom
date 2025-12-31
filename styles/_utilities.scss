@@ -222,22 +222,25 @@ p {
 
 body {
   // Typography Colors & Sizes
-  $text-sizes: "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl";
+  $text-sizes:
+    "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl";
   @each $size in $text-sizes {
     .text-#{$size} {
       font-size: var(--text-#{$size});
     }
   }
 
-  $font-weights: "thin", "extralight", "light", "regular", "medium", "semibold",
-    "bold", "extrabold", "black";
+  $font-weights:
+    "thin", "extralight", "light", "regular", "medium", "semibold", "bold",
+    "extrabold", "black";
   @each $weight in $font-weights {
     .font-#{$weight} {
       font-weight: var(--font-#{$weight});
     }
   }
 
-  $colors: "primary", "secondary", "muted", "success", "warning", "error",
+  $colors:
+    "primary", "secondary", "muted", "success", "warning", "error",
     "background", "foreground";
   @each $color in $colors {
     .text-#{$color} {

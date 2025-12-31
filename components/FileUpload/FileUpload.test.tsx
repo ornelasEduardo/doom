@@ -182,7 +182,9 @@ describe("FileUpload", () => {
     render(<FileUpload showPreview />);
 
     const input = screen.getByLabelText("File upload input");
-    const imageFile = new File(["content"], "image.png", { type: "image/png" });
+    const imageFile = new File(["content"], "image.png", {
+      type: "image/png",
+    });
 
     fireEvent.change(input, { target: { files: [imageFile] } });
 

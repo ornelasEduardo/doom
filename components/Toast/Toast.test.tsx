@@ -54,7 +54,8 @@ describe("Toast Component", () => {
 
     // It has a timeout for animation, so we need to wait
     // But in JSDOM/Vitest we might need fake timers.
-    // For now, let's just check if removeToast was called (which sets isExiting).
+    // For now, let's just check if removeToast was called (which sets
+    // isExiting).
     // The element might still be there but exiting.
     // Let's use fake timers.
   });

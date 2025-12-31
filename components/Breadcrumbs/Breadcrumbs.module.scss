@@ -21,7 +21,7 @@
   gap: 0.5rem;
 
   &:not(:last-child)::after {
-    content: '/';
+    content: "/";
     margin-left: 0.25rem;
     color: var(--muted-foreground);
     opacity: 0.5;

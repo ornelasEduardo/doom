@@ -67,11 +67,8 @@
         inset: -50%;
         width: 200%;
         height: 200%;
-        background-image: radial-gradient(
-            1px 1px at 20% 30%,
-            #fff 100%,
-            transparent
-          ),
+        background-image:
+          radial-gradient(1px 1px at 20% 30%, #fff 100%, transparent),
           radial-gradient(1px 1px at 40% 70%, #fff 100%, transparent),
           radial-gradient(1px 1px at 60% 40%, #fff 100%, transparent),
           radial-gradient(1px 1px at 80% 80%, #fff 100%, transparent),
@@ -110,11 +107,8 @@
           inset: -50%;
           width: 200%;
           height: 200%;
-          background-image: radial-gradient(
-              1px 1px at 25% 35%,
-              #fff 100%,
-              transparent
-            ),
+          background-image:
+            radial-gradient(1px 1px at 25% 35%, #fff 100%, transparent),
             radial-gradient(1px 1px at 45% 75%, #fff 100%, transparent),
             radial-gradient(1px 1px at 65% 45%, #fff 100%, transparent),
             radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
@@ -257,7 +251,9 @@
   transition: background-color 0.2s ease;
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary);
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 4px var(--primary);
   }
 
   &:hover {

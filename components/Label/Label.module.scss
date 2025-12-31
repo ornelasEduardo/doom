@@ -10,7 +10,7 @@
   gap: 0.25rem;
 
   &.required::after {
-    content: '*';
+    content: "*";
     color: var(--error);
     margin-left: 0.25rem;
   }

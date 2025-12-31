@@ -61,6 +61,7 @@ export default [
         },
       ],
       "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
       "@typescript-eslint/no-explicit-any": "warn",
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
@@ -84,4 +85,10 @@ export default [
     },
   },
   prettierRecommended,
+  {
+    rules: {
+      curly: ["error", "all"],
+      "max-len": "off",
+    },
+  },
 ];

@@ -27,7 +27,8 @@ class MockResizeObserver {
 beforeAll(() => {
   global.ResizeObserver = MockResizeObserver;
 
-  // Force Polyfill SVG methods (JSDOM implementation might be partial or missing methods like inverse/matrixTransform)
+  // Force Polyfill SVG methods (JSDOM implementation might be partial or
+  // missing methods like inverse/matrixTransform)
   SVGSVGElement.prototype.createSVGPoint = function () {
     return {
       x: 0,
@@ -135,7 +136,8 @@ describe("Chart", () => {
     // Check if Tooltip rendered.
     // Value is "10", Label is "A".
     await waitFor(() => {
-      // Use role heading to distinguish from axis text if necessary, or just be check document
+      // Use role heading to distinguish from axis text if necessary, or just
+      // by check document
       // Note: Text variant="h4" usually renders h4
       expect(screen.getByRole("heading", { name: "10" })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "A" })).toBeInTheDocument();
@@ -179,11 +181,13 @@ describe("Chart", () => {
     // Chart dimensions: 500x300. Margins: left~55, top~20.
     // We want to hit the first data point ("A", value 10).
     // Domain is "A", "B". Point scale distributes them.
-    // "A" should be near the start (or spread depending on scale type handling of strings).
+    // "A" should be near the start (or spread depending on scale type handling
+    // of strings).
     // Let's rely on finding *any* tooltip content.
 
     act(() => {
-      // clientX 160 -> relative x = 60. With left margin 55, this is inside chart area.
+      // clientX 160 -> relative x = 60. With left margin 55, this is inside
+      // chart area.
       const event = new MouseEvent("mousemove", {
         bubbles: true,
         clientX: 160,
@@ -225,7 +229,8 @@ describe("Chart", () => {
         bubbles: true,
         touches: [
           {
-            clientX: 60, // Relative x = 60 (after 0 offset) - margin (~55) = ~5px inside chart
+            clientX: 60, // Relative x = 60 (after 0 offset) - margin (~55)
+            // = ~5px inside chart
             clientY: 50,
             force: 1,
             identifier: 0,

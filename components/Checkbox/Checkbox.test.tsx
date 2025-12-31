@@ -14,8 +14,8 @@ describe("Checkbox", () => {
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toBeInTheDocument();
 
-    // The "label" text is rendered in a span (Label component) but linked via htmlFor,
-    // so getting by Label Text should work
+    // The "label" text is rendered in a span (Label component) but linked
+    // via htmlFor, so getting by Label Text should work
     const label = screen.getByLabelText("Test Checkbox");
     expect(label).toBeInTheDocument();
     expect(label).toBe(checkbox);
@@ -45,8 +45,10 @@ describe("Checkbox", () => {
   });
 
   it("displays error state", () => {
-    // Currently Checkbox doesn't do much visually with error prop other than maybe passing it down?
-    // Looking at implementation: `error` prop is in interface but not used in rendering classNames?
+    // Currently Checkbox doesn't do much visually with error prop other than
+    // maybe passing it down?
+    // Looking at implementation: `error` prop is in interface but not used
+    // in rendering classNames?
     // Let's check implementation behavior or just skip if visual only.
     // The impl passes ...props to input.
     render(<Checkbox error label="Test" />);

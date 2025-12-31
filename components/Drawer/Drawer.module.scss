@@ -7,7 +7,9 @@
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  transition:
+    opacity 0.2s ease-in-out,
+    visibility 0.2s ease-in-out;
   pointer-events: none;
   z-index: var(--z-overlay);
 
@@ -24,7 +26,8 @@
   z-index: var(--z-drawer);
   display: flex;
   flex-direction: column;
-  transition: transform var(--duration-normal) var(--ease-in-out),
+  transition:
+    transform var(--duration-normal) var(--ease-in-out),
     visibility var(--duration-normal) var(--ease-in-out);
   top: 0;
   bottom: 0;

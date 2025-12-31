@@ -35,10 +35,11 @@ describe("Field Component", () => {
         <Input />
       </Field>,
     );
-    // Assuming styling adds visual indicator, but DOM structure might contain styling?
-    // Actually, screen.getByText('Password') gets the text node.
-    // The CSS pseudo-element ::after content '*' is not reachable by getByText easily.
-    // We check if the Label component received the prop implicitly by checking label existence.
+    // Assuming styling adds visual indicator, but DOM structure might contain
+    // styling? Actually, screen.getByText('Password') gets the text node.
+    // The CSS pseudo-element ::after content '*' is not reachable by
+    // getByText easily. We check if the Label component received the prop
+    // implicitly by checking label existence.
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 

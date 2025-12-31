@@ -368,7 +368,11 @@ export const IntegratedChart: Story = {
                 value: "-$1,150",
                 color: "var(--error)",
               },
-              { label: "Investments", value: "+$850", color: "var(--success)" },
+              {
+                label: "Investments",
+                value: "+$850",
+                color: "var(--success)",
+              },
             ].map((item) => (
               <Slat
                 key={item.label}
