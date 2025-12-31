@@ -8,6 +8,7 @@
 
 import * as d3Array from "d3-array";
 import * as d3Axis from "d3-axis";
+import * as d3Format from "d3-format";
 import * as d3Scale from "d3-scale";
 import * as d3Selection from "d3-selection";
 import * as d3Shape from "d3-shape";
@@ -20,6 +21,7 @@ const d3 = {
   ...d3Selection,
   ...d3Axis,
   ...d3Array,
+  ...d3Format,
 };
 
 // ============================================================================
@@ -176,12 +178,17 @@ export function drawGrid(
   yScale: d3Scale.ScaleLinear<number, number>,
   innerWidth: number,
   className: string,
+  isMobile: boolean = false,
 ) {
+  // Only show major grid lines (fewer lines for cleaner look)
+  const tickCount = isMobile ? 3 : 5;
+
   g.append("g")
     .attr("class", className)
     .call(
       d3
         .axisLeft(yScale)
+        .ticks(tickCount)
         .tickSize(-innerWidth)
         .tickFormat(() => ""),
     );
@@ -228,6 +235,13 @@ export function drawAxes(
     d3
       .axisLeft(yScale)
       .ticks(isMobile ? 3 : 5)
+      .tickFormat((d) => {
+        const val = typeof d === "number" ? d : d.valueOf();
+        if (val === 0) {
+          return "0";
+        }
+        return d3.format(".2s")(val).replace("G", "B");
+      })
       .tickPadding(10),
   );
 
@@ -248,7 +262,7 @@ export function drawAxes(
       .attr("class", styles.axisLabel)
       .attr("transform", "rotate(-90)")
       .attr("x", -innerHeight / 2)
-      .attr("y", -margin.left + 12)
+      .attr("y", -margin.left + 24)
       .text(config.yAxisLabel);
   }
 }
@@ -278,14 +292,18 @@ export function drawLineArea<T>({
 }: DrawContext<T>) {
   const lineGenerator = d3
     .line<T>()
-    .x((d) => xScale(x(d)) ?? 0)
+    .x((d) => (xScale as (val: string | number) => number)(x(d)) ?? 0)
     .y((d) => yScale(y(d)))
     .curve(config.curve || d3.curveLinear);
+
+  // Retrieve transition if setup
+  // Use easePolyOut.exponent(5) (Quintic) for a "snappy" high-velocity feel
+  // const t = d3.transition().duration(1000).ease(d3.easePolyOut.exponent(5)); // Removed animation
 
   if (type === "area") {
     const areaGenerator = d3
       .area<T>()
-      .x((d) => xScale(x(d)) ?? 0)
+      .x((d) => (xScale as (val: string | number) => number)(x(d)) ?? 0)
       .y0(innerHeight)
       .y1((d) => yScale(y(d)))
       .curve(config.curve || d3.curveLinear);
@@ -303,7 +321,8 @@ export function drawLineArea<T>({
     }
   }
 
-  g.append("path")
+  const path = g
+    .append("path")
     .datum(data)
     .attr("class", styles.path)
     .attr("d", lineGenerator);
@@ -314,7 +333,10 @@ export function drawLineArea<T>({
       .enter()
       .append("circle")
       .attr("class", styles.dot)
-      .attr("cx", (d) => xScale(x(d)) ?? 0)
+      .attr(
+        "cx",
+        (d) => (xScale as (val: string | number) => number)(x(d)) ?? 0,
+      )
       .attr("cy", (d) => yScale(y(d)))
       .attr("r", 5);
   }
@@ -367,7 +389,7 @@ export function drawLineArea<T>({
     return null;
   };
 
-  const handleInteraction = (event: any) => {
+  const handleInteraction = (event: MouseEvent | TouchEvent) => {
     if (event.type.startsWith("touch") && event.cancelable) {
       event.preventDefault();
     }
@@ -376,7 +398,8 @@ export function drawLineArea<T>({
     const selectedData = findNearestPoint(pointerX);
 
     if (selectedData) {
-      const cx = xScale(x(selectedData)) ?? 0;
+      const cx =
+        (xScale as (val: string | number) => number)(x(selectedData)) ?? 0;
       const cy = yScale(y(selectedData));
 
       cursorLine.attr("x1", cx).attr("x2", cx).style("opacity", 1);
@@ -413,7 +436,6 @@ export function drawBars<T>({
   innerHeight,
   styles,
   setHoverState,
-  margin,
   resolveInteraction,
 }: DrawContext<T>) {
   const BAR_RADIUS = 4;
@@ -425,14 +447,14 @@ export function drawBars<T>({
     .append("path")
     .attr("class", styles.bar)
     .attr("d", (d) => {
-      const xVal = xScale(x(d)) || 0;
+      const xVal = (xScale as (val: string | number) => number)(x(d)) || 0;
       const yVal = yScale(y(d));
       const w = "bandwidth" in xScale ? xScale.bandwidth() : 10;
       const h = innerHeight - yVal;
       return createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS);
     });
 
-  const handleInteraction = (event: any) => {
+  const handleInteraction = (event: MouseEvent | TouchEvent) => {
     const result = resolveInteraction(event);
 
     if (
@@ -453,15 +475,15 @@ export function drawBars<T>({
       let clientX: number;
       let clientY: number;
 
-      if (event.touches && event.touches.length > 0) {
+      if ("touches" in event && event.touches.length > 0) {
         clientX = event.touches[0].clientX;
         clientY = event.touches[0].clientY;
-      } else if (event.changedTouches && event.changedTouches.length > 0) {
+      } else if ("changedTouches" in event && event.changedTouches.length > 0) {
         clientX = event.changedTouches[0].clientX;
         clientY = event.changedTouches[0].clientY;
       } else {
-        clientX = event.clientX;
-        clientY = event.clientY;
+        clientX = (event as MouseEvent).clientX;
+        clientY = (event as MouseEvent).clientY;
       }
 
       const hoverX = clientX - svgRect.left;

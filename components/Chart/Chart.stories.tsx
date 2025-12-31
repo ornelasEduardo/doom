@@ -91,6 +91,82 @@ export const BarChart: Story = {
   },
 };
 
+export const WithLegendAndSubtitle: Story = {
+  args: {
+    data,
+    x: (d: any) => d.label,
+    y: (d: any) => d.value,
+    type: "line",
+    title: "Monthly Performance",
+    subtitle: "Tracking key metrics over time",
+    legend: {
+      data: [{ label: "Revenue" }, { label: "Expenses" }, { label: "Profit" }],
+    },
+    style: { width: "100%", maxWidth: 800, height: 400 },
+    d3Config: {
+      grid: true,
+      showDots: true,
+      hideYAxisDomain: true,
+    },
+  },
+};
+
+export const WithLegendPositions: Story = {
+  render: (args: any) => {
+    return (
+      <Stack className="pb-4" gap={16}>
+        <Chart
+          {...args}
+          legend={{
+            data: [{ label: "Series A" }, { label: "Series B" }],
+            position: { default: "top" },
+          }}
+          subtitle="Legend at top (default)"
+          title="Top Legend"
+        />
+        <Chart
+          {...args}
+          legend={{
+            data: [{ label: "Series A" }, { label: "Series B" }],
+            position: { default: "bottom" },
+          }}
+          subtitle="Legend at bottom"
+          title="Bottom Legend"
+        />
+        <Chart
+          {...args}
+          legend={{
+            data: [{ label: "Series A" }, { label: "Series B" }],
+            position: { default: "left" },
+          }}
+          subtitle="Legend on left"
+          title="Left Legend"
+        />
+        <Chart
+          {...args}
+          legend={{
+            data: [{ label: "Series A" }, { label: "Series B" }],
+            position: { default: "right" },
+          }}
+          subtitle="Legend on right"
+          title="Right Legend"
+        />
+      </Stack>
+    );
+  },
+  args: {
+    data,
+    x: (d: any) => d.label,
+    y: (d: any) => d.value,
+    type: "area",
+    style: { width: "100%", maxWidth: 600, height: 350 },
+    d3Config: {
+      grid: true,
+      showDots: true,
+    },
+  },
+};
+
 export const CustomRender1: Story = {
   args: {
     data: [
@@ -494,7 +570,6 @@ export const DetailedTooltip: Story = {
     title: "Fiscal Year Report",
     style: {
       width: "100%",
-      maxWidth: 800,
       height: 450,
     },
     d3Config: {
@@ -504,7 +579,6 @@ export const DetailedTooltip: Story = {
       withGradient: true,
       showDots: true,
       curve: d3Shape.curveMonotoneX,
-      margin: { top: 40, right: 40, bottom: 60, left: 80 },
     },
     renderTooltip: (data: any) => (
       <Card style={{ padding: "12px", minWidth: "200px" }}>
