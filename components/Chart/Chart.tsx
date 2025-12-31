@@ -2,7 +2,13 @@
 
 import clsx from "clsx";
 import { pointer, select } from "d3-selection";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Card } from "../Card/Card";
 import { Stack } from "../Layout/Layout";
@@ -76,21 +82,36 @@ export function Chart<T>({
     [d3Config, type],
   );
 
-  React.useLayoutEffect(() => {
+  const calculateTooltipTransform = (tx: number, ty: number) => {
+    if (!tooltipRef.current || !wrapperRef.current) {
+      return "";
+    }
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const tooltipWidth = tooltipRef.current.offsetWidth;
+    const absX = rect.left + tx;
+
+    let xOffset = TOOLTIP_OFFSET;
+
+    // Check right edge
+    if (absX + tooltipWidth + TOOLTIP_OFFSET > window.innerWidth - 10) {
+      xOffset = -TOOLTIP_OFFSET - tooltipWidth;
+    }
+
+    // Check left edge (after potential flip)
+    if (rect.left + tx + xOffset < 10) {
+      xOffset = 10 - (rect.left + tx);
+    }
+
+    return `translate3d(${tx + xOffset}px, calc(${ty}px - 50%), 0)`;
+  };
+
+  useLayoutEffect(() => {
     if (activeData && tooltipRef.current && wrapperRef.current) {
       const { x, y } = tooltipPosRef.current;
-      const rect = wrapperRef.current.getBoundingClientRect();
-      const tooltipWidth = tooltipRef.current.offsetWidth;
-      const absX = rect.left + x;
-
-      const isRightEdge =
-        absX + tooltipWidth + TOOLTIP_OFFSET > window.innerWidth - 10;
-
-      const xOffset = isRightEdge
-        ? -TOOLTIP_OFFSET - tooltipWidth
-        : TOOLTIP_OFFSET;
-
-      tooltipRef.current.style.transform = `translate3d(${x + xOffset}px, calc(${y}px - 50%), 0)`;
+      const transform = calculateTooltipTransform(x, y);
+      if (transform) {
+        tooltipRef.current.style.transform = transform;
+      }
     }
   }, [activeData]);
 
@@ -203,18 +224,10 @@ export function Chart<T>({
       tooltipPosRef.current = { x: tx, y: ty };
 
       if (tooltipRef.current && wrapperRef.current) {
-        const rect = wrapperRef.current.getBoundingClientRect();
-        const tooltipWidth = tooltipRef.current.offsetWidth;
-        const absX = rect.left + tx;
-
-        const isRightEdge =
-          absX + tooltipWidth + TOOLTIP_OFFSET > window.innerWidth - 10;
-
-        const xOffset = isRightEdge
-          ? -TOOLTIP_OFFSET - tooltipWidth
-          : TOOLTIP_OFFSET;
-
-        tooltipRef.current.style.transform = `translate3d(${tx + xOffset}px, calc(${ty}px - 50%), 0)`;
+        const transform = calculateTooltipTransform(tx, ty);
+        if (transform) {
+          tooltipRef.current.style.transform = transform;
+        }
       }
 
       setActiveData((prev) => (prev === data ? prev : data));
@@ -262,6 +275,32 @@ export function Chart<T>({
       hideTooltip,
       type,
       isMobile,
+      resolveInteraction: (event: any) => {
+        if (event.cancelable && event.type.startsWith("touch")) {
+          event.preventDefault();
+        }
+
+        let el: Element | null = null;
+
+        if (event.touches && event.touches.length > 0) {
+          const touch = event.touches[0];
+          el = document.elementFromPoint(touch.clientX, touch.clientY);
+        } else {
+          el = event.currentTarget as Element;
+        }
+
+        if (!el) {
+          return null;
+        }
+
+        const data = select(el).datum() as T;
+
+        if (Array.isArray(data)) {
+          return null;
+        }
+
+        return data ? { element: el, data } : null;
+      },
     };
 
     if (render) {

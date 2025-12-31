@@ -229,8 +229,7 @@ describe("Chart", () => {
         bubbles: true,
         touches: [
           {
-            clientX: 60, // Relative x = 60 (after 0 offset) - margin (~55)
-            // = ~5px inside chart
+            clientX: 60,
             clientY: 50,
             force: 1,
             identifier: 0,
@@ -249,5 +248,53 @@ describe("Chart", () => {
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "A" })).toBeInTheDocument();
     });
+  });
+
+  it("correctly resolves element data and ignores background", async () => {
+    let capturedCtx: any;
+    render(
+      <Chart
+        data={data}
+        render={(ctx) => {
+          capturedCtx = ctx;
+        }}
+        x={x}
+        y={y}
+      />,
+    );
+    await waitFor(() => expect(capturedCtx).toBeDefined());
+
+    const mockElement = document.createElement("div");
+    (mockElement as any).__data__ = data[0];
+
+    // Mock elementFromPoint to return our element
+    const originalElementFromPoint = document.elementFromPoint;
+    document.elementFromPoint = vi.fn(() => mockElement);
+
+    // Test successful resolution
+    const result = capturedCtx.resolveInteraction({
+      type: "touchmove",
+      touches: [{ clientX: 10, clientY: 10 }],
+      preventDefault: vi.fn(),
+      cancelable: true,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result.element).toBe(mockElement);
+    expect(result.data).toBe(data[0]);
+
+    // Test Array data (background/group) - should be ignored
+    (mockElement as any).__data__ = data;
+    const badResult = capturedCtx.resolveInteraction({
+      type: "touchmove",
+      touches: [{ clientX: 10, clientY: 10 }],
+      preventDefault: vi.fn(),
+      cancelable: true,
+    });
+
+    expect(badResult).toBeNull();
+
+    // Cleanup
+    document.elementFromPoint = originalElementFromPoint;
   });
 });

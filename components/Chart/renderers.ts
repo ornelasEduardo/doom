@@ -410,11 +410,11 @@ export function drawBars<T>({
   yScale,
   x,
   y,
-  innerWidth,
   innerHeight,
   styles,
   setHoverState,
   margin,
+  resolveInteraction,
 }: DrawContext<T>) {
   const BAR_RADIUS = 4;
 
@@ -432,66 +432,38 @@ export function drawBars<T>({
       return createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS);
     });
 
-  const overlay = g
-    .append("rect")
-    .attr("class", "overlay")
-    .attr("width", innerWidth)
-    .attr("height", innerHeight)
-    .style("fill", "transparent")
-    .style("cursor", "crosshair")
-    .style("touch-action", "none");
-
-  const findNearestBar = (pointerX: number): T | null => {
-    const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
-    let nearestData: T | null = null;
-    let minDist = Infinity;
-
-    for (const d of data) {
-      const barX = xScale(x(d)) || 0;
-      const barCenter = barX + bandwidth / 2;
-      const dist = Math.abs(pointerX - barCenter);
-
-      if (dist < minDist) {
-        minDist = dist;
-        nearestData = d;
-      }
-    }
-
-    return nearestData;
-  };
-
   const handleInteraction = (event: any) => {
-    if (event.type.startsWith("touch") && event.cancelable) {
-      event.preventDefault();
-    }
+    const result = resolveInteraction(event);
 
-    const [pointerX, pointerY] = getPointerCoords(event, g.node(), margin);
-    const selectedData = findNearestBar(pointerX);
+    if (
+      result &&
+      result.data &&
+      d3.select(result.element).classed(styles.bar)
+    ) {
+      bars.style("opacity", (d) => (d === result.data ? 1 : 0.6));
 
-    if (selectedData) {
-      bars.style("opacity", (d) => (d === selectedData ? 1 : 0.6));
+      const d = result.data;
+      const xVal = xScale(x(d)) || 0;
+      const yVal = yScale(y(d));
+      const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
 
-      let hoverX = pointerX;
-      let hoverY = pointerY;
-
-      if (event.type.startsWith("touch")) {
-        const xVal = xScale(x(selectedData)) || 0;
-        const bandwidth = "bandwidth" in xScale ? xScale.bandwidth() : 10;
-        hoverX = xVal + bandwidth / 2;
-        hoverY = yScale(y(selectedData));
-      }
+      const hoverX = xVal + bandwidth / 2;
+      const hoverY = yVal;
 
       setHoverState({
         x: hoverX + margin.left,
         y: hoverY + margin.top,
-        data: selectedData,
+        data: d,
       });
     }
   };
 
-  overlay
+  bars
+    .style("pointer-events", "all")
+    .style("cursor", "crosshair")
+    .style("touch-action", "none")
     .on("mousemove touchmove touchstart", handleInteraction)
-    .on("mouseleave touchend touchcancel", () => {
+    .on("mouseleave touchend", () => {
       bars.style("opacity", 1);
       setHoverState(null);
     });
