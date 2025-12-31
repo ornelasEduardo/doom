@@ -148,16 +148,27 @@ export const CustomRender1: Story = {
 
       arcs
         .append("path")
+        .attr("class", "arc")
         .attr("d", arc)
         .attr("fill", (_, i) => colorScale[i % colorScale.length])
         .attr("stroke", "var(--card-bg)")
         .attr("stroke-width", "2px")
         .style("cursor", "pointer")
+        .style("touch-action", "none")
         .on("mouseenter", (event) => {
           select(event.currentTarget).style("opacity", 0.8);
         })
-        .on("mousemove", (event, d) => ctx.showTooltip(event, d.data))
-        .on("mouseleave", (event) => {
+        .on("mousemove touchmove touchstart", (event) => {
+          const result = ctx.resolveInteraction(event);
+          if (result && result.data && select(result.element).classed("arc")) {
+            const d: any = result.data;
+            const [cx, cy] = arc.centroid(d);
+            const x = cx + ctx.innerWidth / 2 + ctx.margin.left;
+            const y = cy + ctx.innerHeight / 2 + ctx.margin.top;
+            ctx.setHoverState({ x, y, data: d.data });
+          }
+        })
+        .on("mouseleave touchend", (event) => {
           select(event.currentTarget).style("opacity", 1);
           ctx.hideTooltip();
         });
@@ -244,11 +255,24 @@ export const CustomRender2: Story = {
         .style("rx", "var(--radius)")
         .style("ry", "var(--radius)")
         .style("cursor", "pointer")
+        .style("touch-action", "none")
         .on("mouseenter", (event) => {
           select(event.currentTarget).attr("fill-opacity", 1);
         })
-        .on("mousemove", (event, d: any) => ctx.showTooltip(event, d.data))
-        .on("mouseleave", (event) => {
+        .on("mousemove touchmove touchstart", (event) => {
+          const result = ctx.resolveInteraction(event);
+          if (result && result.data) {
+            const d: any = result.data;
+            if (typeof d.x0 === "number") {
+              const width = d.x1 - d.x0;
+              const height = d.y1 - d.y0;
+              const x = d.x0 + width / 2 + ctx.margin.left;
+              const y = d.y0 + height / 2 + ctx.margin.top;
+              ctx.setHoverState({ x, y, data: d.data });
+            }
+          }
+        })
+        .on("mouseleave touchend", (event) => {
           select(event.currentTarget).attr("fill-opacity", 0.8);
           ctx.hideTooltip();
         });

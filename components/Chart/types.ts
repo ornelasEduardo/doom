@@ -32,6 +32,8 @@ export interface DrawContext<T> {
   hideTooltip: () => void;
   type: ChartProps<T>["type"];
   isMobile: boolean;
+
+  resolveInteraction: (event: any) => { element: Element; data: T } | null;
 }
 
 export interface ChartConfig {
