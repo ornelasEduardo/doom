@@ -118,7 +118,7 @@ export const CustomRender1: Story = {
         .append("g")
         .attr(
           "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`
+          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
         );
 
       const colorScale = [
