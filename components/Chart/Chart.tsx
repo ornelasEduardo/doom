@@ -65,7 +65,7 @@ export function Chart<T>({
       showDots: false,
       ...d3Config,
     }),
-    [d3Config, type]
+    [d3Config, type],
   );
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -154,7 +154,7 @@ export function Chart<T>({
       margin,
       x,
       y,
-      type
+      type,
     );
 
     if (innerWidth <= 0 || innerHeight <= 0) return;
@@ -173,7 +173,7 @@ export function Chart<T>({
         margin,
         config,
         styles,
-        isMobile
+        isMobile,
       );
     }
 
@@ -256,7 +256,7 @@ export function Chart<T>({
         flat && styles.flat,
         isMobile && styles.mobile,
         !withFrame && styles.frameless,
-        className
+        className,
       )}
       style={{
         height: config.height || 400,
