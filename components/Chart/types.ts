@@ -37,6 +37,7 @@ export interface DrawContext<T> {
   innerHeight: number;
   margin: { top: number; right: number; bottom: number; left: number };
   config: ChartConfig;
+  color?: string;
   styles: Record<string, string>;
   gradientId: string;
   setHoverState: (
@@ -68,8 +69,6 @@ export interface ChartConfig {
 }
 
 // Legend types
-export type LegendPosition = "top" | "bottom" | "left" | "right";
-
 export interface LegendItem {
   label: string;
   color?: string; // CSS variable like "var(--primary)" - auto-assigned if not provided
@@ -77,10 +76,6 @@ export interface LegendItem {
 
 export interface LegendConfig {
   data: LegendItem[];
-  position?: {
-    default?: LegendPosition; // Default: "top"
-    mobile?: LegendPosition; // Default: "bottom"
-  };
 }
 
 export interface ChartProps<T = unknown> {
@@ -99,5 +94,5 @@ export interface ChartProps<T = unknown> {
   flat?: boolean;
   title?: string | React.ReactNode;
   subtitle?: string;
-  legend?: LegendConfig;
+  withLegend?: boolean;
 }
