@@ -38,40 +38,18 @@
 }
 
 .modalCard {
-  background-color: var(--primary);
+  background-color: var(--surface-brand);
 
   &.solid {
-    /* 
-      SCALABLE CONTEXTUAL REMAPPING
-      Save original values then swap semantic tokens to auto-invert content.
-    */
-    --solid-bg: var(--primary);
-    --solid-fg: var(--primary-foreground);
-    --original-border: var(--card-border);
-
-    background-color: var(--solid-bg);
-    color: var(--solid-fg);
-
-    /* 
-       Swap Semantics & Remap Content on CHILDREN only.
-       This avoids circular dependency on the container's background-color.
-    */
-    & > * {
-      --primary: var(--solid-fg);
-      --primary-foreground: var(--solid-bg);
-      --foreground: var(--solid-fg);
-      --muted-foreground: var(--solid-fg);
-    }
+    @include mixins.solid-variant;
 
     .header,
     .body,
     .footer,
     .modalContent {
       background-color: transparent !important;
-      color: var(--solid-fg);
     }
 
-    /* In solid mode, we need to override the close button to ensure contrast */
     .closeButton {
       @include mixins.brutalist-hover();
       background-color: var(--error) !important;
@@ -84,13 +62,9 @@
 
 .header {
   padding: var(--spacing-lg);
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--surface-brand);
+  color: var(--surface-brand-foreground);
   border-bottom: var(--border-width) solid var(--border-strong);
-
-  /* Remap foreground variables so children (like Text) use the correct contrast color */
-  --foreground: var(--primary-foreground);
-  --muted-foreground: var(--primary-foreground);
 }
 
 .headerContent {

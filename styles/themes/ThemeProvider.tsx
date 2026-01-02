@@ -33,10 +33,13 @@ export function ThemeProvider({
   };
 
   // Get the variables for the current theme
-  const themeVars = themes[currentTheme]?.variables || themes.default.variables;
+  const themeConfig = themes[currentTheme] || themes.default;
+  const themeVars = themeConfig.variables;
+  const solidVars = themeConfig.solid || {};
 
-  // Generate CSS variables string
-  const cssVariables = Object.entries(themeVars)
+  // Generate CSS variables string (includes both theme and solid tokens)
+  const allVars = { ...themeVars, ...solidVars };
+  const cssVariables = Object.entries(allVars)
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n");
 

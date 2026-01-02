@@ -183,7 +183,7 @@ export const Default: Story = {
               </Flex>
               <Card
                 style={{
-                  background: "var(--foreground)",
+                  background: "var(--on-surface)",
                   color: "var(--background)",
                   fontFamily: "var(--font-mono)",
                   fontSize: "0.75rem",

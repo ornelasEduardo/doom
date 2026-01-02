@@ -53,6 +53,58 @@
   --muted-foreground: var(--primary-foreground);
 }
 
+/// Applies solid variant styling using subtheme tokens.
+@mixin solid-variant {
+  /* ROOT CONTEXT (The Field) */
+  background-color: var(--solid-bg);
+  color: var(--solid-fg);
+
+  // Root Variables
+  --background: var(--solid-bg);
+  --foreground: var(--solid-fg);
+  --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
+
+  // Standardized Brand Surface Logic
+  // Decouples Modals (Surface) from Buttons (Action)
+  --surface-brand: var(--solid-bg);
+  --surface-brand-foreground: var(--solid-fg);
+
+  // SEMANTICS (True Semantic Colors)
+  --success: var(--solid-success);
+  --success-foreground: var(--solid-fg);
+  --error: var(--solid-error);
+  --error-foreground: var(--solid-fg);
+  --warning: var(--solid-warning);
+  --warning-foreground: var(--solid-fg);
+
+  // SURFACE COLORS
+  --on-surface: var(--solid-bg);
+  --on-surface-muted: var(--solid-bg);
+
+  /* COMPONENT TOKENS (The Black Blocks) */
+  --card-bg: var(--solid-fg);
+  --card-border: var(--solid-fg); // Theme Border defines the block
+  --card-foreground: var(--solid-fg); // Theme Text matches hierarchy
+
+  --popover: var(--solid-fg);
+  --popover-foreground: var(--solid-bg);
+
+  // Inputs
+  --input: var(--solid-fg);
+  --border-strong: var(--solid-fg);
+
+  // Buttons (Primary)
+  --primary: var(--solid-fg);
+  --primary-foreground: var(--solid-bg);
+
+  // Secondary (Muted/Ghost)
+  --secondary: color-mix(in srgb, var(--solid-bg) 90%, transparent);
+  --secondary-foreground: var(--solid-fg);
+
+  // Muted
+  --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
+}
+
 // Brutalist Directional Shadows
 @mixin brutalist-shadow(
   $direction: "standard",

@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .chart {
   width: 100%;
   height: 100%;
@@ -121,24 +123,8 @@
   }
 
   &.solid {
-    --solid-bg: var(--primary);
-    --solid-fg: var(--primary-foreground);
-
-    background-color: var(--solid-bg);
-    color: var(--solid-fg);
+    @include solid-variant;
     border-color: var(--border-strong);
-
-    --text-primary: var(--solid-fg);
-    --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
-    --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
-    --background: var(--solid-bg);
-
-    --foreground: var(--solid-fg);
-
-    & > * {
-      --primary: var(--solid-fg);
-      --primary-hover: color-mix(in srgb, var(--solid-fg) 80%, transparent);
-    }
 
     :global(.tick) text {
       fill: var(--solid-fg);
