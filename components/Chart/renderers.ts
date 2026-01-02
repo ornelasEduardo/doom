@@ -147,7 +147,12 @@ export function createScales<T>(
 /**
  * Sets up an SVG gradient for area chart fills.
  */
-export function setupGradient(svg: SVGSelection, gradientId: string) {
+export function setupGradient(
+  svg: SVGSelection,
+  gradientId: string,
+  color?: string,
+) {
+  const fillColor = color || "var(--primary)";
   const defs = svg.append("defs");
   const gradient = defs
     .append("linearGradient")
@@ -160,13 +165,13 @@ export function setupGradient(svg: SVGSelection, gradientId: string) {
   gradient
     .append("stop")
     .attr("offset", "0%")
-    .attr("stop-color", "var(--primary)")
+    .attr("stop-color", fillColor)
     .attr("stop-opacity", 0.5);
 
   gradient
     .append("stop")
     .attr("offset", "100%")
-    .attr("stop-color", "var(--primary)")
+    .attr("stop-color", fillColor)
     .attr("stop-opacity", 0);
 }
 
@@ -245,6 +250,16 @@ export function drawAxes(
       .tickPadding(10),
   );
 
+  // Post-process Y-axis text for perfect left alignment
+  const hasYLabel = !!config.yAxisLabel;
+  const tickOffset = hasYLabel ? 28 : 0;
+
+  yAxis
+    .selectAll("text")
+    .attr("text-anchor", "start")
+    .attr("x", -margin.left + tickOffset)
+    .style("transform", "translateX(0px)"); // Reset any default translation
+
   if (config.hideYAxisDomain) {
     yAxis.select(".domain").remove();
   }
@@ -262,7 +277,8 @@ export function drawAxes(
       .attr("class", styles.axisLabel)
       .attr("transform", "rotate(-90)")
       .attr("x", -innerHeight / 2)
-      .attr("y", -margin.left + 24)
+      .attr("y", -margin.left + 12) // Position at the far left edge
+      .style("text-anchor", "middle") // Center along the vertical axis
       .text(config.yAxisLabel);
   }
 }
@@ -284,21 +300,19 @@ export function drawLineArea<T>({
   innerWidth,
   innerHeight,
   config,
+  color,
   styles,
   gradientId,
   setHoverState,
   margin,
   type,
 }: DrawContext<T>) {
+  const strokeColor = color || "var(--primary)";
   const lineGenerator = d3
     .line<T>()
     .x((d) => (xScale as (val: string | number) => number)(x(d)) ?? 0)
     .y((d) => yScale(y(d)))
     .curve(config.curve || d3.curveLinear);
-
-  // Retrieve transition if setup
-  // Use easePolyOut.exponent(5) (Quintic) for a "snappy" high-velocity feel
-  // const t = d3.transition().duration(1000).ease(d3.easePolyOut.exponent(5)); // Removed animation
 
   if (type === "area") {
     const areaGenerator = d3
@@ -317,7 +331,7 @@ export function drawLineArea<T>({
     if (config.withGradient) {
       areaPath.style("fill", `url(#${gradientId})`);
     } else {
-      areaPath.style("fill-opacity", 0.1);
+      areaPath.style("fill", strokeColor).style("fill-opacity", 0.1);
     }
   }
 
@@ -325,7 +339,8 @@ export function drawLineArea<T>({
     .append("path")
     .datum(data)
     .attr("class", styles.path)
-    .attr("d", lineGenerator);
+    .attr("d", lineGenerator)
+    .style("stroke", strokeColor);
 
   if (config.showDots) {
     g.selectAll(".dot")
@@ -338,7 +353,8 @@ export function drawLineArea<T>({
         (d) => (xScale as (val: string | number) => number)(x(d)) ?? 0,
       )
       .attr("cy", (d) => yScale(y(d)))
-      .attr("r", 5);
+      .attr("r", 5)
+      .style("fill", strokeColor);
   }
 
   const overlay = g
@@ -361,6 +377,7 @@ export function drawLineArea<T>({
     .append("circle")
     .attr("class", styles.cursorPoint)
     .attr("r", 6)
+    .style("fill", strokeColor)
     .style("opacity", 0);
 
   const findNearestPoint = (pointerX: number): T | null => {
@@ -434,11 +451,13 @@ export function drawBars<T>({
   x,
   y,
   innerHeight,
+  color,
   styles,
   setHoverState,
   resolveInteraction,
 }: DrawContext<T>) {
   const BAR_RADIUS = 4;
+  const fillColor = color || "var(--primary)";
 
   const bars = g
     .selectAll(".bar")
@@ -452,7 +471,8 @@ export function drawBars<T>({
       const w = "bandwidth" in xScale ? xScale.bandwidth() : 10;
       const h = innerHeight - yVal;
       return createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS);
-    });
+    })
+    .style("fill", fillColor);
 
   const handleInteraction = (event: MouseEvent | TouchEvent) => {
     const result = resolveInteraction(event);

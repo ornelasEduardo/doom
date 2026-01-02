@@ -7,6 +7,7 @@ import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
 import { Flex, Stack } from "../Layout/Layout";
+import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
 import { Chart, type DrawContext } from "./Chart";
@@ -99,70 +100,12 @@ export const WithLegendAndSubtitle: Story = {
     type: "line",
     title: "Monthly Performance",
     subtitle: "Tracking key metrics over time",
-    legend: {
-      data: [{ label: "Revenue" }, { label: "Expenses" }, { label: "Profit" }],
-    },
+    withLegend: true,
     style: { width: "100%", maxWidth: 800, height: 400 },
     d3Config: {
       grid: true,
       showDots: true,
       hideYAxisDomain: true,
-    },
-  },
-};
-
-export const WithLegendPositions: Story = {
-  render: (args: any) => {
-    return (
-      <Stack className="pb-4" gap={16}>
-        <Chart
-          {...args}
-          legend={{
-            data: [{ label: "Series A" }, { label: "Series B" }],
-            position: { default: "top" },
-          }}
-          subtitle="Legend at top (default)"
-          title="Top Legend"
-        />
-        <Chart
-          {...args}
-          legend={{
-            data: [{ label: "Series A" }, { label: "Series B" }],
-            position: { default: "bottom" },
-          }}
-          subtitle="Legend at bottom"
-          title="Bottom Legend"
-        />
-        <Chart
-          {...args}
-          legend={{
-            data: [{ label: "Series A" }, { label: "Series B" }],
-            position: { default: "left" },
-          }}
-          subtitle="Legend on left"
-          title="Left Legend"
-        />
-        <Chart
-          {...args}
-          legend={{
-            data: [{ label: "Series A" }, { label: "Series B" }],
-            position: { default: "right" },
-          }}
-          subtitle="Legend on right"
-          title="Right Legend"
-        />
-      </Stack>
-    );
-  },
-  args: {
-    data,
-    x: (d: any) => d.label,
-    y: (d: any) => d.value,
-    type: "area",
-    style: { width: "100%", maxWidth: 600, height: 350 },
-    d3Config: {
-      grid: true,
-      showDots: true,
     },
   },
 };
@@ -468,7 +411,7 @@ export const IntegratedChart: Story = {
         }}
       >
         <Stack
-          className="pt-5 pl-5"
+          className="py-5 px-5"
           gap={0}
           style={{ marginBottom: "-1.5rem" }}
         >
@@ -484,12 +427,12 @@ export const IntegratedChart: Story = {
               {percentChange.toFixed(1)}%
             </Badge>
           </Flex>
+          <Chart
+            {...args}
+            renderTooltip={() => null}
+            onValueChange={setActiveData}
+          />
         </Stack>
-        <Chart
-          {...args}
-          renderTooltip={() => null}
-          onValueChange={setActiveData}
-        />
         <Stack gap={4} style={{ padding: "0 20px 20px" }}>
           <Stack gap={2}>
             {[
@@ -643,5 +586,89 @@ export const DetailedTooltip: Story = {
         </div>
       </Card>
     ),
+  },
+};
+
+export const CompositionExample: Story = {
+  render: () => {
+    const [chartType, setChartType] = useState<"line" | "area" | "bar">("area");
+    const [chartColor, setChartColor] = useState("var(--primary)");
+
+    const chartTypes = [
+      { value: "line", label: "Line" },
+      { value: "area", label: "Area" },
+      { value: "bar", label: "Bar" },
+    ];
+
+    const chartColors = [
+      { value: "var(--primary)", label: "Primary" },
+      { value: "var(--secondary)", label: "Secondary" },
+      { value: "var(--accent)", label: "Accent" },
+      { value: "var(--success)", label: "Success" },
+      { value: "var(--warning)", label: "Warning" },
+      { value: "var(--error)", label: "Error" },
+    ];
+
+    return (
+      <div style={{ width: "100%", maxWidth: 800 }}>
+        <Chart.Root
+          d3Config={{ grid: true, yAxisLabel: "Custom Composition" }}
+          data={data}
+          x={(d: any) => d.label}
+          y={(d: any) => d.value}
+        >
+          <Stack style={{ height: "100%" }}>
+            <Chart.Header
+              subtitle="Using Sub-components"
+              title="Composed Chart"
+            >
+              <Flex gap={2}>
+                <Select
+                  options={chartTypes}
+                  style={{ width: `10ch` }}
+                  value={chartType}
+                  onChange={(e) =>
+                    setChartType(e.target.value as "line" | "area" | "bar")
+                  }
+                />
+                <Select
+                  options={chartColors}
+                  style={{ width: `15ch` }}
+                  value={chartColor}
+                  onChange={(e) => setChartColor(e.target.value as string)}
+                />
+              </Flex>
+            </Chart.Header>
+
+            <Flex gap={4} style={{ flex: 1 }}>
+              <Chart.Plot color={chartColor} type={chartType} />
+
+              <Chart.Legend
+                items={(legendItems) =>
+                  legendItems.map((_, index) => ({
+                    label: `Series ${index + 1}`,
+                    color: chartColor,
+                  }))
+                }
+                layout="vertical"
+                style={{ alignSelf: "center" }}
+              />
+            </Flex>
+
+            <Chart.Footer>
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: "var(--muted-foreground)",
+                }}
+                variant="small"
+              >
+                Custom Footer Content
+              </Text>
+            </Chart.Footer>
+          </Stack>
+        </Chart.Root>
+      </div>
+    );
   },
 };

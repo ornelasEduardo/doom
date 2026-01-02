@@ -33,7 +33,7 @@ beforeAll(() => {
     return {
       x: 0,
       y: 0,
-      matrixTransform: function (m: any) {
+      matrixTransform: function (_m: any) {
         return this;
       },
     } as DOMPoint;
@@ -339,6 +339,14 @@ describe("Chart", () => {
       // The grid group has lines with x2 attribute spanning the width
       const gridLines = container.querySelectorAll("g.tick line[x2]");
       expect(gridLines.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("renders legend when withLegend is true", async () => {
+    const { container } = render(<Chart withLegend data={data} x={x} y={y} />);
+
+    await waitFor(() => {
+      expect(container.textContent).toMatch(/Line/i);
     });
   });
 });
