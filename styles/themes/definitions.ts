@@ -34,7 +34,7 @@ export const themes = {
       "--warning": palette.yellow[500],
       "--warning-foreground": palette.black[950],
     },
-    solid: createSolidTokens(palette.purple[500], palette.black[900], {
+    solid: createSolidTokens(palette.purple[500], palette.black[950], {
       success: palette.green[500],
       error: palette.red[500],
       warning: palette.yellow[500],
