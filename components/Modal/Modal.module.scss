@@ -65,6 +65,10 @@
   background-color: var(--surface-brand);
   color: var(--surface-brand-foreground);
   border-bottom: var(--border-width) solid var(--border-strong);
+
+  /* Remap foreground variables so children (like Text) use the correct contrast color */
+  --foreground: var(--surface-brand-foreground);
+  --muted-foreground: var(--surface-brand-foreground);
 }
 
 .headerContent {
