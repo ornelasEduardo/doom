@@ -1,4 +1,5 @@
 import { baseVariables, palette } from "../tokens";
+import { createSolidTokens } from "./solid-tokens";
 
 export const themes = {
   default: {
@@ -19,6 +20,8 @@ export const themes = {
       "--on-surface-muted": palette.gray[700],
       "--primary": palette.purple[500],
       "--primary-foreground": palette.black[950],
+      "--surface-brand": palette.purple[500],
+      "--surface-brand-foreground": palette.black[950],
       "--primary-hover": palette.purple[600],
       "--secondary": palette.yellow[400],
       "--secondary-foreground": palette.black[950],
@@ -31,6 +34,11 @@ export const themes = {
       "--warning": palette.yellow[500],
       "--warning-foreground": palette.black[950],
     },
+    solid: createSolidTokens(palette.purple[500], palette.black[900], {
+      success: palette.green[500],
+      error: palette.red[500],
+      warning: palette.yellow[500],
+    }),
   },
   doom: {
     name: "DOOMSDAY",
@@ -50,6 +58,8 @@ export const themes = {
       "--on-surface-muted": palette.slate[400],
       "--primary": palette.green[600],
       "--primary-foreground": palette.slate[950],
+      "--surface-brand": palette.green[600],
+      "--surface-brand-foreground": palette.slate[950],
       "--primary-hover": palette.green[700],
       "--secondary": palette.slate[600],
       "--secondary-foreground": palette.slate[50],
@@ -62,6 +72,11 @@ export const themes = {
       "--warning": palette.yellow[500],
       "--warning-foreground": palette.slate[950],
     },
+    solid: createSolidTokens(palette.green[600], palette.black[950], {
+      success: palette.green[600],
+      error: palette.red[500],
+      warning: palette.yellow[500],
+    }),
   },
   captain: {
     name: "THE CAPTAIN",
@@ -79,20 +94,27 @@ export const themes = {
       "--muted-foreground": palette.slate[600],
       "--on-surface": palette.slate[900],
       "--on-surface-muted": palette.slate[600],
-      "--primary": palette.blue[600],
-      "--primary-foreground": palette.white[950],
-      "--primary-hover": palette.blue[700],
+      "--primary": palette.blue[500],
+      "--primary-foreground": palette.black[950],
+      "--surface-brand": palette.blue[500],
+      "--surface-brand-foreground": palette.black[950],
+      "--primary-hover": palette.blue[600],
       "--secondary": palette.slate[500],
       "--secondary-foreground": palette.white[950],
       "--shadow-base": palette.black[950],
       "--shadow-error": palette.red[900],
-      "--shadow-primary": palette.blue[900],
+      "--shadow-primary": palette.blue[800],
       "--success": palette.green[600],
-      "--success-foreground": palette.white[950],
+      "--success-foreground": palette.black[950],
       "--surface-accent": palette.slate[100],
       "--warning": palette.yellow[600],
       "--warning-foreground": palette.gray[950],
     },
+    solid: createSolidTokens(palette.blue[500], palette.black[950], {
+      success: palette.green[600],
+      error: palette.red[600],
+      warning: palette.yellow[600],
+    }),
   },
   vigilante: {
     name: "DARK KNIGHT",
@@ -112,6 +134,8 @@ export const themes = {
       "--on-surface-muted": palette.gray[400],
       "--primary": palette.yellow[600],
       "--primary-foreground": palette.gray[950],
+      "--surface-brand": palette.yellow[600],
+      "--surface-brand-foreground": palette.gray[950],
       "--primary-hover": palette.yellow[700],
       "--secondary": palette.gray[600],
       "--secondary-foreground": "#E8E9ED",
@@ -124,6 +148,11 @@ export const themes = {
       "--warning": palette.yellow[700],
       "--warning-foreground": palette.gray[950],
     },
+    solid: createSolidTokens(palette.yellow[600], palette.gray[950], {
+      success: palette.green[400],
+      error: palette.red[700],
+      warning: palette.yellow[700],
+    }),
   },
 } as const;
 

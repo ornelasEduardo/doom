@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
 import React from "react";
 
+import { Text } from "../Text/Text";
 import styles from "./Alert.module.scss";
 
 export type AlertVariant = "info" | "success" | "warning" | "error";
@@ -41,8 +42,14 @@ export function Alert({
         {icon || <IconComponent size={20} strokeWidth={2.5} />}
       </div>
       <div className={styles.content}>
-        <h5 className={styles.title}>{title}</h5>
-        {description && <p className={styles.description}>{description}</p>}
+        <Text as="h1" className={styles.title} variant="h5">
+          {title}
+        </Text>
+        {description && (
+          <Text as="p" className={styles.description} variant="body">
+            {description}
+          </Text>
+        )}
       </div>
     </div>
   );
