@@ -218,9 +218,9 @@
 }
 
 .legendDot {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
+  width: 16px;
+  height: 8px;
+  border-radius: var(--radius);
   flex-shrink: 0;
   border: var(--border-width) solid var(--border-strong);
 }

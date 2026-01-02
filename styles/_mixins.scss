@@ -9,7 +9,7 @@
 }
 
 @mixin focus {
-  &:focus,
+  // Only show visual focus ring for keyboard navigation, not mouse clicks
   &:focus-visible,
   &[aria-expanded="true"] {
     outline: none;
@@ -17,6 +17,11 @@
     // Shadow compensates for 2px lift: 4px base + 2px = 6px offset
     box-shadow: 6px 6px 0px 0px var(--shadow-primary);
     border-color: var(--primary);
+  }
+
+  // Still remove default outline for all focus to prevent double rings
+  &:focus {
+    outline: none;
   }
 }
 

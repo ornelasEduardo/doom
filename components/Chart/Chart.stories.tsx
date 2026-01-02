@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { select } from "d3-selection";
 import * as d3Shape from "d3-shape";
+import { Info } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "../Badge/Badge";
@@ -612,7 +613,13 @@ export const CompositionExample: Story = {
     return (
       <div style={{ width: "100%", maxWidth: 800 }}>
         <Chart.Root
-          d3Config={{ grid: true, yAxisLabel: "Custom Composition" }}
+          d3Config={{
+            grid: true,
+            yAxisLabel: "Custom Y Axis Label",
+            xAxisLabel: "Custom X Axis Label",
+            curve: d3Shape.curveMonotoneX,
+            showDots: true,
+          }}
           data={data}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
@@ -656,15 +663,15 @@ export const CompositionExample: Story = {
             </Flex>
 
             <Chart.Footer>
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "var(--muted-foreground)",
-                }}
-                variant="small"
-              >
-                Custom Footer Content
-              </Text>
+              <Slat
+                label={
+                  <Text>
+                    An example of how to use the composition approach for the
+                    chart component
+                  </Text>
+                }
+                prependContent={<Info />}
+              ></Slat>
             </Chart.Footer>
           </Stack>
         </Chart.Root>
