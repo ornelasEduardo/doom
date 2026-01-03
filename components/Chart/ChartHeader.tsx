@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import React from "react";
 
-import { Flex, Stack } from "../Layout/Layout";
+import { Stack, Switcher } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 // Use relative import for styles to ensure sharing
 import styles from "./Chart.module.scss";
@@ -30,7 +30,7 @@ export function ChartHeader({
   }
 
   return (
-    <Flex
+    <Switcher
       align="center"
       className={clsx(styles.chartHeader, className)}
       justify="space-between"
@@ -38,6 +38,7 @@ export function ChartHeader({
         width: "100%",
         ...style,
       }}
+      threshold="xs"
     >
       {hasTitle ? (
         <Stack gap={2}>
@@ -62,6 +63,6 @@ export function ChartHeader({
         <div />
       )}
       {children}
-    </Flex>
+    </Switcher>
   );
 }

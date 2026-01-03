@@ -629,7 +629,7 @@ export const CompositionExample: Story = {
               subtitle="Using Sub-components"
               title="Composed Chart"
             >
-              <Flex gap={2} wrap>
+              <Switcher gap={2} threshold="xs">
                 <Select
                   options={chartTypes}
                   style={{ width: `10ch` }}
@@ -644,7 +644,7 @@ export const CompositionExample: Story = {
                   value={chartColor}
                   onChange={(e) => setChartColor(e.target.value as string)}
                 />
-              </Flex>
+              </Switcher>
             </Chart.Header>
 
             <Switcher gap={4} style={{ flex: 1 }} threshold="sm">
