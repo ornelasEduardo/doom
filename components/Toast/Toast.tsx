@@ -93,7 +93,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {isMounted &&
         createPortal(
-          <div className={styles.container}>
+          <div
+            aria-label="Notifications"
+            aria-live="polite"
+            className={styles.container}
+            role="region"
+          >
             {toasts.map((t) => (
               <div
                 key={t.id}
@@ -102,6 +107,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   styles[t.type],
                   t.isExiting && styles.exiting,
                 )}
+                role={t.type === "error" ? "alert" : "status"}
               >
                 {t.type === "success" && (
                   <CheckCircle2
@@ -125,6 +131,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 )}
                 <span className="font-semibold">{t.message}</span>
                 <button
+                  aria-label="Close notification"
                   className={styles.closeButton}
                   onClick={() => removeToast(t.id)}
                 >
