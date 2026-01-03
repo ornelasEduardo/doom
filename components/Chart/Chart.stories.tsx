@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
-import { Flex, Stack } from "../Layout/Layout";
+import { Flex, Stack, Switcher } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
@@ -629,7 +629,7 @@ export const CompositionExample: Story = {
               subtitle="Using Sub-components"
               title="Composed Chart"
             >
-              <Flex gap={2}>
+              <Flex gap={2} wrap>
                 <Select
                   options={chartTypes}
                   style={{ width: `10ch` }}
@@ -647,7 +647,7 @@ export const CompositionExample: Story = {
               </Flex>
             </Chart.Header>
 
-            <Flex gap={4} style={{ flex: 1 }}>
+            <Switcher gap={4} style={{ flex: 1 }} threshold="sm">
               <Chart.Plot color={chartColor} type={chartType} />
 
               <Chart.Legend
@@ -660,7 +660,7 @@ export const CompositionExample: Story = {
                 layout="vertical"
                 style={{ alignSelf: "center" }}
               />
-            </Flex>
+            </Switcher>
 
             <Chart.Footer>
               <Slat
