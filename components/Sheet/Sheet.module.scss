@@ -64,13 +64,18 @@
 }
 
 .header {
-  // Using Standardized Surface Tokens
   background-color: var(--surface-brand);
   color: var(--surface-brand-foreground);
   border-bottom: var(--border-width) solid var(--border-strong);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  touch-action: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .handleBar {

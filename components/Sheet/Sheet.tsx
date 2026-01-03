@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "../Button/Button";
@@ -32,6 +32,18 @@ export function Sheet({
   const titleId = `sheet-title-${reactId}`;
   const [mounted, setMounted] = useState(false);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const startY = useRef(0);
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (!isOpen && panelRef.current) {
+      panelRef.current.style.transform = "";
+      panelRef.current.style.transition = "";
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     setMounted(true);
     if (isOpen) {
@@ -43,6 +55,67 @@ export function Sheet({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  // Ensure strict cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    };
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!panelRef.current) {
+      return;
+    }
+    isDragging.current = true;
+    startY.current = e.clientY;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      if (!isDragging.current || !panelRef.current) {
+        return;
+      }
+      const delta = moveEvent.clientY - startY.current;
+      if (delta < 0) {
+        return;
+      }
+
+      panelRef.current.style.transition = "none";
+      panelRef.current.style.transform = `translateY(${delta}px)`;
+    };
+
+    const onUp = (upEvent: PointerEvent) => {
+      isDragging.current = false;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+      cleanupRef.current = null;
+
+      if (!panelRef.current) {
+        return;
+      }
+
+      const delta = upEvent.clientY - startY.current;
+      if (delta > 150) {
+        onClose();
+      } else {
+        panelRef.current.style.transition = "";
+        panelRef.current.style.transform = "";
+      }
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+
+    cleanupRef.current = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+    };
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -68,6 +141,7 @@ export function Sheet({
         onClick={onClose}
       />
       <div
+        ref={panelRef}
         aria-label={!title ? "Sheet" : undefined}
         aria-labelledby={title ? titleId : undefined}
         aria-modal="true"
@@ -79,7 +153,7 @@ export function Sheet({
         )}
         role="dialog"
       >
-        <div className={styles.header}>
+        <div className={styles.header} onPointerDown={handlePointerDown}>
           <div className={styles.handleBar} />
           <Flex
             align="center"
