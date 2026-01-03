@@ -52,7 +52,7 @@ interface BodyProps<T> {
 }
 
 interface VirtualBodyProps<T> extends BodyProps<T> {
-  parentRef: React.RefObject<HTMLDivElement>;
+  parentRef: React.RefObject<HTMLDivElement | null>;
 }
 
 function VirtualTableBody<T>({
