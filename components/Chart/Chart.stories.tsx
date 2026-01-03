@@ -621,6 +621,7 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
+          style={{ height: "auto" }}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
         >
@@ -629,10 +630,15 @@ export const CompositionExample: Story = {
               subtitle="Using Sub-components"
               title="Composed Chart"
             >
-              <Switcher gap={2} threshold="xs">
+              <Flex
+                align="center"
+                gap={2}
+                style={{ alignSelf: "stretch" }}
+                wrap
+              >
                 <Select
                   options={chartTypes}
-                  style={{ width: `10ch` }}
+                  style={{ flex: 1, minWidth: "120px" }}
                   value={chartType}
                   onChange={(e) =>
                     setChartType(e.target.value as "line" | "area" | "bar")
@@ -640,15 +646,19 @@ export const CompositionExample: Story = {
                 />
                 <Select
                   options={chartColors}
-                  style={{ width: `15ch` }}
+                  style={{ flex: 1, minWidth: "120px" }}
                   value={chartColor}
                   onChange={(e) => setChartColor(e.target.value as string)}
                 />
-              </Switcher>
+              </Flex>
             </Chart.Header>
 
             <Switcher gap={4} style={{ flex: 1 }} threshold="sm">
-              <Chart.Plot color={chartColor} type={chartType} />
+              <Chart.Plot
+                color={chartColor}
+                style={{ minHeight: "300px", flex: 1 }}
+                type={chartType}
+              />
 
               <Chart.Legend
                 items={(legendItems) =>
