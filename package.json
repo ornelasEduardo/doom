@@ -1,6 +1,6 @@
 {
   "name": "doom-design-system",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "description": "Neubrutalist and comic book inspired design system",
   "sideEffects": [
     "**/*.css",
