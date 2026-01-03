@@ -42,6 +42,14 @@ const getIntrinsicSize = (
   return undefined;
 };
 
+const ImageStatus = {
+  Loading: "loading",
+  Loaded: "loaded",
+  Error: "error",
+} as const;
+
+type ImageStatusType = (typeof ImageStatus)[keyof typeof ImageStatus];
+
 export function Image({
   src,
   alt,
@@ -57,10 +65,17 @@ export function Image({
   height,
   ...props
 }: ImageProps) {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    "loading",
-  );
+  const [status, setStatus] = useState<ImageStatusType>(ImageStatus.Loading);
   const [showSkeleton, setShowSkeleton] = useState(true);
+
+  const [storedSrc, setStoredSrc] = useState(src);
+
+  // Render-time state update to avoid flash of broken image
+  if (src !== storedSrc) {
+    setStoredSrc(src);
+    setStatus(ImageStatus.Loading);
+    setShowSkeleton(true);
+  }
 
   const computedAspectRatio = useMemo(() => {
     if (aspectRatio) {
@@ -71,27 +86,17 @@ export function Image({
     return w && h ? `${w} / ${h}` : undefined;
   }, [aspectRatio, width, height]);
 
-  const prevSrcRef = useRef(src);
   const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (imgRef.current?.complete) {
-      setStatus("loaded");
+      setStatus(ImageStatus.Loaded);
     }
   }, []);
 
-  // Reset state when source changes
-  useEffect(() => {
-    if (prevSrcRef.current !== src) {
-      setStatus("loading");
-      setShowSkeleton(true);
-      prevSrcRef.current = src;
-    }
-  }, [src]);
-
   // When loaded, keep skeleton for a moment to allow cross-fade
   useEffect(() => {
-    if (status === "loaded") {
+    if (status === ImageStatus.Loaded) {
       const timer = setTimeout(() => {
         setShowSkeleton(false);
       }, 500); // 500ms delay to allow image to fade in completely
@@ -107,10 +112,10 @@ export function Image({
         if (img.decode) {
           await img.decode();
         }
-      } catch (error) {
+      } catch (_error) {
         // ignore decode errors (e.g. invalid image data)
       } finally {
-        setStatus("loaded");
+        setStatus(ImageStatus.Loaded);
       }
     },
     [onLoad],
@@ -118,14 +123,14 @@ export function Image({
 
   const handleError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-      if (fallbackSrc && status !== "error") {
+      if (fallbackSrc && status !== ImageStatus.Error) {
         // Prevents infinite loop if fallback also fails
         if (e.currentTarget.src !== fallbackSrc) {
           e.currentTarget.src = fallbackSrc;
           return;
         }
       }
-      setStatus("error");
+      setStatus(ImageStatus.Error);
       setShowSkeleton(false); // Remove skeleton immediately on error
       onError?.(e);
     },
@@ -147,7 +152,7 @@ export function Image({
         aria-hidden="true"
         className={clsx(
           styles.skeletonLayer,
-          status === "loaded" && styles.fadeOut,
+          status === ImageStatus.Loaded && styles.fadeOut,
         )}
       >
         {showSkeleton && (
@@ -161,21 +166,23 @@ export function Image({
       </div>
 
       {/* Image Layer */}
-      <img
-        ref={imgRef}
-        alt={alt}
-        className={clsx(
-          styles.image,
-          fit && styles[`fit-${fit}`],
-          status === "loaded" ? styles.visible : styles.hidden,
-        )}
-        height={height}
-        src={src}
-        width={width}
-        onError={handleError}
-        onLoad={handleLoad}
-        {...props}
-      />
+      {src && (
+        <img
+          ref={imgRef}
+          alt={alt}
+          className={clsx(
+            styles.image,
+            fit && styles[`fit-${fit}`],
+            status === ImageStatus.Loaded ? styles.visible : styles.hidden,
+          )}
+          height={height}
+          src={src}
+          width={width}
+          onError={handleError}
+          onLoad={handleLoad}
+          {...props}
+        />
+      )}
     </div>
   );
 }
