@@ -17,6 +17,13 @@ interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   className?: string;
 }
 
+const isSafeHref = (href: string | undefined): boolean => {
+  if (!href) return true;
+  const lowerHref = href.toLowerCase().trim();
+  // Block javascript: protocol
+  return !lowerHref.startsWith("javascript:");
+};
+
 export function Link({
   children,
   variant = "default",
@@ -66,6 +73,15 @@ export function Link({
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {};
 
+  // Security check for href
+  const safeHref = isSafeHref(props.href) ? props.href : undefined;
+
+  if (props.href && !isSafeHref(props.href)) {
+    console.error(
+      "Sentinel 🛡️: Blocked insecure javascript: URL in Link component.",
+    );
+  }
+
   return (
     <a
       aria-disabled={disabled}
@@ -79,6 +95,7 @@ export function Link({
       onMouseEnter={handleMouseEnter}
       {...externalProps}
       {...props}
+      href={safeHref}
     >
       {children}
       {isExternal && <ExternalLink className="ml-1" size={14} />}
