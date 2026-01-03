@@ -1,7 +1,8 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { Link } from "./Link";
-import { describe, it, expect, vi } from "vitest";
 
 describe("Link Security", () => {
   it("blocks javascript: URLs and logs error", () => {
@@ -19,7 +20,7 @@ describe("Link Security", () => {
 
     // Should verify that the console error was called
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Sentinel 🛡️: Blocked insecure javascript: URL")
+      expect.stringContaining("Sentinel 🛡️: Blocked insecure javascript: URL"),
     );
 
     consoleSpy.mockRestore();

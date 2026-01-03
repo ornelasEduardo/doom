@@ -18,7 +18,9 @@ interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 }
 
 const isSafeHref = (href: string | undefined): boolean => {
-  if (!href) return true;
+  if (!href) {
+    return true;
+  }
   const lowerHref = href.toLowerCase().trim();
   // Block javascript: protocol
   return !lowerHref.startsWith("javascript:");
