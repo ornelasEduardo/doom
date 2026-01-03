@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import { ChartConfig, LegendItem } from "./types";
+import { ChartConfig, DrawContext, LegendItem } from "./types";
 
 export interface ChartContextValue<T = unknown> {
   data: T[];
@@ -18,7 +18,7 @@ export interface ChartContextValue<T = unknown> {
   y: (d: T) => number;
   legendItems: LegendItem[];
   type?: "line" | "area" | "bar";
-  render?: (context: any) => void;
+  render?: (context: DrawContext<T>) => void;
   registerSeries?: (item: LegendItem) => () => void;
 }
 
