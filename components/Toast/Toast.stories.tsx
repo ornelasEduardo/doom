@@ -27,7 +27,7 @@ export const Default: Story = {
             Success Toast
           </Button>
           <Button
-            variant="primary"
+            variant="danger"
             onClick={() => toastError("Something went wrong!")}
           >
             Error Toast

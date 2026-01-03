@@ -173,7 +173,7 @@ export const CustomRender1: Story = {
         .attr("fill", (_, i) => colorScale[i % colorScale.length])
         .attr("stroke", "var(--card-bg)")
         .attr("stroke-width", "2px")
-        .style("cursor", "pointer")
+        .style("cursor", "crosshair")
         .style("touch-action", "none")
         .on("mouseenter", (event) => {
           select(event.currentTarget).style("opacity", 0.8);
@@ -290,7 +290,7 @@ export const CustomRender2: Story = {
         .attr("fill-opacity", 0.8)
         .style("rx", "var(--radius)")
         .style("ry", "var(--radius)")
-        .style("cursor", "pointer")
+        .style("cursor", "crosshair")
         .style("touch-action", "none")
         .on("mouseenter", (event) => {
           select(event.currentTarget).attr("fill-opacity", 1);
