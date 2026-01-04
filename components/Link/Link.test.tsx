@@ -106,10 +106,22 @@ describe("Link Component", () => {
     render(
       <Link href="https://example.com" target="_blank">
         Unsafe External
-      </Link>
+      </Link>,
     );
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("should merge user-provided rel with security rel when target='_blank'", () => {
+    render(
+      <Link href="https://example.com" rel="nofollow" target="_blank">
+        Merged Rel
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("target", "_blank");
+    // clsx merges strings with spaces
+    expect(link).toHaveAttribute("rel", "nofollow noopener noreferrer");
   });
 });
