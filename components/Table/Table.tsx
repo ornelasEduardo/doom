@@ -8,6 +8,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  type Table as ReactTable,
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -19,6 +20,12 @@ import { Flex } from "../Layout/Layout";
 import { Pagination } from "../Pagination/Pagination";
 import { Select } from "../Select/Select";
 import styles from "./Table.module.scss";
+
+// Instantiate factory functions outside to maintain referential stability
+const coreRowModel = getCoreRowModel();
+const sortedRowModel = getSortedRowModel();
+const paginationRowModel = getPaginationRowModel();
+const filteredRowModel = getFilteredRowModel();
 
 interface TableProps<T> {
   data: T[];
@@ -34,6 +41,76 @@ interface TableProps<T> {
   density?: "compact" | "standard" | "relaxed";
   toolbarContent?: React.ReactNode;
   striped?: boolean;
+}
+
+interface VirtualizedTableBodyProps<T> {
+  table: ReactTable<T>;
+  parentRef: React.RefObject<HTMLDivElement | null>;
+  columns: ColumnDef<T>[];
+  striped: boolean;
+  density: "compact" | "standard" | "relaxed";
+  estimateSize?: () => number;
+}
+
+function VirtualizedTableBody<T>({
+  table,
+  parentRef,
+  columns,
+  striped,
+  density,
+  estimateSize = () => 50,
+}: VirtualizedTableBodyProps<T>) {
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize,
+    overscan: 5,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  return (
+    <tbody>
+      {virtualItems.length > 0 && (
+        <tr
+          style={{
+            height: `${virtualItems[0].start}px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+      {virtualItems.map((virtualRow) => {
+        const row = rows[virtualRow.index];
+        return (
+          <tr
+            key={row.id}
+            className={clsx(styles.tr, striped && styles.striped)}
+          >
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className={clsx(styles.td, styles[density])}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        );
+      })}
+      {virtualItems.length > 0 && (
+        <tr
+          style={{
+            height: `${
+              rowVirtualizer.getTotalSize() -
+              virtualItems[virtualItems.length - 1].end
+            }px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+    </tbody>
+  );
 }
 
 export function Table<T>({
@@ -70,27 +147,14 @@ export function Table<T>({
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    // Always provide the model, enableSorting controls usage
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: enablePagination
-      ? getPaginationRowModel()
-      : undefined,
-    getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
+    getCoreRowModel: coreRowModel,
+    getSortedRowModel: sortedRowModel,
+    getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
+    getFilteredRowModel: enableFiltering ? filteredRowModel : undefined,
   });
 
   // Virtualization Logic (Simplified for rows)
   const parentRef = React.useRef<HTMLDivElement>(null);
-
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 50, // Estimate row height
-    overscan: 5,
-  });
-
   const isVirtual = !!height;
 
   return (
@@ -170,58 +234,13 @@ export function Table<T>({
           </thead>
 
           {isVirtual ? (
-            <tbody>
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                return (
-                  <tr
-                    key={row.id}
-                    className={clsx(styles.tr, striped && styles.striped)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={clsx(styles.td, styles[density])}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${
-                      rowVirtualizer.getTotalSize() -
-                      rowVirtualizer.getVirtualItems()[
-                        rowVirtualizer.getVirtualItems().length - 1
-                      ].end
-                    }px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-            </tbody>
+            <VirtualizedTableBody
+              table={table}
+              parentRef={parentRef}
+              columns={columns}
+              striped={striped}
+              density={density}
+            />
           ) : (
             <tbody>
               {table.getRowModel().rows.map((row) => (
