@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
-import { Flex, Stack } from "../Layout/Layout";
+import { Flex, Stack, Switcher } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
@@ -621,6 +621,7 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
+          style={{ height: "auto" }}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
         >
@@ -629,10 +630,15 @@ export const CompositionExample: Story = {
               subtitle="Using Sub-components"
               title="Composed Chart"
             >
-              <Flex gap={2}>
+              <Flex
+                wrap
+                align="center"
+                gap={2}
+                style={{ alignSelf: "stretch" }}
+              >
                 <Select
                   options={chartTypes}
-                  style={{ width: `10ch` }}
+                  style={{ flex: 1, minWidth: "120px" }}
                   value={chartType}
                   onChange={(e) =>
                     setChartType(e.target.value as "line" | "area" | "bar")
@@ -640,15 +646,19 @@ export const CompositionExample: Story = {
                 />
                 <Select
                   options={chartColors}
-                  style={{ width: `15ch` }}
+                  style={{ flex: 1, minWidth: "120px" }}
                   value={chartColor}
                   onChange={(e) => setChartColor(e.target.value as string)}
                 />
               </Flex>
             </Chart.Header>
 
-            <Flex gap={4} style={{ flex: 1 }}>
-              <Chart.Plot color={chartColor} type={chartType} />
+            <Switcher gap={4} style={{ flex: 1 }} threshold="sm">
+              <Chart.Plot
+                color={chartColor}
+                style={{ minHeight: "300px", flex: 1 }}
+                type={chartType}
+              />
 
               <Chart.Legend
                 items={(legendItems) =>
@@ -660,7 +670,7 @@ export const CompositionExample: Story = {
                 layout="vertical"
                 style={{ alignSelf: "center" }}
               />
-            </Flex>
+            </Switcher>
 
             <Chart.Footer>
               <Slat

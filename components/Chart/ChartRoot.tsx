@@ -56,7 +56,7 @@ function getDefaultChartMargins(
 
   return {
     top: isMobile ? 10 : 20,
-    right: isMobile ? 0 : 5,
+    right: isMobile ? 16 : 20,
     bottom: isMobile ? 40 : config?.xAxisLabel ? 60 : 30,
     left: isMobile ? 30 : config?.yAxisLabel ? 60 : 35,
   };
