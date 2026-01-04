@@ -631,10 +631,10 @@ export const CompositionExample: Story = {
               title="Composed Chart"
             >
               <Flex
+                wrap
                 align="center"
                 gap={2}
                 style={{ alignSelf: "stretch" }}
-                wrap
               >
                 <Select
                   options={chartTypes}
