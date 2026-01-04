@@ -66,6 +66,13 @@ export function Link({
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {};
 
+  // Security: Prevent reverse tabnabbing attacks when opening in a new tab.
+  // Ensure we set rel="noopener noreferrer" if target is _blank.
+  const rel =
+    props.target === "_blank" || externalProps.target === "_blank"
+      ? "noopener noreferrer"
+      : undefined;
+
   return (
     <a
       aria-disabled={disabled}
@@ -77,6 +84,7 @@ export function Link({
       )}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
+      rel={rel}
       {...externalProps}
       {...props}
     >
