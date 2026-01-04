@@ -339,6 +339,7 @@ export const VirtualizedUnbounded: Story = {
     data: generateLargeData(1000),
     columns: columns as any,
     height: 400,
+    enableVirtualization: true,
     enablePagination: false,
   },
   parameters: {

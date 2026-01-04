@@ -86,4 +86,39 @@ describe("Table Component", () => {
     render(<Table columns={columns} data={data} striped={true} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
+
+  it("should render with virtualization enabled and only show visible rows", () => {
+    global.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+
+    Object.defineProperties(HTMLElement.prototype, {
+      offsetHeight: { get: () => 400 },
+      offsetWidth: { get: () => 600 },
+    });
+
+    const largeData = Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      name: `Person ${i}`,
+      age: 20 + i,
+    }));
+
+    render(
+      <Table
+        columns={columns}
+        data={largeData}
+        enableVirtualization={true}
+        height={400}
+      />,
+    );
+
+    const rows = screen.getAllByRole("row");
+    const dataRows = rows.slice(1);
+
+    expect(dataRows.length).toBeLessThan(50);
+    expect(dataRows.length).toBeGreaterThan(0);
+    expect(screen.getByText("Person 0")).toBeInTheDocument();
+  });
 });

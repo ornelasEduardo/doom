@@ -8,6 +8,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  Table as ReactTableInstance,
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -20,20 +21,129 @@ import { Pagination } from "../Pagination/Pagination";
 import { Select } from "../Select/Select";
 import styles from "./Table.module.scss";
 
+// Instantiate factories outside the component to ensure stable references
+const coreRowModel = getCoreRowModel();
+const sortedRowModel = getSortedRowModel();
+const paginationRowModel = getPaginationRowModel();
+const filteredRowModel = getFilteredRowModel();
+
 interface TableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   enablePagination?: boolean;
   enableFiltering?: boolean;
   enableSorting?: boolean;
+  enableVirtualization?: boolean;
   pageSize?: number;
-  height?: string | number; // If provided, enables virtualization (simplified)
+  height?: string | number;
   className?: string;
   style?: React.CSSProperties;
   variant?: "default" | "flat";
   density?: "compact" | "standard" | "relaxed";
   toolbarContent?: React.ReactNode;
+  filters?: {
+    columnId: string;
+    label: string;
+    options: { value: string; label: string }[];
+  }[];
   striped?: boolean;
+}
+
+interface BodyProps<T> {
+  table: ReactTableInstance<T>;
+  columns: ColumnDef<T>[];
+  striped: boolean;
+  density: "compact" | "standard" | "relaxed";
+}
+
+interface VirtualBodyProps<T> extends BodyProps<T> {
+  scrollElement: HTMLDivElement | null;
+}
+
+function VirtualTableBody<T>({
+  table,
+  columns,
+  striped,
+  density,
+  scrollElement,
+}: VirtualBodyProps<T>) {
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => 50,
+    overscan: 5,
+  });
+
+  return (
+    <tbody>
+      {rowVirtualizer.getVirtualItems().length > 0 && (
+        <tr
+          style={{
+            height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+      {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+        const row = rows[virtualRow.index];
+        return (
+          <tr
+            key={row.id}
+            ref={rowVirtualizer.measureElement}
+            className={clsx(styles.tr, {
+              [styles.striped]: striped && virtualRow.index % 2 !== 0,
+            })}
+            data-index={virtualRow.index}
+          >
+            {row.getVisibleCells().map((cell) => (
+              <td
+                key={cell.id}
+                className={clsx(styles.td, styles[`density-${density}`])}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        );
+      })}
+      {rowVirtualizer.getVirtualItems().length > 0 && (
+        <tr
+          style={{
+            height: `${
+              rowVirtualizer.getTotalSize() -
+              rowVirtualizer.getVirtualItems()[
+                rowVirtualizer.getVirtualItems().length - 1
+              ].end
+            }px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+    </tbody>
+  );
+}
+
+function StandardTableBody<T>({ table, striped, density }: BodyProps<T>) {
+  return (
+    <tbody>
+      {table.getRowModel().rows.map((row) => (
+        <tr
+          key={row.id}
+          className={clsx(styles.tr, striped && styles.striped, "group")}
+        >
+          {row.getVisibleCells().map((cell) => (
+            <td key={cell.id} className={clsx(styles.td, styles[density])}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  );
 }
 
 export function Table<T>({
@@ -42,6 +152,7 @@ export function Table<T>({
   enablePagination = true,
   enableFiltering = true,
   enableSorting = true,
+  enableVirtualization = false,
   pageSize = 10,
   height,
   className,
@@ -49,6 +160,7 @@ export function Table<T>({
   variant = "default",
   density = "standard",
   toolbarContent,
+  filters,
   striped = false,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -66,32 +178,22 @@ export function Table<T>({
       globalFilter,
       pagination,
     },
-    enableSorting, // Pass this to useReactTable
+    enableSorting,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    // Always provide the model, enableSorting controls usage
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: enablePagination
-      ? getPaginationRowModel()
-      : undefined,
-    getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
+    getCoreRowModel: coreRowModel,
+    getSortedRowModel: sortedRowModel,
+    getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
+    getFilteredRowModel: enableFiltering ? filteredRowModel : undefined,
   });
 
-  // Virtualization Logic (Simplified for rows)
-  const parentRef = React.useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
 
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 50, // Estimate row height
-    overscan: 5,
-  });
-
-  const isVirtual = !!height;
+  const isVirtual = enableVirtualization;
+  const effectiveHeight = isVirtual ? (height ?? 400) : height;
 
   return (
     <div
@@ -106,6 +208,7 @@ export function Table<T>({
         <div className={styles.toolbar}>
           <div style={{ width: "300px" }}>
             <Input
+              className={styles.search}
               placeholder="Search..."
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
@@ -119,11 +222,32 @@ export function Table<T>({
         </div>
       )}
 
+      {filters?.length && (
+        <div className={styles.toolbar} style={{ marginTop: "-1rem" }}>
+          {filters.map((filter) => (
+            <Select
+              key={filter.columnId}
+              options={filter.options}
+              placeholder={filter.label}
+              value={
+                (table
+                  .getColumn(filter.columnId)
+                  ?.getFilterValue() as string) ?? ""
+              }
+              onChange={(e) =>
+                table.getColumn(filter.columnId)?.setFilterValue(e.target.value)
+              }
+            />
+          ))}
+        </div>
+      )}
+
       <div
-        ref={parentRef}
+        ref={setScrollElement}
+        className={styles.tableWrapper}
         style={{
-          height: height ? height : "auto",
-          overflowY: height ? "auto" : "visible",
+          height: effectiveHeight ?? "auto",
+          overflow: effectiveHeight ? "auto" : "visible",
           overflowX: "auto",
           width: "100%",
         }}
@@ -170,83 +294,20 @@ export function Table<T>({
           </thead>
 
           {isVirtual ? (
-            <tbody>
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                return (
-                  <tr
-                    key={row.id}
-                    className={clsx(styles.tr, striped && styles.striped)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={clsx(styles.td, styles[density])}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${
-                      rowVirtualizer.getTotalSize() -
-                      rowVirtualizer.getVirtualItems()[
-                        rowVirtualizer.getVirtualItems().length - 1
-                      ].end
-                    }px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-            </tbody>
+            <VirtualTableBody
+              columns={columns}
+              density={density}
+              scrollElement={scrollElement}
+              striped={striped}
+              table={table}
+            />
           ) : (
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={clsx(
-                    styles.tr,
-                    striped && styles.striped,
-                    "group",
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className={clsx(styles.td, styles[density])}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            <StandardTableBody
+              columns={columns}
+              density={density}
+              striped={striped}
+              table={table}
+            />
           )}
         </table>
 
