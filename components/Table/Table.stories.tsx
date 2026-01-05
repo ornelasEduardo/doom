@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { createColumnHelper } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Download, Plus } from "lucide-react";
 import React from "react";
 
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { ProgressBar } from "../ProgressBar/ProgressBar";
-import { Table } from "./Table";
+import { Table, type TableProps } from "./Table";
 
-const meta: Meta<typeof Table> = {
+const meta: Meta<TableProps<Hero>> = {
   title: "Components/Table",
   component: Table,
   tags: ["autodocs"],
@@ -28,7 +28,7 @@ const meta: Meta<typeof Table> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Table>;
+type Story = StoryObj<TableProps<Hero>>;
 
 // --- Data & Columns ---
 
@@ -44,7 +44,7 @@ type Hero = {
 
 const columnHelper = createColumnHelper<Hero>();
 
-const columns = [
+const columns: ColumnDef<Hero, any>[] = [
   columnHelper.accessor("alias", {
     header: "Alias",
     cell: (info) => (
@@ -252,7 +252,7 @@ const largeData = generateLargeData(100);
 export const Default: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     density: "standard",
   },
 };
@@ -260,7 +260,7 @@ export const Default: Story = {
 export const Striped: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     striped: true,
   },
 };
@@ -268,7 +268,7 @@ export const Striped: Story = {
 export const WithPagination: Story = {
   args: {
     data: largeData,
-    columns: columns as any,
+    columns: columns,
     enablePagination: true,
     pageSize: 10,
   },
@@ -285,7 +285,7 @@ export const WithPagination: Story = {
 export const WithToolbarActions: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     enableFiltering: true,
     toolbarContent: (
       <>
@@ -305,7 +305,7 @@ export const WithToolbarActions: Story = {
 export const Flat: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     variant: "flat",
   },
   parameters: {
@@ -321,7 +321,7 @@ export const Flat: Story = {
 export const Compact: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     density: "compact",
   },
 };
@@ -329,7 +329,7 @@ export const Compact: Story = {
 export const EmptyState: Story = {
   args: {
     data: [],
-    columns: columns as any,
+    columns: columns,
     enablePagination: false,
   },
 };
@@ -337,7 +337,7 @@ export const EmptyState: Story = {
 export const VirtualizedUnbounded: Story = {
   args: {
     data: generateLargeData(1000),
-    columns: columns as any,
+    columns: columns,
     height: 400,
     enableVirtualization: true,
     enablePagination: false,
@@ -358,7 +358,7 @@ export const Comprehensive: Story = {
     columns: columns.map((col) => ({
       ...col,
       filterFn: "arrIncludesSome",
-    })) as any,
+    })),
     enablePagination: true,
     enableFiltering: true,
     enableSorting: true,
@@ -390,7 +390,7 @@ export const Comprehensive: Story = {
 export const WithAdvancedFiltering: Story = {
   args: {
     data: generateLargeData(50),
-    columns: columns as any,
+    columns: columns,
     enableAdvancedFiltering: true,
     enableFiltering: true,
     enablePagination: true,

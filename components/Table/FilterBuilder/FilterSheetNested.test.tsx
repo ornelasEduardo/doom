@@ -1,10 +1,10 @@
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
 
 import { FilterField } from "./FilterBuilder";
-import type { FilterGroupItem } from "./FilterGroup";
+import type { FilterConditionItem, FilterGroupItem } from "./FilterGroup";
 import { FilterSheetNested } from "./FilterSheetNested";
 
 // Mock DnD
@@ -23,7 +23,7 @@ vi.mock("../../Sheet/Sheet", () => ({
     onClose,
   }: {
     children: React.ReactNode;
-    footer: React.ReactNode;
+    footer?: React.ReactNode;
     isOpen: boolean;
     onClose: () => void;
   }) => {
@@ -57,7 +57,7 @@ vi.mock("./FilterGroup", () => {
             {child.type === "group" ? (
               <MockFilterGroup
                 group={child}
-                onUpdate={(updatedChild) => {
+                onUpdate={(_updatedChild) => {
                   /* No-op for mock display */
                 }}
               />
@@ -73,13 +73,14 @@ vi.mock("./FilterGroup", () => {
             ...group,
             children: [
               ...group.children,
+
               {
                 type: "condition",
                 id: "new-cond",
                 field: "name",
                 operator: "eq",
                 value: "Alice",
-              } as any,
+              } as FilterConditionItem,
             ],
           })
         }
@@ -131,9 +132,13 @@ describe("FilterSheetNested", () => {
 
     render(<FilterSheetNested {...defaultProps} initialValue={initial} />);
 
-    const sourceGroup = { type: "group", id: "source-group", children: [] };
+    const sourceGroup = {
+      type: "group",
+      id: "source-group",
+      children: [],
+    } as FilterGroupItem;
 
-    const calls = (monitorForElements as any).mock.calls;
+    const calls = (monitorForElements as Mock).mock.calls;
     const { onDrop } = calls[calls.length - 1][0];
 
     act(() => {
@@ -158,9 +163,13 @@ describe("FilterSheetNested", () => {
     };
     render(<FilterSheetNested {...defaultProps} initialValue={initial} />);
 
-    const sourceGroup = { type: "group", id: "new-group", children: [] };
+    const sourceGroup = {
+      type: "group",
+      id: "new-group",
+      children: [],
+    } as FilterGroupItem;
 
-    const calls = (monitorForElements as any).mock.calls;
+    const calls = (monitorForElements as Mock).mock.calls;
     const { onDrop } = calls[calls.length - 1][0];
 
     // Drop 'new-group' inside 'g1'.

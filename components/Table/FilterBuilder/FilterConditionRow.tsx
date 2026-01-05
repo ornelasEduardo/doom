@@ -6,10 +6,10 @@ import React from "react";
 import { Button } from "../../Button/Button";
 import { Input } from "../../Input/Input";
 import { Select } from "../../Select/Select";
-import type { FilterField } from "./FilterBuilder";
-import styles from "./FilterConditionRow.module.scss";
 import type { FilterOperatorKey } from "../utils/filterAst";
 import { OPERATORS } from "../utils/filterAst";
+import type { FilterField } from "./FilterBuilder";
+import styles from "./FilterConditionRow.module.scss";
 
 export interface FilterConditionData {
   id: string;

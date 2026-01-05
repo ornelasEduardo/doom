@@ -12,7 +12,15 @@ import type { FilterGroupItem } from "./FilterGroup";
 
 // Mock FilterSheetNested
 vi.mock("./FilterSheetNested", () => ({
-  FilterSheetNested: ({ isOpen, onApply, onClose }: any) => {
+  FilterSheetNested: ({
+    isOpen,
+    onApply,
+    onClose,
+  }: {
+    isOpen: boolean;
+    onApply: (group: FilterGroupItem) => void;
+    onClose: () => void;
+  }) => {
     if (!isOpen) {
       return null;
     }

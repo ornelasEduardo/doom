@@ -16,14 +16,20 @@ vi.mock("../../Select/Select", () => ({
     options,
     "data-testid": testId,
     className,
-  }: any) => (
+  }: {
+    value: string | number | undefined;
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+    options: { value: string | number; label: string }[];
+    "data-testid"?: string;
+    className?: string;
+  }) => (
     <select
       className={className}
       data-testid={testId || "mock-select"}
       value={value}
       onChange={onChange}
     >
-      {options.map((opt: any) => (
+      {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
           {opt.label}
         </option>

@@ -1,6 +1,7 @@
 import {
   ColumnDef,
   ColumnFiltersState,
+  FilterFn,
   flexRender,
   getCoreRowModel,
   getFacetedUniqueValues,
@@ -26,7 +27,7 @@ import {
   countConditions,
   type FilterOperatorKey,
 } from "./FilterBuilder/FilterBuilder";
-import type { FilterGroupItem } from "./FilterBuilder/FilterGroup";
+import type { FilterGroupItem, FilterItem } from "./FilterBuilder/FilterGroup";
 import { FilterSheetNested } from "./FilterBuilder/FilterSheetNested";
 import styles from "./Table.module.scss";
 import { TableHeaderFilter } from "./TableHeaderFilter";
@@ -38,23 +39,26 @@ const sortedRowModel = getSortedRowModel();
 const paginationRowModel = getPaginationRowModel();
 const filteredRowModel = getFilteredRowModel();
 
-const smartColumnFilterFn: any = (
-  row: any,
-  columnId: string,
-  filterValue: any,
-) => {
-  const value = row.getValue(columnId);
-  if (Array.isArray(filterValue)) {
-    return filterValue.includes(value);
+const convertToFilterNode = (item: FilterItem): FilterNode => {
+  if (item.type === "group") {
+    return {
+      type: "group",
+      logic: item.logic,
+      conditions: (item.children || []).map(convertToFilterNode),
+    };
   }
-  return String(value)
-    .toLowerCase()
-    .includes(String(filterValue).toLowerCase());
+  return {
+    type: "condition",
+    field: item.field,
+    operator: item.operator,
+    value: item.value,
+    logic: item.logic,
+  };
 };
 
-interface TableProps<T> {
+export interface TableProps<T> {
   data: T[];
-  columns: ColumnDef<T>[];
+  columns: ColumnDef<T, any>[];
   enablePagination?: boolean;
   enableFiltering?: boolean;
   enableColumnFilters?: boolean;
@@ -209,31 +213,18 @@ export function Table<T>({
     useState<FilterGroupItem | null>(null);
   const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
 
-  const convertToFilterNode = (item: FilterGroupItem): FilterNode => {
-    return {
-      type: "group",
-      logic: item.logic,
-      conditions: item.children
-        .filter((child) => {
-          if (child.type === "condition") {
-            return child.field && child.value;
-          }
-          return true;
-        })
-        .map((child) => {
-          if (child.type === "condition") {
-            return {
-              type: "condition" as const,
-              field: child.field,
-              operator: child.operator,
-              value: child.value,
-              logic: child.logic,
-            };
-          }
-          return convertToFilterNode(child);
-        }),
-    };
-  };
+  const smartColumnFilterFn = useMemo<FilterFn<T>>(
+    () => (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      if (Array.isArray(filterValue)) {
+        return (filterValue as T[]).includes(value as T);
+      }
+      return String(value)
+        .toLowerCase()
+        .includes(String(filterValue).toLowerCase());
+    },
+    [],
+  );
 
   const filteredData = useMemo(() => {
     if (!advancedFilterValue || !enableAdvancedFiltering) {
@@ -250,7 +241,7 @@ export function Table<T>({
     );
   }, [data, advancedFilterValue, enableAdvancedFiltering]);
 
-  const table = useReactTable({
+  const table = useReactTable<T>({
     data: filteredData,
     columns,
     state: {
@@ -452,7 +443,7 @@ export function Table<T>({
           </thead>
 
           {isVirtual ? (
-            <VirtualTableBody
+            <VirtualTableBody<T>
               columns={columns}
               density={density}
               scrollElement={scrollElement}
@@ -460,7 +451,7 @@ export function Table<T>({
               table={table}
             />
           ) : (
-            <StandardTableBody
+            <StandardTableBody<T>
               columns={columns}
               density={density}
               striped={striped}

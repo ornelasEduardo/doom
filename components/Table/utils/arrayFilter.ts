@@ -9,6 +9,7 @@ export const arrayIncludesFilter: FilterFn<unknown> = (
   row,
   columnId,
   filterValue,
+  _addMeta,
 ) => {
   // No filter = show all
   if (!filterValue || !Array.isArray(filterValue) || filterValue.length === 0) {

@@ -9,7 +9,7 @@ import { Table } from "./Table";
 
 // Mock FilterSheetNested
 vi.mock("./FilterBuilder/FilterSheetNested", () => ({
-  FilterSheetNested: ({ isOpen }: any) =>
+  FilterSheetNested: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="filter-sheet">Filter Sheet</div> : null,
 }));
 
@@ -21,14 +21,20 @@ vi.mock("../Select/Select", () => ({
     options,
     "data-testid": testId,
     className,
-  }: any) => (
+  }: {
+    value?: string | number;
+    onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+    options: { value: string | number; label: string }[];
+    "data-testid"?: string;
+    className?: string;
+  }) => (
     <select
       className={className}
       data-testid={testId || "mock-select"}
       value={value}
       onChange={onChange}
     >
-      {options.map((opt: any) => (
+      {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
           {opt.label}
         </option>

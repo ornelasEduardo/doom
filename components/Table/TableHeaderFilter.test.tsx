@@ -1,13 +1,23 @@
 import { Column } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
 
 import { TableHeaderFilter } from "./TableHeaderFilter";
 
 // Mock Popover and Combobox to simplify testing interaction
 vi.mock("../Popover/Popover", () => ({
-  Popover: ({ trigger, content, isOpen, onClose }: any) => (
+  Popover: ({
+    trigger,
+    content,
+    isOpen,
+    onClose,
+  }: {
+    trigger: React.ReactNode;
+    content: React.ReactNode;
+    isOpen: boolean;
+    onClose?: () => void;
+  }) => (
     <div data-testid="mock-popover">
       <div onClick={() => onClose && onClose()}>{trigger}</div>
       {isOpen && <div data-testid="popover-content">{content}</div>}
@@ -16,15 +26,23 @@ vi.mock("../Popover/Popover", () => ({
 }));
 
 vi.mock("../Combobox/Combobox", () => ({
-  Combobox: ({ onChange, value, options }: any) => (
+  Combobox: ({
+    onChange,
+    value,
+    options,
+  }: {
+    onChange: (val: string[]) => void;
+    value: string[];
+    options: { value: string; label: string }[];
+  }) => (
     <div data-testid="mock-combobox">
-      {options.map((opt: any) => (
+      {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => {
             // Toggle logic simulation for multi-select
             const newValue = value.includes(opt.value)
-              ? value.filter((v: string) => v !== opt.value)
+              ? value.filter((v) => v !== opt.value)
               : [...value, opt.value];
             onChange(newValue);
           }}
@@ -51,22 +69,22 @@ describe("TableHeaderFilter", () => {
     columnDef: {
       header: "Name",
     },
-  } as unknown as Column<any, unknown>;
+  } as unknown as Column<unknown, unknown>;
 
   it("should render trigger button", () => {
-    (mockColumn.getFilterValue as any).mockReturnValue(undefined);
+    (mockColumn.getFilterValue as Mock).mockReturnValue(undefined);
     render(<TableHeaderFilter column={mockColumn} />);
     expect(screen.getByLabelText("Filter by Name")).toBeInTheDocument();
   });
 
   it("should render active count", () => {
-    (mockColumn.getFilterValue as any).mockReturnValue(["Alice"]);
+    (mockColumn.getFilterValue as Mock).mockReturnValue(["Alice"]);
     render(<TableHeaderFilter column={mockColumn} />);
     expect(screen.getByText("(1)")).toBeInTheDocument();
   });
 
   it("should open popover on click", () => {
-    (mockColumn.getFilterValue as any).mockReturnValue(undefined);
+    (mockColumn.getFilterValue as Mock).mockReturnValue(undefined);
     render(<TableHeaderFilter column={mockColumn} />);
 
     expect(screen.queryByTestId("popover-content")).not.toBeInTheDocument();
@@ -77,7 +95,7 @@ describe("TableHeaderFilter", () => {
   });
 
   it("should generate options from column if not provided", () => {
-    (mockColumn.getFilterValue as any).mockReturnValue(undefined);
+    (mockColumn.getFilterValue as Mock).mockReturnValue(undefined);
     render(<TableHeaderFilter column={mockColumn} />);
     fireEvent.click(screen.getByLabelText("Filter by Name"));
 
@@ -86,7 +104,7 @@ describe("TableHeaderFilter", () => {
   });
 
   it("should call setFilterValue when option selected", () => {
-    (mockColumn.getFilterValue as any).mockReturnValue([]);
+    (mockColumn.getFilterValue as Mock).mockReturnValue([]);
     render(<TableHeaderFilter column={mockColumn} />);
     fireEvent.click(screen.getByLabelText("Filter by Name"));
 

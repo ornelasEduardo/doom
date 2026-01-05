@@ -27,7 +27,7 @@ function useFilterOptions<T>(
       return [];
     }
     if (Array.isArray(filterValue)) {
-      return (filterValue as any[]).map(String);
+      return (filterValue as unknown[]).map(String);
     }
     return [String(filterValue)];
   }, [filterValue]);
@@ -37,7 +37,7 @@ function useFilterOptions<T>(
       return { filterOptions: itemOptions, valueMap: null };
     }
 
-    const uniqueValues = new Map<string, any>();
+    const uniqueValues = new Map<string, unknown>();
     const facetedValues = column.getFacetedUniqueValues();
     facetedValues.forEach((_, value) => {
       if (value !== null && value !== undefined) {
@@ -72,8 +72,7 @@ function useFilterOptions<T>(
         });
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, filterOptions, selectedValues]);
 
   return {
     sortedOptions,
@@ -104,7 +103,7 @@ export function TableHeaderFilter<T>({
     (Array.isArray(filterValue) ? filterValue.length > 0 : true);
 
   const handleChange = (value: string | string[] | undefined) => {
-    let finalValue: any = value;
+    let finalValue: unknown = value;
     if (valueMap && value) {
       if (Array.isArray(value)) {
         finalValue = value.map((v) => valueMap.get(v));
