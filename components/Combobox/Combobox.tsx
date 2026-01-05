@@ -265,11 +265,9 @@ export function Combobox({
             }}
             onKeyDown={(e) => handleOptionKeyDown(e, -1)}
           >
-            <Checkbox
-              readOnly
-              checked={allSelected}
-              style={{ pointerEvents: "none" }}
-            />
+            <div style={{ pointerEvents: "none" }}>
+              <Checkbox readOnly checked={allSelected} />
+            </div>
             <Text as="span" className={styles.optionLabel}>
               All
             </Text>
@@ -315,11 +313,9 @@ export function Combobox({
                   onKeyDown={(e) => handleOptionKeyDown(e, virtualRow.index)}
                 >
                   {multiple && (
-                    <Checkbox
-                      readOnly
-                      checked={isSelected(option.value)}
-                      style={{ pointerEvents: "none" }}
-                    />
+                    <div style={{ pointerEvents: "none" }}>
+                      <Checkbox readOnly checked={isSelected(option.value)} />
+                    </div>
                   )}
                   <Text as="span" className={styles.optionLabel}>
                     {option.label}

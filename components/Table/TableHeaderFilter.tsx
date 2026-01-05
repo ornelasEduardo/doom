@@ -2,7 +2,7 @@
 
 import { Column } from "@tanstack/react-table";
 import { Filter } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 import { Button } from "../Button/Button";
 import { Combobox } from "../Combobox/Combobox";
@@ -32,13 +32,14 @@ function useFilterOptions<T>(
     return [String(filterValue)];
   }, [filterValue]);
 
+  const facetedValues = column.getFacetedUniqueValues();
+
   const { filterOptions, valueMap } = useMemo(() => {
     if (itemOptions) {
       return { filterOptions: itemOptions, valueMap: null };
     }
 
     const uniqueValues = new Map<string, unknown>();
-    const facetedValues = column.getFacetedUniqueValues();
     facetedValues.forEach((_, value) => {
       if (value !== null && value !== undefined) {
         uniqueValues.set(String(value), value);
@@ -50,13 +51,17 @@ function useFilterOptions<T>(
       .map((value) => ({ value, label: value }));
 
     return { filterOptions: generatedOptions, valueMap: uniqueValues };
-  }, [column, itemOptions]);
+  }, [facetedValues, itemOptions]);
 
   const [sortedOptions, setSortedOptions] = useState(filterOptions);
+  const wasOpenRef = useRef(false);
 
+  // Update sorted options only when the popover opens or the underlying data changes
   React.useEffect(() => {
-    if (isOpen) {
-      setSortedOptions((_prev) => {
+    // Only perform the full re-sort when transitioning from closed to open
+    // or when the underlying filter options (column data) change while open.
+    if (isOpen && !wasOpenRef.current) {
+      setSortedOptions(() => {
         const next = [...filterOptions];
         return next.sort((a, b) => {
           const aSelected = selectedValues.includes(a.value);
@@ -72,6 +77,8 @@ function useFilterOptions<T>(
         });
       });
     }
+
+    wasOpenRef.current = isOpen;
   }, [isOpen, filterOptions, selectedValues]);
 
   return {

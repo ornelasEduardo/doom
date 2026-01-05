@@ -53,7 +53,6 @@ function countConditions(item: FilterItem): number {
 }
 
 // Internal reusable DropZone
-// Internal reusable DropZone
 function DropZone({
   targetId,
   position,
@@ -404,19 +403,13 @@ export function FilterGroup({
               top: 0,
               height: "100%",
               zIndex: 10,
-              // Adjust for nested group to not cover header?
-              // Actually covering header is fine if we want to drop "into" group
             }}
             targetId={group.id}
             onHoverChange={handleHoverChange}
           />
           <DropZone
             position="before"
-            style={{ top: 0, height: "10px", zIndex: 30 }} // Keep 10px / Z30 for gaps? Or match ConditionRow?
-            // Groups are taller. 25% might be huge.
-            // Let's stick to 10px strip for Before/After to be precise.
-            // But user said "not calculating correctly".
-            // Let's update to 20px / distinct zones.
+            style={{ top: 0, height: "10px", zIndex: 30 }}
             targetId={group.id}
             onHoverChange={handleHoverChange}
           />

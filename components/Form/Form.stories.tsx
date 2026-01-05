@@ -78,7 +78,6 @@ export const ComprehensiveForm: Story = {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      console.log("Form submitted:", formData);
       alert("Form submitted! Check console for data.");
     };
 
