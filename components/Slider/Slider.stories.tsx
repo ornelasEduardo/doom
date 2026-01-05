@@ -27,7 +27,7 @@ export const Default: Story = {
 };
 
 export const Controlled: Story = {
-  render: () => {
+  render: function Render() {
     // Cast to number because this specific story uses a single number
     const [val, setVal] = useState<number | [number, number]>(25);
 
@@ -43,7 +43,7 @@ export const Controlled: Story = {
 };
 
 export const Range: Story = {
-  render: () => {
+  render: function Render() {
     const [range, setRange] = useState<number | [number, number]>([20, 80]);
     return (
       <Slider

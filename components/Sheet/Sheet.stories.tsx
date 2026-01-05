@@ -70,7 +70,7 @@ const telemetryColumns = [
 ];
 
 export const Default: Story = {
-  render: (args) => {
+  render: function Render(args) {
     const [open, setOpen] = useState(false);
     return (
       <Flex align="center" justify="center" style={{ height: "200px" }}>
@@ -210,7 +210,7 @@ export const Default: Story = {
 };
 
 export const Solid: Story = {
-  render: (args) => {
+  render: function Render(args) {
     const [open, setOpen] = useState(false);
     return (
       <Flex align="center" justify="center" style={{ height: "200px" }}>

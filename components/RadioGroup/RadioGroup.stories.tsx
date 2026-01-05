@@ -13,7 +13,7 @@ export default meta;
 type Story = StoryObj<typeof RadioGroup>;
 
 export const Default: Story = {
-  render: () => {
+  render: function Render() {
     const [value, setValue] = useState("option-1");
     return (
       <RadioGroup name="example" value={value} onValueChange={setValue}>
