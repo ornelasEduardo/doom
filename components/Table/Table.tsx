@@ -1,9 +1,9 @@
-"use client";
-
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -13,27 +13,55 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import React, { useState } from "react";
+import { Filter, ListFilter, Search } from "lucide-react";
+import React, { useMemo, useState } from "react";
 
+import { Button } from "../Button/Button";
+import { Chip } from "../Chip/Chip";
 import { Input } from "../Input/Input";
 import { Flex } from "../Layout/Layout";
 import { Pagination } from "../Pagination/Pagination";
 import { Select } from "../Select/Select";
+import {
+  countConditions,
+  type FilterOperatorKey,
+} from "./FilterBuilder/FilterBuilder";
+import type { FilterGroupItem } from "./FilterBuilder/FilterGroup";
+import { FilterSheetNested } from "./FilterBuilder/FilterSheetNested";
 import styles from "./Table.module.scss";
+import { TableHeaderFilter } from "./TableHeaderFilter";
+import type { FilterNode } from "./utils/filterAst";
+import { evaluateFilter } from "./utils/filterAst";
 
-// Instantiate factories outside the component to ensure stable references
 const coreRowModel = getCoreRowModel();
 const sortedRowModel = getSortedRowModel();
 const paginationRowModel = getPaginationRowModel();
 const filteredRowModel = getFilteredRowModel();
+
+const smartColumnFilterFn: any = (
+  row: any,
+  columnId: string,
+  filterValue: any,
+) => {
+  const value = row.getValue(columnId);
+  if (Array.isArray(filterValue)) {
+    return filterValue.includes(value);
+  }
+  return String(value)
+    .toLowerCase()
+    .includes(String(filterValue).toLowerCase());
+};
 
 interface TableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   enablePagination?: boolean;
   enableFiltering?: boolean;
+  enableColumnFilters?: boolean;
   enableSorting?: boolean;
   enableVirtualization?: boolean;
+  enableAdvancedFiltering?: boolean;
+  onAdvancedFilterChange?: (value: FilterGroupItem) => void;
   pageSize?: number;
   height?: string | number;
   className?: string;
@@ -44,7 +72,9 @@ interface TableProps<T> {
   filters?: {
     columnId: string;
     label: string;
-    options: { value: string; label: string }[];
+    type?: "select" | "text" | "number";
+    options?: { value: string; label: string }[];
+    operators?: FilterOperatorKey[];
   }[];
   striped?: boolean;
 }
@@ -151,8 +181,11 @@ export function Table<T>({
   columns,
   enablePagination = true,
   enableFiltering = true,
+  enableColumnFilters = true,
   enableSorting = true,
   enableVirtualization = false,
+  enableAdvancedFiltering = false,
+  onAdvancedFilterChange,
   pageSize = 10,
   height,
   className,
@@ -165,27 +198,83 @@ export function Table<T>({
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: pageSize,
   });
 
+  const [advancedFilterValue, setAdvancedFilterValue] =
+    useState<FilterGroupItem | null>(null);
+  const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
+
+  const convertToFilterNode = (item: FilterGroupItem): FilterNode => {
+    return {
+      type: "group",
+      logic: item.logic,
+      conditions: item.children
+        .filter((child) => {
+          if (child.type === "condition") {
+            return child.field && child.value;
+          }
+          return true;
+        })
+        .map((child) => {
+          if (child.type === "condition") {
+            return {
+              type: "condition" as const,
+              field: child.field,
+              operator: child.operator,
+              value: child.value,
+              logic: child.logic,
+            };
+          }
+          return convertToFilterNode(child);
+        }),
+    };
+  };
+
+  const filteredData = useMemo(() => {
+    if (!advancedFilterValue || !enableAdvancedFiltering) {
+      return data;
+    }
+
+    const filterNode = convertToFilterNode(advancedFilterValue);
+    if (filterNode.type === "group" && filterNode.conditions.length === 0) {
+      return data;
+    }
+
+    return data.filter((row) =>
+      evaluateFilter(filterNode, row as Record<string, unknown>),
+    );
+  }, [data, advancedFilterValue, enableAdvancedFiltering]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
       globalFilter,
+      columnFilters,
       pagination,
     },
     enableSorting,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     getCoreRowModel: coreRowModel,
     getSortedRowModel: sortedRowModel,
     getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
-    getFilteredRowModel: enableFiltering ? filteredRowModel : undefined,
+    getFilteredRowModel:
+      enableFiltering || enableColumnFilters ? filteredRowModel : undefined,
+    defaultColumn: {
+      filterFn: smartColumnFilterFn,
+    },
+    getFacetedUniqueValues: enableColumnFilters
+      ? getFacetedUniqueValues()
+      : undefined,
   });
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
@@ -194,6 +283,10 @@ export function Table<T>({
 
   const isVirtual = enableVirtualization;
   const effectiveHeight = isVirtual ? (height ?? 400) : height;
+
+  const activeAdvancedCount = advancedFilterValue
+    ? countConditions(advancedFilterValue)
+    : 0;
 
   return (
     <div
@@ -204,41 +297,101 @@ export function Table<T>({
       )}
       style={style}
     >
-      {enableFiltering && (
-        <div className={styles.toolbar}>
-          <div style={{ width: "300px" }}>
-            <Input
-              className={styles.search}
-              placeholder="Search..."
-              value={globalFilter ?? ""}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-            />
-          </div>
-          {toolbarContent && (
-            <Flex align="center" gap={4}>
-              {toolbarContent}
-            </Flex>
-          )}
-        </div>
-      )}
+      {(enableFiltering ||
+        toolbarContent ||
+        enableAdvancedFiltering ||
+        (filters && filters.length > 0)) && (
+        <div className={styles.headerGroup}>
+          {(enableFiltering || toolbarContent || enableAdvancedFiltering) && (
+            <div className={styles.searchBar}>
+              {enableFiltering && (
+                <div className={styles.searchWrapper}>
+                  <Input
+                    endAdornment={
+                      enableAdvancedFiltering ? (
+                        <Button
+                          aria-label="Filter builder"
+                          size="sm"
+                          style={{
+                            height: "24px",
+                            padding: "0 4px",
+                            marginRight: "-4px",
+                          }}
+                          variant="ghost"
+                          onClick={() => setIsFilterBuilderOpen(true)}
+                        >
+                          <Filter size={16} strokeWidth={2.5} />
+                        </Button>
+                      ) : undefined
+                    }
+                    placeholder="Search..."
+                    startAdornment={<Search size={16} />}
+                    value={globalFilter ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setGlobalFilter(e.target.value)
+                    }
+                  />
+                </div>
+              )}
 
-      {filters?.length && (
-        <div className={styles.toolbar} style={{ marginTop: "-1rem" }}>
-          {filters.map((filter) => (
-            <Select
-              key={filter.columnId}
-              options={filter.options}
-              placeholder={filter.label}
-              value={
-                (table
-                  .getColumn(filter.columnId)
-                  ?.getFilterValue() as string) ?? ""
-              }
-              onChange={(e) =>
-                table.getColumn(filter.columnId)?.setFilterValue(e.target.value)
-              }
-            />
-          ))}
+              <div className={styles.actionsWrapper}>
+                {filters && filters.length > 0 && !enableAdvancedFiltering && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                  >
+                    <ListFilter size={16} />
+                    FILTERS
+                  </Button>
+                )}
+                {toolbarContent && (
+                  <div className={styles.controls}>{toolbarContent}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {enableAdvancedFiltering && activeAdvancedCount > 0 && (
+            <div className={styles.filterBar}>
+              <Chip
+                onClick={() => setIsFilterBuilderOpen(true)}
+                onDismiss={() => {
+                  setAdvancedFilterValue(null);
+                  onAdvancedFilterChange?.(null as unknown as FilterGroupItem);
+                }}
+              >
+                {activeAdvancedCount} Filter
+                {activeAdvancedCount > 1 ? "s" : ""}
+              </Chip>
+            </div>
+          )}
+
+          {!enableAdvancedFiltering &&
+            filters &&
+            filters.length > 0 &&
+            isFilterExpanded && (
+              <div className={styles.filterBar}>
+                {filters.map((filter) => (
+                  <div key={filter.columnId} className={styles.filterItem}>
+                    <Select
+                      options={filter.options ?? []}
+                      placeholder={filter.label}
+                      size="sm"
+                      value={
+                        (table
+                          .getColumn(filter.columnId)
+                          ?.getFilterValue() as string) ?? ""
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn(filter.columnId)
+                          ?.setFilterValue(e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
       )}
 
@@ -285,6 +438,11 @@ export function Table<T>({
                             desc: " ▼",
                           }[header.column.getIsSorted() as string] ??
                             null)}
+                        {enableColumnFilters &&
+                          !enableAdvancedFiltering &&
+                          header.column.getCanFilter() && (
+                            <TableHeaderFilter column={header.column} />
+                          )}
                       </div>
                     </th>
                   );
@@ -344,6 +502,27 @@ export function Table<T>({
             />
           </Flex>
         </div>
+      )}
+
+      {enableAdvancedFiltering && (
+        <FilterSheetNested
+          fields={
+            filters?.map((f) => ({
+              key: f.columnId,
+              label: f.label,
+              type: f.type ?? "text",
+              operators: f.operators ?? ["eq", "neq", "contains"],
+              options: f.options,
+            })) ?? []
+          }
+          initialValue={advancedFilterValue}
+          isOpen={isFilterBuilderOpen}
+          onApply={(val) => {
+            setAdvancedFilterValue(val);
+            onAdvancedFilterChange?.(val);
+          }}
+          onClose={() => setIsFilterBuilderOpen(false)}
+        />
       )}
     </div>
   );

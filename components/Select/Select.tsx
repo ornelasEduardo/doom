@@ -26,6 +26,7 @@ interface SelectProps extends Omit<
   defaultValue?: string | number;
   name?: string;
   required?: boolean;
+  size?: "sm" | "md";
 }
 
 export function Select({
@@ -42,6 +43,7 @@ export function Select({
   disabled,
   name,
   autoFocus,
+  size = "md",
   ...props
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +61,6 @@ export function Select({
     (opt) => String(opt.value) === String(currentValue),
   );
 
-  // Reset highlighted index when opening
   useEffect(() => {
     if (isOpen) {
       const index = options.findIndex(
@@ -196,7 +197,7 @@ export function Select({
             aria-labelledby={label ? labelId : undefined}
             aria-required={required}
             autoFocus={autoFocus}
-            className={styles.trigger}
+            className={clsx(styles.trigger, size === "sm" && styles.sm)}
             disabled={disabled}
             id={selectId}
             role="combobox"

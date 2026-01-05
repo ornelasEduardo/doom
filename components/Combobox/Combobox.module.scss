@@ -1,0 +1,202 @@
+@use "../../styles/mixins" as m;
+
+.trigger {
+  @include m.base-interactive;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm);
+  // Fonts handled by Text component
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+
+  &.sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--text-xs);
+  }
+
+  &.hasValue {
+    color: var(--foreground);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @include m.focus;
+}
+
+.triggerText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+
+  .hasValue & {
+    color: var(--foreground);
+  }
+}
+
+.triggerIcons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+  color: var(--muted-foreground);
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    background: var(--surface-accent);
+    color: var(--foreground);
+  }
+}
+
+.chevron {
+  transition: transform var(--duration-fast) var(--ease-in-out);
+}
+
+.dropdown {
+  min-width: 200px;
+  max-width: 320px;
+  padding: 0; // Override default Card padding
+  overflow: hidden;
+}
+
+.searchWrapper {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-border) 60%, transparent); // Softer border
+  background: var(--card-bg); // Match card bg but sticky
+  z-index: 10;
+}
+
+.searchIcon {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  outline: none;
+
+  &::placeholder {
+    color: var(--muted-foreground);
+    transition: opacity var(--duration-fast);
+  }
+
+  &:focus::placeholder {
+    opacity: 0.7;
+  }
+}
+
+.optionsList {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+    &:hover {
+      background: var(--muted-foreground);
+    }
+  }
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm); // Slightly taller
+  margin-bottom: 2px; // Tiny gap between items
+  border: none;
+  border-radius: var(--radius-sm); // Floating pill look
+  background: transparent;
+  border-radius: var(--radius-sm); // Floating pill look
+  background: transparent;
+  // Fonts handled by Text component
+  text-align: left;
+  color: var(
+    --foreground
+  ); // Text component usually sets this, but ensuring default
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    background: var(--surface-accent);
+    // transform: translateX(2px); // Removed to prevent shift
+  }
+
+  &.selected {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    color: var(--primary);
+    font-weight: 500;
+
+    &:hover {
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// .checkmark styles removed - using Checkbox component instead
+
+.optionLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noResults {
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.stickyOption {
+  padding: var(--spacing-xs);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--card-border) 60%, transparent);
+  background: var(--card-bg);
+}

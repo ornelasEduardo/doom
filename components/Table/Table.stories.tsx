@@ -289,11 +289,11 @@ export const WithToolbarActions: Story = {
     enableFiltering: true,
     toolbarContent: (
       <>
-        <Button size="sm" variant="outline">
+        <Button variant="outline">
           <Download size={16} style={{ marginRight: "8px" }} />
           Export
         </Button>
-        <Button size="sm">
+        <Button>
           <Plus size={16} style={{ marginRight: "8px" }} />
           Add Hero
         </Button>
@@ -347,6 +347,110 @@ export const VirtualizedUnbounded: Story = {
       description: {
         story:
           "Virtualization enabled for large datasets (1000+ rows) with a fixed height.",
+      },
+    },
+  },
+};
+
+export const Comprehensive: Story = {
+  args: {
+    data: generateLargeData(100),
+    columns: columns.map((col) => ({
+      ...col,
+      filterFn: "arrIncludesSome",
+    })) as any,
+    enablePagination: true,
+    enableFiltering: true,
+    enableSorting: true,
+    striped: true,
+    pageSize: 10,
+    toolbarContent: (
+      <>
+        <Button size="sm" variant="outline">
+          <Download size={16} style={{ marginRight: "8px" }} />
+          Export
+        </Button>
+        <Button size="sm">
+          <Plus size={16} style={{ marginRight: "8px" }} />
+          Add Hero
+        </Button>
+      </>
+    ),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A comprehensive example showing all major features enabled: Pagination, Sorting, Global Search, Column Header Filters, Toolbar Actions, and Striped rows.",
+      },
+    },
+  },
+};
+
+export const WithAdvancedFiltering: Story = {
+  args: {
+    data: generateLargeData(50),
+    columns: columns as any,
+    enableAdvancedFiltering: true,
+    enableFiltering: true,
+    enablePagination: true,
+    pageSize: 10,
+    filters: [
+      {
+        columnId: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "Active", label: "Active" },
+          { value: "MIA", label: "MIA" },
+          { value: "Rogue", label: "Rogue" },
+          { value: "Retired", label: "Retired" },
+        ],
+      },
+      {
+        columnId: "affiliation",
+        label: "Affiliation",
+        type: "select",
+        options: [
+          { value: "Avengers", label: "Avengers" },
+          { value: "X-Men", label: "X-Men" },
+          { value: "Defenders", label: "Defenders" },
+          { value: "Inhumans", label: "Inhumans" },
+          { value: "Eternals", label: "Eternals" },
+          { value: "Guardians", label: "Guardians" },
+        ],
+      },
+      {
+        columnId: "alias",
+        label: "Alias",
+        type: "text",
+        operators: ["contains", "eq", "neq", "startsWith"],
+      },
+      {
+        columnId: "name",
+        label: "Secret Identity",
+        type: "text",
+        operators: ["contains", "eq", "neq"],
+      },
+      {
+        columnId: "missionProgress",
+        label: "Mission Progress",
+        type: "number",
+        operators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+      },
+      {
+        columnId: "lastMission",
+        label: "Last Mission",
+        type: "text",
+        operators: ["contains", "eq", "startsWith"],
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Advanced Filter Builder playground. Click the filter icon to open the nested filter sheet. Build complex filters with AND/OR logic, multiple conditions, and nested groups. Try filtering by status='Active', or combining conditions like 'affiliation=Avengers AND missionProgress > 50'.",
       },
     },
   },

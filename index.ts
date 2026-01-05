@@ -8,6 +8,7 @@ export * from "./components/Button";
 export * from "./components/Card";
 export * from "./components/Chart";
 export * from "./components/Checkbox";
+export * from "./components/Chip";
 export * from "./components/Drawer";
 export * from "./components/Dropdown";
 export * from "./components/FileUpload";

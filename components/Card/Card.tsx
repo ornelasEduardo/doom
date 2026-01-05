@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import React from "react";
+import React, { forwardRef } from "react";
 
 import styles from "./Card.module.scss";
 
@@ -11,15 +11,13 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean;
 }
 
-export function Card({
-  children,
-  className,
-  as: Component = "div",
-  ...props
-}: CardProps) {
+export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
+  { children, className, as: Component = "div", ...props },
+  ref,
+) {
   return (
-    <Component className={clsx(styles.card, className)} {...props}>
+    <Component ref={ref} className={clsx(styles.card, className)} {...props}>
       {children}
     </Component>
   );
-}
+});
