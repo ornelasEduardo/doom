@@ -20,7 +20,7 @@ export default meta;
 type Story = StoryObj<typeof Popover>;
 
 export const Default: Story = {
-  render: () => {
+  render: function Render() {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -50,7 +50,7 @@ export const Default: Story = {
 };
 
 export const Placements: Story = {
-  render: () => {
+  render: function Render() {
     const [isOpen1, setIsOpen1] = useState(false);
     const [isOpen2, setIsOpen2] = useState(false);
     const [isOpen3, setIsOpen3] = useState(false);
@@ -119,7 +119,7 @@ export const Placements: Story = {
 };
 
 export const EdgeDetection: Story = {
-  render: () => {
+  render: function Render() {
     const [isOpen1, setIsOpen1] = useState(false);
     const [isOpen2, setIsOpen2] = useState(false);
     const [isOpen3, setIsOpen3] = useState(false);

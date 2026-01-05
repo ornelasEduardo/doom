@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { createColumnHelper } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { Download, Plus } from "lucide-react";
 import React from "react";
 
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { ProgressBar } from "../ProgressBar/ProgressBar";
-import { Table } from "./Table";
+import { Table, type TableProps } from "./Table";
 
-const meta: Meta<typeof Table> = {
+const meta: Meta<TableProps<Hero>> = {
   title: "Components/Table",
   component: Table,
   tags: ["autodocs"],
@@ -28,7 +28,7 @@ const meta: Meta<typeof Table> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Table>;
+type Story = StoryObj<TableProps<Hero>>;
 
 // --- Data & Columns ---
 
@@ -44,7 +44,7 @@ type Hero = {
 
 const columnHelper = createColumnHelper<Hero>();
 
-const columns = [
+const columns: ColumnDef<Hero, any>[] = [
   columnHelper.accessor("alias", {
     header: "Alias",
     cell: (info) => (
@@ -252,7 +252,7 @@ const largeData = generateLargeData(100);
 export const Default: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     density: "standard",
   },
 };
@@ -260,7 +260,7 @@ export const Default: Story = {
 export const Striped: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     striped: true,
   },
 };
@@ -268,7 +268,7 @@ export const Striped: Story = {
 export const WithPagination: Story = {
   args: {
     data: largeData,
-    columns: columns as any,
+    columns: columns,
     enablePagination: true,
     pageSize: 10,
   },
@@ -285,15 +285,15 @@ export const WithPagination: Story = {
 export const WithToolbarActions: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     enableFiltering: true,
     toolbarContent: (
       <>
-        <Button size="sm" variant="outline">
+        <Button variant="outline">
           <Download size={16} style={{ marginRight: "8px" }} />
           Export
         </Button>
-        <Button size="sm">
+        <Button>
           <Plus size={16} style={{ marginRight: "8px" }} />
           Add Hero
         </Button>
@@ -305,7 +305,7 @@ export const WithToolbarActions: Story = {
 export const Flat: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     variant: "flat",
   },
   parameters: {
@@ -321,7 +321,7 @@ export const Flat: Story = {
 export const Compact: Story = {
   args: {
     data: heroData.slice(0, 5),
-    columns: columns as any,
+    columns: columns,
     density: "compact",
   },
 };
@@ -329,7 +329,7 @@ export const Compact: Story = {
 export const EmptyState: Story = {
   args: {
     data: [],
-    columns: columns as any,
+    columns: columns,
     enablePagination: false,
   },
 };
@@ -337,8 +337,9 @@ export const EmptyState: Story = {
 export const VirtualizedUnbounded: Story = {
   args: {
     data: generateLargeData(1000),
-    columns: columns as any,
+    columns: columns,
     height: 400,
+    enableVirtualization: true,
     enablePagination: false,
   },
   parameters: {
@@ -346,6 +347,110 @@ export const VirtualizedUnbounded: Story = {
       description: {
         story:
           "Virtualization enabled for large datasets (1000+ rows) with a fixed height.",
+      },
+    },
+  },
+};
+
+export const Comprehensive: Story = {
+  args: {
+    data: generateLargeData(100),
+    columns: columns.map((col) => ({
+      ...col,
+      filterFn: "arrIncludesSome",
+    })),
+    enablePagination: true,
+    enableFiltering: true,
+    enableSorting: true,
+    striped: true,
+    pageSize: 10,
+    toolbarContent: (
+      <>
+        <Button size="sm" variant="outline">
+          <Download size={16} style={{ marginRight: "8px" }} />
+          Export
+        </Button>
+        <Button size="sm">
+          <Plus size={16} style={{ marginRight: "8px" }} />
+          Add Hero
+        </Button>
+      </>
+    ),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "A comprehensive example showing all major features enabled: Pagination, Sorting, Global Search, Column Header Filters, Toolbar Actions, and Striped rows.",
+      },
+    },
+  },
+};
+
+export const WithAdvancedFiltering: Story = {
+  args: {
+    data: generateLargeData(50),
+    columns: columns,
+    enableAdvancedFiltering: true,
+    enableFiltering: true,
+    enablePagination: true,
+    pageSize: 10,
+    filters: [
+      {
+        columnId: "status",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "Active", label: "Active" },
+          { value: "MIA", label: "MIA" },
+          { value: "Rogue", label: "Rogue" },
+          { value: "Retired", label: "Retired" },
+        ],
+      },
+      {
+        columnId: "affiliation",
+        label: "Affiliation",
+        type: "select",
+        options: [
+          { value: "Avengers", label: "Avengers" },
+          { value: "X-Men", label: "X-Men" },
+          { value: "Defenders", label: "Defenders" },
+          { value: "Inhumans", label: "Inhumans" },
+          { value: "Eternals", label: "Eternals" },
+          { value: "Guardians", label: "Guardians" },
+        ],
+      },
+      {
+        columnId: "alias",
+        label: "Alias",
+        type: "text",
+        operators: ["contains", "eq", "neq", "startsWith"],
+      },
+      {
+        columnId: "name",
+        label: "Secret Identity",
+        type: "text",
+        operators: ["contains", "eq", "neq"],
+      },
+      {
+        columnId: "missionProgress",
+        label: "Mission Progress",
+        type: "number",
+        operators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+      },
+      {
+        columnId: "lastMission",
+        label: "Last Mission",
+        type: "text",
+        operators: ["contains", "eq", "startsWith"],
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Advanced Filter Builder playground. Click the filter icon to open the nested filter sheet. Build complex filters with AND/OR logic, multiple conditions, and nested groups. Try filtering by status='Active', or combining conditions like 'affiliation=Avengers AND missionProgress > 50'.",
       },
     },
   },

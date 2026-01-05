@@ -1,0 +1,24 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface-bg);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+}
+
+.fieldSelect {
+  flex: 1;
+  min-width: 120px;
+}
+
+.operatorSelect {
+  width: 140px;
+}
+
+.valueSelect,
+.valueInput {
+  flex: 1;
+  min-width: 120px;
+}

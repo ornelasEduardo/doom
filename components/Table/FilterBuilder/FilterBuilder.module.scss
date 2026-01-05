@@ -1,0 +1,43 @@
+@use "../../../styles/mixins" as m;
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface-bg);
+  border-top: var(--border-width) solid var(--card-border);
+
+  @include m.mq("md", "max") {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.popoverContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  min-width: 220px;
+}
+
+.textInput {
+  padding: var(--spacing-sm);
+  font-family: var(--font-family);
+  font-size: var(--text-sm);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  background: var(--surface-bg);
+  color: var(--foreground);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  &::placeholder {
+    color: var(--muted-foreground);
+  }
+}

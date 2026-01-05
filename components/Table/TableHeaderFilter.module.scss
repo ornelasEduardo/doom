@@ -1,0 +1,61 @@
+@use "../../styles/mixins" as m;
+
+.filterContent {
+  min-width: 200px;
+  max-width: 280px;
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+}
+
+.filterCount {
+  color: currentColor; // Inherit from parent (handles active/inactive contrast)
+  font-size: 0.75rem;
+  font-weight: 700; // Bold per spec
+  line-height: 1;
+}
+
+.filterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.filterBody {
+  padding: var(--spacing-sm);
+}
+
+.filterOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.filterOption {
+  padding: var(--spacing-xs);
+  border-radius: var(--radius);
+
+  &:hover {
+    background: var(--surface-accent);
+  }
+}
+
+.filterInput {
+  width: 100%;
+}
+
+.filterSelect {
+  width: 100%;
+}
+
+.filterActions {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--card-border);
+}

@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .container {
   width: 100%;
   border: var(--border-width) solid var(--card-border);
@@ -21,6 +23,87 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.headerGroup {
+  display: flex;
+  flex-direction: column;
+  border-bottom: var(--border-width) solid var(--card-border);
+  background: transparent;
+  width: 100%;
+}
+
+.searchBar {
+  padding: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+
+  @include mq("md", "max") {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.searchWrapper {
+  width: 300px;
+
+  @include mq("md", "max") {
+    width: 100%;
+  }
+}
+
+.actionsWrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  @include mq("md", "max") {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterBar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  background: var(--background);
+  border-top: var(--border-width) solid var(--card-border);
+  border-bottom: var(--border-width) solid var(--card-border);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  padding: var(--spacing-md);
+  gap: 0.5rem;
+
+  @include mq("md", "max") {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.filterItem {
+  /* "Module" look */
+  min-width: 150px;
+  width: 200px;
+  position: relative;
+
+  @include mq("md", "max") {
+    width: 100%;
+    min-width: 0;
+  }
+
+  // Optional: Add a "label" styling above if we want to get fancy later.
+  // For now, it's just the wrapper for the Select.
 }
 
 .tableWrapper {

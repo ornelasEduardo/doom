@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof Switch>;
 
 export const Default: Story = {
-  render: (args) => {
+  render: function Render(args) {
     const [checked, setChecked] = useState(false);
     return <Switch {...args} checked={checked} onChange={setChecked} />;
   },
@@ -28,7 +28,7 @@ export const Default: Story = {
 };
 
 export const Checked: Story = {
-  render: (args) => {
+  render: function Render(args) {
     const [checked, setChecked] = useState(true);
     return <Switch {...args} checked={checked} onChange={setChecked} />;
   },

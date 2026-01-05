@@ -1,39 +1,183 @@
-"use client";
-
 import {
   ColumnDef,
+  ColumnFiltersState,
+  FilterFn,
   flexRender,
   getCoreRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  Table as ReactTableInstance,
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import React, { useState } from "react";
+import { Filter, ListFilter, Search } from "lucide-react";
+import React, { useMemo, useState } from "react";
 
+import { Button } from "../Button/Button";
+import { Chip } from "../Chip/Chip";
 import { Input } from "../Input/Input";
 import { Flex } from "../Layout/Layout";
 import { Pagination } from "../Pagination/Pagination";
 import { Select } from "../Select/Select";
+import {
+  countConditions,
+  type FilterOperatorKey,
+} from "./FilterBuilder/FilterBuilder";
+import type { FilterGroupItem, FilterItem } from "./FilterBuilder/FilterGroup";
+import { FilterSheetNested } from "./FilterBuilder/FilterSheetNested";
 import styles from "./Table.module.scss";
+import { TableHeaderFilter } from "./TableHeaderFilter";
+import type { FilterNode } from "./utils/filterAst";
+import { evaluateFilter } from "./utils/filterAst";
 
-interface TableProps<T> {
+const coreRowModel = getCoreRowModel();
+const sortedRowModel = getSortedRowModel();
+const paginationRowModel = getPaginationRowModel();
+const filteredRowModel = getFilteredRowModel();
+
+const convertToFilterNode = (item: FilterItem): FilterNode => {
+  if (item.type === "group") {
+    return {
+      type: "group",
+      logic: item.logic,
+      conditions: (item.children || []).map(convertToFilterNode),
+    };
+  }
+  return {
+    type: "condition",
+    field: item.field,
+    operator: item.operator,
+    value: item.value,
+    logic: item.logic,
+  };
+};
+
+export interface TableProps<T> {
   data: T[];
-  columns: ColumnDef<T>[];
+  columns: ColumnDef<T, any>[];
   enablePagination?: boolean;
   enableFiltering?: boolean;
+  enableColumnFilters?: boolean;
   enableSorting?: boolean;
+  enableVirtualization?: boolean;
+  enableAdvancedFiltering?: boolean;
+  onAdvancedFilterChange?: (value: FilterGroupItem) => void;
   pageSize?: number;
-  height?: string | number; // If provided, enables virtualization (simplified)
+  height?: string | number;
   className?: string;
   style?: React.CSSProperties;
   variant?: "default" | "flat";
   density?: "compact" | "standard" | "relaxed";
   toolbarContent?: React.ReactNode;
+  filters?: {
+    columnId: string;
+    label: string;
+    type?: "select" | "text" | "number";
+    options?: { value: string; label: string }[];
+    operators?: FilterOperatorKey[];
+  }[];
   striped?: boolean;
+}
+
+interface BodyProps<T> {
+  table: ReactTableInstance<T>;
+  columns: ColumnDef<T>[];
+  striped: boolean;
+  density: "compact" | "standard" | "relaxed";
+}
+
+interface VirtualBodyProps<T> extends BodyProps<T> {
+  scrollElement: HTMLDivElement | null;
+}
+
+function VirtualTableBody<T>({
+  table,
+  columns,
+  striped,
+  density,
+  scrollElement,
+}: VirtualBodyProps<T>) {
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => 50,
+    overscan: 5,
+  });
+
+  return (
+    <tbody>
+      {rowVirtualizer.getVirtualItems().length > 0 && (
+        <tr
+          style={{
+            height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+      {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+        const row = rows[virtualRow.index];
+        return (
+          <tr
+            key={row.id}
+            ref={rowVirtualizer.measureElement}
+            className={clsx(styles.tr, {
+              [styles.striped]: striped && virtualRow.index % 2 !== 0,
+            })}
+            data-index={virtualRow.index}
+          >
+            {row.getVisibleCells().map((cell) => (
+              <td
+                key={cell.id}
+                className={clsx(styles.td, styles[`density-${density}`])}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        );
+      })}
+      {rowVirtualizer.getVirtualItems().length > 0 && (
+        <tr
+          style={{
+            height: `${
+              rowVirtualizer.getTotalSize() -
+              rowVirtualizer.getVirtualItems()[
+                rowVirtualizer.getVirtualItems().length - 1
+              ].end
+            }px`,
+          }}
+        >
+          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+        </tr>
+      )}
+    </tbody>
+  );
+}
+
+function StandardTableBody<T>({ table, striped, density }: BodyProps<T>) {
+  return (
+    <tbody>
+      {table.getRowModel().rows.map((row) => (
+        <tr
+          key={row.id}
+          className={clsx(styles.tr, striped && styles.striped, "group")}
+        >
+          {row.getVisibleCells().map((cell) => (
+            <td key={cell.id} className={clsx(styles.td, styles[density])}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  );
 }
 
 export function Table<T>({
@@ -41,7 +185,11 @@ export function Table<T>({
   columns,
   enablePagination = true,
   enableFiltering = true,
+  enableColumnFilters = true,
   enableSorting = true,
+  enableVirtualization = false,
+  enableAdvancedFiltering = false,
+  onAdvancedFilterChange,
   pageSize = 10,
   height,
   className,
@@ -49,49 +197,87 @@ export function Table<T>({
   variant = "default",
   density = "standard",
   toolbarContent,
+  filters,
   striped = false,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: pageSize,
   });
 
-  const table = useReactTable({
-    data,
+  const [advancedFilterValue, setAdvancedFilterValue] =
+    useState<FilterGroupItem | null>(null);
+  const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
+
+  const smartColumnFilterFn = useMemo<FilterFn<T>>(
+    () => (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      if (Array.isArray(filterValue)) {
+        return (filterValue as T[]).includes(value as T);
+      }
+      return String(value)
+        .toLowerCase()
+        .includes(String(filterValue).toLowerCase());
+    },
+    [],
+  );
+
+  const filteredData = useMemo(() => {
+    if (!advancedFilterValue || !enableAdvancedFiltering) {
+      return data;
+    }
+
+    const filterNode = convertToFilterNode(advancedFilterValue);
+    if (filterNode.type === "group" && filterNode.conditions.length === 0) {
+      return data;
+    }
+
+    return data.filter((row) =>
+      evaluateFilter(filterNode, row as Record<string, unknown>),
+    );
+  }, [data, advancedFilterValue, enableAdvancedFiltering]);
+
+  const table = useReactTable<T>({
+    data: filteredData,
     columns,
     state: {
       sorting,
       globalFilter,
+      columnFilters,
       pagination,
     },
-    enableSorting, // Pass this to useReactTable
+    enableSorting,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    // Always provide the model, enableSorting controls usage
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: enablePagination
-      ? getPaginationRowModel()
+    getCoreRowModel: coreRowModel,
+    getSortedRowModel: sortedRowModel,
+    getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
+    getFilteredRowModel:
+      enableFiltering || enableColumnFilters ? filteredRowModel : undefined,
+    defaultColumn: {
+      filterFn: smartColumnFilterFn,
+    },
+    getFacetedUniqueValues: enableColumnFilters
+      ? getFacetedUniqueValues()
       : undefined,
-    getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
   });
 
-  // Virtualization Logic (Simplified for rows)
-  const parentRef = React.useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
+    null,
+  );
 
-  const { rows } = table.getRowModel();
+  const isVirtual = enableVirtualization;
+  const effectiveHeight = isVirtual ? (height ?? 400) : height;
 
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 50, // Estimate row height
-    overscan: 5,
-  });
-
-  const isVirtual = !!height;
+  const activeAdvancedCount = advancedFilterValue
+    ? countConditions(advancedFilterValue)
+    : 0;
 
   return (
     <div
@@ -102,28 +288,110 @@ export function Table<T>({
       )}
       style={style}
     >
-      {enableFiltering && (
-        <div className={styles.toolbar}>
-          <div style={{ width: "300px" }}>
-            <Input
-              placeholder="Search..."
-              value={globalFilter ?? ""}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-            />
-          </div>
-          {toolbarContent && (
-            <Flex align="center" gap={4}>
-              {toolbarContent}
-            </Flex>
+      {(enableFiltering ||
+        toolbarContent ||
+        enableAdvancedFiltering ||
+        (filters && filters.length > 0)) && (
+        <div className={styles.headerGroup}>
+          {(enableFiltering || toolbarContent || enableAdvancedFiltering) && (
+            <div className={styles.searchBar}>
+              {enableFiltering && (
+                <div className={styles.searchWrapper}>
+                  <Input
+                    endAdornment={
+                      enableAdvancedFiltering ? (
+                        <Button
+                          aria-label="Filter builder"
+                          size="sm"
+                          style={{
+                            height: "24px",
+                            padding: "0 4px",
+                            marginRight: "-4px",
+                          }}
+                          variant="ghost"
+                          onClick={() => setIsFilterBuilderOpen(true)}
+                        >
+                          <Filter size={16} strokeWidth={2.5} />
+                        </Button>
+                      ) : undefined
+                    }
+                    placeholder="Search..."
+                    startAdornment={<Search size={16} />}
+                    value={globalFilter ?? ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setGlobalFilter(e.target.value)
+                    }
+                  />
+                </div>
+              )}
+
+              <div className={styles.actionsWrapper}>
+                {filters && filters.length > 0 && !enableAdvancedFiltering && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                  >
+                    <ListFilter size={16} />
+                    FILTERS
+                  </Button>
+                )}
+                {toolbarContent && (
+                  <div className={styles.controls}>{toolbarContent}</div>
+                )}
+              </div>
+            </div>
           )}
+
+          {enableAdvancedFiltering && activeAdvancedCount > 0 && (
+            <div className={styles.filterBar}>
+              <Chip
+                onClick={() => setIsFilterBuilderOpen(true)}
+                onDismiss={() => {
+                  setAdvancedFilterValue(null);
+                  onAdvancedFilterChange?.(null as unknown as FilterGroupItem);
+                }}
+              >
+                {activeAdvancedCount} Filter
+                {activeAdvancedCount > 1 ? "s" : ""}
+              </Chip>
+            </div>
+          )}
+
+          {!enableAdvancedFiltering &&
+            filters &&
+            filters.length > 0 &&
+            isFilterExpanded && (
+              <div className={styles.filterBar}>
+                {filters.map((filter) => (
+                  <div key={filter.columnId} className={styles.filterItem}>
+                    <Select
+                      options={filter.options ?? []}
+                      placeholder={filter.label}
+                      size="sm"
+                      value={
+                        (table
+                          .getColumn(filter.columnId)
+                          ?.getFilterValue() as string) ?? ""
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn(filter.columnId)
+                          ?.setFilterValue(e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
         </div>
       )}
 
       <div
-        ref={parentRef}
+        ref={setScrollElement}
+        className={styles.tableWrapper}
         style={{
-          height: height ? height : "auto",
-          overflowY: height ? "auto" : "visible",
+          height: effectiveHeight ?? "auto",
+          overflow: effectiveHeight ? "auto" : "visible",
           overflowX: "auto",
           width: "100%",
         }}
@@ -161,6 +429,11 @@ export function Table<T>({
                             desc: " ▼",
                           }[header.column.getIsSorted() as string] ??
                             null)}
+                        {enableColumnFilters &&
+                          !enableAdvancedFiltering &&
+                          header.column.getCanFilter() && (
+                            <TableHeaderFilter column={header.column} />
+                          )}
                       </div>
                     </th>
                   );
@@ -170,83 +443,20 @@ export function Table<T>({
           </thead>
 
           {isVirtual ? (
-            <tbody>
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                return (
-                  <tr
-                    key={row.id}
-                    className={clsx(styles.tr, striped && styles.striped)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={clsx(styles.td, styles[density])}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-              {rowVirtualizer.getVirtualItems().length > 0 && (
-                <tr
-                  style={{
-                    height: `${
-                      rowVirtualizer.getTotalSize() -
-                      rowVirtualizer.getVirtualItems()[
-                        rowVirtualizer.getVirtualItems().length - 1
-                      ].end
-                    }px`,
-                  }}
-                >
-                  <td
-                    colSpan={columns.length}
-                    style={{ border: 0, padding: 0 }}
-                  />
-                </tr>
-              )}
-            </tbody>
+            <VirtualTableBody<T>
+              columns={columns}
+              density={density}
+              scrollElement={scrollElement}
+              striped={striped}
+              table={table}
+            />
           ) : (
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={clsx(
-                    styles.tr,
-                    striped && styles.striped,
-                    "group",
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className={clsx(styles.td, styles[density])}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            <StandardTableBody<T>
+              columns={columns}
+              density={density}
+              striped={striped}
+              table={table}
+            />
           )}
         </table>
 
@@ -283,6 +493,27 @@ export function Table<T>({
             />
           </Flex>
         </div>
+      )}
+
+      {enableAdvancedFiltering && (
+        <FilterSheetNested
+          fields={
+            filters?.map((f) => ({
+              key: f.columnId,
+              label: f.label,
+              type: f.type ?? "text",
+              operators: f.operators ?? ["eq", "neq", "contains"],
+              options: f.options,
+            })) ?? []
+          }
+          initialValue={advancedFilterValue}
+          isOpen={isFilterBuilderOpen}
+          onApply={(val) => {
+            setAdvancedFilterValue(val);
+            onAdvancedFilterChange?.(val);
+          }}
+          onClose={() => setIsFilterBuilderOpen(false)}
+        />
       )}
     </div>
   );

@@ -26,6 +26,14 @@
   @include brutalist-hover;
 
   @include focus;
+
+  &.sm {
+    padding: 0.4rem 0.75rem;
+    min-height: 32px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 }
 
 .optionsList {
