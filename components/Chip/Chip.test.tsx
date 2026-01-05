@@ -152,4 +152,30 @@ describe("Chip", () => {
     const chip = container.querySelector("span");
     expect(chip?.className).toMatch(/disabled/);
   });
+
+  // ==========================================================================
+  // Keyboard Accessibility
+  // ==========================================================================
+
+  it("should trigger onClick when Enter key is pressed", () => {
+    const handleClick = vi.fn();
+    render(<Chip onClick={handleClick}>Clickable</Chip>);
+    const chip = screen.getByText("Clickable").closest("span");
+
+    if (chip) {
+      fireEvent.keyDown(chip, { key: "Enter", code: "Enter" });
+    }
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("should trigger onClick when Space key is pressed", () => {
+    const handleClick = vi.fn();
+    render(<Chip onClick={handleClick}>Clickable</Chip>);
+    const chip = screen.getByText("Clickable").closest("span");
+
+    if (chip) {
+      fireEvent.keyDown(chip, { key: " ", code: "Space" });
+    }
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
 });
