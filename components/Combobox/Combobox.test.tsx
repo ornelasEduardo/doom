@@ -244,14 +244,103 @@ describe("Combobox", () => {
   });
 
   // ==========================================================================
-  // Inline Mode
+  // Keyboard Navigation / Interactivity
   // ==========================================================================
 
-  it("should render inline without trigger", () => {
+  it("should focus search input when opened", async () => {
+    render(<Combobox options={defaultOptions} onChange={() => {}} />);
+
+    fireEvent.click(getTrigger());
+
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText("Search...");
+      expect(searchInput).toHaveFocus();
+    });
+  });
+
+  it("should navigate from search to 'All' then options using ArrowDown", async () => {
+    render(<Combobox multiple options={defaultOptions} onChange={() => {}} />);
+
+    fireEvent.click(getTrigger());
+
+    const searchInput = await screen.findByPlaceholderText("Search...");
+    searchInput.focus(); // Ensure it's focused before sending key events
+
+    fireEvent.keyDown(searchInput, { key: "ArrowDown" });
+
+    const allButton = screen.getByText("All").closest("button");
+    await waitFor(() => {
+      expect(allButton).toHaveFocus();
+    });
+
+    fireEvent.keyDown(allButton!, { key: "ArrowDown" });
+    // Since we mock the virtualizer, index 0 is always rendered
+    const firstOption = screen.getByText("Apple").closest("button");
+    await waitFor(() => {
+      expect(firstOption).toHaveFocus();
+    });
+  });
+
+  it("should navigate back to search using ArrowUp", async () => {
+    render(<Combobox multiple options={defaultOptions} onChange={() => {}} />);
+
+    fireEvent.click(getTrigger());
+
+    await waitFor(() => {
+      const allButton = screen.getByText("All").closest("button");
+      fireEvent.keyDown(allButton!, { key: "ArrowUp" });
+    });
+
+    const searchInput = screen.getByPlaceholderText("Search...");
+    expect(searchInput).toHaveFocus();
+  });
+
+  it("should select all filtered options on Enter in search field (multiple mode)", async () => {
+    const handleChange = vi.fn();
+    render(
+      <Combobox multiple options={defaultOptions} onChange={handleChange} />,
+    );
+
+    fireEvent.click(getTrigger());
+
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "a" } }); // Apple, Banana, Date (all have 'a')
+    });
+
+    const searchInput = screen.getByPlaceholderText("Search...");
+    fireEvent.keyDown(searchInput, { key: "Enter" });
+
+    expect(handleChange).toHaveBeenCalledWith(["apple", "banana", "date"]);
+  });
+
+  it("should toggle selection using Space key on options", async () => {
+    const handleChange = vi.fn();
+    render(
+      <Combobox
+        multiple
+        options={defaultOptions}
+        value={["apple"]}
+        onChange={handleChange}
+      />,
+    );
+
+    fireEvent.click(getTrigger());
+
+    await waitFor(() => {
+      const bananaOption = screen.getByText("Banana").closest("button");
+      fireEvent.keyDown(bananaOption!, { key: " " });
+    });
+
+    expect(handleChange).toHaveBeenCalledWith(["apple", "banana"]);
+  });
+
+  it("should focus search input immediately in inline mode", async () => {
     render(<Combobox inline options={defaultOptions} onChange={() => {}} />);
 
-    // In inline mode, options should be visible immediately
-    expect(screen.getByText("Apple")).toBeInTheDocument();
-    expect(screen.getByText("Banana")).toBeInTheDocument();
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText("Search...");
+      expect(searchInput).toHaveFocus();
+    });
   });
 });

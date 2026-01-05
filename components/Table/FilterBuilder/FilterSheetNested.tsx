@@ -83,11 +83,9 @@ export function FilterSheetNested({
         }
 
         const sourceId = source.data.id as string;
-        // source can be condition or group
         const sourceItem = (source.data.item ||
           source.data.group) as FilterItem;
 
-        // The drop zone provides targetId (the item we dropped ON) and position
         const destTargetId = destination.data.targetId as string;
         const position = destination.data.position as DropPosition;
 
@@ -95,13 +93,11 @@ export function FilterSheetNested({
           return;
         }
 
-        // Don't drop on self
         if (sourceId === destTargetId) {
           return;
         }
 
         setRootGroup((prev) => {
-          // Validate Max Depth
           const destDepth = getItemDepth(prev, destTargetId);
           if (destDepth === -1) {
             return prev;
@@ -111,10 +107,10 @@ export function FilterSheetNested({
           if (position === "inside") {
             baseLevel = destDepth + 1;
           }
+
           // Special case: If dropping 'inside' a condition, we create a group at destDepth.
           // The contents end up at destDepth + 1.
           // Our calculation holds: final level of source is baseLevel.
-
           const sourceRelativeHeight = getMaxRelativeDepth(sourceItem);
           const likelyFinalDepth = baseLevel + sourceRelativeHeight;
 
