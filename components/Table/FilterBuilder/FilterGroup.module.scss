@@ -2,13 +2,18 @@
 
 .group {
   padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
   transition: all var(--duration-fast) var(--ease-in-out);
+  position: relative;
+  margin-left: 0 !important;
 
   &.hasRail {
-    margin-left: 0 !important; /* Reset margin, use padding/border for depth */
+    margin-left: 0 !important;
     border-left: 2px solid var(--border-strong);
     padding-left: var(--spacing-md);
+
+    @include m.mq("sm", "max") {
+      padding-left: var(--spacing-sm);
+    }
   }
 
   &.groupDropTarget {
@@ -18,7 +23,7 @@
   }
 
   &.collapsed {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm);
 
     .groupHeader {
       margin-bottom: 0;
@@ -74,14 +79,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+
+  @include m.mq("sm", "max") {
+    gap: var(--spacing-sm);
+  }
 }
 
 .groupActions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-sm);
   border-top: 1px solid var(--card-border);
+
+  @include m.mq("sm", "max") {
+    flex-direction: column;
+    button {
+      width: 100%;
+    }
+  }
 }
 
 .siblingGroupAction {
@@ -100,9 +117,14 @@
 
 .emptyActions {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
+
+  @include m.mq("sm", "max") {
+    flex-direction: column;
+  }
 }
 
 .logicIndicator {
@@ -123,16 +145,25 @@
 .conditionRow {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   background: var(--surface-accent);
   transition: all var(--duration-fast) var(--ease-in-out);
 
+  @include m.mq("sm", "max") {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
   &.dragging {
     opacity: 0.5;
     border-style: dashed;
     border-color: var(--muted);
+    user-select: none;
   }
 
   &.dropTarget {
@@ -140,6 +171,106 @@
     background: color-mix(in srgb, var(--success) 10%, transparent);
     box-shadow: 0 0 0 2px var(--success);
   }
+}
+
+.conditionHeader {
+  display: contents;
+
+  @include m.mq("sm", "max") {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    order: -1;
+  }
+}
+
+.mobileCollapseToggle {
+  display: none;
+
+  @include m.mq("sm", "max") {
+    display: flex;
+  }
+}
+
+.mobileRemoveButton {
+  display: none;
+
+  @include m.mq("sm", "max") {
+    display: flex;
+    margin-left: auto;
+  }
+}
+
+.desktopRemoveButton {
+  @include m.mq("sm", "max") {
+    display: none;
+  }
+}
+
+.collapsedConditionSummary {
+  display: none;
+  flex: 1;
+  cursor: pointer;
+
+  @include m.mq("sm", "max") {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.conditionFields {
+  display: contents;
+
+  @include m.mq("sm", "max") {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+  }
+}
+
+.conditionFieldsCollapsed {
+  @include m.mq("sm", "max") {
+    display: none;
+  }
+}
+
+.logicWrapper,
+.whereWrapper {
+  width: var(--logic-col-width, 80px);
+
+  @include m.mq("sm", "max") {
+    width: auto;
+  }
+}
+
+.whereWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: var(--logic-col-width, 80px);
+  height: 36px;
+
+  @include m.mq("sm", "max") {
+    justify-content: flex-start;
+    min-width: auto;
+    height: auto;
+  }
+}
+
+.whereBadge {
+  height: 36px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-md) !important;
+  border-width: 2px !important;
 }
 
 .dragHandle {
@@ -158,23 +289,36 @@
 
   &:active {
     cursor: grabbing;
-    color: var(--primary);
   }
+
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .fieldSelect {
   flex: 1;
   min-width: 100px;
+  @include m.mq("sm", "max") {
+    width: 100%;
+  }
 }
 
 .operatorSelect {
   width: 120px;
+  @include m.mq("sm", "max") {
+    width: 100%;
+  }
 }
 
 .valueSelect,
 .valueInput {
   flex: 1;
   min-width: 100px;
+  @include m.mq("sm", "max") {
+    width: 100%;
+  }
 }
 
 .dropIndicator {

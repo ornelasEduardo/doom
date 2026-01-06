@@ -47,6 +47,18 @@ export function FilterSheetNested({
   const idPrefix = useId();
   const [isDragging, setIsDragging] = useState(false);
 
+  /*
+   * We configure 'pressHoldDelayMS' to 200ms (default is 500ms) to make the
+   * drag initiation feel more responsive on mobile devices.
+   */
+  useEffect(() => {
+    import("@dragdroptouch/drag-drop-touch").then((module) => {
+      module.enableDragDropTouch(undefined, undefined, {
+        pressHoldDelayMS: 200,
+      });
+    });
+  }, []);
+
   const [rootGroup, setRootGroup] = useState<FilterGroupItem>(() => {
     if (initialValue) {
       return initialValue;

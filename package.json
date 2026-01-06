@@ -88,6 +88,7 @@
   },
   "dependencies": {
     "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
+    "@dragdroptouch/drag-drop-touch": "^2.0.3",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@types/d3-array": "^3.2.2",
