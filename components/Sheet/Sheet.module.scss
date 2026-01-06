@@ -120,4 +120,9 @@
   gap: var(--spacing-md);
   background-color: var(--card-bg);
   flex-shrink: 0;
+
+  @include mq("sm", "max") {
+    padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm)
+      var(--spacing-lg);
+  }
 }

@@ -127,6 +127,7 @@ function ConditionRow({
   const handleRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [activeDrops, setActiveDrops] = useState(0);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const handleHoverChange = (isOver: boolean) => {
     setActiveDrops((prev) => prev + (isOver ? 1 : -1));
@@ -156,6 +157,7 @@ function ConditionRow({
         item,
       }),
       onDragStart: () => setIsDragging(true),
+
       onDrop: () => setIsDragging(false),
     });
 
@@ -196,77 +198,123 @@ function ConditionRow({
         </>
       )}
 
-      <div ref={handleRef} className={styles.dragHandle}>
-        <GripVertical size={16} />
+      {/* Header elements: Drag, Logic, Collapse, Remove (mobile) */}
+      <div className={styles.conditionHeader}>
+        <div ref={handleRef} className={styles.dragHandle}>
+          <GripVertical size={16} />
+        </div>
+
+        {showLogic && logic && onLogicChange ? (
+          <div className={styles.logicWrapper}>
+            <Select
+              options={[
+                { value: "and", label: "AND" },
+                { value: "or", label: "OR" },
+              ]}
+              size="sm"
+              value={logic}
+              onChange={(e) => onLogicChange(e.target.value as "and" | "or")}
+            />
+          </div>
+        ) : (
+          <div className={styles.whereWrapper}>
+            <Badge className={styles.whereBadge} size="lg" variant="secondary">
+              WHERE
+            </Badge>
+          </div>
+        )}
+
+        <Button
+          aria-label={isCollapsed ? "Expand" : "Collapse"}
+          className={styles.mobileCollapseToggle}
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+        </Button>
+
+        <Button
+          aria-label="Remove"
+          className={styles.mobileRemoveButton}
+          size="sm"
+          variant="ghost"
+          onClick={onRemove}
+        >
+          <Trash2 size={14} />
+        </Button>
       </div>
 
-      {showLogic && logic && onLogicChange ? (
-        <div style={{ width: 80 }}>
-          <Select
-            options={[
-              { value: "and", label: "AND" },
-              { value: "or", label: "OR" },
-            ]}
-            size="sm"
-            value={logic}
-            onChange={(e) => onLogicChange(e.target.value as "and" | "or")}
-          />
-        </div>
-      ) : (
-        <div
-          style={{
-            width: 80,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+      {/* Collapsed summary - mobile only */}
+      {isCollapsed && (
+        <Text
+          className={styles.collapsedConditionSummary}
+          color="muted"
+          variant="body"
+          onClick={() => setIsCollapsed(false)}
         >
-          <Badge size="lg" variant="secondary">
-            WHERE
-          </Badge>
-        </div>
+          {selectedField?.label || item.field || "Field"}{" "}
+          <strong>{OPERATORS[item.operator]?.label || item.operator}</strong>{" "}
+          {item.value || "..."}
+        </Text>
       )}
 
-      <Select
-        className={styles.fieldSelect}
-        options={fields.map((f) => ({ value: f.key, label: f.label }))}
-        placeholder="Field..."
-        value={item.field}
-        onChange={(e) =>
-          onUpdate({ ...item, field: e.target.value as string, value: "" })
-        }
-      />
-      <Select
-        className={styles.operatorSelect}
-        options={availableOperators.map((op) => ({
-          value: op,
-          label: OPERATORS[op].label,
-        }))}
-        value={item.operator}
-        onChange={(e) =>
-          onUpdate({ ...item, operator: e.target.value as FilterOperatorKey })
-        }
-      />
-      {selectedField?.type === "select" && selectedField.options ? (
+      {/* Expanded form fields */}
+      <div
+        className={clsx(
+          styles.conditionFields,
+          isCollapsed && styles.conditionFieldsCollapsed,
+        )}
+      >
         <Select
-          className={styles.valueSelect}
-          options={selectedField.options}
-          placeholder="Value..."
-          value={item.value}
+          className={styles.fieldSelect}
+          options={fields.map((f) => ({ value: f.key, label: f.label }))}
+          placeholder="Field..."
+          value={item.field}
           onChange={(e) =>
-            onUpdate({ ...item, value: e.target.value as string })
+            onUpdate({ ...item, field: e.target.value as string, value: "" })
           }
         />
-      ) : (
-        <Input
-          className={styles.valueInput}
-          placeholder="Value..."
-          value={item.value}
-          onChange={(e) => onUpdate({ ...item, value: e.target.value })}
+        <Select
+          className={styles.operatorSelect}
+          options={availableOperators.map((op) => ({
+            value: op,
+            label: OPERATORS[op].label,
+          }))}
+          value={item.operator}
+          onChange={(e) =>
+            onUpdate({ ...item, operator: e.target.value as FilterOperatorKey })
+          }
         />
-      )}
-      <Button aria-label="Remove" size="sm" variant="ghost" onClick={onRemove}>
-        <Trash2 size={16} />
+        {selectedField?.type === "select" && selectedField.options ? (
+          <Select
+            className={styles.valueSelect}
+            options={selectedField.options}
+            placeholder="Value..."
+            value={item.value}
+            onChange={(e) =>
+              onUpdate({ ...item, value: e.target.value as string })
+            }
+          />
+        ) : (
+          <Input
+            className={styles.valueInput}
+            placeholder="Value..."
+            value={item.value}
+            onChange={(e) => onUpdate({ ...item, value: e.target.value })}
+          />
+        )}
+      </div>
+
+      {/* Desktop remove button - visible only on larger screens */}
+      <Button
+        aria-label="Remove"
+        className={styles.desktopRemoveButton}
+        size="sm"
+        variant="ghost"
+        onClick={onRemove}
+      >
+        <Trash2 size={14} />
       </Button>
     </Card>
   );
@@ -323,6 +371,7 @@ export function FilterGroup({
         group,
       }),
       onDragStart: () => setIsDragging(true),
+
       onDrop: () => setIsDragging(false),
     });
 
@@ -392,7 +441,6 @@ export function FilterGroup({
         isDragging && styles.dragging,
         activeDrops > 0 && styles.zIndexHigh,
       )}
-      style={{ marginLeft: 0, position: "relative" }}
     >
       {/* Drop targets for the Group itself */}
       {isGlobalDragging && !isDragging && depth > 0 && (
@@ -429,7 +477,7 @@ export function FilterGroup({
 
         {depth > 0 &&
           (showLogic && group.logic && onLogicChange ? (
-            <div style={{ width: 80 }}>
+            <div className={styles.logicWrapper}>
               <Select
                 options={[
                   { value: "and", label: "AND" },
@@ -441,15 +489,12 @@ export function FilterGroup({
               />
             </div>
           ) : (
-            <div
-              style={{
-                width: 80,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Badge size="lg" variant="secondary">
+            <div className={styles.whereWrapper}>
+              <Badge
+                className={styles.whereBadge}
+                size="lg"
+                variant="secondary"
+              >
                 WHERE
               </Badge>
             </div>
@@ -538,7 +583,7 @@ export function FilterGroup({
                       depth={depth + 1}
                       fields={fields}
                       group={child}
-                      isDragging={isGlobalDragging} // Pass down global dragging state
+                      isDragging={isGlobalDragging}
                       showLogic={index > 0}
                       onLogicChange={(newLogic) =>
                         updateChild(index, { ...child, logic: newLogic })
