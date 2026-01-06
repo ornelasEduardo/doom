@@ -1,0 +1,3 @@
+## 2024-05-23 - [TanStack Table Performance Optimization]
+**Learning:** `useReactTable` hooks should receive a memoized options object to prevent referential instability that can trigger internal state resets or deep re-computations. Specifically, factory functions like `getFacetedUniqueValues` should be instantiated outside the component render loop, and the options object itself (along with any nested objects like `defaultColumn`) should be wrapped in `useMemo`.
+**Action:** Always wrap `useReactTable` options in `useMemo` and hoist factory functions to module scope when using `@tanstack/react-table`.
