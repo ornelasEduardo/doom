@@ -16,6 +16,12 @@
     }
   }
 
+  &.dragging {
+    opacity: 0.5;
+    border-style: dashed;
+    border-color: var(--muted);
+  }
+
   &.groupDropTarget {
     border-color: var(--primary);
     background: color-mix(in srgb, var(--primary) 8%, transparent);
@@ -163,7 +169,6 @@
     opacity: 0.5;
     border-style: dashed;
     border-color: var(--muted);
-    user-select: none;
   }
 
   &.dropTarget {
@@ -282,6 +287,10 @@
   cursor: grab;
   color: var(--muted-foreground);
   transition: color var(--duration-fast) var(--ease-in-out);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 
   &:hover {
     color: var(--foreground);
@@ -290,11 +299,6 @@
   &:active {
     cursor: grabbing;
   }
-
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
 }
 
 .fieldSelect {
@@ -382,4 +386,67 @@
 .zIndexHigh {
   z-index: 50 !important;
   position: relative;
+}
+
+// Dedicated DropZone classes for mobile optimization
+.dropZoneBase {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: transparent;
+  pointer-events: none; // Default to passing clicks through
+}
+
+.zoneActive {
+  pointer-events: auto !important; // Enable interaction only when dragging
+}
+
+.dropZoneInside {
+  @extend .dropZoneBase;
+  top: 0;
+  height: 100%;
+  z-index: 100; // High priority but below siblings
+}
+
+.dropZoneBefore {
+  @extend .dropZoneBase;
+  top: 0;
+  height: 25%;
+  z-index: 110;
+
+  @include m.mq("sm", "max") {
+    height: 30%; // Larger hit area on mobile
+  }
+}
+
+.dropZoneAfter {
+  @extend .dropZoneBase;
+  bottom: 0;
+  height: 25%;
+  z-index: 110;
+
+  @include m.mq("sm", "max") {
+    height: 30%; // Larger hit area on mobile
+  }
+}
+
+// Specific overrides for Group drop zones (which were 10px fixed)
+.groupDropZoneBefore {
+  @extend .dropZoneBefore;
+  height: 10px;
+
+  @include m.mq("sm", "max") {
+    height: 30px; // Much larger on mobile
+    top: -10px; // Extend upwards
+  }
+}
+
+.groupDropZoneAfter {
+  @extend .dropZoneAfter;
+  height: 10px;
+
+  @include m.mq("sm", "max") {
+    height: 30px; // Much larger on mobile
+    bottom: -10px; // Extend downwards
+  }
 }

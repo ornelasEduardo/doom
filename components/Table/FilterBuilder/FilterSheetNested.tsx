@@ -1,14 +1,29 @@
 "use client";
 
-import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  KeyboardSensor,
+  MouseSensor,
+  pointerWithin,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import React, { useEffect, useId, useState } from "react";
 
 import { Button } from "../../Button/Button";
 import { Flex } from "../../Layout/Layout";
 import { Sheet } from "../../Sheet/Sheet";
 import type { FilterField } from "./FilterBuilder";
-import type { FilterGroupItem, FilterItem } from "./FilterGroup";
-import { FilterGroup } from "./FilterGroup";
+import type {
+  FilterConditionItem,
+  FilterGroupItem,
+  FilterItem,
+} from "./FilterGroup";
+import { ConditionRow, FilterGroup } from "./FilterGroup";
 import styles from "./FilterSheet.module.scss";
 import {
   DropPosition,
@@ -45,19 +60,8 @@ export function FilterSheetNested({
   onApply,
 }: FilterSheetNestedProps) {
   const idPrefix = useId();
-  const [isDragging, setIsDragging] = useState(false);
-
-  /*
-   * We configure 'pressHoldDelayMS' to 200ms (default is 500ms) to make the
-   * drag initiation feel more responsive on mobile devices.
-   */
-  useEffect(() => {
-    import("@dragdroptouch/drag-drop-touch").then((module) => {
-      module.enableDragDropTouch(undefined, undefined, {
-        pressHoldDelayMS: 200,
-      });
-    });
-  }, []);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<FilterItem | null>(null);
 
   const [rootGroup, setRootGroup] = useState<FilterGroupItem>(() => {
     if (initialValue) {
@@ -84,61 +88,73 @@ export function FilterSheetNested({
     }
   }, [isOpen, initialValue, idPrefix]);
 
-  useEffect(() => {
-    return monitorForElements({
-      onDragStart: () => setIsDragging(true),
-      onDrop: ({ source, location }) => {
-        setIsDragging(false);
-        const destination = location.current.dropTargets[0];
-        if (!destination) {
-          return;
-        }
-
-        const sourceId = source.data.id as string;
-        const sourceItem = (source.data.item ||
-          source.data.group) as FilterItem;
-
-        const destTargetId = destination.data.targetId as string;
-        const position = destination.data.position as DropPosition;
-
-        if (!sourceId || !destTargetId || !sourceItem || !position) {
-          return;
-        }
-
-        if (sourceId === destTargetId) {
-          return;
-        }
-
-        setRootGroup((prev) => {
-          const destDepth = getItemDepth(prev, destTargetId);
-          if (destDepth === -1) {
-            return prev;
-          }
-
-          let baseLevel = destDepth;
-          if (position === "inside") {
-            baseLevel = destDepth + 1;
-          }
-
-          // Special case: If dropping 'inside' a condition, we create a group at destDepth.
-          // The contents end up at destDepth + 1.
-          // Our calculation holds: final level of source is baseLevel.
-          const sourceRelativeHeight = getMaxRelativeDepth(sourceItem);
-          const likelyFinalDepth = baseLevel + sourceRelativeHeight;
-
-          if (likelyFinalDepth > MAX_DEPTH) {
-            return prev;
-          }
-
-          // 1. Remove source from tree
-          const withoutSource = removeItem(prev, sourceId);
-
-          // 2. Insert at destination
-          return insertItem(withoutSource, sourceItem, destTargetId, position);
-        });
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
       },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+    setActiveItem(active.data.current?.item as FilterItem);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    setActiveItem(null);
+
+    if (!over) {
+      return;
+    }
+
+    const sourceId = active.id as string;
+    const sourceItem = active.data.current?.item as FilterItem;
+
+    const data = over.data.current || {};
+    const destTargetId = data.targetId;
+    const position = data.position as DropPosition;
+
+    if (!sourceId || !destTargetId || !sourceItem || !position) {
+      return;
+    }
+
+    if (sourceId === destTargetId) {
+      return;
+    }
+
+    setRootGroup((prev) => {
+      const destDepth = getItemDepth(prev, destTargetId);
+      if (destDepth === -1) {
+        return prev;
+      }
+
+      let baseLevel = destDepth;
+      if (position === "inside") {
+        baseLevel = destDepth + 1;
+      }
+
+      const sourceRelativeHeight = getMaxRelativeDepth(sourceItem);
+      const likelyFinalDepth = baseLevel + sourceRelativeHeight;
+
+      if (likelyFinalDepth > MAX_DEPTH) {
+        return prev;
+      }
+
+      const withoutSource = removeItem(prev, sourceId);
+      return insertItem(withoutSource, sourceItem, destTargetId, position);
     });
-  }, []);
+  };
 
   const handleApply = () => {
     onApply(rootGroup);
@@ -163,30 +179,65 @@ export function FilterSheetNested({
   const validCount = countValidConditions(rootGroup);
 
   return (
-    <Sheet
-      footer={
-        <Flex gap={4} justify="space-between">
-          <Button variant="ghost" onClick={handleClear}>
-            CLEAR ALL
-          </Button>
-          <Button onClick={handleApply}>
-            APPLY{validCount > 0 ? ` (${validCount})` : ""}
-          </Button>
-        </Flex>
-      }
-      isOpen={isOpen}
-      title="FILTERS"
-      onClose={onClose}
+    <DndContext
+      collisionDetection={pointerWithin}
+      sensors={sensors}
+      onDragEnd={handleDragEnd}
+      onDragStart={handleDragStart}
     >
-      <div className={styles.conditionList}>
-        <FilterGroup
-          fields={fields}
-          group={rootGroup}
-          isDragging={isDragging}
-          onRemoveSourceById={removeChildById}
-          onUpdate={setRootGroup}
-        />
-      </div>
-    </Sheet>
+      <Sheet
+        footer={
+          <Flex gap={4} justify="space-between">
+            <Button variant="ghost" onClick={handleClear}>
+              CLEAR ALL
+            </Button>
+            <Button onClick={handleApply}>
+              APPLY{validCount > 0 ? ` (${validCount})` : ""}
+            </Button>
+          </Flex>
+        }
+        isOpen={isOpen}
+        title="FILTERS"
+        onClose={onClose}
+      >
+        <div className={styles.conditionList}>
+          <FilterGroup
+            fields={fields}
+            isGlobalDragging={activeId !== null}
+            item={rootGroup}
+            parentId=""
+            onRemove={() => removeChildById(rootGroup.id)}
+            onUpdate={(updated) => {
+              setRootGroup(updated as FilterGroupItem);
+            }}
+          />
+        </div>
+      </Sheet>
+      <DragOverlay dropAnimation={null}>
+        {activeItem ? (
+          <div style={{ opacity: 0.9, transform: "scale(1.02)" }}>
+            {activeItem.type === "group" ? (
+              <FilterGroup
+                fields={fields}
+                isGlobalDragging={true}
+                item={activeItem as FilterGroupItem}
+                parentId="overlay"
+                onRemove={() => {}}
+                onUpdate={() => {}}
+              />
+            ) : (
+              <ConditionRow
+                fields={fields}
+                isGlobalDragging={true}
+                item={activeItem as FilterConditionItem}
+                parentId="overlay"
+                onRemove={() => {}}
+                onUpdate={() => {}}
+              />
+            )}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }
