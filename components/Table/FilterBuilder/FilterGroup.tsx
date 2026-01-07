@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  draggable,
-  dropTargetForElements,
-} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import clsx from "clsx";
 import {
   ChevronDown,
@@ -12,7 +9,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Badge } from "../../Badge/Badge";
 import { Button } from "../../Button/Button";
@@ -40,7 +37,7 @@ export interface FilterGroupItem {
   id: string;
   children: FilterItem[];
   collapsed?: boolean;
-  logic?: "and" | "or"; // Logic connecting this group to PREVIOUS
+  logic?: "and" | "or";
 }
 
 export type FilterItem = FilterConditionItem | FilterGroupItem;
@@ -52,47 +49,34 @@ function countConditions(item: FilterItem): number {
   return item.children.reduce((sum, child) => sum + countConditions(child), 0);
 }
 
-// Internal reusable DropZone
 function DropZone({
   targetId,
   position,
   style,
+  className,
   onHoverChange,
 }: {
   targetId: string;
   position: "before" | "after" | "inside";
   style?: React.CSSProperties;
+  className?: string;
   onHoverChange?: (isOver: boolean) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isOver, setIsOver] = useState(false);
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${targetId}-${position}`,
+    data: { targetId, position },
+  });
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) {
-      return;
-    }
-
-    return dropTargetForElements({
-      element: el,
-      getData: () => ({ targetId, position }),
-      onDragEnter: () => {
-        setIsOver(true);
-        onHoverChange?.(true);
-      },
-      onDragLeave: () => {
-        setIsOver(false);
-        onHoverChange?.(false);
-      },
-      onDrop: () => {
-        setIsOver(false);
-        onHoverChange?.(false);
-      },
-    });
-  }, [targetId, position, onHoverChange]);
+    onHoverChange?.(isOver);
+  }, [isOver, onHoverChange]);
 
   return (
-    <div ref={ref} className={styles.dropTargetZone} style={style}>
+    <div
+      ref={setNodeRef}
+      className={clsx(styles.dropTargetZone, className)}
+      style={style}
+    >
       {isOver && (
         <div className={clsx(styles.dropIndicator, styles[position])} />
       )}
@@ -100,7 +84,7 @@ function DropZone({
   );
 }
 
-interface ConditionRowProps {
+export interface ConditionRowProps {
   item: FilterConditionItem;
   fields: FilterField[];
   parentId: string;
@@ -112,10 +96,10 @@ interface ConditionRowProps {
   onLogicChange?: (logic: "and" | "or") => void;
 }
 
-function ConditionRow({
+export function ConditionRow({
   item,
   fields,
-  parentId,
+  parentId: _parentId,
   logic,
   showLogic = false,
   isGlobalDragging,
@@ -123,15 +107,19 @@ function ConditionRow({
   onRemove,
   onLogicChange,
 }: ConditionRowProps) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [activeDrops, setActiveDrops] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  const handleHoverChange = (isOver: boolean) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: item.id,
+    data: { type: "condition", item },
+  });
+
+  const handleHoverChange = useCallback((isOver: boolean) => {
     setActiveDrops((prev) => prev + (isOver ? 1 : -1));
-  };
+  }, []);
+
+  const showZones = isGlobalDragging && !isDragging;
 
   const selectedField = fields.find((f) => f.key === item.field);
   const availableOperators = selectedField?.operators ?? [
@@ -140,67 +128,43 @@ function ConditionRow({
     "contains",
   ];
 
-  useEffect(() => {
-    const el = rowRef.current;
-    const handle = handleRef.current;
-    if (!el || !handle) {
-      return;
-    }
-
-    const cleanupDraggable = draggable({
-      element: el,
-      dragHandle: handle,
-      getInitialData: () => ({
-        type: "condition",
-        id: item.id,
-        parentId,
-        item,
-      }),
-      onDragStart: () => setIsDragging(true),
-
-      onDrop: () => setIsDragging(false),
-    });
-
-    return () => {
-      cleanupDraggable();
-    };
-  }, [item, parentId]);
-
   return (
     <Card
-      ref={rowRef}
+      ref={setNodeRef}
       className={clsx(
         styles.conditionRow,
         isDragging && styles.dragging,
         activeDrops > 0 && styles.zIndexHigh,
       )}
     >
-      {isGlobalDragging && !isDragging && (
-        <>
-          <DropZone
-            position="inside"
-            style={{ top: 0, height: "100%", zIndex: 10 }}
-            targetId={item.id}
-            onHoverChange={handleHoverChange}
-          />
-          <DropZone
-            position="before"
-            style={{ top: 0, height: "25%", zIndex: 20 }}
-            targetId={item.id}
-            onHoverChange={handleHoverChange}
-          />
-          <DropZone
-            position="after"
-            style={{ bottom: 0, height: "25%", zIndex: 20 }}
-            targetId={item.id}
-            onHoverChange={handleHoverChange}
-          />
-        </>
-      )}
+      <DropZone
+        className={clsx(styles.dropZoneInside, showZones && styles.zoneActive)}
+        position="inside"
+        targetId={item.id}
+        onHoverChange={handleHoverChange}
+      />
+      <DropZone
+        className={clsx(styles.dropZoneBefore, showZones && styles.zoneActive)}
+        position="before"
+        targetId={item.id}
+        onHoverChange={handleHoverChange}
+      />
+      <DropZone
+        className={clsx(styles.dropZoneAfter, showZones && styles.zoneActive)}
+        position="after"
+        targetId={item.id}
+        onHoverChange={handleHoverChange}
+      />
 
       {/* Header elements: Drag, Logic, Collapse, Remove (mobile) */}
+      {/* Header elements: Drag, Logic, Collapse, Remove (mobile) */}
       <div className={styles.conditionHeader}>
-        <div ref={handleRef} className={styles.dragHandle}>
+        <div
+          className={styles.dragHandle}
+          onContextMenu={(e) => e.preventDefault()}
+          {...listeners}
+          {...attributes}
+        >
           <GripVertical size={16} />
         </div>
 
@@ -321,11 +285,12 @@ function ConditionRow({
 }
 
 interface FilterGroupProps {
-  group: FilterGroupItem;
+  item: FilterGroupItem;
   fields: FilterField[];
+  parentId: string;
   depth?: number;
   showLogic?: boolean;
-  isDragging?: boolean;
+  isGlobalDragging?: boolean;
   onUpdate: (updated: FilterGroupItem) => void;
   onRemove?: () => void;
   onRemoveSourceById?: (id: string) => void;
@@ -333,56 +298,36 @@ interface FilterGroupProps {
 }
 
 export function FilterGroup({
-  group,
+  item,
   fields,
+  parentId: _parentId,
   depth = 0,
   showLogic = false,
-  isDragging: isGlobalDragging = false,
+  isGlobalDragging = false,
   onUpdate,
   onRemove,
-  onRemoveSourceById,
+  onRemoveSourceById: _onRemoveSourceById,
   onLogicChange,
 }: FilterGroupProps) {
-  const groupRef = useRef<HTMLDivElement>(null);
-  const handleRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const idPrefix = useId();
-  const [isDragging, setIsDragging] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(group.collapsed ?? false);
+  const [isCollapsed, setIsCollapsed] = useState(item.collapsed ?? false);
   const [activeDrops, setActiveDrops] = useState(0);
 
-  const handleHoverChange = (isOver: boolean) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: item.id,
+    data: { type: "group", item },
+  });
+
+  const handleHoverChange = useCallback((isOver: boolean) => {
     setActiveDrops((prev) => prev + (isOver ? 1 : -1));
-  };
+  }, []);
 
-  useEffect(() => {
-    const el = groupRef.current;
-    const handle = handleRef.current;
-    if (!el || !handle) {
-      return;
-    }
-
-    const cleanupDraggable = draggable({
-      element: el,
-      dragHandle: handle,
-      getInitialData: () => ({
-        type: "group",
-        id: group.id,
-        group,
-      }),
-      onDragStart: () => setIsDragging(true),
-
-      onDrop: () => setIsDragging(false),
-    });
-
-    return () => {
-      cleanupDraggable();
-    };
-  }, [group, idPrefix, onUpdate, onRemoveSourceById]);
+  const showZones = isGlobalDragging && !isDragging;
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
-    onUpdate({ ...group, collapsed: !isCollapsed });
+    onUpdate({ ...item, collapsed: !isCollapsed });
   };
 
   const addCondition = () => {
@@ -394,7 +339,7 @@ export function FilterGroup({
       value: "",
       logic: "and",
     };
-    onUpdate({ ...group, children: [...group.children, newCondition] });
+    onUpdate({ ...item, children: [...item.children, newCondition] });
   };
 
   const addNestedGroup = () => {
@@ -404,35 +349,35 @@ export function FilterGroup({
       children: [],
       logic: "and",
     };
-    onUpdate({ ...group, children: [...group.children, newGroup] });
+    onUpdate({ ...item, children: [...item.children, newGroup] });
   };
 
   const updateChild = (index: number, updated: FilterItem) => {
-    const next = [...group.children];
+    const next = [...item.children];
     next[index] = updated;
-    onUpdate({ ...group, children: next });
+    onUpdate({ ...item, children: next });
   };
 
   const removeChild = (index: number) => {
     onUpdate({
-      ...group,
-      children: group.children.filter((_, i) => i !== index),
+      ...item,
+      children: item.children.filter((_: FilterItem, i: number) => i !== index),
     });
   };
 
   const removeChildById = (id: string) => {
     onUpdate({
-      ...group,
-      children: group.children.filter((c) => c.id !== id),
+      ...item,
+      children: item.children.filter((c: FilterItem) => c.id !== id),
     });
   };
 
-  const conditionCount = countConditions(group);
-  const isEmpty = group.children.length === 0;
+  const conditionCount = countConditions(item);
+  const isEmpty = item.children.length === 0;
 
   return (
     <Card
-      ref={groupRef}
+      ref={setNodeRef}
       className={clsx(
         styles.group,
         depth === 0 && styles.rootGroup,
@@ -443,40 +388,51 @@ export function FilterGroup({
       )}
     >
       {/* Drop targets for the Group itself */}
-      {isGlobalDragging && !isDragging && depth > 0 && (
+      {depth > 0 && (
         <>
           <DropZone
+            className={clsx(
+              styles.dropZoneInside,
+              showZones && styles.zoneActive,
+            )}
             position="inside"
-            style={{
-              top: 0,
-              height: "100%",
-              zIndex: 10,
-            }}
-            targetId={group.id}
+            targetId={item.id}
             onHoverChange={handleHoverChange}
           />
           <DropZone
+            className={clsx(
+              styles.groupDropZoneBefore,
+              showZones && styles.zoneActive,
+            )}
             position="before"
-            style={{ top: 0, height: "10px", zIndex: 30 }}
-            targetId={group.id}
+            targetId={item.id}
             onHoverChange={handleHoverChange}
           />
           <DropZone
+            className={clsx(
+              styles.groupDropZoneAfter,
+              showZones && styles.zoneActive,
+            )}
             position="after"
-            style={{ bottom: 0, height: "10px", zIndex: 30 }}
-            targetId={group.id}
+            targetId={item.id}
             onHoverChange={handleHoverChange}
           />
         </>
       )}
 
+      {/* Header elements: Drag, Logic, Collapse, Remove (mobile) */}
       <div className={styles.groupHeader}>
-        <div ref={handleRef} className={styles.dragHandle}>
+        <div
+          className={styles.dragHandle}
+          onContextMenu={(e) => e.preventDefault()}
+          {...listeners}
+          {...attributes}
+        >
           <GripVertical size={16} />
         </div>
 
         {depth > 0 &&
-          (showLogic && group.logic && onLogicChange ? (
+          (showLogic && item.logic && onLogicChange ? (
             <div className={styles.logicWrapper}>
               <Select
                 options={[
@@ -484,7 +440,7 @@ export function FilterGroup({
                   { value: "or", label: "OR" },
                 ]}
                 size="sm"
-                value={group.logic}
+                value={item.logic}
                 onChange={(e) => onLogicChange(e.target.value as "and" | "or")}
               />
             </div>
@@ -561,7 +517,7 @@ export function FilterGroup({
               </div>
             </div>
           ) : (
-            group.children.map((child, index) => (
+            item.children.map((child: FilterItem, index: number) => (
               <React.Fragment key={child.id}>
                 {child.type === "condition" ? (
                   <ConditionRow
@@ -569,7 +525,7 @@ export function FilterGroup({
                     isGlobalDragging={isGlobalDragging}
                     item={child}
                     logic={child.logic}
-                    parentId={group.id}
+                    parentId={item.id}
                     showLogic={index > 0}
                     onLogicChange={(newLogic) =>
                       updateChild(index, { ...child, logic: newLogic })
@@ -582,8 +538,9 @@ export function FilterGroup({
                     <FilterGroup
                       depth={depth + 1}
                       fields={fields}
-                      group={child}
-                      isDragging={isGlobalDragging}
+                      isGlobalDragging={isGlobalDragging}
+                      item={child as FilterGroupItem}
+                      parentId={item.id}
                       showLogic={index > 0}
                       onLogicChange={(newLogic) =>
                         updateChild(index, { ...child, logic: newLogic })

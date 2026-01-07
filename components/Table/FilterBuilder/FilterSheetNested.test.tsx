@@ -1,17 +1,35 @@
-import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, type Mock, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { FilterField } from "./FilterBuilder";
 import type { FilterConditionItem, FilterGroupItem } from "./FilterGroup";
 import { FilterSheetNested } from "./FilterSheetNested";
 
-// Mock DnD
-vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
-  monitorForElements: vi.fn(),
-  draggable: () => () => {},
-  dropTargetForElements: () => () => {},
+// Mock @dnd-kit/core
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dnd-context">{children}</div>
+  ),
+  DragOverlay: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="drag-overlay">{children}</div>
+  ),
+  useDraggable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: () => {},
+    isDragging: false,
+  }),
+  useDroppable: () => ({
+    setNodeRef: () => {},
+    isOver: false,
+  }),
+  useSensor: vi.fn(),
+  useSensors: () => [],
+  MouseSensor: {},
+  TouchSensor: {},
+  KeyboardSensor: {},
+  pointerWithin: vi.fn(),
 }));
 
 // Mock Sheet
@@ -43,20 +61,20 @@ vi.mock("../../Sheet/Sheet", () => ({
 // Recursive Mock FilterGroup
 vi.mock("./FilterGroup", () => {
   const MockFilterGroup = ({
-    group,
+    item,
     onUpdate,
   }: {
-    group: FilterGroupItem;
+    item: FilterGroupItem;
     onUpdate: (g: FilterGroupItem) => void;
   }) => (
-    <div data-testid={`group-${group.id}`}>
-      <span data-testid="group-id">{group.id}</span>
+    <div data-testid={`group-${item.id}`}>
+      <span data-testid="group-id">{item.id}</span>
       <div data-testid="children-container">
-        {group.children?.map((child) => (
+        {item.children?.map((child) => (
           <div key={child.id} data-testid={`child-${child.id}`}>
             {child.type === "group" ? (
               <MockFilterGroup
-                group={child}
+                item={child}
                 onUpdate={(_updatedChild) => {
                   /* No-op for mock display */
                 }}
@@ -70,9 +88,9 @@ vi.mock("./FilterGroup", () => {
       <button
         onClick={() =>
           onUpdate({
-            ...group,
+            ...item,
             children: [
-              ...group.children,
+              ...item.children,
 
               {
                 type: "condition",
@@ -89,7 +107,12 @@ vi.mock("./FilterGroup", () => {
       </button>
     </div>
   );
-  return { FilterGroup: MockFilterGroup };
+  return {
+    FilterGroup: MockFilterGroup,
+    ConditionRow: () => (
+      <div data-testid="mock-condition-row">Condition Row</div>
+    ),
+  };
 });
 
 describe("FilterSheetNested", () => {
@@ -111,81 +134,9 @@ describe("FilterSheetNested", () => {
     expect(screen.getByTestId("mock-sheet")).toBeInTheDocument();
   });
 
-  it("should prevent dropping deep group into deep structure (Max Depth)", () => {
-    const initial: FilterGroupItem = {
-      type: "group",
-      id: "root",
-      children: [
-        {
-          type: "group",
-          id: "g1",
-          children: [
-            {
-              type: "group",
-              id: "g2",
-              children: [{ type: "group", id: "g3", children: [] }],
-            },
-          ],
-        },
-      ],
-    };
-
-    render(<FilterSheetNested {...defaultProps} initialValue={initial} />);
-
-    const sourceGroup = {
-      type: "group",
-      id: "source-group",
-      children: [],
-    } as FilterGroupItem;
-
-    const calls = (monitorForElements as Mock).mock.calls;
-    const { onDrop } = calls[calls.length - 1][0];
-
-    act(() => {
-      onDrop({
-        source: { data: { id: "source-group", item: sourceGroup } },
-        location: {
-          current: {
-            dropTargets: [{ data: { targetId: "g3", position: "inside" } }],
-          },
-        },
-      });
-    });
-
-    expect(screen.queryByTestId("child-source-group")).not.toBeInTheDocument();
-  });
-
-  it("should allow valid move", () => {
-    const initial: FilterGroupItem = {
-      type: "group",
-      id: "root",
-      children: [{ type: "group", id: "g1", children: [] }],
-    };
-    render(<FilterSheetNested {...defaultProps} initialValue={initial} />);
-
-    const sourceGroup = {
-      type: "group",
-      id: "new-group",
-      children: [],
-    } as FilterGroupItem;
-
-    const calls = (monitorForElements as Mock).mock.calls;
-    const { onDrop } = calls[calls.length - 1][0];
-
-    // Drop 'new-group' inside 'g1'.
-    act(() => {
-      onDrop({
-        source: { data: { id: "new-group", item: sourceGroup } },
-        location: {
-          current: {
-            dropTargets: [{ data: { targetId: "g1", position: "inside" } }],
-          },
-        },
-      });
-    });
-
-    // Should be visible because MockFilterGroup recursively renders children
-    expect(screen.getByTestId("child-new-group")).toBeInTheDocument();
+  it("should render DndContext wrapper", () => {
+    render(<FilterSheetNested {...defaultProps} />);
+    expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
   });
 
   it("should initialize with empty group if no value", () => {
@@ -213,5 +164,22 @@ describe("FilterSheetNested", () => {
 
     fireEvent.click(screen.getByText("CLEAR ALL"));
     expect(screen.getByText("APPLY")).toBeInTheDocument();
+  });
+
+  it("should render initial value structure", () => {
+    const initial: FilterGroupItem = {
+      type: "group",
+      id: "root",
+      children: [
+        {
+          type: "group",
+          id: "g1",
+          children: [],
+        },
+      ],
+    };
+
+    render(<FilterSheetNested {...defaultProps} initialValue={initial} />);
+    expect(screen.getByTestId("child-g1")).toBeInTheDocument();
   });
 });

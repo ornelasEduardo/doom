@@ -6,10 +6,30 @@ import type { FilterField } from "./FilterBuilder";
 import type { FilterGroupItem } from "./FilterGroup";
 import { FilterGroup } from "./FilterGroup";
 
-// Mock DnD
-vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
-  draggable: () => () => {},
-  dropTargetForElements: () => () => {},
+// Mock @dnd-kit/core
+vi.mock("@dnd-kit/core", () => ({
+  DndContext: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dnd-context">{children}</div>
+  ),
+  DragOverlay: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="drag-overlay">{children}</div>
+  ),
+  useDraggable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: () => {},
+    isDragging: false,
+  }),
+  useDroppable: () => ({
+    setNodeRef: () => {},
+    isOver: false,
+  }),
+  useSensor: vi.fn(),
+  useSensors: () => [],
+  MouseSensor: {},
+  TouchSensor: {},
+  KeyboardSensor: {},
+  pointerWithin: vi.fn(),
 }));
 
 describe("FilterGroup", () => {
@@ -42,7 +62,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={emptyGroup}
+        item={emptyGroup}
+        parentId=""
         onUpdate={() => {}}
       />,
     );
@@ -57,7 +78,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={populatedGroup}
+        item={populatedGroup}
+        parentId=""
         onUpdate={() => {}}
       />,
     );
@@ -71,7 +93,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={emptyGroup}
+        item={emptyGroup}
+        parentId=""
         onUpdate={handleUpdate}
       />,
     );
@@ -89,7 +112,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={emptyGroup}
+        item={emptyGroup}
+        parentId=""
         onUpdate={handleUpdate}
       />,
     );
@@ -107,7 +131,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={populatedGroup}
+        item={populatedGroup}
+        parentId=""
         onUpdate={handleUpdate}
       />,
     );
@@ -124,7 +149,8 @@ describe("FilterGroup", () => {
     render(
       <FilterGroup
         fields={mockFields}
-        group={emptyGroup}
+        item={emptyGroup}
+        parentId=""
         onRemove={handleRemove}
         onUpdate={() => {}}
       />,

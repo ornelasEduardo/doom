@@ -87,8 +87,8 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
-    "@dragdroptouch/drag-drop-touch": "^2.0.3",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/utilities": "^3.2.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@types/d3-array": "^3.2.2",
