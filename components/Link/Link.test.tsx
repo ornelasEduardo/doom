@@ -100,4 +100,25 @@ describe("Link Component", () => {
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
+
+  it("should add noopener noreferrer when target is _blank via props", () => {
+    render(
+      <Link href="https://example.com" target="_blank">
+        Insecure Link
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("should merge user provided rel with noopener noreferrer", () => {
+    render(
+      <Link href="https://example.com" rel="nofollow" target="_blank">
+        Merged Rel Link
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("rel", "nofollow noopener noreferrer");
+  });
 });
