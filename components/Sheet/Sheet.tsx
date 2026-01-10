@@ -9,17 +9,103 @@ import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Sheet.module.scss";
 
+// Context for composition API
+const SheetContext = React.createContext<{
+  onClose: () => void;
+  titleId?: string;
+  variant: "default" | "solid";
+  handlePointerDown: (e: React.PointerEvent) => void;
+}>({
+  onClose: () => {},
+  variant: "default",
+  handlePointerDown: () => {},
+});
+
+// ============================================================================
+// Sub-components for composition API
+// ============================================================================
+
+interface SheetHeaderProps {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}
+
+export function SheetHeader({ children, className, id }: SheetHeaderProps) {
+  const { onClose, titleId, handlePointerDown } =
+    React.useContext(SheetContext);
+
+  return (
+    <div
+      className={clsx(styles.header, className)}
+      onPointerDown={handlePointerDown}
+    >
+      <div className={styles.handleBar} />
+      <Flex
+        align="center"
+        className={styles.headerBody}
+        justify="space-between"
+      >
+        <div className={styles.headerContent} id={id || titleId}>
+          {children}
+        </div>
+        <Button
+          aria-label="Close sheet"
+          size="sm"
+          variant="danger"
+          onClick={onClose}
+        >
+          <X size={24} />
+        </Button>
+      </Flex>
+    </div>
+  );
+}
+
+export function SheetBody({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={clsx(styles.content, className)}>{children}</div>;
+}
+
+export function SheetFooter({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Flex
+      align="center"
+      className={clsx(styles.footer, className)}
+      gap={4}
+      justify="flex-end"
+    >
+      {children}
+    </Flex>
+  );
+}
+
+// ============================================================================
+// Main Sheet component
+// ============================================================================
+
 interface SheetProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
   variant?: "default" | "solid";
   className?: string;
 }
 
-export function Sheet({
+function SheetInternal({
   isOpen,
   onClose,
   title,
@@ -134,7 +220,9 @@ export function Sheet({
   }
 
   return createPortal(
-    <>
+    <SheetContext.Provider
+      value={{ onClose, titleId, variant, handlePointerDown }}
+    >
       <div
         aria-hidden="true"
         className={clsx(styles.overlay, isOpen && styles.isOpen)}
@@ -153,32 +241,24 @@ export function Sheet({
         )}
         role="dialog"
       >
-        <div className={styles.header} onPointerDown={handlePointerDown}>
-          <div className={styles.handleBar} />
-          <Flex
-            align="center"
-            className={styles.headerBody}
-            justify="space-between"
-          >
-            {title && (
-              <h2 className={styles.title} id={titleId}>
-                {title}
-              </h2>
-            )}
-            <Button
-              aria-label="Close sheet"
-              size="sm"
-              variant="danger"
-              onClick={onClose}
-            >
-              <X size={24} />
-            </Button>
-          </Flex>
-        </div>
-        <div className={styles.content}>{children}</div>
-        {footer && <div className={styles.footer}>{footer}</div>}
+        {title ? (
+          <>
+            <SheetHeader>{title}</SheetHeader>
+            <SheetBody>{children}</SheetBody>
+            {footer && <SheetFooter>{footer}</SheetFooter>}
+          </>
+        ) : (
+          children
+        )}
       </div>
-    </>,
+    </SheetContext.Provider>,
     document.body,
   );
 }
+
+// Namespace export pattern (like Chart)
+export const Sheet = Object.assign(SheetInternal, {
+  Header: SheetHeader,
+  Body: SheetBody,
+  Footer: SheetFooter,
+});

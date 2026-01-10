@@ -129,6 +129,9 @@
   user-select: none;
   white-space: nowrap;
   color: var(--secondary-foreground);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 
   &.compact {
     padding: 0.5rem 1rem;

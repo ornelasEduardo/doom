@@ -6,16 +6,22 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--spacing-sm);
-  width: 100%;
-  padding: var(--spacing-sm);
-  // Fonts handled by Text component
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--card-bg);
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   text-align: left;
   cursor: pointer;
+  min-height: var(--size-lg);
   transition: all var(--duration-fast) var(--ease-in-out);
 
+  @include m.brutalist-hover;
+
   &.sm {
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-height: var(--size-md);
     font-size: var(--text-xs);
   }
 
@@ -70,11 +76,16 @@
   transition: transform var(--duration-fast) var(--ease-in-out);
 }
 
+// Dropdown container (rendered by popover)
 .dropdown {
   min-width: 200px;
   max-width: 320px;
-  padding: 0; // Override default Card padding
+  padding: 0;
   overflow: hidden;
+  // Use Select's border style
+  border: var(--border-width) solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--card-bg);
 }
 
 .searchWrapper {
@@ -85,8 +96,8 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   border-bottom: 1px solid
-    color-mix(in srgb, var(--card-border) 60%, transparent); // Softer border
-  background: var(--card-bg); // Match card bg but sticky
+    color-mix(in srgb, var(--card-border) 60%, transparent);
+  background: var(--card-bg);
   z-index: 10;
 }
 
@@ -119,6 +130,10 @@
   max-height: 240px;
   overflow-y: auto;
   padding: var(--spacing-xs);
+  padding-bottom: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 
   // Custom scrollbar
   &::-webkit-scrollbar {
@@ -129,7 +144,7 @@
   }
   &::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     &:hover {
       background: var(--muted-foreground);
     }
@@ -141,42 +156,35 @@
   align-items: center;
   gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-xs) var(--spacing-sm); // Slightly taller
-  margin-bottom: 2px; // Tiny gap between items
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
-  border-radius: var(--radius-sm); // Floating pill look
+  border-radius: calc(var(--radius) - 2px);
   background: transparent;
-  border-radius: var(--radius-sm); // Floating pill look
-  background: transparent;
-  // Fonts handled by Text component
   text-align: left;
-  color: var(
-    --foreground
-  ); // Text component usually sets this, but ensuring default
+  color: var(--foreground);
   cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: var(--font-regular);
   transition: all var(--duration-fast) var(--ease-in-out);
+  user-select: none;
 
   &:hover {
-    background: var(--surface-accent);
-    // transform: translateX(2px); // Removed to prevent shift
+    background-color: color-mix(in srgb, var(--primary), transparent 85%);
+    color: color-mix(in srgb, var(--primary), var(--foreground) 25%);
   }
 
   &.selected {
-    background: color-mix(in srgb, var(--primary) 8%, transparent);
-    color: var(--primary);
-    font-weight: 500;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: var(--font-bold);
 
     &:hover {
-      background: color-mix(in srgb, var(--primary) 12%, transparent);
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      filter: brightness(1.1);
     }
   }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 }
-
-// .checkmark styles removed - using Checkbox component instead
 
 .optionLabel {
   flex: 1;

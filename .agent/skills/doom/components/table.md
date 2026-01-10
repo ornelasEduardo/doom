@@ -9,23 +9,24 @@ import { ColumnDef } from "@tanstack/react-table";
 
 ## Props
 
-| Prop                      | Type                                   | Default      | Description                                |
-| ------------------------- | -------------------------------------- | ------------ | ------------------------------------------ |
-| `data`                    | `T[]`                                  | required     | Array of row data                          |
-| `columns`                 | `ColumnDef<T>[]`                       | required     | TanStack column definitions                |
-| `enablePagination`        | `boolean`                              | `true`       | Enable pagination controls                 |
-| `enableFiltering`         | `boolean`                              | `true`       | Enable global search                       |
-| `enableColumnFilters`     | `boolean`                              | `true`       | Enable per-column filters                  |
-| `enableSorting`           | `boolean`                              | `true`       | Enable column sorting                      |
-| `enableVirtualization`    | `boolean`                              | `false`      | Virtualize rows for large datasets         |
-| `enableAdvancedFiltering` | `boolean`                              | `false`      | Enable FilterBuilder UI                    |
-| `pageSize`                | `number`                               | `10`         | Default rows per page                      |
-| `height`                  | `string \| number`                     | —            | Fixed height (required for virtualization) |
-| `variant`                 | `"default" \| "flat"`                  | `"default"`  | Visual style                               |
-| `density`                 | `"compact" \| "standard" \| "relaxed"` | `"standard"` | Row padding                                |
-| `striped`                 | `boolean`                              | `false`      | Alternating row colors                     |
-| `filters`                 | `FilterConfig[]`                       | —            | Filter definitions for advanced filtering  |
-| `toolbarContent`          | `ReactNode`                            | —            | Custom toolbar content                     |
+| Prop                      | Type                                   | Default      | Description                                    |
+| ------------------------- | -------------------------------------- | ------------ | ---------------------------------------------- |
+| `data`                    | `T[]`                                  | required     | Array of row data                              |
+| `columns`                 | `ColumnDef<T>[]`                       | required     | TanStack column definitions                    |
+| `enablePagination`        | `boolean`                              | `true`       | Enable pagination controls                     |
+| `enableFiltering`         | `boolean`                              | `true`       | Enable global search                           |
+| `enableColumnFilters`     | `boolean`                              | `true`       | Enable per-column filters                      |
+| `enableSorting`           | `boolean`                              | `true`       | Enable column sorting                          |
+| `enableVirtualization`    | `boolean`                              | `false`      | Virtualize rows for large datasets             |
+| `enableAdvancedFiltering` | `boolean`                              | `false`      | Enable FilterBuilder UI                        |
+| `pageSize`                | `number`                               | `10`         | Default rows per page                          |
+| `height`                  | `string \| number`                     | —            | Fixed height (scrolls body with sticky header) |
+| `maxHeight`               | `string \| number`                     | —            | Max height (scrolls body with sticky header)   |
+| `variant`                 | `"default" \| "flat"`                  | `"default"`  | Visual style                                   |
+| `density`                 | `"compact" \| "standard" \| "relaxed"` | `"standard"` | Row padding                                    |
+| `striped`                 | `boolean`                              | `false`      | Alternating row colors                         |
+| `filters`                 | `FilterConfig[]`                       | —            | Filter definitions for advanced filtering      |
+| `toolbarContent`          | `ReactNode`                            | —            | Custom toolbar content                         |
 
 ## Column Definition
 

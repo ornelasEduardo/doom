@@ -37,7 +37,7 @@ interface ModalHeaderProps {
   id?: string;
 }
 
-export function ModalHeader({ children, className, id }: ModalHeaderProps) {
+function ModalHeader({ children, className, id }: ModalHeaderProps) {
   const { onClose, titleId } = React.useContext(ModalContext);
 
   return (
@@ -62,7 +62,7 @@ export function ModalHeader({ children, className, id }: ModalHeaderProps) {
   );
 }
 
-export function ModalBody({
+function ModalBody({
   children,
   className,
 }: {
@@ -72,7 +72,7 @@ export function ModalBody({
   return <div className={clsx(styles.body, className)}>{children}</div>;
 }
 
-export function ModalFooter({
+function ModalFooter({
   children,
   className,
 }: {
@@ -91,7 +91,7 @@ export function ModalFooter({
   );
 }
 
-export function Modal({
+function ModalInternal({
   isOpen,
   onClose,
   title,
@@ -183,3 +183,10 @@ export function Modal({
     document.body,
   );
 }
+
+// Namespace export pattern (like Chart)
+export const Modal = Object.assign(ModalInternal, {
+  Header: ModalHeader,
+  Body: ModalBody,
+  Footer: ModalFooter,
+});

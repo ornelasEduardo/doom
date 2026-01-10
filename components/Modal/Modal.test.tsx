@@ -79,4 +79,10 @@ describe("Modal Component", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(handleClose).toHaveBeenCalled();
   });
+
+  it("exports sub-components via namespace", () => {
+    expect(Modal.Header).toBeDefined();
+    expect(Modal.Body).toBeDefined();
+    expect(Modal.Footer).toBeDefined();
+  });
 });

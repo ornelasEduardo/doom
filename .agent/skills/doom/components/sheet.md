@@ -12,35 +12,60 @@ import { Sheet } from "doom-design-system";
 | ---------- | ---------------------- | ----------- | ------------------- |
 | `isOpen`   | `boolean`              | required    | Controls visibility |
 | `onClose`  | `() => void`           | required    | Close callback      |
-| `title`    | `string`               | —           | Header title        |
+| `title`    | `ReactNode`            | —           | Header title        |
 | `children` | `ReactNode`            | required    | Sheet content       |
 | `footer`   | `ReactNode`            | —           | Footer content      |
 | `variant`  | `"default" \| "solid"` | `"default"` | Visual style        |
 
-## Usage
+## Usage Patterns
+
+### Shorthand API (simple sheets)
 
 ```tsx
 <Sheet
   isOpen={isOpen}
   onClose={() => setIsOpen(false)}
-  title="Filters"
-  footer={
-    <Flex gap={2}>
-      <Button variant="ghost" onClick={reset}>
-        Reset
-      </Button>
-      <Button onClick={apply}>Apply</Button>
-    </Flex>
-  }
+  title="Options"
+  footer={<Button onClick={handleConfirm}>Confirm</Button>}
 >
-  <Stack gap={4}>{/* Filter controls */}</Stack>
+  <RadioGroup options={options} />
 </Sheet>
 ```
 
+### Composition API (custom layouts)
+
+```tsx
+<Sheet isOpen={isOpen} onClose={onClose}>
+  <Sheet.Header>
+    <Flex align="center" gap={2}>
+      <Icon name="settings" />
+      <Text variant="h4">Advanced Options</Text>
+    </Flex>
+  </Sheet.Header>
+  <Sheet.Body>
+    <Stack gap={4}>{/* Custom content */}</Stack>
+  </Sheet.Body>
+  <Sheet.Footer>
+    <Button variant="ghost" onClick={onClose}>
+      Cancel
+    </Button>
+    <Button onClick={handleSave}>Apply</Button>
+  </Sheet.Footer>
+</Sheet>
+```
+
+## Sub-components
+
+| Component      | Description             |
+| -------------- | ----------------------- |
+| `Sheet.Header` | Header with drag handle |
+| `Sheet.Body`   | Scrollable content area |
+| `Sheet.Footer` | Action buttons area     |
+
 ## Guidelines
 
-- Slides up from bottom of screen (mobile-friendly).
-- Supports drag-to-dismiss gesture (swipe down to close).
+- Use for bottom sheets on mobile or compact overlays.
+- Supports drag-to-dismiss gesture (drag down 150px+ to close).
 - Closes on Escape key and overlay click.
-- Use for mobile-first overlays, filters, or action sheets.
-- For side panels, use `Drawer` instead.
+- Use `variant="solid"` for high-emphasis content.
+- Use composition API when you need custom header content.

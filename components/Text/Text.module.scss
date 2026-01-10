@@ -17,7 +17,16 @@
   text-align: right;
 }
 
-/* Variants */
+/* Variants - all headings reset margins for predictable layout */
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  margin: 0;
+}
+
 .h1 {
   font-size: var(--text-5xl);
   font-weight: var(--font-black);

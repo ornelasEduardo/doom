@@ -334,3 +334,54 @@ export const SolidVariant: Story = {
     );
   },
 };
+
+export const Composition: Story = {
+  render: (args) => {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <Flex align="center" gap={2}>
+            <Settings2 size={18} />
+            Custom Layout
+          </Flex>
+        </Button>
+        <Drawer
+          {...args}
+          isOpen={open}
+          side="right"
+          onClose={() => setOpen(false)}
+        >
+          <Drawer.Header>
+            <Flex align="center" gap={2}>
+              <Shield size={20} />
+              <Text variant="h4" weight="bold">
+                Custom Header
+              </Text>
+            </Flex>
+          </Drawer.Header>
+          <Drawer.Body>
+            <Stack gap={4}>
+              <Text>
+                This drawer uses the composition API with{" "}
+                <code>Drawer.Header</code>, <code>Drawer.Body</code>, and{" "}
+                <code>Drawer.Footer</code> for complete control.
+              </Text>
+              <ActionRow
+                description="Full layout customization"
+                icon={<Target size={20} />}
+                title="Composition Pattern"
+              />
+            </Stack>
+          </Drawer.Body>
+          <Drawer.Footer>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setOpen(false)}>Save Changes</Button>
+          </Drawer.Footer>
+        </Drawer>
+      </>
+    );
+  },
+};

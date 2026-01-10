@@ -3,7 +3,7 @@
 ## Import
 
 ```tsx
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "doom-design-system";
+import { Modal } from "doom-design-system";
 ```
 
 ## Props
@@ -18,7 +18,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "doom-design-system";
 
 ## Usage Patterns
 
-### Shorthand API (recommended for simple modals)
+### Shorthand API (simple modals)
 
 ```tsx
 <Modal
@@ -38,23 +38,31 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "doom-design-system";
 </Modal>
 ```
 
-### Composition API (for custom layouts)
+### Composition API (custom layouts)
 
 ```tsx
 <Modal isOpen={isOpen} onClose={onClose}>
-  <ModalHeader>
+  <Modal.Header>
     <Text variant="h3">Custom Title</Text>
-  </ModalHeader>
-  <ModalBody>
+  </Modal.Header>
+  <Modal.Body>
     <Stack gap={4}>
       <Text>Custom body content...</Text>
     </Stack>
-  </ModalBody>
-  <ModalFooter>
+  </Modal.Body>
+  <Modal.Footer>
     <Button onClick={onClose}>Close</Button>
-  </ModalFooter>
+  </Modal.Footer>
 </Modal>
 ```
+
+## Sub-components
+
+| Component      | Description              |
+| -------------- | ------------------------ |
+| `Modal.Header` | Header with close button |
+| `Modal.Body`   | Scrollable content area  |
+| `Modal.Footer` | Action buttons area      |
 
 ## Guidelines
 

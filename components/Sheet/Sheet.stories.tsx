@@ -364,3 +364,55 @@ export const Solid: Story = {
     );
   },
 };
+
+export const Composition: Story = {
+  render: function Render(args) {
+    const [open, setOpen] = useState(false);
+    return (
+      <Flex align="center" justify="center" style={{ height: "200px" }}>
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <Flex align="center" gap={2}>
+            <SlidersHorizontal size={18} />
+            Custom Layout
+          </Flex>
+        </Button>
+        <Sheet {...args} isOpen={open} onClose={() => setOpen(false)}>
+          <Sheet.Header>
+            <Flex align="center" gap={2}>
+              <Command size={20} />
+              <Text variant="h4" weight="bold">
+                Custom Header
+              </Text>
+            </Flex>
+          </Sheet.Header>
+          <Sheet.Body>
+            <Stack gap={4}>
+              <Text>
+                This sheet uses the composition API with{" "}
+                <code>Sheet.Header</code>, <code>Sheet.Body</code>, and{" "}
+                <code>Sheet.Footer</code> for complete control.
+              </Text>
+              <Alert
+                description="Composition allows custom icons and layouts in the header."
+                title="Pro Tip"
+                variant="info"
+              />
+            </Stack>
+          </Sheet.Body>
+          <Sheet.Footer>
+            <Button
+              style={{ width: "100%" }}
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button style={{ width: "100%" }} onClick={() => setOpen(false)}>
+              Apply
+            </Button>
+          </Sheet.Footer>
+        </Sheet>
+      </Flex>
+    );
+  },
+};
