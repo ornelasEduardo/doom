@@ -2,7 +2,7 @@
 
 These rules must be followed for all code generation and modification tasks within the `doom` design system.
 
-## 0. Communication Protocol (Experienced Engineer)
+## Communication Protocol (Experienced Engineer)
 
 - **Conciseness**: Be succinct. Avoid fluff, filler, and stating the obvious. Focus on the _actions_ and _technical rationale_.
 - **Competence Assumption**: Assume the user is an experienced engineer. Do not over-explain basic concepts (e.g., standard React patterns, basic CSS) unless explicitly asked.
@@ -11,26 +11,39 @@ These rules must be followed for all code generation and modification tasks with
   2.  You detect a significant risk or deviation from best practices in the user's request.
   - Otherwise, proceed with the most optimal, standard implementation immediately.
 
-## 1. Component Architecture
+## PREREQUISITE KNOWLEDGE (READ THIS FIRST)
+
+You **MUST** consult these resources before generating code:
+
+1.  **Skills** (`.agent/skills/doom/`): Check this directory for architectural patterns and component documentation relevant to your task.
+    - _Rule_: If a skill file exists for a component you are editing, you **MUST** read it first.
+    - _Maintenance_: If you modify code, you **MUST** update the corresponding skill file.
+2.  **Cheat Sheet** (`.agent/AGENTS.md`): Quick reference for commands, tokens, and standard patterns.
+3.  **Workflows** (`.agent/workflows/`): Use these for scaffolding and automation.
+
+## Component Architecture
 
 - **Reusability**: Components must be generic, reusable, and composable. Avoid business logic.
 - **Props**: Expose sufficient props for customization (className, style, children, etc.) but enforce consistency via variants.
 - **Exports**: All public components must be exported from the root `index.ts`.
 
-## 2. Styling & Layout
+## Styling & Layout
 
-- **NO Inline Styles**: Avoid the `style={{ ... }}` prop. Use styled-components/emotion.
-- **Layout Components**: Use `Flex` and `Grid` for internal component layout where possible.
-- **Spacing**: Use `gap` for spacing between elements.
-- **Library**: Use `@emotion/styled` and `@emotion/react`.
+- **Library**: Use **SCSS Modules** (`.module.scss`).
+- **Methodology**: Use `clsx` for conditional class names.
+- **Mixins**: Use `@use "../../styles/mixins" as m;` for consistent interactive states, focus rings, and hover effects.
+- **NO Inline Styles**: Avoid the `style={{ ... }}` prop. Define classes in your SCSS module.
+- **Layout**: Use standard CSS Flexbox/Grid in SCSS, or the `Stack`/`Flex` layout components for composition.
+- **Spacing**: Use `gap` for spacing. Use tokens (`var(--spacing-*)`) for margins/padding.
 
-## 3. Typography
+## Typography
 
 - **Use Text Component**: Internally use the `<Text>` component for any text rendering.
 - **Variants**: Use `variant="..."` (h1-h6, body, small, caption).
 - **Colors**: Use `color="..."` (primary, muted, error, etc.) instead of hex codes.
+- **No Default Margins**: Do NOT add `margin` to text components. Use layout components or `gap` to handle spacing.
 
-## 4. Theming & Colors
+## Theming & Colors
 
 - **CSS Variables Only**: Never use hardcoded hex values. Use the defined CSS variables.
   - `var(--primary)`
@@ -39,43 +52,43 @@ These rules must be followed for all code generation and modification tasks with
   - `var(--muted-foreground)`
 - **Borders**: Always use `var(--border-width)` and `var(--radius)`.
 
-## 5. Icons
+## Icons
 
 - **Library**: Use `lucide-react`.
 - **Standard Props**: Always set `strokeWidth={2.5}` for the neubrutalism aesthetic.
 - **Sizing**: Use the `size` prop (e.g., `size={24}`).
 
-## 6. File Organization & Imports
+## File Organization & Imports
 
 - **Colocation**: Keep related files together (Component, Stories, Tests).
 - **Relative Imports**: Use relative imports (e.g., `../../components/...`) for internal dependencies. Do NOT use path aliases like `@/`.
 
-## 7. TypeScript & Safety
+## TypeScript & Safety
 
 - **Strict Typing**: Define explicit interfaces for all component props.
 - **No Any**: Avoid using `any`.
 - **Prop Types**: Use specific union types for string props (e.g., `variant: 'primary' | 'secondary'`).
 
-## 8. React Patterns
+## React Patterns
 
 - **'use client'**: Explicitly add `'use client';` at the top of components to ensure compatibility with Next.js App Router consumers.
 - **ForwardRef**: Ensure primitive components forward refs to the underlying DOM element.
 
-## 9. Documentation & Testing
+## Documentation & Testing
 
 - **Storybook**: Every component MUST have a corresponding `.stories.tsx` file.
 - **Maintenance**: If you add/modify props, you **MUST** update the Storybook file.
 - **Examples**: Stories should cover all major variants and states.
 - **Unit Tests**: Create/update unit tests (`.test.tsx`) for all components using `vitest`.
 
-## 10. Accessibility Standards
+## Accessibility Standards
 
-- **Color Contrast**: Ensure all text and UI components meet **WCAG 2.1 AAA** standards.
+- **Color Contrast**: Ensure all text and UI components meet **WCAG 2.1 AA** standards (AAA if possible).
 - **Semantic HTML**: Use appropriate HTML tags (`<button>`, `<nav>`, `<main>`, `<h1>`-`<h6>`).
 - **ARIA**: Use ARIA attributes only when semantic HTML is insufficient.
 - **Focus Management**: Ensure all interactive elements are focusable and have visible focus states.
 
-## 11. Code Quality & Readability
+## Code Quality & Readability
 
 ### Naming
 
@@ -253,7 +266,7 @@ hideTimeoutRef.current = setTimeout(() => setActiveData(null), 16);
 setActiveData(null);
 ```
 
-## 12. Code Formatting (ESLint + Prettier)
+## Code Formatting (ESLint + Prettier)
 
 ### Prettier Rules
 
@@ -366,13 +379,3 @@ const unusedVar = 123;
 | Unused imports  | Remove them                  |
 | Unused vars     | Prefix with `_`              |
 | eslint-disable  | Never use                    |
-
-## 13. Skills
-
-### Proactive Reading
-
-- **Check related skills first**: Before modifying a component, token, or style, check if a corresponding `.agent/skills/doom/*.md` file exists. If so, read it to understand patterns and conventions.
-
-### Maintenance
-
-- **Keep skills in sync**: When modifying code that has a corresponding skill file, you MUST update the skill to reflect any changes.

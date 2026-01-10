@@ -11,6 +11,7 @@ npm install
 2. Run Storybook:
 
 ```bash
+// turbo
 npm run storybook
 ```
 
