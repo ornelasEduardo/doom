@@ -366,3 +366,13 @@ const unusedVar = 123;
 | Unused imports  | Remove them                  |
 | Unused vars     | Prefix with `_`              |
 | eslint-disable  | Never use                    |
+
+## 13. Skills
+
+### Proactive Reading
+
+- **Check related skills first**: Before modifying a component, token, or style, check if a corresponding `.agent/skills/doom/*.md` file exists. If so, read it to understand patterns and conventions.
+
+### Maintenance
+
+- **Keep skills in sync**: When modifying code that has a corresponding skill file, you MUST update the skill to reflect any changes.

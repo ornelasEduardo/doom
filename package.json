@@ -14,7 +14,8 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    ".agent/skills"
   ],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
