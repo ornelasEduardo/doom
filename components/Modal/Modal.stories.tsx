@@ -6,7 +6,7 @@ import { Input } from "../Input/Input";
 import { Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 import { Textarea } from "../Textarea/Textarea";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "./Modal";
+import { Modal } from "./Modal";
 
 const meta: Meta<typeof Modal> = {
   title: "Components/Modal",
@@ -116,12 +116,12 @@ export const CustomComposition: Story = {
           Open Custom Modal
         </Button>
         <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-          <ModalHeader>
+          <Modal.Header>
             <Text as="h2" className="mb-0" variant="h3">
               Custom Composition
             </Text>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Header>
+          <Modal.Body>
             <Stack gap={4}>
               <Text>
                 This modal is built by composing <code>ModalHeader</code>,{" "}
@@ -140,11 +140,11 @@ export const CustomComposition: Story = {
                 It allows for completely custom layouts!
               </div>
             </Stack>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Text variant="small">Custom Footer Content</Text>
             <Button onClick={() => setIsOpen(false)}>Got it</Button>
-          </ModalFooter>
+          </Modal.Footer>
         </Modal>
       </Stack>
     );
@@ -160,12 +160,12 @@ export const SolidVariant: Story = {
           Open Solid Modal
         </Button>
         <Modal isOpen={isOpen} variant="solid" onClose={() => setIsOpen(false)}>
-          <ModalHeader>
+          <Modal.Header>
             <Text as="h2" className="mb-0" variant="h3">
               SOLID VARIANT
             </Text>
-          </ModalHeader>
-          <ModalBody>
+          </Modal.Header>
+          <Modal.Body>
             <Stack gap={4}>
               <Text>
                 This modal uses the <code>variant=&quot;solid&quot;</code> prop
@@ -182,15 +182,15 @@ export const SolidVariant: Story = {
                 Perfect for announcements or critical alerts!
               </div>
             </Stack>
-          </ModalBody>
-          <ModalFooter>
+          </Modal.Body>
+          <Modal.Footer>
             <Button variant="outline" onClick={() => setIsOpen(false)}>
               DISMISS
             </Button>
             <Button variant="primary" onClick={() => setIsOpen(false)}>
               Understood
             </Button>
-          </ModalFooter>
+          </Modal.Footer>
         </Modal>
       </Stack>
     );

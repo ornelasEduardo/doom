@@ -58,4 +58,10 @@ describe("Sheet Component", () => {
     const title = getByText("Linked Title");
     expect(dialog).toHaveAttribute("aria-labelledby", title.id);
   });
+
+  it("exports sub-components via namespace", () => {
+    expect(Sheet.Header).toBeDefined();
+    expect(Sheet.Body).toBeDefined();
+    expect(Sheet.Footer).toBeDefined();
+  });
 });

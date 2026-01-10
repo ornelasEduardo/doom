@@ -59,4 +59,10 @@ describe("Drawer Component", () => {
     fireEvent.click(closeBtn);
     expect(handleClose).toHaveBeenCalled();
   });
+
+  it("exports sub-components via namespace", () => {
+    expect(Drawer.Header).toBeDefined();
+    expect(Drawer.Body).toBeDefined();
+    expect(Drawer.Footer).toBeDefined();
+  });
 });

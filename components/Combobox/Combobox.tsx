@@ -340,6 +340,7 @@ export function Combobox({
       placement="bottom-start"
       trigger={
         <button
+          aria-expanded={isOpen}
           className={clsx(
             styles.trigger,
             styles[size],

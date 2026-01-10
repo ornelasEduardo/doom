@@ -6,12 +6,90 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "../Button/Button";
+import { Flex } from "../Layout/Layout";
 import styles from "./Drawer.module.scss";
+
+// Context for composition API
+const DrawerContext = React.createContext<{
+  onClose: () => void;
+  titleId?: string;
+  variant: "default" | "solid";
+}>({
+  onClose: () => {},
+  variant: "default",
+});
+
+// ============================================================================
+// Sub-components for composition API
+// ============================================================================
+
+interface DrawerHeaderProps {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}
+
+export function DrawerHeader({ children, className, id }: DrawerHeaderProps) {
+  const { onClose, titleId } = React.useContext(DrawerContext);
+
+  return (
+    <Flex
+      align="center"
+      className={clsx(styles.header, className)}
+      justify="space-between"
+    >
+      <div className={styles.headerContent} id={id || titleId}>
+        {children}
+      </div>
+      <Button
+        aria-label="Close drawer"
+        size="sm"
+        variant="danger"
+        onClick={onClose}
+      >
+        <X size={24} />
+      </Button>
+    </Flex>
+  );
+}
+
+export function DrawerBody({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={clsx(styles.content, className)}>{children}</div>;
+}
+
+export function DrawerFooter({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Flex
+      align="center"
+      className={clsx(styles.footer, className)}
+      gap={4}
+      justify="flex-end"
+    >
+      {children}
+    </Flex>
+  );
+}
+
+// ============================================================================
+// Main Drawer component
+// ============================================================================
 
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   side?: "left" | "right";
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -19,7 +97,7 @@ interface DrawerProps {
   variant?: "default" | "solid";
 }
 
-export function Drawer({
+function DrawerInternal({
   isOpen,
   onClose,
   title,
@@ -62,7 +140,7 @@ export function Drawer({
   }
 
   return createPortal(
-    <>
+    <DrawerContext.Provider value={{ onClose, titleId, variant }}>
       <div
         aria-hidden="true"
         className={clsx(styles.overlay, isOpen && styles.isOpen)}
@@ -81,25 +159,24 @@ export function Drawer({
         )}
         role="dialog"
       >
-        <div className={styles.header}>
-          {title && (
-            <h2 className={styles.title} id={titleId}>
-              {title}
-            </h2>
-          )}
-          <Button
-            aria-label="Close drawer"
-            size="sm"
-            variant="danger"
-            onClick={onClose}
-          >
-            <X size={24} />
-          </Button>
-        </div>
-        <div className={styles.content}>{children}</div>
-        {footer && <div className={styles.footer}>{footer}</div>}
+        {title ? (
+          <>
+            <DrawerHeader>{title}</DrawerHeader>
+            <DrawerBody>{children}</DrawerBody>
+            {footer && <DrawerFooter>{footer}</DrawerFooter>}
+          </>
+        ) : (
+          children
+        )}
       </div>
-    </>,
+    </DrawerContext.Provider>,
     document.body,
   );
 }
+
+// Namespace export pattern (like Chart)
+export const Drawer = Object.assign(DrawerInternal, {
+  Header: DrawerHeader,
+  Body: DrawerBody,
+  Footer: DrawerFooter,
+});

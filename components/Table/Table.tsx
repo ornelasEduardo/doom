@@ -68,6 +68,7 @@ export interface TableProps<T> {
   onAdvancedFilterChange?: (value: FilterGroupItem) => void;
   pageSize?: number;
   height?: string | number;
+  maxHeight?: string | number;
   className?: string;
   style?: React.CSSProperties;
   variant?: "default" | "flat";
@@ -199,6 +200,7 @@ export function Table<T>({
   toolbarContent,
   filters,
   striped = false,
+  maxHeight,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -391,7 +393,8 @@ export function Table<T>({
         className={styles.tableWrapper}
         style={{
           height: effectiveHeight ?? "auto",
-          overflow: effectiveHeight ? "auto" : "visible",
+          maxHeight: maxHeight ?? "none",
+          overflow: effectiveHeight || maxHeight ? "auto" : "visible",
           overflowX: "auto",
           width: "100%",
         }}

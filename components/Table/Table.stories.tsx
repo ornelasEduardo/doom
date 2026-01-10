@@ -265,6 +265,24 @@ export const Striped: Story = {
   },
 };
 
+export const StickyHeader: Story = {
+  args: {
+    data: generateLargeData(20),
+    columns: columns,
+    maxHeight: 300,
+    enablePagination: true,
+    pageSize: 20,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Demonstrates the sticky header functionality by constraining the table height. Scroll the table body to see the header stay in place.",
+      },
+    },
+  },
+};
+
 export const WithPagination: Story = {
   args: {
     data: largeData,
