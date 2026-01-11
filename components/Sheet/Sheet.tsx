@@ -9,7 +9,6 @@ import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Sheet.module.scss";
 
-// Context for composition API
 const SheetContext = React.createContext<{
   onClose: () => void;
   titleId?: string;
@@ -20,10 +19,6 @@ const SheetContext = React.createContext<{
   variant: "default",
   handlePointerDown: () => {},
 });
-
-// ============================================================================
-// Sub-components for composition API
-// ============================================================================
 
 interface SheetHeaderProps {
   children: React.ReactNode;
@@ -91,10 +86,6 @@ export function SheetFooter({
   );
 }
 
-// ============================================================================
-// Main Sheet component
-// ============================================================================
-
 interface SheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -142,7 +133,6 @@ function SheetInternal({
     };
   }, [isOpen]);
 
-  // Ensure strict cleanup on unmount
   useEffect(() => {
     return () => {
       if (cleanupRef.current) {
@@ -256,8 +246,8 @@ function SheetInternal({
   );
 }
 
-// Namespace export pattern (like Chart)
 export const Sheet = Object.assign(SheetInternal, {
+  Root: SheetInternal,
   Header: SheetHeader,
   Body: SheetBody,
   Footer: SheetFooter,

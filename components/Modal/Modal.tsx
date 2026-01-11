@@ -184,8 +184,8 @@ function ModalInternal({
   );
 }
 
-// Namespace export pattern (like Chart)
 export const Modal = Object.assign(ModalInternal, {
+  Root: ModalInternal,
   Header: ModalHeader,
   Body: ModalBody,
   Footer: ModalFooter,

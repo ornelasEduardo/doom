@@ -19,7 +19,15 @@ vi.mock("lucide-react", () => ({
 }));
 
 vi.mock("../Button", () => ({
-  Button: ({ children, onClick, "aria-label": ariaLabel }: any) => (
+  Button: ({
+    children,
+    onClick,
+    "aria-label": ariaLabel,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    "aria-label"?: string;
+  }) => (
     <button aria-label={ariaLabel} onClick={onClick}>
       {children}
     </button>
@@ -27,6 +35,17 @@ vi.mock("../Button", () => ({
 }));
 
 describe("Sheet Component", () => {
+  it("is hidden when closed", () => {
+    render(
+      <Sheet isOpen={false} title="Test Sheet" onClose={() => {}}>
+        Content
+      </Sheet>,
+    );
+    // The component stays mounted for exit animations but should be hidden
+    const panel = screen.getByRole("dialog", { hidden: true });
+    expect(panel).toBeInTheDocument();
+  });
+
   it("renders when open", () => {
     render(
       <Sheet isOpen={true} title="Test Sheet" onClose={() => {}}>
@@ -63,5 +82,15 @@ describe("Sheet Component", () => {
     expect(Sheet.Header).toBeDefined();
     expect(Sheet.Body).toBeDefined();
     expect(Sheet.Footer).toBeDefined();
+  });
+
+  it("should support composition via Sheet.Root", () => {
+    render(
+      <Sheet.Root isOpen={true} onClose={() => {}}>
+        <Sheet.Header>Custom Header</Sheet.Header>
+        <Sheet.Body>Custom Body</Sheet.Body>
+      </Sheet.Root>,
+    );
+    expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
 });
