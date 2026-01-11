@@ -81,8 +81,7 @@ describe("Drawer Component", () => {
         <Drawer.Body>Custom Body</Drawer.Body>
       </Drawer.Root>,
     );
-    // Note: drawer-root is on the dialog div, which might be hidden if implementation differs,
-    // but isOpen=true should make it visible.
+
     expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
 });
