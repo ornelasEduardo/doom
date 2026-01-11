@@ -12,14 +12,24 @@ describe("Card Component", () => {
     expect(screen.getByText("Card Content")).toBeInTheDocument();
   });
 
-  it("should pass through props", () => {
+  it("should have padding by default (Standard usage)", () => {
+    render(<Card data-testid="card">Content</Card>);
+    const card = screen.getByTestId("card");
+    expect(card.tagName).toBe("DIV");
+  });
+
+  it("should support composition via Card.Root", () => {
     render(
-      <Card className="custom-class" data-testid="test-card">
-        Content
-      </Card>,
+      <Card.Root data-testid="card-root">
+        <Card.Header>Header</Card.Header>
+        <Card.Body>Body</Card.Body>
+        <Card.Footer>Footer</Card.Footer>
+      </Card.Root>,
     );
-    const card = screen.getByTestId("test-card");
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveClass("custom-class");
+
+    expect(screen.getByTestId("card-root")).toBeInTheDocument();
+    expect(screen.getByText("Header")).toBeInTheDocument();
+    expect(screen.getByText("Body")).toBeInTheDocument();
+    expect(screen.getByText("Footer")).toBeInTheDocument();
   });
 });

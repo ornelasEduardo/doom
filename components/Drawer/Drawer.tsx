@@ -9,7 +9,6 @@ import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Drawer.module.scss";
 
-// Context for composition API
 const DrawerContext = React.createContext<{
   onClose: () => void;
   titleId?: string;
@@ -18,10 +17,6 @@ const DrawerContext = React.createContext<{
   onClose: () => {},
   variant: "default",
 });
-
-// ============================================================================
-// Sub-components for composition API
-// ============================================================================
 
 interface DrawerHeaderProps {
   children: React.ReactNode;
@@ -81,10 +76,6 @@ export function DrawerFooter({
     </Flex>
   );
 }
-
-// ============================================================================
-// Main Drawer component
-// ============================================================================
 
 interface DrawerProps {
   isOpen: boolean;
@@ -174,8 +165,8 @@ function DrawerInternal({
   );
 }
 
-// Namespace export pattern (like Chart)
 export const Drawer = Object.assign(DrawerInternal, {
+  Root: DrawerInternal,
   Header: DrawerHeader,
   Body: DrawerBody,
   Footer: DrawerFooter,

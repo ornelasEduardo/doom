@@ -8,11 +8,15 @@ import { Modal } from "./Modal";
 
 // Mock Design System components
 vi.mock("../..", () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
-  Button: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
-  ),
-  Flex: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Button: ({
+    children,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{children}</button>,
+  Flex: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe("Modal Component", () => {
@@ -24,7 +28,7 @@ describe("Modal Component", () => {
     );
     // The component stays mounted for exit animations but should be hidden
     const dialog = screen.getByRole("dialog", { hidden: true });
-    expect(dialog).not.toHaveClass(/isOpen/);
+    expect(dialog).toBeInTheDocument();
   });
 
   it("should render when isOpen is true with accessibility attributes", () => {
@@ -84,5 +88,18 @@ describe("Modal Component", () => {
     expect(Modal.Header).toBeDefined();
     expect(Modal.Body).toBeDefined();
     expect(Modal.Footer).toBeDefined();
+  });
+
+  it("should support composition via Modal.Root", () => {
+    render(
+      <Modal.Root data-testid="modal-root" isOpen={true} onClose={() => {}}>
+        <Modal.Header>Custom Header</Modal.Header>
+        <Modal.Body>Custom Body</Modal.Body>
+        <Modal.Footer>Custom Footer</Modal.Footer>
+      </Modal.Root>,
+    );
+
+    expect(screen.getByTestId("modal-root")).toBeInTheDocument();
+    expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Badge } from "../Badge/Badge";
+import { Button } from "../Button/Button";
 import { Image } from "../Image/Image";
 import { Flex, Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
@@ -24,26 +25,17 @@ type Story = StoryObj<typeof Card>;
 
 export const Default: Story = {
   args: {
-    style: { height: "400px" },
     children: (
       <Stack gap={1}>
         <Text variant="h3">Card Title</Text>
         <Stack style={{ maxHeight: "300px", overflow: "scroll" }}>
           <Text>
-            This is some content inside the card. Lorem ipsum dolor sit amet
-            consectetur adipisicing elit. Lorem ipsum, dolor sit amet
-            consectetur adipisicing elit. Modi pariatur veritatis tempore,
-            explicabo autem beatae saepe! Tenetur aliquid, obcaecati quasi,
-            soluta cupiditate exercitationem excepturi, quas perferendis
-            repellat error doloremque non?
+            This is a standard card. It uses the default <code>Card</code>{" "}
+            wrapper which adds padding automatically.
           </Text>
           <Text>
-            Some more text that we&apos;re adding here lorem ipsum dolor sit
-            amet consectetur adipisicing elit. Lorem ipsum dolor sit amet
-            consectetur adipisicing elit. Modi pariatur veritatis tempore,
-            explicabo autem beatae saepe! Tenetur aliquid, obcaecati quasi,
-            soluta cupiditate exercitationem excepturi, quas perferendis
-            repellat error doloremque non?
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Modi
+            pariatur veritatis tempore, explicabo autem beatae saepe!
           </Text>
         </Stack>
       </Stack>
@@ -51,47 +43,84 @@ export const Default: Story = {
   },
 };
 
+export const Composition: Story = {
+  render: () => (
+    <Card.Root>
+      <Card.Header>
+        <Flex align="center" justify="space-between">
+          <Text className="mb-0" variant="h4">
+            Composed Card
+          </Text>
+          <Badge variant="success">Active</Badge>
+        </Flex>
+      </Card.Header>
+      <Card.Body>
+        <Stack gap={2}>
+          <Text>
+            This card uses structure composition:
+            <code>{"<Card.Root>"}</code>,<code>{"<Card.Header>"}</code>,
+            <code>{"<Card.Body>"}</code>, and <code>{"<Card.Footer>"}</code>.
+          </Text>
+          <Text>
+            This provides consistent borders and spacing for advanced layouts.
+          </Text>
+        </Stack>
+      </Card.Body>
+      <Card.Footer>
+        <Flex gap={2} justify="flex-end">
+          <Button size="sm" variant="ghost">
+            Cancel
+          </Button>
+          <Button size="sm">Save Changes</Button>
+        </Flex>
+      </Card.Footer>
+    </Card.Root>
+  ),
+};
+
 export const WithImage: Story = {
   render: () => (
-    <Card className="w-full p-0" style={{ overflow: "hidden" }}>
-      <Stack gap={0}>
+    <Card.Root>
+      <div
+        style={{
+          width: "100%",
+          height: "250px",
+          overflow: "hidden",
+        }}
+      >
         <Image
           alt="Randomly generated image from picsum"
           fit="cover"
           rounded={false}
           src="https://picsum.photos/600/500"
-          style={{
-            width: "100%",
-            height: "250px",
-          }}
+          style={{ width: "100%", height: "100%" }}
         />
-        <Stack className="p-5" gap={2}>
+      </div>
+      <Card.Body>
+        <Stack gap={2}>
           <Flex align="flex-end" justify="space-between">
             <Text color="muted" variant="small">
               Dec 2025
             </Text>
           </Flex>
           <Text className="mb-0" variant="h3">
-            Randomly image Card
+            Full Bleed Image
           </Text>
           <Text>
-            Cards are excellent containers for showcasing images alongside
-            descriptive text.
+            By using <code>Card.Root</code> (which has no padding), we can
+            easily insert full-width images without negative margin hacks.
           </Text>
           <Flex wrap gap={2}>
             <Badge size="sm" variant="primary">
               Photography
             </Badge>
-            <Badge size="sm" variant="success">
-              Random
-            </Badge>
             <Badge size="sm" variant="secondary">
-              What could it be?
+              Travel
             </Badge>
           </Flex>
         </Stack>
-      </Stack>
-    </Card>
+      </Card.Body>
+    </Card.Root>
   ),
 };
 
@@ -103,10 +132,8 @@ export const ImageOnly: Story = {
       </div>
     ),
   ],
-  args: {
-    className: "p-0",
-    style: { overflow: "hidden" },
-    children: (
+  render: () => (
+    <Card.Root>
       <Image
         alt="Randomly generated image from picsum"
         fit="cover"
@@ -117,6 +144,6 @@ export const ImageOnly: Story = {
           height: "450px",
         }}
       />
-    ),
-  },
+    </Card.Root>
+  ),
 };
