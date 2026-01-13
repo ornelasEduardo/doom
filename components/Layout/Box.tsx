@@ -85,16 +85,50 @@ export const Box = forwardRef<HTMLElement, BoxProps>(
     },
     ref,
   ) => {
+    // Build base style, filtering out undefined values
+    const baseStyle: React.CSSProperties = {};
+
+    const resolvedWidth = resolveSize(width);
+    const resolvedMinWidth = resolveSize(minWidth);
+    const resolvedMaxWidth = resolveSize(maxWidth);
+    const resolvedHeight = resolveSize(height);
+    const resolvedMinHeight = resolveSize(minHeight);
+    const resolvedMaxHeight = resolveSize(maxHeight);
+    const resolvedFlex = typeof flex === "boolean" ? (flex ? "1" : "0") : flex;
+    const resolvedGrow = typeof grow === "boolean" ? (grow ? 1 : 0) : grow;
+    const resolvedShrink =
+      typeof shrink === "boolean" ? (shrink ? 1 : 0) : shrink;
+
+    if (resolvedWidth !== undefined) {
+      baseStyle.width = resolvedWidth;
+    }
+    if (resolvedMinWidth !== undefined) {
+      baseStyle.minWidth = resolvedMinWidth;
+    }
+    if (resolvedMaxWidth !== undefined) {
+      baseStyle.maxWidth = resolvedMaxWidth;
+    }
+    if (resolvedHeight !== undefined) {
+      baseStyle.height = resolvedHeight;
+    }
+    if (resolvedMinHeight !== undefined) {
+      baseStyle.minHeight = resolvedMinHeight;
+    }
+    if (resolvedMaxHeight !== undefined) {
+      baseStyle.maxHeight = resolvedMaxHeight;
+    }
+    if (resolvedFlex !== undefined) {
+      baseStyle.flex = resolvedFlex;
+    }
+    if (resolvedGrow !== undefined) {
+      baseStyle.flexGrow = resolvedGrow;
+    }
+    if (resolvedShrink !== undefined) {
+      baseStyle.flexShrink = resolvedShrink;
+    }
+
     const resolvedStyle: React.CSSProperties = {
-      width: resolveSize(width),
-      minWidth: resolveSize(minWidth),
-      maxWidth: resolveSize(maxWidth),
-      height: resolveSize(height),
-      minHeight: resolveSize(minHeight),
-      maxHeight: resolveSize(maxHeight),
-      flex: typeof flex === "boolean" ? (flex ? "1" : "0") : flex,
-      flexGrow: typeof grow === "boolean" ? (grow ? 1 : 0) : grow,
-      flexShrink: typeof shrink === "boolean" ? (shrink ? 1 : 0) : shrink,
+      ...baseStyle,
       ...style,
     };
 

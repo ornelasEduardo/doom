@@ -115,19 +115,19 @@
   $color: var(--shadow-base)
 ) {
   @if $direction == "standard" {
-    box-shadow: $size $size 0 0 $color;
+    box-shadow: #{$size} #{$size} 0 0 $color;
   } @else if $direction == "top" {
     /* Top-Right heavy shadow */
-    box-shadow: $size (-$size) 0 0 $color;
+    box-shadow: #{$size} calc(-1 * #{$size}) 0 0 $color;
   } @else if $direction == "bottom" {
     /* Standard Bottom-Right shadow */
-    box-shadow: $size $size 0 0 $color;
+    box-shadow: #{$size} #{$size} 0 0 $color;
   } @else if $direction == "left" {
     /* Bottom-Left shadow for right-anchored elements */
-    box-shadow: (-$size) $size 0 0 $color;
+    box-shadow: calc(-1 * #{$size}) #{$size} 0 0 $color;
   } @else if $direction == "right" {
     /* Bottom-Right shadow for left-anchored elements */
-    box-shadow: $size $size 0 0 $color;
+    box-shadow: #{$size} #{$size} 0 0 $color;
   }
 }
 

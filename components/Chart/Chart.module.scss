@@ -149,7 +149,7 @@
   width: 100%;
   flex: 1;
 
-  height: auto;
+  height: 100%;
   min-height: 0;
 
   position: relative;
@@ -167,9 +167,17 @@
 }
 
 .tooltipCard {
-  padding: var(--spacing-2) var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--text-xs);
   white-space: nowrap;
+}
+
+.tooltipLabel {
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-1);
 }
 
 .axisLabel {

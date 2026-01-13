@@ -86,9 +86,7 @@ export const Prefetch: Story = {
     >
       <Stack gap={4}>
         <Stack gap={0}>
-          <Text className="mb-0" variant="h5">
-            Network Tab Demo
-          </Text>
+          <Text variant="h5">Network Tab Demo</Text>
           <Text>
             Hovering the link below will dynamically inject a prefetch tag for a
             high-res image.

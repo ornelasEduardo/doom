@@ -132,20 +132,26 @@
 
 /* Sizes */
 .sm {
-  padding: 0.25rem;
+  padding: var(--spacing-1);
   font-size: var(--text-sm);
-  min-width: 24px;
+  min-width: var(--spacing-6);
+  min-height: var(--control-height-sm);
+  box-sizing: border-box;
   justify-content: center;
 }
 
 .md {
-  padding: 0.75rem 1.5rem;
+  padding: var(--spacing-3) var(--spacing-6);
   font-size: var(--text-base);
+  min-height: var(--control-height-md);
+  box-sizing: border-box;
 }
 
 .lg {
-  padding: 1rem 2rem;
+  padding: var(--spacing-4) var(--spacing-8);
   font-size: var(--text-lg);
+  min-height: var(--control-height-lg);
+  box-sizing: border-box;
 }
 /* Loading State */
 .loading {

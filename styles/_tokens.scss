@@ -115,6 +115,8 @@ $size-touch-target: $base-unit * 11; // 44px
   --radius: #{$radius};
   --radius-lg: #{$radius-lg};
   --radius-xl: #{$radius-xl};
+  --radius-pill: 9999px;
+  --radius-full: 50%;
   --border-width: #{$border-width};
   --outline-width: #{$outline-width};
   --outline-offset: #{$outline-offset};
@@ -124,6 +126,11 @@ $size-touch-target: $base-unit * 11; // 44px
   --size-icon-md: #{$size-icon-md};
   --size-icon-lg: #{$size-icon-lg};
   --size-touch-target: #{$size-touch-target};
+
+  // Component heights (for inputs, selects, buttons)
+  --control-height-sm: 32px;
+  --control-height-md: 40px;
+  --control-height-lg: 48px;
 
   // Shadows (offsets derived from base-unit, colors are theme-dependent)
   // Small shadows: 1 unit offset (4px)

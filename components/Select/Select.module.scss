@@ -20,7 +20,8 @@
   font-weight: var(--font-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  min-height: var(--size-lg);
+  min-height: var(--control-height-lg);
+  box-sizing: border-box;
 
   @include base-interactive;
   @include brutalist-hover;
@@ -29,7 +30,7 @@
 
   &.sm {
     padding: var(--spacing-2) var(--spacing-4);
-    min-height: var(--size-md);
+    min-height: var(--control-height-md);
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.05em;

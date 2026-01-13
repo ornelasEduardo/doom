@@ -30,14 +30,16 @@
   border: none;
   background: transparent;
   color: inherit;
-  padding: 0.75rem 1rem;
-  padding-right: 0.75rem;
+  padding: var(--spacing-3) var(--spacing-4);
+  padding-right: var(--spacing-3);
   font-weight: 700;
   font-size: var(--text-base);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  border-right: 2px solid rgba(0, 0, 0, 0.2);
+  border-right: var(--border-width) solid rgba(0, 0, 0, 0.2);
+  min-height: var(--control-height-md);
+  box-sizing: border-box;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.25);
@@ -48,10 +50,12 @@
   border: none;
   background: transparent;
   color: inherit;
-  padding: 0.75rem 0.75rem;
+  padding: var(--spacing-3);
   cursor: pointer;
   display: flex;
   align-items: center;
+  min-height: var(--control-height-md);
+  box-sizing: border-box;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.25);
@@ -62,23 +66,23 @@
   background: var(--card-bg);
   border: var(--border-width) solid var(--primary);
   border-radius: var(--radius);
-  box-shadow: 8px 8px 0px 0px var(--shadow-primary);
-  min-width: 200px;
+  box-shadow: var(--spacing-2) var(--spacing-2) 0px 0px var(--shadow-primary);
+  min-width: var(--spacing-56);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.25rem;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
 }
 
 .item {
   text-align: left;
-  padding: 0.75rem 1rem;
+  padding: var(--spacing-3) var(--spacing-4);
   background: transparent;
   border: none;
   color: var(--foreground);
   cursor: pointer;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: calc(var(--radius) - var(--border-width));
   font-size: var(--text-base);
   font-weight: 600;
   transition: background-color 0.2s;

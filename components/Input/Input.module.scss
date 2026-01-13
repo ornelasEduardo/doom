@@ -16,10 +16,12 @@
 
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: var(--spacing-4) var(--spacing-6);
   font-size: var(--text-base);
   background: var(--card-bg);
   color: var(--foreground);
+  min-height: var(--control-height-lg);
+  box-sizing: border-box;
 
   @include base-interactive;
   @include focus;

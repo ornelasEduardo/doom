@@ -1,5 +1,5 @@
 .actionRow {
-  padding: 1.5rem;
+  padding: var(--spacing-6);
   cursor: pointer;
   transition: background-color 0.2s ease;
   border-bottom: var(--border-width) solid var(--card-border);
@@ -14,8 +14,8 @@
 }
 
 .iconWrapper {
-  width: 48px;
-  height: 48px;
+  width: var(--spacing-12);
+  height: var(--spacing-12);
   background: var(--primary);
   color: var(--primary-foreground);
   display: flex;

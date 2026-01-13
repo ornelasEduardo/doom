@@ -14,14 +14,15 @@
   letter-spacing: 0.05em;
   text-align: left;
   cursor: pointer;
-  min-height: var(--size-lg);
+  min-height: var(--control-height-lg);
+  box-sizing: border-box;
   transition: all var(--duration-fast) var(--ease-in-out);
 
   @include m.brutalist-hover;
 
   &.sm {
     padding: var(--spacing-2) var(--spacing-4);
-    min-height: var(--size-md);
+    min-height: var(--control-height-md);
     font-size: var(--text-xs);
   }
 

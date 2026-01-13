@@ -64,10 +64,7 @@ export function Pagination({
     return pages.map((page, index) => {
       if (page === "ellipsis") {
         return (
-          <span
-            key={`ellipsis-${index}`}
-            style={{ display: "flex", alignItems: "center" }}
-          >
+          <span key={`ellipsis-${index}`} className={styles.ellipsis}>
             <MoreHorizontal size={20} />
           </span>
         );
