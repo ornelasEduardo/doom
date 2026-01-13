@@ -13,7 +13,7 @@
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
   max-width: 100%;
-  min-width: 280px;
+  min-width: var(--spacing-72);
 
   &.disabled {
     cursor: not-allowed;
@@ -37,7 +37,7 @@
 
   &.void {
     border-color: transparent;
-    box-shadow: 0 0 0 4px var(--foreground);
+    box-shadow: 0 0 0 var(--spacing-1) var(--foreground);
     transform: scale(1.01);
     cursor: wait;
 
@@ -155,19 +155,19 @@
 .header {
   background-color: var(--primary);
   color: var(--primary-foreground);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-2) var(--spacing-4);
   border-bottom: var(--border-width) solid var(--border-strong);
   user-select: none;
-  min-height: 56px;
+  min-height: var(--header-height);
   transition: all 0.4s ease;
 
   @include mq("xs", "max") {
-    padding: var(--spacing-sm);
-    min-height: 48px;
+    padding: var(--spacing-2);
+    min-height: var(--header-height-sm);
   }
 
   @include mq("xxs", "max") {
-    padding: var(--spacing-md);
+    padding: var(--spacing-4);
   }
 
   & > * {
@@ -211,9 +211,9 @@
 }
 
 .body {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   background-color: var(--card-bg);
-  min-height: 200px;
+  min-height: var(--spacing-56);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -223,12 +223,12 @@
   position: relative;
 
   @include mq("sm", "max") {
-    padding: var(--spacing-md);
-    min-height: 160px;
+    padding: var(--spacing-4);
+    min-height: var(--spacing-40);
   }
 
   @include mq("xxs", "max") {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-2) var(--spacing-4);
   }
 
   &.hasFiles {
@@ -252,8 +252,8 @@
 
   &:focus-visible {
     box-shadow:
-      0 0 0 2px var(--background),
-      0 0 0 4px var(--primary);
+      0 0 0 var(--spacing-half) var(--background),
+      0 0 0 var(--spacing-1) var(--primary);
   }
 
   &:hover {
@@ -268,8 +268,8 @@
 
 .voidIconWrapper {
   transition: all 0.3s ease;
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
 }
 
 .icon {
@@ -277,8 +277,8 @@
   transition: all 0.3s ease;
 
   @include mq("xs", "max") {
-    width: 32px;
-    height: 32px;
+    width: var(--spacing-8);
+    height: var(--spacing-8);
   }
 }
 
@@ -297,8 +297,8 @@
 }
 
 .removeButton {
-  width: 32px;
-  height: 32px;
+  width: var(--spacing-8);
+  height: var(--spacing-8);
   padding: 0 !important;
   flex-shrink: 0;
 }
@@ -338,8 +338,8 @@
 }
 
 .previewWrapper {
-  width: 64px;
-  height: 64px;
+  width: var(--spacing-16);
+  height: var(--spacing-16);
   border-radius: var(--radius);
   overflow: hidden;
   border: var(--border-width) solid var(--border-strong);

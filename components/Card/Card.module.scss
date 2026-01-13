@@ -12,22 +12,22 @@
 }
 
 .padded {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
 }
 
 .header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   border-bottom: var(--border-width) solid var(--card-border);
   background-color: var(--card-bg);
 }
 
 .body {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   flex: 1;
 }
 
 .footer {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   border-top: var(--border-width) solid var(--card-border);
   background-color: var(--card-bg);
 }

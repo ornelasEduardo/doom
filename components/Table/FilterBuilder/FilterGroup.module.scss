@@ -1,18 +1,19 @@
 @use "../../../styles/mixins" as m;
 
 .group {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-2);
   transition: all var(--duration-fast) var(--ease-in-out);
   position: relative;
   margin-left: 0 !important;
+  overflow: visible; // Override Card.Root overflow: hidden
 
   &.hasRail {
     margin-left: 0 !important;
     border-left: 2px solid var(--border-strong);
-    padding-left: var(--spacing-md);
+    padding-left: var(--spacing-6);
 
     @include m.mq("sm", "max") {
-      padding-left: var(--spacing-sm);
+      padding-left: var(--spacing-2);
     }
   }
 
@@ -29,8 +30,6 @@
   }
 
   &.collapsed {
-    padding: var(--spacing-sm);
-
     .groupHeader {
       margin-bottom: 0;
       padding-bottom: 0;
@@ -40,7 +39,7 @@
 
   &.rootGroup {
     .groupHeader {
-      margin-bottom: var(--spacing-sm);
+      margin-bottom: var(--spacing-2);
     }
   }
 }
@@ -48,9 +47,9 @@
 .groupHeader {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
+  padding-bottom: var(--spacing-2);
   border-bottom: 1px solid var(--card-border);
 }
 
@@ -59,7 +58,7 @@
 }
 
 .collapseToggle {
-  padding: var(--spacing-xs);
+  padding: var(--spacing-1);
   color: var(--muted-foreground);
 
   &:hover {
@@ -74,29 +73,37 @@
 }
 
 .collapsedSummary {
-  margin-left: var(--spacing-xs);
+  margin-left: var(--spacing-1);
 }
 
 .groupContentWrapper {
-  transition: height var(--duration-normal) var(--ease-out);
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--duration-normal) var(--ease-in-out);
+}
+
+.collapsedWrapper {
+  grid-template-rows: 0fr;
 }
 
 .groupContent {
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-4);
 
   @include m.mq("sm", "max") {
-    gap: var(--spacing-sm);
+    gap: var(--spacing-2);
   }
 }
 
 .groupActions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-sm);
+  gap: var(--spacing-2);
+  gap: var(--spacing-2);
+  padding-top: var(--spacing-2);
   border-top: 1px solid var(--card-border);
 
   @include m.mq("sm", "max") {
@@ -108,14 +115,14 @@
 }
 
 .siblingGroupAction {
-  margin-top: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-4);
+  margin-bottom: var(--spacing-2);
+  padding-top: var(--spacing-2);
   border-top: 1px dashed var(--card-border);
 }
 
 .emptyState {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   text-align: center;
   background: var(--surface-accent);
   border-radius: var(--radius);
@@ -125,8 +132,8 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
 
   @include m.mq("sm", "max") {
     flex-direction: column;
@@ -137,8 +144,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: var(--spacing-sm) 0;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  margin: var(--spacing-2) 0;
+  padding: var(--spacing-1) var(--spacing-2);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: var(--text-xs);
@@ -150,19 +157,26 @@
 
 .conditionRow {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid !important;
+  grid-template-columns:
+    auto minmax(var(--width-control-sm), 1fr) minmax(
+      var(--width-control-sm),
+      max-content
+    )
+    minmax(var(--width-control-sm), 1fr) auto;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
+  gap: var(--spacing-4);
+  padding: var(--spacing-2);
   background: var(--surface-accent);
   transition: all var(--duration-fast) var(--ease-in-out);
+  overflow: visible;
 
   @include m.mq("sm", "max") {
+    display: flex !important;
     flex-direction: column;
     align-items: stretch;
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
   }
 
   &.dragging {
@@ -179,12 +193,14 @@
 }
 
 .conditionHeader {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
 
   @include m.mq("sm", "max") {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-2);
     width: 100%;
     order: -1;
   }
@@ -232,7 +248,7 @@
   @include m.mq("sm", "max") {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-2);
     width: 100%;
   }
 }
@@ -245,11 +261,7 @@
 
 .logicWrapper,
 .whereWrapper {
-  width: var(--logic-col-width, 80px);
-
-  @include m.mq("sm", "max") {
-    width: auto;
-  }
+  width: auto;
 }
 
 .whereWrapper {
@@ -257,7 +269,7 @@
   align-items: center;
   justify-content: center;
 
-  min-width: var(--logic-col-width, 80px);
+  min-width: 0;
   height: 36px;
 
   @include m.mq("sm", "max") {
@@ -274,7 +286,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--spacing-md) !important;
+  padding: 0 var(--spacing-4) !important;
   border-width: 2px !important;
 }
 
@@ -301,28 +313,12 @@
   }
 }
 
-.fieldSelect {
-  flex: 1;
-  min-width: 100px;
-  @include m.mq("sm", "max") {
-    width: 100%;
-  }
-}
-
-.operatorSelect {
-  width: 120px;
-  @include m.mq("sm", "max") {
-    width: 100%;
-  }
-}
-
+.fieldSelect,
+.operatorSelect,
 .valueSelect,
 .valueInput {
-  flex: 1;
-  min-width: 100px;
-  @include m.mq("sm", "max") {
-    width: 100%;
-  }
+  width: 100%;
+  min-width: 0;
 }
 
 .dropIndicator {
@@ -394,18 +390,18 @@
   left: 0;
   right: 0;
   background: transparent;
-  pointer-events: none; // Default to passing clicks through
+  pointer-events: none;
 }
 
 .zoneActive {
-  pointer-events: auto !important; // Enable interaction only when dragging
+  pointer-events: auto !important;
 }
 
 .dropZoneInside {
   @extend .dropZoneBase;
   top: 0;
   height: 100%;
-  z-index: 100; // High priority but below siblings
+  z-index: 100;
 }
 
 .dropZoneBefore {
@@ -415,7 +411,7 @@
   z-index: 110;
 
   @include m.mq("sm", "max") {
-    height: 30%; // Larger hit area on mobile
+    height: 30%;
   }
 }
 
@@ -426,18 +422,17 @@
   z-index: 110;
 
   @include m.mq("sm", "max") {
-    height: 30%; // Larger hit area on mobile
+    height: 30%;
   }
 }
 
-// Specific overrides for Group drop zones (which were 10px fixed)
 .groupDropZoneBefore {
   @extend .dropZoneBefore;
   height: 10px;
 
   @include m.mq("sm", "max") {
-    height: 30px; // Much larger on mobile
-    top: -10px; // Extend upwards
+    height: 30px;
+    top: -10px;
   }
 }
 
@@ -446,7 +441,7 @@
   height: 10px;
 
   @include m.mq("sm", "max") {
-    height: 30px; // Much larger on mobile
-    bottom: -10px; // Extend downwards
+    height: 30px;
+    bottom: -10px;
   }
 }

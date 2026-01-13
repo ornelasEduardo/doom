@@ -4,7 +4,7 @@
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, var(--overlay-opacity));
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(var(--blur-standard));
   opacity: 0;
   visibility: hidden;
   transition:
@@ -32,7 +32,7 @@
   top: 0;
   bottom: 0;
   width: 100%;
-  max-width: 400px;
+  max-width: var(--drawer-width);
   visibility: hidden;
   border: var(--border-width) solid var(--card-border);
 
@@ -41,7 +41,7 @@
     /* Remove border on the edge touching the screen */
     border-left: 0;
     /* Standard directional shadow for left-anchored panel */
-    @include brutalist-shadow("right", 8px);
+    @include brutalist-shadow("right", var(--spacing-2));
     border-top-right-radius: var(--radius);
     border-bottom-right-radius: var(--radius);
     transform: translateX(calc(-100% - 20px));
@@ -52,7 +52,7 @@
     /* Remove border on the edge touching the screen */
     border-right: 0;
     /* Standard directional shadow for right-anchored panel */
-    @include brutalist-shadow("left", 8px);
+    @include brutalist-shadow("left", var(--spacing-2));
     border-top-left-radius: var(--radius);
     border-bottom-left-radius: var(--radius);
     transform: translateX(calc(100% + 20px));
@@ -79,7 +79,7 @@
 }
 
 .header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   background-color: var(--primary);
   color: var(--primary-foreground);
   border-bottom: var(--border-width) solid var(--border-strong);
@@ -94,23 +94,24 @@
   font-family: var(--font-heading);
   font-size: var(--text-xl);
   font-weight: 800;
+  min-height: var(--header-height);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .content {
   flex: 1;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   overflow-y: auto;
   background-color: var(--card-bg);
 }
 
 .footer {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-6);
   border-top: var(--border-width) solid var(--border-strong);
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
+  gap: var(--spacing-4);
   background-color: var(--card-bg);
   flex-shrink: 0;
 }

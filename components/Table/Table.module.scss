@@ -16,7 +16,7 @@
 }
 
 .toolbar {
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   border-bottom: var(--border-width) solid var(--card-border);
   background: transparent;
   display: flex;
@@ -34,7 +34,7 @@
 }
 
 .searchBar {
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,7 +82,7 @@
   border-top: var(--border-width) solid var(--card-border);
   border-bottom: var(--border-width) solid var(--card-border);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   gap: 0.5rem;
 
   @include mq("md", "max") {
@@ -191,7 +191,7 @@
 }
 
 .paginationContainer {
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   border-top: var(--border-width) solid var(--card-border);
   background: transparent;
   display: flex;

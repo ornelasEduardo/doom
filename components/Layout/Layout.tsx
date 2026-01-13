@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import React, { ElementType } from "react";
+import React from "react";
 
+import { Box, BoxProps } from "./Box";
 import styles from "./Layout.module.scss";
 
 const SPACING_MAP = {
@@ -28,14 +29,9 @@ function resolveGap(gap?: Spacing): string | undefined {
   return SPACING_MAP[gap];
 }
 
-export interface LayoutProps extends React.HTMLAttributes<HTMLElement> {
+export interface LayoutProps extends BoxProps {
   /** The content to be rendered inside the layout container. */
   children?: React.ReactNode;
-  /**
-   * The HTML element or React component to render as the root node.
-   * @default "div"
-   */
-  as?: ElementType;
 }
 
 export interface GridProps extends LayoutProps {
@@ -65,7 +61,7 @@ export function Grid({
   gap = 4,
   className,
   style,
-  as: Component = "div",
+  as = "div",
   ...props
 }: GridProps) {
   const gridTemplateColumns =
@@ -74,7 +70,8 @@ export function Grid({
   const gridClasses = clsx(styles.grid, className);
 
   return (
-    <Component
+    <Box
+      as={as}
       className={gridClasses}
       style={{
         gridTemplateColumns,
@@ -84,7 +81,7 @@ export function Grid({
       {...props}
     >
       {children}
-    </Component>
+    </Box>
   );
 }
 
@@ -138,7 +135,7 @@ export function Flex({
   wrap = false,
   className,
   style,
-  as: Component = "div",
+  as = "div",
   ...props
 }: FlexProps) {
   const flexWrap =
@@ -153,7 +150,8 @@ export function Flex({
   );
 
   return (
-    <Component
+    <Box
+      as={as}
       className={flexClasses}
       style={{
         gap: resolveGap(gap),
@@ -163,7 +161,7 @@ export function Flex({
       {...props}
     >
       {children}
-    </Component>
+    </Box>
   );
 }
 
@@ -254,14 +252,14 @@ export function Container({
   children,
   maxWidth = "xl",
   className,
-  as: Component = "div",
+  as = "div",
   ...props
 }: ContainerProps) {
   const containerClasses = clsx(styles.container, styles[maxWidth], className);
 
   return (
-    <Component className={containerClasses} {...props}>
+    <Box as={as} className={containerClasses} {...props}>
       {children}
-    </Component>
+    </Box>
   );
 }

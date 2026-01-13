@@ -21,7 +21,7 @@
 
   &[data-state="open"] {
     transform: translate(-2px, -2px);
-    box-shadow: 8px 8px 0px 0px var(--shadow-primary);
+    box-shadow: var(--spacing-2) var(--spacing-2) 0px 0px var(--shadow-primary);
     border: var(--border-width) solid var(--shadow-primary);
   }
 }

@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-4) var(--spacing-6);
   background: var(--card-bg);
   font-size: var(--text-base);
   font-weight: var(--font-bold);
@@ -20,7 +20,7 @@
   @include m.brutalist-hover;
 
   &.sm {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-2) var(--spacing-4);
     min-height: var(--size-md);
     font-size: var(--text-xs);
   }
@@ -52,8 +52,8 @@
 .triggerIcons {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  margin-left: var(--spacing-sm);
+  gap: var(--spacing-1);
+  margin-left: var(--spacing-2);
   color: var(--muted-foreground);
 }
 
@@ -93,8 +93,8 @@
   top: 0;
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
   border-bottom: 1px solid
     color-mix(in srgb, var(--card-border) 60%, transparent);
   background: var(--card-bg);
@@ -129,11 +129,11 @@
 .optionsList {
   max-height: 240px;
   overflow-y: auto;
-  padding: var(--spacing-xs);
-  padding-bottom: var(--spacing-sm);
+  padding: var(--spacing-1);
+  padding-bottom: var(--spacing-2);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-1);
 
   // Custom scrollbar
   &::-webkit-scrollbar {
@@ -154,9 +154,9 @@
 .option {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-2);
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-2) var(--spacing-4);
   border: none;
   border-radius: calc(var(--radius) - 2px);
   background: transparent;
@@ -194,7 +194,7 @@
 }
 
 .noResults {
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-xl) var(--spacing-4);
   text-align: center;
   color: var(--muted-foreground);
   font-size: var(--text-sm);
@@ -203,7 +203,7 @@
 }
 
 .stickyOption {
-  padding: var(--spacing-xs);
+  padding: var(--spacing-1);
   border-bottom: 1px solid
     color-mix(in srgb, var(--card-border) 60%, transparent);
   background: var(--card-bg);

@@ -1,7 +1,7 @@
 .root {
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-lg); // Provide space for floating breakout
+  padding: var(--spacing-6); // Provide space for floating breakout
 }
 
 .item {
@@ -29,24 +29,24 @@
   &.isOpen + .item {
     border-top-left-radius: var(--radius);
     border-top-right-radius: var(--radius);
-    margin-top: var(--spacing-sm);
+    margin-top: var(--spacing-2);
   }
 
   &:has(+ .item.isOpen) {
     border-bottom-left-radius: var(--radius);
     border-bottom-right-radius: var(--radius);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-2);
   }
 
   &.isOpen {
-    margin: var(--spacing-sm) 0;
+    margin: var(--spacing-2) 0;
     transform: translate(-2px, -2px);
     border-radius: var(--radius);
     z-index: 10;
     box-shadow: var(--shadow-hard);
 
     & + .item.isOpen {
-      margin-top: var(--spacing-sm);
+      margin-top: var(--spacing-2);
     }
 
     .trigger.trigger {
@@ -61,7 +61,7 @@
 
     .contentBody {
       border-top: var(--border-width) solid var(--card-border);
-      padding-top: var(--spacing-md);
+      padding-top: var(--spacing-4);
     }
   }
 }
@@ -80,7 +80,7 @@
   box-shadow: none;
   transform: none;
   justify-content: space-between;
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   background-color: var(--card-bg);
   color: var(--foreground);
   text-transform: none;
@@ -134,7 +134,7 @@
 }
 
 .contentBody {
-  padding: var(--spacing-md);
+  padding: var(--spacing-4);
   padding-top: 0;
   font-size: var(--text-base);
   color: var(--muted-foreground);

@@ -3,7 +3,7 @@
 .checkboxWrapper {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-2);
   cursor: pointer;
   user-select: none;
 
@@ -37,7 +37,7 @@
   background-color: var(--card-bg);
   color: transparent;
 
-  border: 3px solid var(--muted-foreground);
+  border: var(--border-width) solid var(--muted-foreground);
   border-radius: 4px;
 
   transition: all 0.1s ease;
@@ -58,5 +58,5 @@
 
 .labelOverride {
   cursor: pointer;
-  margin-left: var(--spacing-xs);
+  margin-left: var(--spacing-1);
 }

@@ -1,16 +1,16 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .itemLabel {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--spacing-3);
   cursor: pointer;
   position: relative;
-  padding: 0.75rem 1rem;
+  padding: var(--spacing-3) var(--spacing-4);
   border-radius: var(--radius);
   transition: all 0.15s ease;
   opacity: 1;
@@ -27,9 +27,9 @@
 }
 
 .radioCircle {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--foreground);
+  width: var(--spacing-6);
+  height: var(--spacing-6);
+  border: var(--border-width) solid var(--foreground);
   border-radius: 50%;
   background: var(--background);
   display: flex;
@@ -42,13 +42,14 @@
   &.checked {
     border-color: var(--primary);
     background: var(--primary);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent);
+    box-shadow: 0 0 0 var(--spacing-1)
+      color-mix(in srgb, var(--primary) 15%, transparent);
   }
 }
 
 .innerDot {
-  width: 10px;
-  height: 10px;
+  width: var(--spacing-3);
+  height: var(--spacing-3);
   background: var(--primary-foreground);
   border-radius: 50%;
   transform: scale(0);

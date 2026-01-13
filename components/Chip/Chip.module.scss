@@ -46,7 +46,7 @@
 // Sizes (tighter than Button for inline use)
 .xs {
   padding: var(--spacing-half) var(--spacing-1); // 2px 4px
-  font-size: 0.625rem; // 10px
+  font-size: var(--text-2xs);
 }
 
 .sm {

@@ -47,8 +47,8 @@ $align-values: "flex-start", "flex-end", "center", "stretch", "baseline";
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--spacing-md);
-  padding-right: var(--spacing-md);
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
 
   &.sm {
     max-width: 640px;

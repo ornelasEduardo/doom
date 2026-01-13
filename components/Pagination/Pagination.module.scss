@@ -2,15 +2,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--spacing-10);
+  height: var(--spacing-10);
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
   background-color: var(--card-bg);

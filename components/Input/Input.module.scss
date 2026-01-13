@@ -68,7 +68,7 @@
 .adornment {
   position: absolute;
   color: var(--muted-foreground);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   z-index: 1;
 
   &.start {

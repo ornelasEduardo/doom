@@ -7,7 +7,8 @@
 
 .default {
   width: 90%;
-  max-width: 1920px;
+  max-width: var(--page-max-width);
+  backdrop-filter: blur(var(--blur-standard));
   margin: 0 auto;
   padding: 2rem 1rem;
 

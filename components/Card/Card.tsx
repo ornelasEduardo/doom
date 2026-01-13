@@ -75,4 +75,9 @@ export const Card = Object.assign(CardInternal, {
   Header: CardHeader,
   Body: CardBody,
   Footer: CardFooter,
-});
+}) as typeof CardInternal & {
+  Root: typeof CardRoot;
+  Header: typeof CardHeader;
+  Body: typeof CardBody;
+  Footer: typeof CardFooter;
+};

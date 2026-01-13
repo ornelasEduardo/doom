@@ -11,7 +11,7 @@
   width: 100%;
   background: var(--card-bg);
   color: var(--foreground);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-4) var(--spacing-6);
   font-size: var(--text-base);
   cursor: pointer;
   display: flex;
@@ -28,7 +28,7 @@
   @include focus;
 
   &.sm {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-2) var(--spacing-4);
     min-height: var(--size-md);
     font-size: var(--text-xs);
     text-transform: uppercase;
@@ -46,15 +46,15 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs);
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
   margin: 0;
   list-style: none;
 }
 
 .optionItem {
   text-align: left;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-4) var(--spacing-6);
   background: transparent;
   border: none;
   border-radius: calc(var(--radius) - 2px);

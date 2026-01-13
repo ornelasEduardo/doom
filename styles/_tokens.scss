@@ -23,11 +23,19 @@ $spacing-12: $base-unit * 12; // 48px
 $spacing-16: $base-unit * 16; // 64px
 $spacing-20: $base-unit * 20; // 80px
 $spacing-24: $base-unit * 24; // 96px
+$spacing-32: $base-unit * 32; // 128px
+$spacing-36: $base-unit * 36; // 144px
+$spacing-40: $base-unit * 40; // 160px
+$spacing-56: $base-unit * 56; // 224px
+$spacing-64: $base-unit * 64; // 256px
+$spacing-72: $base-unit * 72; // 288px
+$spacing-100: $base-unit * 100; // 400px
 
 // ============================================================================
 // TYPOGRAPHY SCALE
 // Font sizes derived from base unit (some use half-units for common sizes)
 // ============================================================================
+$text-2xs: $base-unit * 2.5; // 10px (extra-small for chips, badges)
 $text-xs: $base-unit * 3; // 12px
 $text-sm: $base-unit * 3.5; // 14px
 $text-base: $base-unit * 4; // 16px
@@ -82,8 +90,16 @@ $size-touch-target: $base-unit * 11; // 44px
   --spacing-16: #{$spacing-16};
   --spacing-20: #{$spacing-20};
   --spacing-24: #{$spacing-24};
+  --spacing-32: #{$spacing-32};
+  --spacing-36: #{$spacing-36};
+  --spacing-40: #{$spacing-40};
+  --spacing-56: #{$spacing-56};
+  --spacing-64: #{$spacing-64};
+  --spacing-72: #{$spacing-72};
+  --spacing-100: #{$spacing-100};
 
   // Typography
+  --text-2xs: #{$text-2xs};
   --text-xs: #{$text-xs};
   --text-sm: #{$text-sm};
   --text-base: #{$text-base};
@@ -135,8 +151,56 @@ $size-touch-target: $base-unit * 11; // 44px
   --font-extrabold: 800;
   --font-black: 900;
 
+  --font-black: 900;
+
   // ============================================================================
-  // Z-INDICES (Stacking order)
+  // SIZING & SEMANTIC LAYOUT
+  // ============================================================================
+
+  // Fractionals
+  --width-full: 100%;
+  --width-screen: 100vw;
+  --height-screen: 100vh;
+  --width-min: min-content;
+  --width-max: max-content;
+  --width-fit: fit-content;
+
+  // Prose (Reading Widths) - ch units for optimal readability
+  --width-prose-narrow: 45ch; // captions, comments, side notes
+  --width-prose: 65ch; // standard reading width
+  --width-prose-wide: 80ch; // documentation, technical writing
+
+  // Structural (Containers & Regions)
+  --width-sidebar: 280px;
+  --width-sidebar-collapsed: 64px;
+  --width-panel: 400px; // Standard drawer/panel width
+  --width-panel-wide: 600px;
+
+  // Modal Sizes
+  --width-modal-sm: 400px;
+  --width-modal-md: 600px;
+  --width-modal-lg: 800px;
+  --width-modal-xl: 1024px;
+
+  // Controls (Inputs, Buttons, etc)
+  --width-control-sm: 120px;
+  --width-control-md: 240px;
+  --width-control-lg: 320px;
+  --width-control-xl: 400px;
+
+  // Legacy/Specific Overrides (Mapped to new system where possible)
+  --drawer-width: var(--width-panel);
+  --page-max-width: 1920px;
+  --header-height: 56px;
+  --header-height-sm: 48px;
+
+  --form-col-min: #{$base-unit * 32}; // 128px
+  --form-select-width: #{$base-unit * 36}; // 144px
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+  --blur-standard: 4px;
   // ============================================================================
   --z-base: 0;
   --z-elevated: 10;
