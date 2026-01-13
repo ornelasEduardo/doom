@@ -53,7 +53,7 @@
 /* Variants */
 .primary {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--primary);
   color: var(--primary-foreground);
@@ -66,7 +66,7 @@
 
 .secondary {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--secondary);
   color: var(--secondary-foreground);
@@ -79,7 +79,7 @@
 
 .success {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--success);
   color: var(--success-foreground);
@@ -92,7 +92,7 @@
 
 .danger {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--error);
   color: var(--error-foreground);

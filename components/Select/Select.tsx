@@ -215,7 +215,7 @@ export function Select({
               aria-hidden="true"
               size={16}
               strokeWidth={2.5}
-              style={{ marginLeft: "0.5rem" }}
+              style={{ marginLeft: "var(--spacing-2)" }}
             />
           </button>
         }

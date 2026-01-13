@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: var(--spacing-half);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-in-out);
@@ -79,8 +79,8 @@
 
 // Dropdown container (rendered by popover)
 .dropdown {
-  min-width: 200px;
-  max-width: 320px;
+  min-width: var(--spacing-50);
+  max-width: var(--width-control-lg);
   padding: 0;
   overflow: hidden;
   // Use Select's border style
@@ -99,7 +99,7 @@
   border-bottom: 1px solid
     color-mix(in srgb, var(--card-border) 60%, transparent);
   background: var(--card-bg);
-  z-index: 10;
+  z-index: var(--z-elevated);
 }
 
 .searchIcon {
@@ -128,7 +128,7 @@
 }
 
 .optionsList {
-  max-height: 240px;
+  max-height: var(--spacing-60);
   overflow-y: auto;
   padding: var(--spacing-1);
   padding-bottom: var(--spacing-2);
@@ -159,7 +159,7 @@
   width: 100%;
   padding: var(--spacing-2) var(--spacing-4);
   border: none;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: calc(var(--radius) - var(--border-width));
   background: transparent;
   text-align: left;
   color: var(--foreground);

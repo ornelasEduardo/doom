@@ -375,12 +375,12 @@
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: var(--z-elevated);
   background: transparent;
 }
 
 .zIndexHigh {
-  z-index: 50 !important;
+  z-index: var(--z-dropdown) !important;
   position: relative;
 }
 
@@ -401,14 +401,14 @@
   @extend .dropZoneBase;
   top: 0;
   height: 100%;
-  z-index: 100;
+  z-index: var(--z-modal);
 }
 
 .dropZoneBefore {
   @extend .dropZoneBase;
   top: 0;
   height: 25%;
-  z-index: 110;
+  z-index: calc(var(--z-modal) + 10);
 
   @include m.mq("sm", "max") {
     height: 30%;
@@ -419,7 +419,7 @@
   @extend .dropZoneBase;
   bottom: 0;
   height: 25%;
-  z-index: 110;
+  z-index: calc(var(--z-modal) + 10);
 
   @include m.mq("sm", "max") {
     height: 30%;
