@@ -23,17 +23,17 @@
   &.text {
     height: var(--height, 1em);
     border-radius: var(--radius);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-2);
   }
 
   &.circular {
     border-radius: 50%;
-    height: var(--height, var(--width, 3rem));
-    width: var(--width, var(--height, 3rem));
+    height: var(--height, var(--width, var(--spacing-12)));
+    width: var(--width, var(--height, var(--spacing-12)));
   }
 
   &.rectangular {
-    height: var(--height, 10rem);
+    height: var(--height, var(--spacing-40));
     border-radius: var(--radius);
   }
 }

@@ -79,7 +79,7 @@
 }
 
 .handleBar {
-  width: 48px;
+  width: var(--spacing-12);
   height: 6px;
   background-color: var(--card-border);
   border-radius: var(--radius-pill);

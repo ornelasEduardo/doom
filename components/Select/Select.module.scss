@@ -42,8 +42,8 @@
   border: var(--border-width) solid var(--primary);
   border-radius: var(--radius);
   box-shadow: none;
-  min-width: 200px;
-  max-height: 300px;
+  min-width: var(--spacing-50);
+  max-height: var(--spacing-72);
   overflow-y: auto;
   display: flex;
   flex-direction: column;

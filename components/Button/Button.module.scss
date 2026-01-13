@@ -30,13 +30,16 @@
   &:focus-visible {
     outline: none;
     box-shadow: 7px 7px 0px 0px var(--btn-focus-shadow);
-    transform: translate(-2px, -2px);
+    transform: translate(
+      calc(-1 * var(--spacing-half)),
+      calc(-1 * var(--spacing-half))
+    );
     border-color: var(--btn-focus-border);
   }
 
   &:active {
     transition: none;
-    transform: translate(2px, 2px);
+    transform: translate(var(--spacing-half), var(--spacing-half));
     box-shadow: none;
   }
 

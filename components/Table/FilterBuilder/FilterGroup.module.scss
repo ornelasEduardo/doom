@@ -270,7 +270,7 @@
   justify-content: center;
 
   min-width: 0;
-  height: 36px;
+  height: var(--spacing-9);
 
   @include m.mq("sm", "max") {
     justify-content: flex-start;
@@ -280,14 +280,14 @@
 }
 
 .whereBadge {
-  height: 36px !important;
-  font-size: 12px !important;
+  height: var(--spacing-9) !important;
+  font-size: var(--text-xs) !important;
   line-height: 1 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 var(--spacing-4) !important;
-  border-width: 2px !important;
+  border-width: var(--border-width) !important;
 }
 
 .dragHandle {

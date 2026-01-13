@@ -78,8 +78,8 @@
 
 .modalContent {
   background-color: var(--card-bg);
-  padding-top: 1px;
-  margin-top: -1px;
+  padding-top: var(--border-width);
+  margin-top: calc(-1 * var(--border-width));
 }
 
 .body {
@@ -90,8 +90,8 @@
 }
 
 .header + .body {
-  margin-top: -1px;
-  padding-top: calc(var(--spacing-6) + 1px);
+  margin-top: calc(-1 * var(--border-width));
+  padding-top: calc(var(--spacing-6) + var(--border-width));
 }
 
 .footer {

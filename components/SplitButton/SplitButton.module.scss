@@ -20,7 +20,10 @@
   @include brutalist-hover;
 
   &[data-state="open"] {
-    transform: translate(-2px, -2px);
+    transform: translate(
+      calc(-1 * var(--spacing-half)),
+      calc(-1 * var(--spacing-half))
+    );
     box-shadow: var(--spacing-2) var(--spacing-2) 0px 0px var(--shadow-primary);
     border: var(--border-width) solid var(--shadow-primary);
   }

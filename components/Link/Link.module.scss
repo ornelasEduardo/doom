@@ -24,8 +24,8 @@
   &.default {
     color: var(--primary);
     text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 2px;
+    text-decoration-thickness: var(--spacing-half);
+    text-underline-offset: var(--spacing-half);
 
     &:hover {
       filter: brightness(1.2);

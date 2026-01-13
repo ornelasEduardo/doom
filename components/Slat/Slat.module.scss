@@ -42,7 +42,10 @@
     &:hover {
       background-color: var(--surface-accent);
       color: var(--foreground);
-      transform: translate(-2px, -2px);
+      transform: translate(
+        calc(-1 * var(--spacing-half)),
+        calc(-1 * var(--spacing-half))
+      );
       box-shadow: var(--spacing-1) var(--spacing-1) 0px 0px var(--border-strong);
     }
 
