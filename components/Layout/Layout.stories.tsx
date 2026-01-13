@@ -92,28 +92,28 @@ export const SemanticSizing: Story = {
       <Stack gap={4}>
         <Text weight="bold">Prose Widths (Reading)</Text>
         <Stack
-          width="prose-narrow"
           style={{
             background: "white",
             padding: "1rem",
             border: "1px solid #ccc",
           }}
+          width="prose-narrow"
         >
           <Text weight="medium">Prose Narrow (45ch)</Text>
-          <Text size="sm" color="muted">
+          <Text color="muted" variant="small">
             Ideal for captions, side notes, or comments.
           </Text>
         </Stack>
         <Stack
-          width="prose"
           style={{
             background: "white",
             padding: "1rem",
             border: "1px solid #ccc",
           }}
+          width="prose"
         >
           <Text weight="medium">Prose Standard (65ch)</Text>
-          <Text size="sm" color="muted">
+          <Text color="muted" variant="small">
             The gold standard for readability. Use this for main content text
             blocks.
           </Text>
@@ -122,9 +122,8 @@ export const SemanticSizing: Story = {
 
       <Stack gap={4}>
         <Text weight="bold">Structural Widths</Text>
-        <Flex gap={4} wrap>
+        <Flex wrap gap={4}>
           <Stack
-            width="sidebar"
             align="center"
             justify="center"
             style={{
@@ -132,11 +131,11 @@ export const SemanticSizing: Story = {
               background: "#ddd",
               border: "1px dashed #999",
             }}
+            width="sidebar"
           >
             Sidebar
           </Stack>
           <Stack
-            width="panel"
             align="center"
             justify="center"
             style={{
@@ -144,6 +143,7 @@ export const SemanticSizing: Story = {
               background: "#ddd",
               border: "1px dashed #999",
             }}
+            width="panel"
           >
             Panel
           </Stack>
@@ -154,20 +154,20 @@ export const SemanticSizing: Story = {
         <Text weight="bold">Controls</Text>
         <Flex gap={4}>
           <Stack
-            width="control-sm"
             style={{ background: "#e0e7ff", padding: "0.5rem" }}
+            width="control-sm"
           >
             SM
           </Stack>
           <Stack
-            width="control-md"
             style={{ background: "#c7d2fe", padding: "0.5rem" }}
+            width="control-md"
           >
             MD
           </Stack>
           <Stack
-            width="control-lg"
             style={{ background: "#a5b4fc", padding: "0.5rem" }}
+            width="control-lg"
           >
             LG
           </Stack>
