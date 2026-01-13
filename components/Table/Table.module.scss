@@ -22,7 +22,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
 .headerGroup {
@@ -38,18 +38,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-4);
   width: 100%;
 
   @include mq("md", "max") {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: var(--spacing-3);
   }
 }
 
 .searchWrapper {
-  width: 300px;
+  width: var(--spacing-72);
 
   @include mq("md", "max") {
     width: 100%;
@@ -58,7 +58,7 @@
 
 .actionsWrapper {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   align-items: center;
 
   @include mq("md", "max") {
@@ -69,7 +69,7 @@
 
 .controls {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .filterBar {
@@ -81,9 +81,9 @@
   background: var(--background);
   border-top: var(--border-width) solid var(--card-border);
   border-bottom: var(--border-width) solid var(--card-border);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 var(--border-width) var(--spacing-1) rgba(0, 0, 0, 0.06);
   padding: var(--spacing-4);
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 
   @include mq("md", "max") {
     flex-direction: column;
@@ -93,8 +93,8 @@
 
 .filterItem {
   /* "Module" look */
-  min-width: 150px;
-  width: 200px;
+  min-width: var(--spacing-36);
+  width: var(--spacing-56);
   position: relative;
 
   @include mq("md", "max") {
@@ -120,7 +120,7 @@
 
 .th {
   text-align: left;
-  padding: 1rem;
+  padding: var(--spacing-4);
   background: var(--secondary);
   border-bottom: var(--border-width) solid var(--card-border);
   font-weight: 700;
@@ -131,13 +131,13 @@
   color: var(--secondary-foreground);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-elevated);
 
   &.compact {
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-2) var(--spacing-4);
   }
   &.relaxed {
-    padding: 1.5rem 1rem;
+    padding: var(--spacing-6) var(--spacing-4);
   }
 
   &.sortable {
@@ -150,15 +150,15 @@
 }
 
 .td {
-  padding: 1rem;
+  padding: var(--spacing-4);
   border-bottom: 1px solid var(--card-border);
   color: var(--on-surface);
 
   &.compact {
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-2) var(--spacing-4);
   }
   &.relaxed {
-    padding: 1.5rem 1rem;
+    padding: var(--spacing-6) var(--spacing-4);
   }
 }
 
@@ -168,21 +168,33 @@
   }
 
   &:hover {
-    background-color: rgba(113, 128, 150, 0.1);
+    background-color: color-mix(
+      in srgb,
+      var(--muted-foreground) 10%,
+      transparent
+    );
   }
 
   &.striped {
     &:nth-of-type(even) {
-      background-color: rgba(113, 128, 150, 0.05);
+      background-color: color-mix(
+        in srgb,
+        var(--muted-foreground) 5%,
+        transparent
+      );
     }
     &:hover {
-      background-color: rgba(113, 128, 150, 0.15);
+      background-color: color-mix(
+        in srgb,
+        var(--muted-foreground) 15%,
+        transparent
+      );
     }
   }
 
   .row-actions {
     opacity: 0;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity var(--duration-fast) var(--ease-in-out);
   }
 
   &:hover .row-actions {
@@ -200,7 +212,7 @@
 }
 
 .noResults {
-  padding: 2rem;
+  padding: var(--spacing-8);
   text-align: center;
   color: var(--on-surface-muted);
 }
@@ -208,5 +220,5 @@
 .headerContent {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }

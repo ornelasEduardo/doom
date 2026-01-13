@@ -29,12 +29,12 @@
 
 .contentContainer {
   width: 100%;
-  max-width: 32rem;
-  transform: translateY(20px);
+  max-width: var(--width-modal-md);
+  transform: translateY(var(--spacing-5));
   opacity: 0;
   transition:
-    transform 0.3s ease-out,
-    opacity 0.3s ease-out;
+    transform var(--duration-slow) var(--ease-out),
+    opacity var(--duration-slow) var(--ease-out);
 }
 
 .modalCard {

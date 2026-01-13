@@ -1,7 +1,7 @@
 .alert {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: var(--spacing-3);
   padding: var(--spacing-4);
   width: 100%;
   border: var(--border-width) solid var(--card-border);
@@ -18,7 +18,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 6px;
+    width: var(--spacing-1);
     background-color: var(--primary); /* Default fallback */
   }
 
@@ -39,7 +39,7 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--spacing-1);
   flex: 1;
 }
 

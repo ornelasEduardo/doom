@@ -10,11 +10,11 @@
   max-width: var(--page-max-width);
   backdrop-filter: blur(var(--blur-standard));
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--spacing-8) var(--spacing-4);
 
   @include mq("lg", "max") {
     width: 95%;
-    padding: 1rem;
+    padding: var(--spacing-4);
   }
 }
 

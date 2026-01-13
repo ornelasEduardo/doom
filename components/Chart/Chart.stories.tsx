@@ -625,7 +625,11 @@ export const CompositionExample: Story = {
           <Stack style={{ height: "100%" }}>
             <Chart.Header
               subtitle="Using Sub-components"
-              title="Composed Chart"
+              title={
+                <Text as="h1" variant="h4">
+                  Composed Chart
+                </Text>
+              }
             >
               <Flex gap={2}>
                 <Select

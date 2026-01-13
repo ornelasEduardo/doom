@@ -18,23 +18,23 @@
 
   /* Sizes */
   &.sm {
-    width: 32px;
-    height: 32px;
+    width: var(--spacing-8);
+    height: var(--spacing-8);
   }
 
   &.md {
-    width: 48px;
-    height: 48px;
+    width: var(--spacing-12);
+    height: var(--spacing-12);
   }
 
   &.lg {
-    width: 64px;
-    height: 64px;
+    width: var(--spacing-16);
+    height: var(--spacing-16);
   }
 
   &.xl {
-    width: 96px;
-    height: 96px;
+    width: var(--spacing-24);
+    height: var(--spacing-24);
   }
 }
 

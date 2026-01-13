@@ -3,7 +3,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   width: 100%;
 }
 
@@ -48,7 +48,7 @@
       rgba(0, 0, 0, 0.05) 75%,
       rgba(0, 0, 0, 0.05)
     );
-    background-size: 20px 20px;
+    background-size: var(--spacing-5) var(--spacing-5);
     box-shadow: none;
     transform: none;
     color: var(--muted-foreground);
@@ -59,11 +59,11 @@
   }
 
   &.hasStartAdornment {
-    padding-left: 2rem;
+    padding-left: var(--spacing-8);
   }
 
   &.hasEndAdornment {
-    padding-right: 2rem;
+    padding-right: var(--spacing-8);
   }
 }
 
@@ -74,11 +74,11 @@
   z-index: 1;
 
   &.start {
-    left: 0.75rem;
+    left: var(--spacing-3);
   }
 
   &.end {
-    right: 0.75rem;
+    right: var(--spacing-3);
   }
 }
 
@@ -86,8 +86,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
-  margin-top: -0.25rem;
+  gap: var(--spacing-4);
+  margin-top: calc(-1 * var(--spacing-1));
 }
 
 .messageArea {
@@ -113,10 +113,10 @@
       transform: translateX(0);
     }
     25% {
-      transform: translateX(-4px);
+      transform: translateX(calc(-1 * var(--spacing-1)));
     }
     75% {
-      transform: translateX(4px);
+      transform: translateX(var(--spacing-1));
     }
   }
 }
