@@ -100,4 +100,34 @@ describe("Link Component", () => {
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
+
+  describe("Security", () => {
+    it("blocks javascript: URLs and logs error", () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      render(<Link href="javascript:alert(1)">Malicious Link</Link>);
+      const link = screen.getByText("Malicious Link");
+
+      // Should not have the malicious href
+      expect(link).not.toHaveAttribute("href", "javascript:alert(1)");
+      expect(link).not.toHaveAttribute("href");
+
+      // Should verify that the console error was called
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "Sentinel 🛡️: Blocked insecure javascript: URL",
+        ),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it("allows safe URLs", () => {
+      render(<Link href="https://example.com">Safe Link</Link>);
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "https://example.com");
+    });
+  });
 });
