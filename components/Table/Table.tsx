@@ -38,6 +38,7 @@ const coreRowModel = getCoreRowModel();
 const sortedRowModel = getSortedRowModel();
 const paginationRowModel = getPaginationRowModel();
 const filteredRowModel = getFilteredRowModel();
+const facetedUniqueValues = getFacetedUniqueValues();
 
 const convertToFilterNode = (item: FilterItem): FilterNode => {
   if (item.type === "group") {
@@ -243,32 +244,49 @@ export function Table<T>({
     );
   }, [data, advancedFilterValue, enableAdvancedFiltering]);
 
-  const table = useReactTable<T>({
-    data: filteredData,
-    columns,
-    state: {
+  const tableOptions = useMemo(
+    () => ({
+      data: filteredData,
+      columns,
+      state: {
+        sorting,
+        globalFilter,
+        columnFilters,
+        pagination,
+      },
+      enableSorting,
+      onSortingChange: setSorting,
+      onGlobalFilterChange: setGlobalFilter,
+      onColumnFiltersChange: setColumnFilters,
+      onPaginationChange: setPagination,
+      getCoreRowModel: coreRowModel,
+      getSortedRowModel: sortedRowModel,
+      getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
+      getFilteredRowModel:
+        enableFiltering || enableColumnFilters ? filteredRowModel : undefined,
+      defaultColumn: {
+        filterFn: smartColumnFilterFn,
+      },
+      getFacetedUniqueValues: enableColumnFilters
+        ? facetedUniqueValues
+        : undefined,
+    }),
+    [
+      filteredData,
+      columns,
       sorting,
       globalFilter,
       columnFilters,
       pagination,
-    },
-    enableSorting,
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
-    getCoreRowModel: coreRowModel,
-    getSortedRowModel: sortedRowModel,
-    getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
-    getFilteredRowModel:
-      enableFiltering || enableColumnFilters ? filteredRowModel : undefined,
-    defaultColumn: {
-      filterFn: smartColumnFilterFn,
-    },
-    getFacetedUniqueValues: enableColumnFilters
-      ? getFacetedUniqueValues()
-      : undefined,
-  });
+      enableSorting,
+      enablePagination,
+      enableFiltering,
+      enableColumnFilters,
+      smartColumnFilterFn,
+    ],
+  );
+
+  const table = useReactTable<T>(tableOptions);
 
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(
     null,
