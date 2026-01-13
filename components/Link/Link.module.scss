@@ -24,8 +24,8 @@
   &.default {
     color: var(--primary);
     text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 2px;
+    text-decoration-thickness: var(--spacing-half);
+    text-underline-offset: var(--spacing-half);
 
     &:hover {
       filter: brightness(1.2);
@@ -43,7 +43,7 @@
 
   &.subtle {
     color: var(--muted-foreground);
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 
@@ -58,11 +58,11 @@
     color: var(--primary-foreground);
     border: var(--border-width) solid var(--card-border);
     border-radius: var(--radius);
-    padding: 0.75rem 1.5rem;
+    padding: var(--spacing-3) var(--spacing-6);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     box-shadow: var(--shadow-hard);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
 
     @include brutalist-hover;
 

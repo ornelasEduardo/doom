@@ -28,11 +28,12 @@ export function ActionRow({
       align="center"
       className={clsx(styles.actionRow, className)}
       gap={6}
+      width="100%"
       onClick={onClick}
       {...props}
     >
       <div className={styles.iconWrapper}>{icon}</div>
-      <Flex direction="column" gap={1} style={{ flex: 1 }}>
+      <Flex direction="column" gap={1} style={{ flex: 1, minWidth: 0 }}>
         <Text variant="h6" weight="bold">
           {title}
         </Text>
@@ -45,7 +46,7 @@ export function ActionRow({
       <ChevronRight
         size={20}
         strokeWidth={2.5}
-        style={{ color: "var(--muted-foreground)" }}
+        style={{ color: "var(--muted-foreground)", flexShrink: 0 }}
       />
     </Flex>
   );

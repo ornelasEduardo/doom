@@ -17,7 +17,7 @@ const DISMISS_ICON_SIZE: Record<ChipSize, number> = {
   xl: 20,
 };
 
-interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
+interface ChipProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: ChipVariant;
   size?: ChipSize;
   onDismiss?: () => void;
@@ -25,7 +25,7 @@ interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
 }
 
-export const Chip = React.forwardRef<HTMLSpanElement, ChipProps>(
+export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
   (
     {
       variant = "default",
@@ -40,15 +40,17 @@ export const Chip = React.forwardRef<HTMLSpanElement, ChipProps>(
     ref,
   ) => {
     const isInteractive = !!onClick || !!onDismiss;
+    const isClickable = !!onClick;
 
     return (
-      <span
+      <div
         ref={ref}
         className={clsx(
           styles.chip,
           styles[variant],
           styles[size],
           isInteractive && styles.interactive,
+          isClickable && styles.clickable,
           disabled && styles.disabled,
           className,
         )}
@@ -71,7 +73,7 @@ export const Chip = React.forwardRef<HTMLSpanElement, ChipProps>(
             <X size={DISMISS_ICON_SIZE[size]} />
           </button>
         )}
-      </span>
+      </div>
     );
   },
 );

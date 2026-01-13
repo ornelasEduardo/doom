@@ -17,6 +17,7 @@ import React, { useEffect, useId, useState } from "react";
 import { Button } from "../../Button/Button";
 import { Flex } from "../../Layout/Layout";
 import { Sheet } from "../../Sheet/Sheet";
+import { Text } from "../../Text/Text";
 import type { FilterField } from "./FilterBuilder";
 import type {
   FilterConditionItem,
@@ -197,7 +198,11 @@ export function FilterSheetNested({
           </Flex>
         }
         isOpen={isOpen}
-        title="FILTERS"
+        title={
+          <Text as="h1" variant="h4">
+            FILTER BUILDER
+          </Text>
+        }
         onClose={onClose}
       >
         <div className={styles.conditionList}>

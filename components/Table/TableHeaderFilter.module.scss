@@ -1,8 +1,8 @@
 @use "../../styles/mixins" as m;
 
 .filterContent {
-  min-width: 200px;
-  max-width: 280px;
+  min-width: var(--spacing-50);
+  max-width: var(--spacing-70);
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-hard);
@@ -10,7 +10,7 @@
 
 .filterCount {
   color: currentColor; // Inherit from parent (handles active/inactive contrast)
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 700; // Bold per spec
   line-height: 1;
 }
@@ -19,24 +19,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm);
-  border-bottom: 1px solid var(--card-border);
+  padding: var(--spacing-2);
+  border-bottom: var(--border-width) solid var(--card-border);
 }
 
 .filterBody {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-2);
 }
 
 .filterOptions {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  max-height: 200px;
+  gap: var(--spacing-1);
+  max-height: var(--spacing-50);
   overflow-y: auto;
 }
 
 .filterOption {
-  padding: var(--spacing-xs);
+  padding: var(--spacing-1);
   border-radius: var(--radius);
 
   &:hover {
@@ -54,8 +54,8 @@
 
 .filterActions {
   display: flex;
-  gap: var(--spacing-xs);
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--card-border);
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-2);
+  border-top: var(--border-width) solid var(--card-border);
 }

@@ -3,7 +3,7 @@
 .checkboxWrapper {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-2);
   cursor: pointer;
   user-select: none;
 
@@ -22,7 +22,7 @@
 
   &:focus-visible + .checkboxDisplay {
     @include m.focus;
-    outline: 2px solid var(--primary);
+    outline: var(--border-width) solid var(--primary);
   }
 }
 
@@ -31,16 +31,16 @@
   align-items: center;
   justify-content: center;
 
-  width: 1.5rem;
-  height: 1.5rem;
+  width: var(--spacing-6);
+  height: var(--spacing-6);
 
   background-color: var(--card-bg);
   color: transparent;
 
-  border: 3px solid var(--muted-foreground);
-  border-radius: 4px;
+  border: var(--border-width) solid var(--muted-foreground);
+  border-radius: var(--radius);
 
-  transition: all 0.1s ease;
+  transition: all var(--duration-fast) var(--ease-in-out);
 
   .checkboxInput:checked + & {
     background-color: var(--primary);
@@ -58,5 +58,5 @@
 
 .labelOverride {
   cursor: pointer;
-  margin-left: var(--spacing-xs);
+  margin-left: var(--spacing-1);
 }

@@ -1,7 +1,7 @@
 .switchContainer {
   display: inline-flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-4);
   cursor: pointer;
   opacity: 1;
   user-select: none;
@@ -26,8 +26,8 @@
 
 .toggle {
   position: relative;
-  width: 58px;
-  height: 32px;
+  width: calc(var(--spacing-12) + var(--spacing-2));
+  height: var(--spacing-8);
   background-color: var(--card-bg);
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius-pill);
@@ -43,9 +43,9 @@
     display: block;
     position: absolute;
     top: 50%;
-    left: 4px;
-    width: 24px;
-    height: 24px;
+    left: var(--spacing-1);
+    width: var(--spacing-6);
+    height: var(--spacing-6);
     background-color: var(--muted);
     border: var(--border-width) solid var(--card-border);
     border-radius: 50%;
@@ -61,13 +61,13 @@
 
     &::after {
       background-color: var(--primary-foreground);
-      transform: translateY(-50%) translateX(20px);
+      transform: translateY(-50%) translateX(var(--spacing-5));
     }
   }
 }
 
 .label {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: var(--font-semibold);
   color: var(--foreground);
 }

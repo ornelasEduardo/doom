@@ -1,6 +1,6 @@
 .popover {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
   animation: popoverScale 0.1s ease-out;
 }
 

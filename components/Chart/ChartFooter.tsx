@@ -40,7 +40,7 @@ export function ChartFooter({
       justify={justifyMap[align]}
       style={{
         width: "100%",
-        marginTop: "var(--spacing-md)",
+        marginTop: "var(--spacing-4)",
         ...style,
       }}
     >

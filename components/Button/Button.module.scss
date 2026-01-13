@@ -30,13 +30,16 @@
   &:focus-visible {
     outline: none;
     box-shadow: 7px 7px 0px 0px var(--btn-focus-shadow);
-    transform: translate(-2px, -2px);
+    transform: translate(
+      calc(-1 * var(--spacing-half)),
+      calc(-1 * var(--spacing-half))
+    );
     border-color: var(--btn-focus-border);
   }
 
   &:active {
     transition: none;
-    transform: translate(2px, 2px);
+    transform: translate(var(--spacing-half), var(--spacing-half));
     box-shadow: none;
   }
 
@@ -50,7 +53,7 @@
 /* Variants */
 .primary {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--primary);
   color: var(--primary-foreground);
@@ -63,7 +66,7 @@
 
 .secondary {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--secondary);
   color: var(--secondary-foreground);
@@ -76,7 +79,7 @@
 
 .success {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--success);
   color: var(--success-foreground);
@@ -89,7 +92,7 @@
 
 .danger {
   --btn-focus-border: var(--card-border);
-  --btn-focus-shadow: #000000;
+  --btn-focus-shadow: var(--shadow-base);
 
   background-color: var(--error);
   color: var(--error-foreground);
@@ -132,20 +135,26 @@
 
 /* Sizes */
 .sm {
-  padding: 0.25rem;
+  padding: var(--spacing-1);
   font-size: var(--text-sm);
-  min-width: 24px;
+  min-width: var(--spacing-6);
+  min-height: var(--control-height-sm);
+  box-sizing: border-box;
   justify-content: center;
 }
 
 .md {
-  padding: 0.75rem 1.5rem;
+  padding: var(--spacing-3) var(--spacing-6);
   font-size: var(--text-base);
+  min-height: var(--control-height-md);
+  box-sizing: border-box;
 }
 
 .lg {
-  padding: 1rem 2rem;
+  padding: var(--spacing-4) var(--spacing-8);
   font-size: var(--text-lg);
+  min-height: var(--control-height-lg);
+  box-sizing: border-box;
 }
 /* Loading State */
 .loading {
@@ -155,5 +164,5 @@
 }
 
 .spinnerIcon {
-  margin-right: 0.5rem;
+  margin-right: var(--spacing-2);
 }

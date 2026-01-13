@@ -329,24 +329,10 @@ export function ChartPlot<T>({
             renderTooltip(activeData)
           ) : (
             <Card className={styles.tooltipCard}>
-              <div style={{ marginBottom: 4 }}>
-                <Text
-                  style={{
-                    color: "var(--muted-foreground)",
-                    textTransform: "uppercase",
-                    fontSize: "10px",
-                    letterSpacing: "0.5px",
-                  }}
-                  variant="h6"
-                >
-                  {x(activeData)}
-                </Text>
-              </div>
-              <div>
-                <Text style={{ margin: 0 }} variant="h4">
-                  {y(activeData)}
-                </Text>
-              </div>
+              <Text className={styles.tooltipLabel} variant="h6">
+                {x(activeData)}
+              </Text>
+              <Text variant="h4">{y(activeData)}</Text>
             </Card>
           )}
         </div>

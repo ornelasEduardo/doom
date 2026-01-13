@@ -1,16 +1,18 @@
+@use "../../styles/mixins" as *;
+
 .nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
 }
 
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--spacing-10);
+  height: var(--spacing-10);
   border: var(--border-width) solid var(--card-border);
   border-radius: var(--radius);
   background-color: var(--card-bg);
@@ -18,14 +20,18 @@
   font-family: var(--font-heading);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: none;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
-  &:hover:not(:disabled) {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-sm-hover);
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+  &:not(:disabled):not(.active) {
+    @include brutalist-hover(2px, var(--card-border));
+
+    &:hover {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+    }
   }
 
   &:active:not(:disabled) {
@@ -37,11 +43,23 @@
     opacity: 0.5;
     cursor: not-allowed;
     background-color: var(--muted);
+    box-shadow: none;
   }
 
   &.active {
     background-color: var(--primary);
     color: var(--primary-foreground);
     box-shadow: var(--shadow-sm);
+    cursor: default;
+    transition: none;
   }
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-10);
+  height: var(--spacing-10);
+  color: var(--muted-foreground);
 }

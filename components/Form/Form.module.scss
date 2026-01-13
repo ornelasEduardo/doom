@@ -38,9 +38,9 @@
     transform: translateX(0);
   }
   25% {
-    transform: translateX(-4px);
+    transform: translateX(calc(var(--spacing-1) * -1));
   }
   75% {
-    transform: translateX(4px);
+    transform: translateX(var(--spacing-1));
   }
 }

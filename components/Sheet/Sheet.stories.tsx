@@ -147,7 +147,7 @@ export const Default: Story = {
                   Targeted Override
                 </Text>
               </Flex>
-              <Card style={{ padding: "var(--spacing-md)" }}>
+              <Card style={{ padding: "var(--spacing-4)" }}>
                 <Stack gap={4}>
                   <Stack gap={2}>
                     <Text color="muted" variant="small">

@@ -1,4 +1,4 @@
-import { baseVariables, palette } from "../tokens";
+import { baseVariables, palette } from "../palettes";
 import { createSolidTokens } from "./solid-tokens";
 
 export const themes = {

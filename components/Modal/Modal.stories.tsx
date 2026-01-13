@@ -37,7 +37,7 @@ export const Default: Story = {
           }
           isOpen={isOpen}
           title={
-            <Text as="h2" className="mb-0" variant="h4">
+            <Text as="h2" variant="h4">
               Example Modal
             </Text>
           }
@@ -78,7 +78,7 @@ export const FeedbackForm: Story = {
           }
           isOpen={isOpen}
           title={
-            <Text as="h2" className="mb-0" variant="h4">
+            <Text as="h2" variant="h4">
               Send Feedback
             </Text>
           }
@@ -117,7 +117,7 @@ export const CustomComposition: Story = {
         </Button>
         <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <Modal.Header>
-            <Text as="h2" className="mb-0" variant="h3">
+            <Text as="h2" variant="h4">
               Custom Composition
             </Text>
           </Modal.Header>
@@ -161,7 +161,7 @@ export const SolidVariant: Story = {
         </Button>
         <Modal isOpen={isOpen} variant="solid" onClose={() => setIsOpen(false)}>
           <Modal.Header>
-            <Text as="h2" className="mb-0" variant="h3">
+            <Text as="h2" variant="h4">
               SOLID VARIANT
             </Text>
           </Modal.Header>

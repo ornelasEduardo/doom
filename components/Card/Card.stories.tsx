@@ -48,9 +48,7 @@ export const Composition: Story = {
     <Card.Root>
       <Card.Header>
         <Flex align="center" justify="space-between">
-          <Text className="mb-0" variant="h4">
-            Composed Card
-          </Text>
+          <Text variant="h4">Composed Card</Text>
           <Badge variant="success">Active</Badge>
         </Flex>
       </Card.Header>
@@ -103,9 +101,7 @@ export const WithImage: Story = {
               Dec 2025
             </Text>
           </Flex>
-          <Text className="mb-0" variant="h3">
-            Full Bleed Image
-          </Text>
+          <Text variant="h3">Full Bleed Image</Text>
           <Text>
             By using <code>Card.Root</code> (which has no padding), we can
             easily insert full-width images without negative margin hacks.

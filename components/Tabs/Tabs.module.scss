@@ -3,7 +3,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(var(--spacing-1));
   }
   to {
     opacity: 1;
@@ -14,9 +14,9 @@
 .tabsList {
   display: flex;
   margin-bottom: 0;
-  padding-left: var(--spacing-md);
+  padding-left: var(--spacing-4);
   position: relative;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
@@ -32,7 +32,7 @@
 
   &.align-right {
     justify-content: flex-end;
-    padding-right: var(--spacing-md);
+    padding-right: var(--spacing-4);
     padding-left: 0;
   }
 }
@@ -41,14 +41,14 @@
   @include mixins.mq("sm", "max") {
     padding-left: 0;
     padding-right: 0;
-    gap: 0.25rem;
+    gap: var(--spacing-1);
   }
 }
 
 .tabsTrigger {
   flex-shrink: 0;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
+  padding: var(--spacing-3) var(--spacing-6);
+  font-size: var(--text-sm);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -61,16 +61,16 @@
   position: relative;
   z-index: 1;
   transition: all 0.2s ease;
-  transform: translateY(4px);
+  transform: translateY(var(--spacing-1));
   white-space: nowrap;
 
   @include mixins.mq("sm", "max") {
-    padding: 0.75rem 1rem;
+    padding: var(--spacing-3) var(--spacing-4);
   }
 
   &:hover {
     background-color: color-mix(in srgb, var(--primary), transparent 90%);
-    transform: translateY(2px);
+    transform: translateY(var(--spacing-half));
   }
 
   &.active {
@@ -98,7 +98,7 @@
   z-index: var(--z-elevated);
 
   @include mixins.mq("sm", "max") {
-    padding: var(--spacing-md);
+    padding: var(--spacing-4);
   }
   min-height: 600px;
   margin-top: -3px;

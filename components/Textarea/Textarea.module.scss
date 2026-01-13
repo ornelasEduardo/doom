@@ -3,19 +3,20 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   width: 100%;
 }
 
 .textarea {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: var(--spacing-4) var(--spacing-6);
   font-size: var(--text-base);
   background: var(--card-bg);
   color: var(--foreground);
   font-family: inherit;
   resize: vertical;
-  min-height: 100px;
+  min-height: var(--spacing-24);
+  box-sizing: border-box;
 
   @include base-interactive;
   @include focus;
@@ -57,7 +58,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
 .messageArea {

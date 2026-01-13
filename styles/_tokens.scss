@@ -1,0 +1,242 @@
+// ============================================================================
+// DESIGN SYSTEM HARMONICS
+// All spatial tokens derived from $base-unit (4px)
+// ============================================================================
+
+// Base Unit - The atomic building block
+$base-unit: 0.25rem; // 4px
+
+// ============================================================================
+// SPACING SCALE
+// Numeric scale where N = N * $base-unit
+// ============================================================================
+$spacing-half: $base-unit * 0.5; // 2px (design exception for tight spacing)
+$spacing-1: $base-unit * 1; // 4px
+$spacing-2: $base-unit * 2; // 8px
+$spacing-3: $base-unit * 3; // 12px
+$spacing-4: $base-unit * 4; // 16px
+$spacing-5: $base-unit * 5; // 20px
+$spacing-6: $base-unit * 6; // 24px
+$spacing-8: $base-unit * 8; // 32px
+$spacing-10: $base-unit * 10; // 40px
+$spacing-12: $base-unit * 12; // 48px
+$spacing-16: $base-unit * 16; // 64px
+$spacing-20: $base-unit * 20; // 80px
+$spacing-24: $base-unit * 24; // 96px
+$spacing-32: $base-unit * 32; // 128px
+$spacing-36: $base-unit * 36; // 144px
+$spacing-40: $base-unit * 40; // 160px
+$spacing-56: $base-unit * 56; // 224px
+$spacing-64: $base-unit * 64; // 256px
+$spacing-72: $base-unit * 72; // 288px
+$spacing-100: $base-unit * 100; // 400px
+
+// ============================================================================
+// TYPOGRAPHY SCALE
+// Font sizes derived from base unit (some use half-units for common sizes)
+// ============================================================================
+$text-2xs: $base-unit * 2.5; // 10px (extra-small for chips, badges)
+$text-xs: $base-unit * 3; // 12px
+$text-sm: $base-unit * 3.5; // 14px
+$text-base: $base-unit * 4; // 16px
+$text-lg: $base-unit * 4.5; // 18px
+$text-xl: $base-unit * 5; // 20px
+$text-2xl: $base-unit * 6; // 24px
+$text-3xl: $base-unit * 7.5; // 30px
+$text-4xl: $base-unit * 9; // 36px
+$text-5xl: $base-unit * 12; // 48px
+$text-6xl: $base-unit * 15; // 60px
+
+// ============================================================================
+// STRUCTURAL TOKENS
+// All values are multiples of base-unit (minimum 4px)
+// Exception: border-width at 2px for aesthetics
+// ============================================================================
+$radius: $base-unit * 1; // 4px
+$radius-lg: $base-unit * 2; // 8px
+$radius-xl: $base-unit * 4; // 16px
+$border-width: $base-unit * 0.5; // 2px (design exception - aesthetically better)
+$outline-width: $base-unit * 0.5; // 2px (match border-width)
+$outline-offset: $base-unit * 0.5; // 2px (match border-width)
+
+// ============================================================================
+// SIZING TOKENS
+// Common sizes for icons, touch targets, etc.
+// ============================================================================
+$size-icon-sm: $base-unit * 5; // 20px
+$size-icon-md: $base-unit * 6; // 24px
+$size-icon-lg: $base-unit * 8; // 32px
+$size-touch-target: $base-unit * 11; // 44px
+
+// ============================================================================
+// CSS CUSTOM PROPERTIES EXPORT
+// Export all SCSS tokens as CSS custom properties for component consumption
+// ============================================================================
+:root {
+  // Base
+  --base-unit: #{$base-unit};
+
+  // Spacing
+  --spacing-half: #{$spacing-half};
+  --spacing-1: #{$spacing-1};
+  --spacing-2: #{$spacing-2};
+  --spacing-3: #{$spacing-3};
+  --spacing-4: #{$spacing-4};
+  --spacing-5: #{$spacing-5};
+  --spacing-6: #{$spacing-6};
+  --spacing-8: #{$spacing-8};
+  --spacing-10: #{$spacing-10};
+  --spacing-12: #{$spacing-12};
+  --spacing-16: #{$spacing-16};
+  --spacing-20: #{$spacing-20};
+  --spacing-24: #{$spacing-24};
+  --spacing-32: #{$spacing-32};
+  --spacing-36: #{$spacing-36};
+  --spacing-40: #{$spacing-40};
+  --spacing-56: #{$spacing-56};
+  --spacing-64: #{$spacing-64};
+  --spacing-72: #{$spacing-72};
+  --spacing-100: #{$spacing-100};
+
+  // Typography
+  --text-2xs: #{$text-2xs};
+  --text-xs: #{$text-xs};
+  --text-sm: #{$text-sm};
+  --text-base: #{$text-base};
+  --text-lg: #{$text-lg};
+  --text-xl: #{$text-xl};
+  --text-2xl: #{$text-2xl};
+  --text-3xl: #{$text-3xl};
+  --text-4xl: #{$text-4xl};
+  --text-5xl: #{$text-5xl};
+  --text-6xl: #{$text-6xl};
+
+  // Structure
+  --radius: #{$radius};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --radius-pill: 9999px;
+  --radius-full: 50%;
+  --border-width: #{$border-width};
+  --outline-width: #{$outline-width};
+  --outline-offset: #{$outline-offset};
+
+  // Sizing
+  --size-icon-sm: #{$size-icon-sm};
+  --size-icon-md: #{$size-icon-md};
+  --size-icon-lg: #{$size-icon-lg};
+  --size-touch-target: #{$size-touch-target};
+
+  // Component heights (for inputs, selects, buttons)
+  --control-height-sm: 32px;
+  --control-height-md: 40px;
+  --control-height-lg: 48px;
+
+  // Shadows (offsets derived from base-unit, colors are theme-dependent)
+  // Small shadows: 1 unit offset (4px)
+  --shadow-sm: #{$spacing-1} #{$spacing-1} 0px 0px var(--card-border);
+  --shadow-sm-hover: #{$spacing-2} #{$spacing-2} 0px 0px var(--card-border);
+  --shadow-sm-checked: #{$spacing-1} #{$spacing-1} 0px 0px var(--card-border);
+  --shadow-sm-checked-hover: #{$spacing-2} #{$spacing-2} 0px 0px
+    var(--card-border);
+
+  // Hard shadows (used on buttons/cards)
+  --shadow-hard: #{$spacing-1} #{$spacing-1} 0px 0px var(--shadow-base);
+  --shadow-hover: #{$spacing-2} #{$spacing-2} 0px 0px var(--shadow-base);
+  --shadow-lg: #{$spacing-2} #{$spacing-2} 0px 0px var(--card-border);
+
+  // ============================================================================
+  // FONT WEIGHTS
+  // ============================================================================
+  --font-thin: 100;
+  --font-extralight: 200;
+  --font-light: 300;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  --font-black: 900;
+
+  // ============================================================================
+  // SIZING & SEMANTIC LAYOUT
+  // ============================================================================
+
+  // Fractionals
+  --width-full: 100%;
+  --width-screen: 100vw;
+  --height-screen: 100vh;
+  --width-min: min-content;
+  --width-max: max-content;
+  --width-fit: fit-content;
+
+  // Prose (Reading Widths) - ch units for optimal readability
+  --width-prose-narrow: 45ch; // captions, comments, side notes
+  --width-prose: 65ch; // standard reading width
+  --width-prose-wide: 80ch; // documentation, technical writing
+
+  // Structural (Containers & Regions)
+  --width-sidebar: 280px;
+  --width-sidebar-collapsed: 64px;
+  --width-panel: 400px; // Standard drawer/panel width
+  --width-panel-wide: 600px;
+
+  // Modal Sizes
+  --width-modal-sm: 400px;
+  --width-modal-md: 600px;
+  --width-modal-lg: 800px;
+  --width-modal-xl: 1024px;
+
+  // Controls (Inputs, Buttons, etc)
+  --width-control-sm: 120px;
+  --width-control-md: 240px;
+  --width-control-lg: 320px;
+  --width-control-xl: 400px;
+
+  // Legacy/Specific Overrides (Mapped to new system where possible)
+  --drawer-width: var(--width-panel);
+  --page-max-width: 1920px;
+  --header-height: 56px;
+  --header-height-sm: 48px;
+
+  --form-col-min: #{$base-unit * 32}; // 128px
+  --form-select-width: #{$base-unit * 36}; // 144px
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+  --blur-standard: 4px;
+  // ============================================================================
+  --z-base: 0;
+  --z-elevated: 10;
+  --z-header: 40;
+  --z-dropdown: 50;
+  --z-modal: 100;
+  --z-overlay: 150;
+  --z-drawer: 200;
+  --z-tooltip: 500;
+
+  // ============================================================================
+  // MOTION (Durations and Easings)
+  // ============================================================================
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  // ============================================================================
+  // OVERLAY
+  // ============================================================================
+  --overlay-opacity: 0.5;
+
+  // ============================================================================
+  // TYPOGRAPHY STANDARDS
+  // ============================================================================
+  --font-heading: var(--font-montserrat);
+  --heading-transform: uppercase;
+  --heading-weight: 800;
+}

@@ -66,7 +66,11 @@ export const RightSideWithFooter: Story = {
             </Button>
           }
           isOpen={open}
-          title="Account Profile"
+          title={
+            <Text as="h1" variant="h4">
+              Account Profile
+            </Text>
+          }
           onClose={() => setOpen(false)}
         >
           <Stack gap={8}>
@@ -161,7 +165,11 @@ export const Default: Story = {
         <Drawer
           {...args}
           isOpen={open}
-          title="Settings"
+          title={
+            <Text as="h1" variant="h4">
+              Settings
+            </Text>
+          }
           onClose={() => setOpen(false)}
         >
           <Stack gap={6}>
@@ -239,7 +247,11 @@ export const LeftSide: Story = {
           {...args}
           isOpen={open}
           side="left"
-          title="Activity Feed"
+          title={
+            <Text as="h1" variant="h4">
+              Activity Feed
+            </Text>
+          }
           onClose={() => setOpen(false)}
         >
           <Stack gap={4} style={{ margin: "-1rem" }}>
@@ -289,7 +301,11 @@ export const SolidVariant: Story = {
             </Button>
           }
           isOpen={open}
-          title="System Integrity"
+          title={
+            <Text as="h1" variant="h4">
+              System Integrity
+            </Text>
+          }
           variant="solid"
           onClose={() => setOpen(false)}
         >

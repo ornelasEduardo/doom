@@ -420,9 +420,7 @@ export const IntegratedChart: Story = {
             Total Balance
           </Text>
           <Flex align="center" gap={2}>
-            <Text className="mb-0" variant="h3">
-              ${currentData.value.toLocaleString()}
-            </Text>
+            <Text variant="h3">${currentData.value.toLocaleString()}</Text>
             <Badge variant={isPositive ? "success" : "error"}>
               {isPositive ? "+" : ""}
               {percentChange.toFixed(1)}%
@@ -627,12 +625,16 @@ export const CompositionExample: Story = {
           <Stack style={{ height: "100%" }}>
             <Chart.Header
               subtitle="Using Sub-components"
-              title="Composed Chart"
+              title={
+                <Text as="h1" variant="h4">
+                  Composed Chart
+                </Text>
+              }
             >
               <Flex gap={2}>
                 <Select
                   options={chartTypes}
-                  style={{ width: `10ch` }}
+                  style={{ width: `12ch` }}
                   value={chartType}
                   onChange={(e) =>
                     setChartType(e.target.value as "line" | "area" | "bar")
@@ -640,7 +642,7 @@ export const CompositionExample: Story = {
                 />
                 <Select
                   options={chartColors}
-                  style={{ width: `15ch` }}
+                  style={{ width: `16ch` }}
                   value={chartColor}
                   onChange={(e) => setChartColor(e.target.value as string)}
                 />

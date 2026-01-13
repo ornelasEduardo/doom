@@ -129,7 +129,7 @@ export function ConditionRow({
   ];
 
   return (
-    <Card
+    <Card.Root
       ref={setNodeRef}
       className={clsx(
         styles.conditionRow,
@@ -280,7 +280,7 @@ export function ConditionRow({
       >
         <Trash2 size={14} />
       </Button>
-    </Card>
+    </Card.Root>
   );
 }
 
@@ -376,7 +376,7 @@ export function FilterGroup({
   const isEmpty = item.children.length === 0;
 
   return (
-    <Card
+    <Card.Root
       ref={setNodeRef}
       className={clsx(
         styles.group,
@@ -489,11 +489,10 @@ export function FilterGroup({
 
       <div
         ref={contentRef}
-        className={styles.groupContentWrapper}
-        style={{
-          height: isCollapsed ? 0 : "auto",
-          overflow: isCollapsed ? "hidden" : "visible",
-        }}
+        className={clsx(
+          styles.groupContentWrapper,
+          isCollapsed && styles.collapsedWrapper,
+        )}
       >
         <div className={styles.groupContent}>
           {isEmpty ? (
@@ -554,24 +553,24 @@ export function FilterGroup({
               </React.Fragment>
             ))
           )}
-        </div>
 
-        {!isEmpty && (
-          <div className={styles.groupActions}>
-            <Button size="sm" variant="ghost" onClick={addCondition}>
-              <Plus size={14} /> Condition
-            </Button>
-            <Button
-              disabled={depth >= MAX_DEPTH}
-              size="sm"
-              variant="ghost"
-              onClick={addNestedGroup}
-            >
-              <Plus size={14} /> Add Group
-            </Button>
-          </div>
-        )}
+          {!isEmpty && (
+            <div className={styles.groupActions}>
+              <Button size="sm" variant="ghost" onClick={addCondition}>
+                <Plus size={14} /> Condition
+              </Button>
+              <Button
+                disabled={depth >= MAX_DEPTH}
+                size="sm"
+                variant="ghost"
+                onClick={addNestedGroup}
+              >
+                <Plus size={14} /> Add Group
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-    </Card>
+    </Card.Root>
   );
 }

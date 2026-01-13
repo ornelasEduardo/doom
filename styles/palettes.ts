@@ -139,95 +139,11 @@ export const palette = {
   },
 } as const;
 
+// All tokens have been moved to styles/_tokens.scss
+// This file now only exports color palettes
 export const baseVariables = {
-  // Typography Scale
-  "--text-xs": "0.75rem",
-  "--text-sm": "0.875rem",
-  "--text-base": "1rem",
-  "--text-lg": "1.125rem",
-  "--text-xl": "1.25rem",
-  "--text-2xl": "1.5rem",
-  "--text-3xl": "1.875rem",
-  "--text-4xl": "2.25rem",
-  "--text-5xl": "3rem",
-  "--text-6xl": "3.75rem",
-
-  // Font Weights
-  "--font-thin": "100",
-  "--font-extralight": "200",
-  "--font-light": "300",
-  "--font-regular": "400",
-  "--font-medium": "500",
-  "--font-semibold": "600",
-  "--font-bold": "700",
-  "--font-extrabold": "800",
-  "--font-black": "900",
-
-  // Spacing Scale
-  "--spacing-xs": "0.25rem",
-  "--spacing-sm": "0.5rem",
-  "--spacing-md": "1rem",
-  "--spacing-lg": "1.5rem",
-  "--spacing-xl": "2rem",
-  "--spacing-2xl": "3rem",
-
-  // Z-Indices
-  "--z-base": "0",
-  "--z-elevated": "10",
-  "--z-header": "40",
-  "--z-dropdown": "50",
-  "--z-modal": "100",
-  "--z-overlay": "150",
-  "--z-drawer": "200",
-  "--z-tooltip": "500",
-
-  // Motion
-  "--duration-fast": "150ms",
-  "--duration-normal": "250ms",
-  "--duration-slow": "350ms",
-  "--ease-in-out": "cubic-bezier(0.4, 0, 0.2, 1)",
-  "--ease-out": "cubic-bezier(0.0, 0, 0.2, 1)",
-  "--ease-in": "cubic-bezier(0.4, 0, 1, 1)",
-
-  // Border Radius
-  "--radius-pill": "9999px",
-  "--radius-full": "50%",
-
-  // Outline
-  "--outline-width": "2px",
-  "--outline-offset": "2px",
-
-  // Overlay
-  "--overlay-opacity": "0.5",
-
-  // Common Sizes
-  "--size-icon-sm": "20px",
-  "--size-icon-md": "24px",
-  "--size-icon-lg": "32px",
-  "--size-touch-target": "44px",
-
-  // Common Colors
+  // Common Colors (still needed for JS theme injection)
   "--common-black": palette.black[950],
   "--common-white": palette.white[950],
-
-  // Functional Tokens (Structure)
   "--border-strong": palette.black[950],
-
-  // Structural Standards (Global)
-  "--border-width": "2px",
-  "--radius": "4px",
-  "--shadow-hard": "4px 4px 0px 0px var(--shadow-base)",
-  "--shadow-hover": "6px 6px 0px 0px var(--shadow-base)",
-
-  // Typography Standards (Global)
-  "--font-heading": "var(--font-montserrat)",
-  "--heading-transform": "uppercase",
-  "--heading-weight": "800",
-
-  // Shadows (consistent relative to theme colors)
-  "--shadow-sm": "2px 2px 0px 0px var(--card-border)",
-  "--shadow-sm-hover": "4px 4px 0px 0px var(--card-border)",
-  "--shadow-sm-checked": "4px 4px 0px 0px var(--card-border)",
-  "--shadow-sm-checked-hover": "6px 6px 0px 0px var(--card-border)",
-  "--shadow-lg": "8px 8px 0px 0px var(--card-border)",
 };

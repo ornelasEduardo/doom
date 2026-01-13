@@ -1,12 +1,12 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-2);
   width: 100%;
 }
 
 .container {
-  height: var(--height, 24px);
+  height: var(--height, var(--spacing-6));
   width: 100%;
   background: var(--card-bg);
   border-radius: var(--radius);
@@ -43,6 +43,6 @@
     transparent 75%,
     transparent
   );
-  background-size: 20px 20px;
+  background-size: var(--spacing-5) var(--spacing-5);
   pointer-events: none;
 }
