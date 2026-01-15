@@ -1,5 +1,6 @@
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
+import importPlugin from "eslint-plugin-import";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
 import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
@@ -36,6 +37,7 @@ export default [
       "simple-import-sort": simpleImportSort,
       "unused-imports": unusedImports,
       "react-hooks": reactHooks,
+      import: importPlugin,
     },
     languageOptions: {
       globals: {
@@ -53,6 +55,9 @@ export default [
       curly: ["error", "all"],
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
+      "import/first": "error",
+      "import/newline-after-import": "error",
+      "import/no-duplicates": "error",
       "react/jsx-sort-props": [
         "error",
         {
