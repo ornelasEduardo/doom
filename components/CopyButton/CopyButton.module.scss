@@ -1,0 +1,104 @@
+@use "../../styles/mixins" as m;
+
+.copyButton {
+  position: relative;
+  overflow: hidden;
+  display: inline-grid !important;
+  grid-template-areas: "stack";
+  place-items: center;
+  text-align: center;
+
+  // Prevent flex squishing
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+
+  &:not(.ghost):active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--shadow-base) !important;
+  }
+}
+
+.ghost {
+  box-shadow: none !important;
+
+  &:active {
+    box-shadow: none !important;
+    transform: scale(0.95);
+  }
+
+  &:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none !important;
+  }
+}
+
+.labelContainer {
+  grid-area: stack;
+  display: grid;
+  place-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+  width: 100%;
+}
+
+.defaultLabel,
+.successLabel {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 100%;
+}
+
+.defaultLabel {
+  transform: scale(1);
+  opacity: 1;
+  filter: blur(0px);
+}
+
+.successLabel {
+  transform: scale(0.5) translateY(10px);
+  opacity: 0;
+  filter: blur(4px);
+}
+
+.copied {
+  .defaultLabel {
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 150ms ease-out;
+  }
+
+  .successLabel {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+.widthPreserver {
+  grid-area: stack;
+  visibility: hidden;
+  display: grid;
+  grid-template-columns: auto;
+  justify-items: center;
+  align-items: center;
+  height: 0;
+  overflow: hidden;
+}
+
+.measureItem {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  white-space: nowrap;
+}

@@ -3,6 +3,8 @@
 import clsx from "clsx";
 import React from "react";
 
+import { Label } from "../Label/Label";
+import { Text } from "../Text/Text";
 import styles from "./Slider.module.scss";
 
 interface SliderProps extends Omit<
@@ -15,9 +17,6 @@ interface SliderProps extends Omit<
   defaultValue?: number | [number, number];
   onChange?: (value: number | [number, number]) => void;
 }
-
-import { Label } from "../Label/Label";
-import { Text } from "../Text/Text";
 
 export function Slider({
   label,

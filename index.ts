@@ -10,6 +10,7 @@ export * from "./components/Chart";
 export * from "./components/Checkbox";
 export * from "./components/Chip";
 export * from "./components/Combobox";
+export * from "./components/CopyButton";
 export * from "./components/Drawer";
 export * from "./components/Dropdown";
 export * from "./components/FileUpload";

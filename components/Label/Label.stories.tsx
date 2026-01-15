@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
+import { Input } from "../Input/Input";
 import { Label } from "./Label";
 
 const meta: Meta<typeof Label> = {
@@ -42,8 +43,6 @@ export const LongText: Story = {
     htmlFor: "complex",
   },
 };
-
-import { Input } from "../Input/Input";
 
 export const WithInput: Story = {
   render: () => (
