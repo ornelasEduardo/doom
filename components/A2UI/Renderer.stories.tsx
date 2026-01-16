@@ -9,7 +9,8 @@ import { Flex, Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 import { Textarea } from "../Textarea/Textarea";
 import { getA2UISystemPrompt } from "./promptUtils";
-import { A2UINode, Renderer } from "./Renderer";
+import { Renderer } from "./Renderer";
+import type { A2UIComponentEntry } from "./types";
 
 const meta: Meta<typeof Renderer> = {
   title: "Components/A2UI",
@@ -24,689 +25,774 @@ type Story = StoryObj<typeof Renderer>;
 
 // --- Executive Dashboard Example ---
 
-const executiveDashboardData = {
-  type: "flex",
-  props: {
-    className: "p-8 w-full h-full",
-    style: { background: "var(--background)" },
-    direction: "column",
-    gap: 6,
+const executiveDashboardComponents: A2UIComponentEntry[] = [
+  // Root layout
+  {
+    id: "root",
+    component: {
+      flex: {
+        className: "p-8 w-full h-full",
+        style: { background: "var(--background)" },
+        direction: "column",
+        gap: 6,
+        children: { explicitList: ["header", "stats-row", "main-tabs"] },
+      },
+    },
   },
-  children: [
-    // Header
-    {
-      type: "flex",
-      props: { justify: "space-between", align: "center", className: "w-full" },
-      children: [
-        {
-          type: "text",
-          props: {
-            variant: "h2",
-            className: "font-bold",
-            style: { color: "var(--foreground)" },
+  // Header
+  {
+    id: "header",
+    component: {
+      flex: {
+        justify: "space-between",
+        align: "center",
+        className: "w-full",
+        children: { explicitList: ["title", "header-right"] },
+      },
+    },
+  },
+  {
+    id: "title",
+    component: {
+      text: {
+        variant: "h2",
+        className: "font-bold",
+        style: { color: "var(--foreground)" },
+        text: { literalString: "Mars Facility Analytics" },
+      },
+    },
+  },
+  {
+    id: "header-right",
+    component: {
+      flex: {
+        gap: 4,
+        align: "center",
+        children: { explicitList: ["status-badge", "user-avatar"] },
+      },
+    },
+  },
+  {
+    id: "status-badge",
+    component: {
+      badge: {
+        variant: "success",
+        size: "md",
+        text: { literalString: "System Online" },
+      },
+    },
+  },
+  {
+    id: "user-avatar",
+    component: {
+      avatar: {
+        fallback: "DS",
+        size: "md",
+        style: { background: "var(--primary)" },
+      },
+    },
+  },
+  // Stats Row
+  {
+    id: "stats-row",
+    component: {
+      grid: {
+        columns: 3,
+        gap: 6,
+        className: "w-full",
+        children: {
+          explicitList: ["energy-card", "personnel-card", "threat-card"],
+        },
+      },
+    },
+  },
+  {
+    id: "energy-card",
+    component: {
+      card: {
+        className: "p-6",
+        children: {
+          explicitList: ["energy-label", "energy-value", "energy-badge"],
+        },
+      },
+    },
+  },
+  {
+    id: "energy-label",
+    component: {
+      text: {
+        variant: "small",
+        className: "text-muted",
+        text: { literalString: "Total Energy Output" },
+      },
+    },
+  },
+  {
+    id: "energy-value",
+    component: {
+      text: {
+        variant: "h3",
+        className: "mt-2",
+        style: { fontFamily: "monospace" },
+        text: { literalString: "45.2 GW" },
+      },
+    },
+  },
+  {
+    id: "energy-badge",
+    component: {
+      badge: {
+        variant: "success",
+        size: "sm",
+        className: "mt-2",
+        text: { literalString: "+12% vs last cycle" },
+      },
+    },
+  },
+  {
+    id: "personnel-card",
+    component: {
+      card: {
+        className: "p-6",
+        children: {
+          explicitList: [
+            "personnel-label",
+            "personnel-value",
+            "personnel-badge",
+          ],
+        },
+      },
+    },
+  },
+  {
+    id: "personnel-label",
+    component: {
+      text: {
+        variant: "small",
+        className: "text-muted",
+        text: { literalString: "Active Personnel" },
+      },
+    },
+  },
+  {
+    id: "personnel-value",
+    component: {
+      text: {
+        variant: "h3",
+        className: "mt-2 font-mono",
+        text: { literalString: "8,421" },
+      },
+    },
+  },
+  {
+    id: "personnel-badge",
+    component: {
+      badge: {
+        variant: "secondary",
+        size: "sm",
+        className: "mt-2",
+        text: { literalString: "Stable" },
+      },
+    },
+  },
+  {
+    id: "threat-card",
+    component: {
+      card: {
+        className: "p-6",
+        children: {
+          explicitList: ["threat-label", "threat-value", "threat-badge"],
+        },
+      },
+    },
+  },
+  {
+    id: "threat-label",
+    component: {
+      text: {
+        variant: "small",
+        className: "text-muted",
+        text: { literalString: "Threat Level" },
+      },
+    },
+  },
+  {
+    id: "threat-value",
+    component: {
+      text: {
+        variant: "h3",
+        className: "mt-2 text-error",
+        style: { fontFamily: "monospace" },
+        text: { literalString: "CRITICAL" },
+      },
+    },
+  },
+  {
+    id: "threat-badge",
+    component: {
+      badge: {
+        variant: "error",
+        size: "sm",
+        className: "mt-2",
+        text: { literalString: "Containment Breach" },
+      },
+    },
+  },
+  // Main Tabs
+  {
+    id: "main-tabs",
+    component: {
+      tabs: {
+        defaultValue: "overview",
+        className: "w-full",
+        children: { explicitList: ["tabs-list", "tabs-body"] },
+      },
+    },
+  },
+  {
+    id: "tabs-list",
+    component: {
+      "tabs-list": {
+        children: {
+          explicitList: ["tab-overview", "tab-incidents", "tab-personnel"],
+        },
+      },
+    },
+  },
+  {
+    id: "tab-overview",
+    component: {
+      "tabs-trigger": {
+        value: "overview",
+        text: { literalString: "Overview" },
+      },
+    },
+  },
+  {
+    id: "tab-incidents",
+    component: {
+      "tabs-trigger": {
+        value: "incidents",
+        text: { literalString: "Incidents" },
+      },
+    },
+  },
+  {
+    id: "tab-personnel",
+    component: {
+      "tabs-trigger": {
+        value: "personnel",
+        text: { literalString: "Personnel" },
+      },
+    },
+  },
+  {
+    id: "tabs-body",
+    component: {
+      "tabs-body": {
+        child: "overview-content",
+      },
+    },
+  },
+  {
+    id: "overview-content",
+    component: {
+      "tabs-content": {
+        value: "overview",
+        children: { explicitList: ["critical-alert", "overview-grid"] },
+      },
+    },
+  },
+  {
+    id: "critical-alert",
+    component: {
+      alert: {
+        variant: "error",
+        title: "Critical System Failure",
+        description:
+          "Sector 7G containment breach detected. Evacuation protocols initiated.",
+        className: "mb-6",
+      },
+    },
+  },
+  {
+    id: "overview-grid",
+    component: {
+      grid: {
+        columns: "2fr 1fr",
+        gap: 6,
+        children: { explicitList: ["chart-area", "alerts-card"] },
+      },
+    },
+  },
+  {
+    id: "chart-area",
+    component: {
+      chart: {
+        title: "Power Consumption",
+        subtitle: "Last 24 Hours",
+        type: "area",
+        withLegend: true,
+        xKey: "time",
+        yKey: "value",
+        config: {
+          value: {
+            label: "Usage (GW)",
+            color: "var(--primary)",
           },
-          children: ["Mars Facility Analytics"],
         },
-        {
-          type: "flex",
-          props: { gap: 4, align: "center" },
-          children: [
-            {
-              type: "badge",
-              props: { variant: "success", size: "md" },
-              children: ["System Online"],
-            },
-            {
-              type: "avatar",
-              props: {
-                fallback: "DS",
-                size: "md",
-                style: { background: "var(--primary)" },
-              },
-            },
-          ],
+        data: [
+          { time: "00:00", value: 30 },
+          { time: "04:00", value: 45 },
+          { time: "08:00", value: 25 },
+          { time: "12:00", value: 60 },
+          { time: "16:00", value: 55 },
+          { time: "20:00", value: 40 },
+          { time: "23:59", value: 35 },
+        ],
+        style: { height: 400 },
+        d3Config: {
+          grid: true,
+          withGradient: true,
+          showDots: true,
         },
-      ],
+      },
     },
-
-    // Stats Row
-    {
-      type: "grid",
-      props: { columns: 3, gap: 6, className: "w-full" },
-      children: [
-        {
-          type: "card",
-          props: { className: "p-6" },
-          children: [
-            {
-              type: "text",
-              props: { variant: "small", className: "text-muted" },
-              children: ["Total Energy Output"],
-            },
-            {
-              type: "text",
-              props: {
-                variant: "h3",
-                className: "mt-2",
-                style: { fontFamily: "monospace" },
-              },
-              children: ["45.2 GW"],
-            },
-            {
-              type: "badge",
-              props: { variant: "success", size: "sm", className: "mt-2" },
-              children: ["+12% vs last cycle"],
-            },
-          ],
-        },
-        {
-          type: "card",
-          props: { className: "p-6" },
-          children: [
-            {
-              type: "text",
-              props: { variant: "small", className: "text-muted" },
-              children: ["Active Personnel"],
-            },
-            {
-              type: "text",
-              props: { variant: "h3", className: "mt-2 font-mono" },
-              children: ["8,421"],
-            },
-            {
-              type: "badge",
-              props: { variant: "secondary", size: "sm", className: "mt-2" },
-              children: ["Stable"],
-            },
-          ],
-        },
-        {
-          type: "card",
-          props: { className: "p-6" },
-          children: [
-            {
-              type: "text",
-              props: { variant: "small", className: "text-muted" },
-              children: ["Threat Level"],
-            },
-            {
-              type: "text",
-              props: {
-                variant: "h3",
-                className: "mt-2 text-error",
-                style: { fontFamily: "monospace" },
-              },
-              children: ["CRITICAL"],
-            },
-            {
-              type: "badge",
-              props: { variant: "error", size: "sm", className: "mt-2" },
-              children: ["Containment Breach"],
-            },
-          ],
-        },
-      ],
+  },
+  {
+    id: "alerts-card",
+    component: {
+      card: {
+        className: "overflow-hidden flex flex-col align-start gap-4",
+        children: { explicitList: ["alerts-title", "alerts-stack"] },
+      },
     },
-
-    // Main Content: Tabs
-    {
-      type: "tabs",
-      props: { defaultValue: "overview", className: "w-full" },
-      children: [
-        {
-          type: "tabs-list",
-          children: [
-            {
-              type: "tabs-trigger",
-              props: { value: "overview" },
-              children: ["Overview"],
-            },
-            {
-              type: "tabs-trigger",
-              props: { value: "incidents" },
-              children: ["Incidents"],
-            },
-            {
-              type: "tabs-trigger",
-              props: { value: "personnel" },
-              children: ["Personnel"],
-            },
-          ],
-        },
-        {
-          type: "tabs-body",
-          children: [
-            {
-              type: "tabs-content",
-              props: { value: "overview" },
-              children: [
-                // Alert
-                {
-                  type: "alert",
-                  props: {
-                    variant: "error",
-                    title: "Critical System Failure",
-                    description:
-                      "Sector 7G containment breach detected. Evacuation protocols initiated.",
-                    className: "mb-6",
-                  },
-                },
-                // Grid with Chart and Alerts
-                {
-                  type: "grid",
-                  props: { columns: "2fr 1fr", gap: 6 },
-                  children: [
-                    // Chart
-                    {
-                      type: "chart",
-                      props: {
-                        title: "Power Consumption",
-                        subtitle: "Last 24 Hours",
-                        type: "area",
-                        withLegend: true,
-                        xKey: "time",
-                        yKey: "value",
-                        config: {
-                          value: {
-                            label: "Usage (GW)",
-                            color: "var(--primary)",
-                          },
-                        },
-                        data: [
-                          { time: "00:00", value: 30 },
-                          { time: "04:00", value: 45 },
-                          { time: "08:00", value: 25 },
-                          { time: "12:00", value: 60 },
-                          { time: "16:00", value: 55 },
-                          { time: "20:00", value: 40 },
-                          { time: "23:59", value: 35 },
-                        ],
-                        style: { height: 400 },
-                        d3Config: {
-                          grid: true,
-                          withGradient: true,
-                          showDots: true,
-                        },
-                      },
-                    },
-                    // Recent Alerts
-                    {
-                      type: "card",
-                      props: {
-                        className:
-                          "overflow-hidden flex flex-col align-start gap-4",
-                      },
-                      children: [
-                        {
-                          type: "text",
-                          props: { variant: "h4" },
-                          children: ["Recent Alerts"],
-                        },
-                        {
-                          type: "stack",
-                          props: { className: "flex-1 overflow-y-auto" },
-                          children: [
-                            {
-                              type: "slat",
-                              props: {
-                                label: "Sector 7G Power Surge",
-                                secondaryLabel: "2 mins ago",
-                                variant: "danger",
-                              },
-                            },
-                            {
-                              type: "slat",
-                              props: {
-                                label: "Airlock 4 Pressure Drop",
-                                secondaryLabel: "15 mins ago",
-                                variant: "warning",
-                              },
-                            },
-                            {
-                              type: "slat",
-                              props: {
-                                label: "Routine Maintenance",
-                                secondaryLabel: "1 hour ago",
-                                variant: "default",
-                              },
-                            },
-                            {
-                              type: "slat",
-                              props: {
-                                label: "Shift Change",
-                                secondaryLabel: "4 hours ago",
-                                variant: "default",
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+  },
+  {
+    id: "alerts-title",
+    component: {
+      text: {
+        variant: "h4",
+        text: { literalString: "Recent Alerts" },
+      },
     },
-  ],
-};
+  },
+  {
+    id: "alerts-stack",
+    component: {
+      stack: {
+        className: "flex-1 overflow-y-auto",
+        children: {
+          explicitList: ["alert-1", "alert-2", "alert-3", "alert-4"],
+        },
+      },
+    },
+  },
+  {
+    id: "alert-1",
+    component: {
+      slat: {
+        label: "Sector 7G Power Surge",
+        secondaryLabel: "2 mins ago",
+        variant: "danger",
+      },
+    },
+  },
+  {
+    id: "alert-2",
+    component: {
+      slat: {
+        label: "Airlock 4 Pressure Drop",
+        secondaryLabel: "15 mins ago",
+        variant: "warning",
+      },
+    },
+  },
+  {
+    id: "alert-3",
+    component: {
+      slat: {
+        label: "Routine Maintenance",
+        secondaryLabel: "1 hour ago",
+        variant: "default",
+      },
+    },
+  },
+  {
+    id: "alert-4",
+    component: {
+      slat: {
+        label: "Shift Change",
+        secondaryLabel: "4 hours ago",
+        variant: "default",
+      },
+    },
+  },
+];
 
 export const ExecutiveDashboard: Story = {
   args: {
-    data: executiveDashboardData,
+    surface: executiveDashboardComponents,
+    rootId: "root",
   },
 };
 
-// --- User Profile Example ---
+// --- Simple Example with Data Binding ---
 
-const userProfileData = {
-  type: "flex",
-  props: {
-    className: "p-8 w-full min-h-screen",
-    style: { background: "var(--background)" },
-    direction: "column",
-    gap: 6,
+const dataBoundComponents: A2UIComponentEntry[] = [
+  {
+    id: "root",
+    component: {
+      card: {
+        className: "p-6 m-8",
+        style: { maxWidth: "24rem" },
+        children: { explicitList: ["welcome", "name", "email"] },
+      },
+    },
   },
-  children: [
-    // Breadcrumbs
-    {
-      type: "breadcrumbs",
-      children: [
-        { type: "breadcrumb-item", props: { href: "/" }, children: ["Home"] },
-        {
-          type: "breadcrumb-item",
-          props: { href: "/users" },
-          children: ["Users"],
-        },
-        { type: "breadcrumb-item", children: ["Dr. Sarah Chen"] },
-      ],
+  {
+    id: "welcome",
+    component: {
+      text: {
+        variant: "small",
+        className: "text-muted",
+        text: { literalString: "Welcome back," },
+      },
     },
-
-    // Profile Header
-    {
-      type: "card",
-      props: { className: "p-6" },
-      children: [
-        {
-          type: "flex",
-          props: { gap: 6, align: "flex-start", justify: "space-between" },
-          children: [
-            // Left side: Avatar + Info
-            {
-              type: "flex",
-              props: { gap: 4, align: "flex-start" },
-              children: [
-                {
-                  type: "avatar",
-                  props: {
-                    fallback: "SC",
-                    size: "xl",
-                  },
-                },
-                {
-                  type: "stack",
-                  props: { gap: 2 },
-                  children: [
-                    {
-                      type: "flex",
-                      props: { align: "center", gap: 3 },
-                      children: [
-                        {
-                          type: "text",
-                          props: { variant: "h2" },
-                          children: ["Dr. Sarah Chen"],
-                        },
-                        {
-                          type: "badge",
-                          props: { variant: "success" },
-                          children: ["Active"],
-                        },
-                        {
-                          type: "chip",
-                          props: { variant: "primary" },
-                          children: ["Level 5 Access"],
-                        },
-                      ],
-                    },
-                    {
-                      type: "text",
-                      props: {
-                        variant: "small",
-                        className: "text-muted",
-                      },
-                      children: ["Chief Science Officer • Research Division"],
-                    },
-                    {
-                      type: "flex",
-                      props: { gap: 2, className: "mt-1" },
-                      children: [
-                        { type: "chip", children: ["Exobiology"] },
-                        { type: "chip", children: ["Xenolinguistics"] },
-                        { type: "chip", children: ["Containment"] },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            // Right side: Action buttons
-            {
-              type: "flex",
-              props: { gap: 3 },
-              children: [
-                {
-                  type: "button",
-                  props: { variant: "secondary" },
-                  children: ["Edit Profile"],
-                },
-                {
-                  type: "button",
-                  props: { variant: "primary" },
-                  children: ["Send Message"],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+  },
+  {
+    id: "name",
+    component: {
+      text: {
+        variant: "h2",
+        text: { path: "/user/name" },
+      },
     },
-
-    // Main Content Grid
-    {
-      type: "grid",
-      props: { columns: "1fr 2fr", gap: 6 },
-      children: [
-        // Left Column - Quick Stats
-        {
-          type: "stack",
-          props: { gap: 4 },
-          children: [
-            // Training Progress Card
-            {
-              type: "card",
-              props: { className: "p-6" },
-              children: [
-                {
-                  type: "text",
-                  props: { variant: "h4", className: "mb-4" },
-                  children: ["Training Progress"],
-                },
-                {
-                  type: "stack",
-                  props: { gap: 4 },
-                  children: [
-                    {
-                      type: "stack",
-                      props: { gap: 1 },
-                      children: [
-                        {
-                          type: "flex",
-                          props: { justify: "space-between" },
-                          children: [
-                            {
-                              type: "text",
-                              props: { variant: "small" },
-                              children: ["Safety Protocols"],
-                            },
-                            {
-                              type: "text",
-                              props: {
-                                variant: "small",
-                                className: "text-muted",
-                              },
-                              children: ["100%"],
-                            },
-                          ],
-                        },
-                        {
-                          type: "progress-bar",
-                          props: { value: 100, variant: "success" },
-                        },
-                      ],
-                    },
-                    {
-                      type: "stack",
-                      props: { gap: 1 },
-                      children: [
-                        {
-                          type: "flex",
-                          props: { justify: "space-between" },
-                          children: [
-                            {
-                              type: "text",
-                              props: { variant: "small" },
-                              children: ["Containment Procedures"],
-                            },
-                            {
-                              type: "text",
-                              props: {
-                                variant: "small",
-                                className: "text-muted",
-                              },
-                              children: ["87%"],
-                            },
-                          ],
-                        },
-                        {
-                          type: "progress-bar",
-                          props: { value: 87, variant: "primary" },
-                        },
-                      ],
-                    },
-                    {
-                      type: "stack",
-                      props: { gap: 1 },
-                      children: [
-                        {
-                          type: "flex",
-                          props: { justify: "space-between" },
-                          children: [
-                            {
-                              type: "text",
-                              props: { variant: "small" },
-                              children: ["Emergency Response"],
-                            },
-                            {
-                              type: "text",
-                              props: {
-                                variant: "small",
-                                className: "text-muted",
-                              },
-                              children: ["45%"],
-                            },
-                          ],
-                        },
-                        {
-                          type: "progress-bar",
-                          props: { value: 45, variant: "warning" },
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            // Contact Card
-            {
-              type: "card",
-              props: { className: "p-6" },
-              children: [
-                {
-                  type: "text",
-                  props: { variant: "h4", className: "mb-4" },
-                  children: ["Contact Information"],
-                },
-                {
-                  type: "stack",
-                  props: { gap: 3 },
-                  children: [
-                    {
-                      type: "input",
-                      props: {
-                        label: "Email",
-                        value: "s.chen@mars-facility.gov",
-                        disabled: true,
-                      },
-                    },
-                    {
-                      type: "input",
-                      props: {
-                        label: "Terminal ID",
-                        value: "TERM-7G-042",
-                        disabled: true,
-                      },
-                    },
-                    {
-                      type: "input",
-                      props: {
-                        label: "Emergency Contact",
-                        value: "+1 (555) 123-4567",
-                        disabled: true,
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-
-        // Right Column - Activity & Details
-        {
-          type: "card",
-          props: { className: "p-6" },
-          children: [
-            {
-              type: "text",
-              props: { variant: "h4", className: "mb-4" },
-              children: ["Personnel Record"],
-            },
-            {
-              type: "accordion",
-              props: { type: "multiple", defaultValue: ["clearance"] },
-              children: [
-                {
-                  type: "accordion-item",
-                  props: { value: "clearance", trigger: "Security Clearance" },
-                  children: [
-                    {
-                      type: "stack",
-                      props: { gap: 3 },
-                      children: [
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Level 5 - Full Access",
-                            secondaryLabel: "Granted: 2024-01-15",
-                            variant: "success",
-                          },
-                        },
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Sector 7G Override",
-                            secondaryLabel: "Temporary",
-                            variant: "warning",
-                          },
-                        },
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Classified Archives",
-                            secondaryLabel: "Read Only",
-                            variant: "default",
-                          },
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: "accordion-item",
-                  props: { value: "history", trigger: "Employment History" },
-                  children: [
-                    {
-                      type: "stack",
-                      props: { gap: 3 },
-                      children: [
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Chief Science Officer",
-                            secondaryLabel: "2023 - Present",
-                          },
-                        },
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Senior Researcher",
-                            secondaryLabel: "2020 - 2023",
-                          },
-                        },
-                        {
-                          type: "slat",
-                          props: {
-                            label: "Research Associate",
-                            secondaryLabel: "2018 - 2020",
-                          },
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: "accordion-item",
-                  props: { value: "incidents", trigger: "Incident Reports" },
-                  children: [
-                    {
-                      type: "alert",
-                      props: {
-                        variant: "warning",
-                        title: "Pending Review",
-                        description:
-                          "Incident #7G-2024-001 is under investigation.",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
+  },
+  {
+    id: "email",
+    component: {
+      text: {
+        variant: "small",
+        className: "text-muted mt-2",
+        text: { path: "/user/email" },
+      },
     },
-  ],
-};
+  },
+];
 
-export const UserProfile: Story = {
+export const DataBinding: Story = {
   args: {
-    data: userProfileData,
+    surface: dataBoundComponents,
+    rootId: "root",
+    dataModel: {
+      user: {
+        name: "Dr. Sarah Chen",
+        email: "s.chen@mars-facility.gov",
+      },
+    },
   },
 };
 
 // --- Interactive Playground ---
 
 const defaultPlaygroundJson = `{
-  "type": "card",
-  "props": { "className": "p-6" },
-  "children": [
+  "surfaceId": "playground",
+  "components": [
     {
-      "type": "stack",
-      "props": { "gap": 4 },
-      "children": [
-        { "type": "text", "props": { "variant": "h2" }, "children": ["Hello A2UI!"] },
-        { "type": "text", "props": { "variant": "body" }, "children": ["Paste your JSON here and click Render."] },
-        { "type": "badge", "props": { "variant": "success" }, "children": ["Working"] }
-      ]
+      "id": "root",
+      "component": {
+        "stack": {
+          "gap": 6,
+          "className": "p-8 w-full max-w-[1200px] mx-auto",
+          "children": { "explicitList": ["header", "stats-grid", "main-content"] }
+        }
+      }
+    },
+    {
+      "id": "header",
+      "component": {
+        "flex": {
+          "justify": "space-between",
+          "align": "center",
+          "children": { "explicitList": ["title-block", "actions"] }
+        }
+      }
+    },
+    {
+      "id": "title-block",
+      "component": {
+        "stack": {
+          "gap": 1,
+          "children": { "explicitList": ["title", "subtitle"] }
+        }
+      }
+    },
+    {
+      "id": "title",
+      "component": {
+        "text": { "variant": "h2", "text": { "literalString": "Mission Control" } }
+      }
+    },
+    {
+      "id": "subtitle",
+      "component": {
+        "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Real-time telemetry and resource tracking" } }
+      }
+    },
+    {
+      "id": "actions",
+      "component": {
+        "flex": {
+          "gap": 3,
+          "children": { "explicitList": ["btn-refresh", "btn-settings"] }
+        }
+      }
+    },
+    {
+      "id": "btn-refresh",
+      "component": {
+        "button": { "variant": "secondary", "size": "sm", "text": { "literalString": "Refresh Data" } }
+      }
+    },
+    {
+      "id": "btn-settings",
+      "component": {
+        "button": { "variant": "ghost", "size": "sm", "text": { "literalString": "Settings" } }
+      }
+    },
+    {
+      "id": "stats-grid",
+      "component": {
+        "grid": {
+          "columns": 3,
+          "gap": 4,
+          "children": { "explicitList": ["stat-1", "stat-2", "stat-3"] }
+        }
+      }
+    },
+    {
+      "id": "stat-1",
+      "component": {
+        "card": { "className": "p-6", "children": { "explicitList": ["lbl-1", "val-1", "badge-1"] } }
+      }
+    },
+    {
+      "id": "lbl-1",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Reactor Output" } } }
+    },
+    {
+      "id": "val-1",
+      "component": { "text": { "variant": "h3", "className": "mt-2 font-mono", "text": { "literalString": "98.4%" } } }
+    },
+    {
+      "id": "badge-1",
+      "component": { "badge": { "variant": "success", "className": "mt-2", "text": { "literalString": "Optimal" } } }
+    },
+    {
+      "id": "stat-2",
+      "component": {
+        "card": { "className": "p-6", "children": { "explicitList": ["lbl-2", "val-2", "badge-2"] } }
+      }
+    },
+    {
+      "id": "lbl-2",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Oxygen Levels" } } }
+    },
+    {
+      "id": "val-2",
+      "component": { "text": { "variant": "h3", "className": "mt-2 font-mono", "text": { "literalString": "21.1%" } } }
+    },
+    {
+      "id": "badge-2",
+      "component": { "badge": { "variant": "secondary", "className": "mt-2", "text": { "literalString": "Stable" } } }
+    },
+    {
+      "id": "stat-3",
+      "component": {
+        "card": { "className": "p-6", "children": { "explicitList": ["lbl-3", "val-3", "badge-3"] } }
+      }
+    },
+    {
+      "id": "lbl-3",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Crew Status" } } }
+    },
+    {
+      "id": "val-3",
+      "component": { "text": { "variant": "h3", "className": "mt-2 font-mono", "text": { "literalString": "4 / 12 Active" } } }
+    },
+    {
+      "id": "badge-3",
+      "component": { "badge": { "variant": "warning", "className": "mt-2", "text": { "literalString": "Shift Change" } } }
+    },
+    {
+      "id": "main-content",
+      "component": {
+        "grid": {
+          "columns": "2fr 1fr",
+          "gap": 6,
+          "children": { "explicitList": ["chart-section", "log-section"] }
+        }
+      }
+    },
+    {
+      "id": "chart-section",
+      "component": {
+        "card": {
+          "className": "p-6 h-full",
+          "children": { "explicitList": ["chart-header-group", "main-chart", "chart-footer-stats"] }
+        }
+      }
+    },
+    {
+      "id": "chart-header-group",
+      "component": {
+        "flex": {
+          "justify": "space-between",
+          "align": "flex-start",
+          "className": "mb-6",
+          "children": { "explicitList": ["chart-titles", "chart-actions"] }
+        }
+      }
+    },
+    {
+      "id": "chart-titles",
+      "component": {
+        "stack": {
+          "gap": 1,
+          "children": { "explicitList": ["chart-custom-title", "chart-custom-subtitle"] }
+        }
+      }
+    },
+    {
+      "id": "chart-custom-title",
+      "component": { "text": { "variant": "h4", "text": { "literalString": "Power Consumption Trend" } } }
+    },
+    {
+      "id": "chart-custom-subtitle",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Real-time usage across all sectors" } } }
+    },
+    {
+      "id": "chart-actions",
+      "component": {
+        "select": {
+          "defaultValue": "24h",
+          "options": [
+            { "label": "Last Hour", "value": "1h" },
+            { "label": "Last 24 Hours", "value": "24h" },
+            { "label": "Last 7 Days", "value": "7d" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "main-chart",
+      "component": {
+        "chart": {
+          "type": "area",
+          "withLegend": true,
+          "xKey": "time",
+          "yKey": "value",
+          "d3Config": {
+            "grid": true,
+            "withGradient": true,
+            "showDots": true,
+            "yAxisLabel": "Usage (GW)"
+          },
+          "style": { "height": 300 },
+          "data": [
+            { "time": "00:00", "value": 45 },
+            { "time": "04:00", "value": 30 },
+            { "time": "08:00", "value": 60 },
+            { "time": "12:00", "value": 85 },
+            { "time": "16:00", "value": 70 },
+            { "time": "20:00", "value": 50 },
+            { "time": "23:59", "value": 40 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "chart-footer-stats",
+      "component": {
+        "grid": {
+          "columns": 3,
+          "gap": 4,
+          "className": "mt-6 pt-6",
+          "style": { "borderTop": "1px solid var(--border-color)" },
+          "children": { "explicitList": ["stat-min", "stat-max", "stat-avg"] }
+        }
+      }
+    },
+    {
+      "id": "stat-min",
+      "component": { "stack": { "gap": 1, "children": { "explicitList": ["lbl-min", "val-min"] } } }
+    },
+    {
+      "id": "lbl-min",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Minimum" } } }
+    },
+    {
+      "id": "val-min",
+      "component": { "text": { "variant": "body", "className": "font-mono font-bold", "text": { "literalString": "30 GW" } } }
+    },
+    {
+      "id": "stat-max",
+      "component": { "stack": { "gap": 1, "children": { "explicitList": ["lbl-max", "val-max"] } } }
+    },
+    {
+      "id": "lbl-max",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Maximum" } } }
+    },
+    {
+      "id": "val-max",
+      "component": { "text": { "variant": "body", "className": "font-mono font-bold", "text": { "literalString": "85 GW" } } }
+    },
+    {
+      "id": "stat-avg",
+      "component": { "stack": { "gap": 1, "children": { "explicitList": ["lbl-avg", "val-avg"] } } }
+    },
+    {
+      "id": "lbl-avg",
+      "component": { "text": { "variant": "small", "className": "text-muted", "text": { "literalString": "Average" } } }
+    },
+    {
+      "id": "val-avg",
+      "component": { "text": { "variant": "body", "className": "font-mono font-bold", "text": { "literalString": "58.2 GW" } } }
+    },
+    {
+      "id": "log-section",
+      "component": {
+        "card": {
+          "className": "p-0 h-full overflow-hidden",
+          "children": { "explicitList": ["log-table"] }
+        }
+      }
+    },
+    {
+      "id": "log-table",
+      "component": {
+        "table": {
+          "columns": ["Event", "Level", "Time"],
+          "data": [
+            { "Event": "System Boot", "Level": "Info", "Time": "08:00" },
+            { "Event": "Surge Detected", "Level": "Warn", "Time": "10:15" },
+            { "Event": "Cooling Active", "Level": "Info", "Time": "10:16" },
+            { "Event": "Door Locked", "Level": "Info", "Time": "11:30" },
+            { "Event": "Power Low", "Level": "Crit", "Time": "14:45" }
+          ]
+        }
+      }
     }
   ]
 }`;
 
 const PlaygroundComponent = () => {
   const [jsonInput, setJsonInput] = useState(defaultPlaygroundJson);
-  const [parsedData, setParsedData] = useState<A2UINode | null>(null);
+  const [parsedData, setParsedData] = useState<{
+    components: A2UIComponentEntry[];
+    rootId?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRendered, setIsRendered] = useState(false);
 
@@ -714,7 +800,22 @@ const PlaygroundComponent = () => {
     e.preventDefault();
     try {
       const parsed = JSON.parse(jsonInput);
-      setParsedData(parsed);
+      // Handle both full surface format and just components array
+      if (parsed.components) {
+        setParsedData({
+          components: parsed.components,
+          rootId: parsed.components[0]?.id,
+        });
+      } else if (Array.isArray(parsed)) {
+        setParsedData({
+          components: parsed,
+          rootId: parsed[0]?.id,
+        });
+      } else {
+        throw new Error(
+          "Invalid format: expected { components: [...] } or [...]",
+        );
+      }
       setError(null);
       setIsRendered(true);
     } catch (err) {
@@ -752,7 +853,10 @@ const PlaygroundComponent = () => {
           ← Edit JSON
         </Button>
         <div style={{ padding: 24 }}>
-          <Renderer data={parsedData} />
+          <Renderer
+            rootId={parsedData.rootId}
+            surface={parsedData.components}
+          />
         </div>
       </div>
     );

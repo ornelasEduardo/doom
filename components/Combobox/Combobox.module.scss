@@ -79,11 +79,11 @@
 
 // Dropdown container (rendered by popover)
 .dropdown {
-  min-width: var(--spacing-50);
-  max-width: var(--width-control-lg);
+  width: fit-content;
+  min-width: 16ch;
+  max-width: 32ch;
   padding: 0;
   overflow: hidden;
-  // Use Select's border style
   border: var(--border-width) solid var(--primary);
   border-radius: var(--radius);
   background: var(--card-bg);
@@ -188,9 +188,6 @@
 }
 
 .optionLabel {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

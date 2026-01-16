@@ -87,6 +87,66 @@ describe("Table Component", () => {
     expect(screen.getByText("Charlie")).toBeInTheDocument();
   });
 
+  describe("string columns", () => {
+    const simpleData = [
+      { name: "Alice", age: 25, status: "Active" },
+      { name: "Bob", age: 30, status: "Inactive" },
+    ];
+
+    it("should render with string[] columns", () => {
+      render(<Table columns={["name", "age", "status"]} data={simpleData} />);
+
+      // Check headers
+      expect(screen.getByText("name")).toBeInTheDocument();
+      expect(screen.getByText("age")).toBeInTheDocument();
+      expect(screen.getByText("status")).toBeInTheDocument();
+
+      // Check data
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+      expect(screen.getByText("25")).toBeInTheDocument();
+      expect(screen.getByText("Active")).toBeInTheDocument();
+    });
+
+    it("should sort with string columns", () => {
+      render(<Table columns={["name", "age"]} data={simpleData} />);
+
+      const nameHeader = screen.getByText("name").closest("th");
+      fireEvent.click(nameHeader!);
+
+      const rows = screen.getAllByRole("row").slice(1);
+      expect(rows[0]).toHaveTextContent("Alice");
+      expect(rows[1]).toHaveTextContent("Bob");
+    });
+
+    it("should filter with string columns", () => {
+      render(<Table columns={["name", "age"]} data={simpleData} />);
+
+      const searchInput = screen.getByPlaceholderText("Search...");
+      fireEvent.change(searchInput, { target: { value: "Bob" } });
+
+      expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+      expect(screen.getByText("Bob")).toBeInTheDocument();
+    });
+
+    it("should support mixed string and ColumnDef columns", () => {
+      const mixedColumns = [
+        "name",
+        { accessorKey: "age", header: "Age (years)" },
+      ];
+
+      render(<Table columns={mixedColumns} data={simpleData} />);
+
+      // String column uses key as header
+      expect(screen.getByText("name")).toBeInTheDocument();
+      // ColumnDef uses custom header
+      expect(screen.getByText("Age (years)")).toBeInTheDocument();
+
+      // Data renders correctly
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+      expect(screen.getByText("25")).toBeInTheDocument();
+    });
+  });
+
   it("should filter data", () => {
     render(<Table columns={columns} data={data} />);
 

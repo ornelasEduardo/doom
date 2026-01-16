@@ -26,6 +26,9 @@ You **MUST** consult these resources before generating code:
 - **Reusability**: Components must be generic, reusable, and composable. Avoid business logic.
 - **Props**: Expose sufficient props for customization (className, style, children, etc.) but enforce consistency via variants.
 - **Exports**: All public components must be exported from the root `index.ts`.
+- **A2UI Integration**: When adding or modifying components:
+  1. Update `components/A2UI/mapping.tsx` to register the component type.
+  2. Update `components/A2UI/catalog.ts` to document the component's props and behavior for AI consumption.
 
 ## Styling & Layout
 

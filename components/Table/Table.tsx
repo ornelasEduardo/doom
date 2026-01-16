@@ -58,7 +58,12 @@ const convertToFilterNode = (item: FilterItem): FilterNode => {
 
 export interface TableProps<T> {
   data: T[];
-  columns: ColumnDef<T, any>[];
+  /**
+   * Column definitions. Can be:
+   * - Simple strings: ["Name", "Age"] - uses string as both accessorKey and header
+   * - Full ColumnDef objects for advanced usage
+   */
+  columns: (string | ColumnDef<T, unknown>)[];
   enablePagination?: boolean;
   enableFiltering?: boolean;
   enableColumnFilters?: boolean;
@@ -243,9 +248,38 @@ export function Table<T>({
     );
   }, [data, advancedFilterValue, enableAdvancedFiltering]);
 
+  // Normalize columns to ensure they all have IDs and proper format
+  // Accepts both string[] and ColumnDef[] for flexibility
+  const normalizedColumns = useMemo(() => {
+    return columns.map((col, index) => {
+      // If it's a string, convert to ColumnDef
+      if (typeof col === "string") {
+        return {
+          id: col,
+          accessorKey: col,
+          header: col,
+        } as ColumnDef<T, unknown>;
+      }
+
+      // If column already has an id, use it
+      if (col.id) {
+        return col;
+      }
+
+      // Try to derive id from accessorKey
+      const accessorKey = (col as { accessorKey?: string }).accessorKey;
+      if (accessorKey) {
+        return { ...col, id: accessorKey };
+      }
+
+      // Fallback to index-based id
+      return { ...col, id: `column-${index}` };
+    });
+  }, [columns]);
+
   const table = useReactTable<T>({
     data: filteredData,
-    columns,
+    columns: normalizedColumns,
     state: {
       sorting,
       globalFilter,
@@ -447,7 +481,7 @@ export function Table<T>({
 
           {isVirtual ? (
             <VirtualTableBody<T>
-              columns={columns}
+              columns={normalizedColumns}
               density={density}
               scrollElement={scrollElement}
               striped={striped}
@@ -455,7 +489,7 @@ export function Table<T>({
             />
           ) : (
             <StandardTableBody<T>
-              columns={columns}
+              columns={normalizedColumns}
               density={density}
               striped={striped}
               table={table}
