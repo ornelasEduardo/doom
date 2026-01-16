@@ -5,9 +5,9 @@
  */
 
 export { extractComponent } from "./extractComponent";
+export { resolveTree } from "./resolveTree";
 export {
   dataModelToObject,
   resolvePathValue,
   resolveTextValue,
 } from "./resolveValue";
-export { resolveTree } from "./resolveTree";
