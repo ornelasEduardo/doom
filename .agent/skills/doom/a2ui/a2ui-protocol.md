@@ -1,110 +1,190 @@
-## JSON Structure
+# A2UI Protocol Reference
+
+## Message Schema
+
+A2UI uses a flat adjacency list format where components reference children by ID.
+
+### Component Structure
 
 ```json
 {
-  "type": "component-name",
-  "props": { "propName": "value" },
-  "children": ["text", { "type": "nested-component" }]
+  "surfaceId": "main",
+  "components": [
+    {
+      "id": "unique-id",
+      "component": {
+        "component-type": {
+          "propName": "value",
+          "text": { "literalString": "Static text" },
+          "children": { "explicitList": ["child-id-1", "child-id-2"] }
+        }
+      }
+    }
+  ]
 }
 ```
 
-## Usage
+### Value Types
 
-Render the JSON using the `A2UI` component:
+| Type              | Format                       | Example                          |
+| ----------------- | ---------------------------- | -------------------------------- |
+| Literal String    | `{ "literalString": "..." }` | `{ "literalString": "Hello" }`   |
+| Data Binding      | `{ "path": "/..." }`         | `{ "path": "/user/name" }`       |
+| Single Child      | `"child-id"`                 | `"header-component"`             |
+| Multiple Children | `{ "explicitList": [...] }`  | `{ "explicitList": ["a", "b"] }` |
 
-```tsx
-import { A2UI } from "doom-design-system";
+---
 
-<A2UI data={jsonData} />;
+## Text Content: IMPORTANT
+
+**Not all components use `text` prop.** Only components marked with ✅ below support `text: { literalString }` or `text: { path }`:
+
+| Supports `text` prop | Component         | Text Prop                      |
+| :------------------: | ----------------- | ------------------------------ |
+|          ✅          | `label`           | `text`                         |
+|          ✅          | `text`            | `text` → maps to children      |
+|          ✅          | `button`          | `text` → maps to children      |
+|          ✅          | `badge`           | `text` → maps to children      |
+|          ✅          | `chip`            | `text` → maps to children      |
+|          ✅          | `link`            | `text` → maps to children      |
+|          ✅          | `tabs-trigger`    | `text` → maps to children      |
+|          ✅          | `breadcrumb-item` | `text` → maps to children      |
+|          ❌          | `slat`            | Use `label` + `secondaryLabel` |
+|          ❌          | `alert`           | Use `title` + `description`    |
+|          ❌          | `input`           | Use `label` + `placeholder`    |
+|          ❌          | `avatar`          | Use `fallback` for initials    |
+
+### Common Mistakes
+
+```json
+// ❌ WRONG - slat doesn't support text prop
+{ "slat": { "label": "Trips", "text": { "literalString": "4" } } }
+
+// ✅ CORRECT - use secondaryLabel
+{ "slat": { "label": "Trips", "secondaryLabel": "4" } }
+
+// ❌ WRONG - alert doesn't support text prop
+{ "alert": { "variant": "warning", "text": { "literalString": "Warning message" } } }
+
+// ✅ CORRECT - use title and description
+{ "alert": { "variant": "warning", "title": "Warning", "description": "Message details" } }
 ```
 
-## Available Components
+---
+
+## Component Reference
 
 ### Primitives
 
-| Type       | Key Props                                                        | Description      |
-| ---------- | ---------------------------------------------------------------- | ---------------- |
-| `text`     | `variant`: h1/h2/h3/h4/h5/h6/p/small                             | Typography       |
-| `button`   | `variant`: primary/secondary/danger/ghost                        | Clickable button |
-| `badge`    | `variant`: default/success/warning/error/secondary               | Status indicator |
-| `chip`     | `variant`: default/primary                                       | Tag/label        |
-| `avatar`   | `fallback`, `size`: sm/md/lg/xl, `src`                           | User avatar      |
-| `alert`    | `variant`: default/success/warning/error, `title`, `description` | Alert message    |
-| `card`     | `className`                                                      | Container card   |
-| `input`    | `label`, `placeholder`, `value`, `disabled`                      | Text input       |
-| `textarea` | `label`, `placeholder`, `rows`                                   | Multi-line input |
-| `checkbox` | `label`, `checked`, `disabled`                                   | Checkbox         |
-| `switch`   | `label`, `checked`                                               | Toggle switch    |
-| `label`    | -                                                                | Form label       |
-| `link`     | `href`                                                           | Hyperlink        |
-| `spinner`  | `size`                                                           | Loading spinner  |
+| Type       | Key Props                            | Notes                          |
+| ---------- | ------------------------------------ | ------------------------------ |
+| `label`    | `text` ✅                            | Simple text label              |
+| `text`     | `variant`, `text` ✅                 | Typography: h1-h6/body/small   |
+| `button`   | `variant`, `text` ✅                 | primary/secondary/ghost/danger |
+| `badge`    | `variant`, `text` ✅                 | Status indicator               |
+| `chip`     | `variant`, `text` ✅                 | Tag element                    |
+| `avatar`   | `src`, `fallback`, `size`            | User avatar                    |
+| `alert`    | `title` ⚠️, `description`, `variant` | title is REQUIRED              |
+| `card`     | `className`, `child`/`children`      | Container                      |
+| `input`    | `label`, `placeholder`, `value`      | Text field                     |
+| `textarea` | `label`, `placeholder`, `rows`       | Multi-line                     |
+| `checkbox` | `label`, `checked`                   | Checkbox                       |
+| `switch`   | `label`, `checked`                   | Toggle                         |
+| `link`     | `href`, `text` ✅                    | Hyperlink                      |
+| `spinner`  | `size`                               | Loading indicator              |
 
 ### Layout
 
-| Type        | Key Props                                                  | Description                  |
-| ----------- | ---------------------------------------------------------- | ---------------------------- |
-| `flex`      | `direction`: row/column, `gap`, `align`, `justify`, `wrap` | Flexbox container            |
-| `stack`     | `gap`                                                      | Vertical stack (column flex) |
-| `grid`      | `columns`, `gap`                                           | CSS Grid                     |
-| `container` | `size`                                                     | Centered container           |
-| `switcher`  | `threshold`, `gap`                                         | Responsive row↔column        |
-| `box`       | -                                                          | Generic div                  |
-
-### Navigation
-
-| Type              | Key Props      | Description          |
-| ----------------- | -------------- | -------------------- |
-| `tabs`            | `defaultValue` | Tab container        |
-| `tabs-list`       | -              | Tab button container |
-| `tabs-trigger`    | `value`        | Tab button           |
-| `tabs-body`       | -              | Tab content wrapper  |
-| `tabs-content`    | `value`        | Tab panel            |
-| `breadcrumbs`     | -              | Breadcrumb container |
-| `breadcrumb-item` | `href`         | Breadcrumb link      |
+| Type        | Key Props                                          |
+| ----------- | -------------------------------------------------- |
+| `flex`      | `direction`, `gap`, `align`, `justify`, `children` |
+| `stack`     | `gap`, `children`                                  |
+| `grid`      | `columns`, `gap`, `children`                       |
+| `container` | `size`, `children`                                 |
+| `box`       | `className`, `children`                            |
 
 ### Data Display
 
-| Type             | Key Props                                                            | Description           |
-| ---------------- | -------------------------------------------------------------------- | --------------------- |
-| `slat`           | `label`, `secondaryLabel`, `variant`: default/success/warning/danger | List item             |
-| `accordion`      | `type`: single/multiple, `defaultValue`                              | Collapsible container |
-| `accordion-item` | `value`, `trigger`                                                   | Collapsible section   |
-| `chart`          | `type`: line/area/bar, `xKey`, `yKey`, `data`, `title`, `subtitle`   | Data chart            |
-| `image`          | `src`, `alt`                                                         | Image                 |
-| `table`          | `data`, `columns`                                                    | Data table            |
-| `skeleton`       | `width`, `height`                                                    | Loading placeholder   |
-| `progress-bar`   | `value`, `variant`: default/success/warning/error                    | Progress indicator    |
+| Type             | Key Props                               | Notes                           |
+| ---------------- | --------------------------------------- | ------------------------------- |
+| `slat`           | `label` ⚠️, `secondaryLabel`, `variant` | label is REQUIRED, NO text prop |
+| `table`          | `data`, `columns`                       | Each column needs `accessorKey` |
+| `chart`          | `type`, `data`, `xKey`, `yKey`          | line/area/bar                   |
+| `accordion`      | `type`, `defaultValue`, `children`      | single/multiple                 |
+| `accordion-item` | `value`, `trigger`, `children`          |                                 |
+| `image`          | `src`, `alt`                            |                                 |
 
-## Example
+### Navigation
+
+| Type              | Key Props                   |
+| ----------------- | --------------------------- |
+| `tabs`            | `defaultValue`, `children`  |
+| `tabs-list`       | `children`                  |
+| `tabs-trigger`    | `value`, `text` ✅          |
+| `tabs-body`       | `children`                  |
+| `tabs-content`    | `value`, `child`/`children` |
+| `breadcrumbs`     | `children`                  |
+| `breadcrumb-item` | `href`, `text` ✅           |
+
+### Feedback
+
+| Type           | Key Props          |
+| -------------- | ------------------ |
+| `progress-bar` | `value`, `variant` |
+| `skeleton`     | `width`, `height`  |
+
+### Actions
+
+| Type           | Key Props  |
+| -------------- | ---------- |
+| `action-row`   | `children` |
+| `split-button` | `options`  |
+
+---
+
+## Complete Example
 
 ```json
 {
-  "type": "card",
-  "props": { "className": "p-6" },
-  "children": [
+  "surfaceId": "demo",
+  "components": [
     {
-      "type": "flex",
-      "props": { "direction": "column", "gap": 4 },
-      "children": [
-        {
-          "type": "text",
-          "props": { "variant": "h2" },
-          "children": ["Dashboard"]
-        },
-        {
-          "type": "badge",
-          "props": { "variant": "success" },
-          "children": ["Active"]
-        },
-        {
-          "type": "slat",
-          "props": {
-            "label": "System Status",
-            "secondaryLabel": "Online",
-            "variant": "success"
-          }
+      "id": "root",
+      "component": {
+        "card": {
+          "className": "p-6",
+          "children": { "explicitList": ["header", "stats", "warning"] }
         }
-      ]
+      }
+    },
+    {
+      "id": "header",
+      "component": {
+        "text": {
+          "variant": "h2",
+          "text": { "literalString": "Dashboard" }
+        }
+      }
+    },
+    {
+      "id": "stats",
+      "component": {
+        "slat": {
+          "label": "Active Users",
+          "secondaryLabel": "1,234",
+          "variant": "success"
+        }
+      }
+    },
+    {
+      "id": "warning",
+      "component": {
+        "alert": {
+          "variant": "warning",
+          "title": "Maintenance Scheduled",
+          "description": "System will be down at 2:00 AM UTC."
+        }
+      }
     }
   ]
 }

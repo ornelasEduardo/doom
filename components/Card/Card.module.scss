@@ -8,7 +8,16 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+
+  > *:first-child {
+    border-top-left-radius: calc(var(--radius) - var(--border-width));
+    border-top-right-radius: calc(var(--radius) - var(--border-width));
+  }
+
+  > *:last-child {
+    border-bottom-left-radius: calc(var(--radius) - var(--border-width));
+    border-bottom-right-radius: calc(var(--radius) - var(--border-width));
+  }
 }
 
 .padded {
@@ -19,6 +28,8 @@
   padding: var(--spacing-6);
   border-bottom: var(--border-width) solid var(--card-border);
   background-color: var(--card-bg);
+  border-radius: calc(var(--radius) - var(--border-width))
+    calc(var(--radius) - var(--border-width)) 0 0;
 }
 
 .body {
@@ -30,4 +41,6 @@
   padding: var(--spacing-6);
   border-top: var(--border-width) solid var(--card-border);
   background-color: var(--card-bg);
+  border-radius: 0 0 calc(var(--radius) - var(--border-width))
+    calc(var(--radius) - var(--border-width));
 }

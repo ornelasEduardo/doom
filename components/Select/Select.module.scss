@@ -3,12 +3,11 @@
 .container {
   display: flex;
   flex-direction: column;
-  width: 100%;
   position: relative;
 }
 
 .trigger {
-  width: 100%;
+  min-width: 20ch;
   background: var(--card-bg);
   color: var(--foreground);
   padding: var(--spacing-4) var(--spacing-6);
