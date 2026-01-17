@@ -210,6 +210,20 @@ const heroData: Hero[] = [
   },
 ];
 
+/**
+ * Simple Linear Congruential Generator (LCG) for deterministic results.
+ *
+ * By using a fixed seed, this algorithm generates the exact same sequence
+ * of "random" numbers on every run. This is crucial for visual testing,
+ * ensuring our table data remains visually stable across CI builds
+ * while still looking varied.
+ */
+let seed = 123456789;
+const seededRandom = () => {
+  seed = (seed * 1664525 + 1013904223) % 4294967296;
+  return seed / 4294967296;
+};
+
 const generateLargeData = (count: number): Hero[] => {
   const aliases = [
     "Iron Man",
@@ -236,11 +250,11 @@ const generateLargeData = (count: number): Hero[] => {
 
   return Array.from({ length: count }).map((_, i) => ({
     id: `hero-${i}`,
-    alias: `${aliases[Math.floor(Math.random() * aliases.length)]} ${i + 1}`,
-    name: names[Math.floor(Math.random() * names.length)],
-    affiliation: teams[Math.floor(Math.random() * teams.length)],
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    missionProgress: Math.floor(Math.random() * 100),
+    alias: `${aliases[Math.floor(seededRandom() * aliases.length)]} ${i + 1}`,
+    name: names[Math.floor(seededRandom() * names.length)],
+    affiliation: teams[Math.floor(seededRandom() * teams.length)],
+    status: statuses[Math.floor(seededRandom() * statuses.length)],
+    missionProgress: Math.floor(seededRandom() * 100),
     lastMission: `Mission #${1000 + i}`,
   }));
 };
