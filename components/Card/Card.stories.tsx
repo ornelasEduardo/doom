@@ -90,7 +90,7 @@ export const WithImage: Story = {
           alt="Randomly generated image from picsum"
           fit="cover"
           rounded={false}
-          src="https://picsum.photos/600/500"
+          src="https://picsum.photos/seed/doom-card-1/600/500"
           style={{ width: "100%", height: "100%" }}
         />
       </div>
@@ -134,7 +134,7 @@ export const ImageOnly: Story = {
         alt="Randomly generated image from picsum"
         fit="cover"
         rounded={false}
-        src="https://picsum.photos/300/450"
+        src="https://picsum.photos/seed/doom-card-2/300/450"
         style={{
           width: "100%",
           height: "450px",

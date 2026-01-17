@@ -23,7 +23,7 @@ type Story = StoryObj<typeof Image>;
 
 export const Default: Story = {
   args: {
-    src: "https://picsum.photos/500/300",
+    src: "https://picsum.photos/seed/doom-image-1/500/300",
     alt: "Randomly generated image from picsum",
     width: 300,
     height: 200,
@@ -39,7 +39,7 @@ export const FitVariants: Story = {
           alt="Randomly generated image from picsum"
           fit="cover"
           height={200}
-          src="https://picsum.photos/300/300"
+          src="https://picsum.photos/seed/doom-image-2/300/300"
           style={{ border: "1px solid #ccc" }}
           width={200}
         />
@@ -50,7 +50,7 @@ export const FitVariants: Story = {
           alt="Randomly generated image from picsum"
           fit="contain"
           height={200}
-          src="https://picsum.photos/300/300"
+          src="https://picsum.photos/seed/doom-image-2/300/300"
           style={{ border: "1px solid #ccc" }}
           width={200}
         />
@@ -61,7 +61,7 @@ export const FitVariants: Story = {
           alt="Randomly generated image from picsum"
           fit="none"
           height={200}
-          src="https://picsum.photos/300/300"
+          src="https://picsum.photos/seed/doom-image-2/300/300"
           style={{ border: "1px solid #ccc" }}
           width={200}
         />
@@ -72,7 +72,9 @@ export const FitVariants: Story = {
 
 export const WithSkeletonLoading: Story = {
   render: () => {
-    const [src, setSrc] = useState("https://picsum.photos/600/400");
+    const [src, setSrc] = useState(
+      "https://picsum.photos/seed/doom-image-3/600/400",
+    );
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -128,7 +130,7 @@ export const WithAspectRatio: Story = {
         alt="Aspect Ratio Test"
         aspectRatio="16/9"
         fit="cover"
-        src="https://picsum.photos/500/300"
+        src="https://picsum.photos/seed/doom-image-4/500/300"
         style={{ width: "400px" }}
       />
       <Text>AspectRatio: 1/1 (Width: 200px)</Text>
@@ -136,7 +138,7 @@ export const WithAspectRatio: Story = {
         alt="Square"
         aspectRatio={1}
         fit="cover"
-        src="https://picsum.photos/500/300"
+        src="https://picsum.photos/seed/doom-image-4/500/300"
         style={{ width: "200px" }}
       />
     </Stack>
@@ -152,7 +154,7 @@ export const RoundedVariants: Story = {
           alt="Randomly generated image from picsum"
           fit="cover"
           height={200}
-          src="https://picsum.photos/300/300"
+          src="https://picsum.photos/seed/doom-image-2/300/300"
           width={200}
         />
       </Stack>
@@ -163,7 +165,7 @@ export const RoundedVariants: Story = {
           fit="cover"
           height={200}
           rounded={false}
-          src="https://picsum.photos/300/300"
+          src="https://picsum.photos/seed/doom-image-2/300/300"
           width={200}
         />
       </Stack>
