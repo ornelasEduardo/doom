@@ -4,6 +4,7 @@ import React from "react";
 
 import { DesignSystemProvider } from "../DesignSystemProvider";
 import { ThemeKey, themes } from "../styles/themes/definitions";
+import { allModes } from "./modes";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -13,6 +14,11 @@ const montserrat = Montserrat({
 
 const preview: Preview = {
   parameters: {
+    chromatic: {
+      modes: {
+        ...allModes,
+      },
+    },
     actions: { argTypesRegex: "^on[A-Z].*" },
     controls: {
       matchers: {
