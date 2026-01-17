@@ -1,6 +1,6 @@
 # Doom Design System
 
-[![Doom CI](https://github.com/ornelasEduardo/doom/actions/workflows/ci.yml/badge.svg)](https://github.com/ornelasEduardo/doom/actions/workflows/ci.yml)
+[![Doom CI](https://github.com/ornelasEduardo/doom/actions/workflows/main.yml/badge.svg)](https://github.com/ornelasEduardo/doom/actions/workflows/main.yml)
 [![npm version](https://img.shields.io/npm/v/doom-design-system.svg)](https://www.npmjs.com/package/doom-design-system)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
