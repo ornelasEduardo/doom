@@ -1,0 +1,36 @@
+name: Doom CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Tests
+    uses: ./.github/workflows/test.yml
+
+  build:
+    name: Build Design System
+    needs: test
+    uses: ./.github/workflows/build.yml
+
+  storybook-build:
+    name: Build Storybook
+    needs: test
+    uses: ./.github/workflows/storybook.yml
+
+  chromatic:
+    name: Run Visual Tests
+    needs: test
+    uses: ./.github/workflows/chromatic.yml
+    secrets:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}

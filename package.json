@@ -28,7 +28,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:package": "publint",
     "lint": "eslint .",
-    "validate:build": "node scripts/validate-build.cjs"
+    "validate:build": "node scripts/validate-build.cjs",
+    "chromatic": "chromatic --exit-zero-on-changes"
   },
   "keywords": [
     "design-system",
@@ -61,6 +62,7 @@
     "@typescript-eslint/parser": "^8.51.0",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/mocker": "^4.0.15",
+    "chromatic": "^13.3.5",
     "copyfiles": "^2.4.1",
     "d3-hierarchy": "^3.1.2",
     "eslint": "^9.39.2",
