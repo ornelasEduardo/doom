@@ -7,7 +7,6 @@
 }
 
 .trigger {
-  min-width: 20ch;
   background: var(--card-bg);
   color: var(--foreground);
   padding: var(--spacing-4) var(--spacing-6);
@@ -21,6 +20,7 @@
   letter-spacing: 0.05em;
   min-height: var(--control-height-lg);
   box-sizing: border-box;
+  width: 100%;
 
   @include base-interactive;
   @include brutalist-hover;
