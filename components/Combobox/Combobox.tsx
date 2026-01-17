@@ -234,7 +234,7 @@ export function Combobox({
   const allSelected = multiple && selectedValues.length === options.length;
 
   const dropdownContent = (
-    <Card
+    <Card.Root
       className={clsx(styles.dropdown, inline && styles.inlineDropdown)}
       onClick={(e) => e.stopPropagation()}
     >
@@ -326,7 +326,7 @@ export function Combobox({
           </div>
         )}
       </div>
-    </Card>
+    </Card.Root>
   );
 
   if (inline) {
