@@ -163,5 +163,13 @@ export const Sidebar = Object.assign(SidebarRoot, {
   MobileTrigger,
 });
 
+export { Header as SidebarHeader };
+export { Nav as SidebarNav };
+export { Section as SidebarSection };
+export { Group as SidebarGroup };
+export { Item as SidebarItem };
+export { Footer as SidebarFooter };
+export { MobileTrigger as SidebarMobileTrigger };
+
 export { useSidebarContext } from "./context";
 export type { SidebarProps } from "./types";

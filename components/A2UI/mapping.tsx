@@ -25,6 +25,16 @@ import { Link } from "../Link/Link";
 import { ProgressBar } from "../ProgressBar/ProgressBar";
 import { RadioGroup, RadioGroupItem } from "../RadioGroup/RadioGroup";
 import { Select } from "../Select/Select";
+import {
+  Sidebar,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarItem,
+  SidebarMobileTrigger,
+  SidebarNav,
+  SidebarSection,
+} from "../Sidebar/Sidebar";
 import { Skeleton } from "../Skeleton/Skeleton";
 import { Slat } from "../Slat/Slat";
 import { Slider } from "../Slider/Slider";
@@ -84,6 +94,16 @@ export const componentMap: Record<string, React.ElementType> = {
   "tabs-content": TabsContent,
   "tabs-list": TabsList,
   "tabs-trigger": TabsTrigger,
+
+  // Sidebar
+  sidebar: Sidebar,
+  "sidebar-header": SidebarHeader,
+  "sidebar-nav": SidebarNav,
+  "sidebar-section": SidebarSection,
+  "sidebar-group": SidebarGroup,
+  "sidebar-item": SidebarItem,
+  "sidebar-footer": SidebarFooter,
+  "sidebar-mobile-trigger": SidebarMobileTrigger,
 
   // Feedback
   "progress-bar": ProgressBar,

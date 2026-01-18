@@ -727,6 +727,135 @@ export const componentCatalog: ComponentDescriptor[] = [
       },
     ],
   },
+  {
+    type: "sidebar",
+    name: "Sidebar",
+    category: "navigation",
+    description: "Main navigation sidebar supporting standard and rail modes",
+    props: [
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "sidebar-header, sidebar-nav, sidebar-footer children",
+      },
+      { name: "withRail", type: "boolean", description: "Enable rail mode" },
+      { name: "collapsed", type: "boolean", description: "Collapsed state" },
+      {
+        name: "activeSection",
+        type: "string",
+        description: "ID of active section",
+      },
+      {
+        name: "activeItem",
+        type: "string",
+        description: "href of active item",
+      },
+    ],
+  },
+  {
+    type: "sidebar-header",
+    name: "SidebarHeader",
+    category: "navigation",
+    description: "Top section of the sidebar",
+    props: [
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "Header content",
+      },
+    ],
+  },
+  {
+    type: "sidebar-nav",
+    name: "SidebarNav",
+    category: "navigation",
+    description: "Main navigation area of the sidebar",
+    props: [
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "sidebar-section children",
+      },
+    ],
+  },
+  {
+    type: "sidebar-section",
+    name: "SidebarSection",
+    category: "navigation",
+    description: "A section of navigation items",
+    props: [
+      { name: "id", type: "string", required: true, description: "Section ID" },
+      {
+        name: "label",
+        type: "string",
+        required: true,
+        description: "Section label",
+      },
+      { name: "icon", type: "A2UIChildRef", description: "Section icon" },
+      { name: "expanded", type: "boolean", description: "Expansion state" },
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "sidebar-item or sidebar-group children",
+      },
+    ],
+  },
+  {
+    type: "sidebar-group",
+    name: "SidebarGroup",
+    category: "navigation",
+    description: "A collapsible group within a section",
+    props: [
+      { name: "id", type: "string", required: true, description: "Group ID" },
+      {
+        name: "label",
+        type: "string",
+        required: true,
+        description: "Group label",
+      },
+      { name: "icon", type: "A2UIChildRef", description: "Group icon" },
+      { name: "expanded", type: "boolean", description: "Expansion state" },
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "sidebar-item children",
+      },
+    ],
+  },
+  {
+    type: "sidebar-item",
+    name: "SidebarItem",
+    category: "navigation",
+    description: "A single navigation link",
+    usesTextProp: true,
+    props: [
+      {
+        name: "text",
+        type: "A2UITextValue",
+        description: "Item label",
+      },
+      { name: "href", type: "string", description: "Link destination" },
+      { name: "icon", type: "A2UIChildRef", description: "Item icon" },
+      {
+        name: "appendContent",
+        type: "A2UIChildRef",
+        description: "Content at the end (e.g. Chip)",
+      },
+    ],
+  },
+  {
+    type: "sidebar-footer",
+    name: "SidebarFooter",
+    category: "navigation",
+    description: "Bottom section of the sidebar",
+    props: [
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "Footer content",
+      },
+    ],
+  },
 
   // ─────────────────────────────────────────────────────────────
   // FEEDBACK
