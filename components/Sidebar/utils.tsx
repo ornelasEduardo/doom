@@ -15,7 +15,8 @@ export const extractSections = (
 
     if (child.type === React.Fragment) {
       extractSections(
-        (child as React.ReactElement<any>).props.children,
+        (child as React.ReactElement<{ children?: React.ReactNode }>).props
+          .children,
         sectionInfo,
       );
       return;
@@ -23,7 +24,8 @@ export const extractSections = (
 
     if (child.type === Nav) {
       React.Children.forEach(
-        (child as React.ReactElement<any>).props.children,
+        (child as React.ReactElement<{ children?: React.ReactNode }>).props
+          .children,
         (navChild) => {
           if (
             React.isValidElement<SidebarSectionProps>(navChild) &&
@@ -52,9 +54,10 @@ export const filterNodesForRail = (
 
     if (child.type === React.Fragment) {
       return (
-        <React.Fragment key={(child as any).key}>
+        <React.Fragment key={child.key ?? undefined}>
           {filterNodesForRail(
-            (child as React.ReactElement<any>).props.children,
+            (child as React.ReactElement<{ children?: React.ReactNode }>).props
+              .children,
             activeSection,
           )}
         </React.Fragment>
@@ -62,8 +65,12 @@ export const filterNodesForRail = (
     }
 
     if (child.type === Nav) {
+      const navElement = child as React.ReactElement<{
+        children?: React.ReactNode;
+        className?: string;
+      }>;
       const filteredNavChildren = React.Children.toArray(
-        (child as React.ReactElement<any>).props.children,
+        navElement.props.children,
       ).filter((navChild) => {
         if (
           React.isValidElement<SidebarSectionProps>(navChild) &&
@@ -78,7 +85,7 @@ export const filterNodesForRail = (
         (navChild) =>
           React.isValidElement<SidebarSectionProps>(navChild) &&
           navChild.type === Section &&
-          (navChild as any).props.id === activeSection,
+          navChild.props.id === activeSection,
       );
 
       if (
@@ -86,10 +93,7 @@ export const filterNodesForRail = (
         React.isValidElement<SidebarSectionProps>(activeSectionChild)
       ) {
         return (
-          <Nav
-            {...(child as React.ReactElement<any>).props}
-            className={(child as React.ReactElement<any>).props.className}
-          >
+          <Nav {...navElement.props} className={navElement.props.className}>
             {activeSectionChild.props.children}
           </Nav>
         );
@@ -101,43 +105,37 @@ export const filterNodesForRail = (
   });
 };
 
+interface ChildWithProps {
+  href?: string;
+  children?: React.ReactNode;
+}
+
 export const hasActiveChild = (
   nodes: React.ReactNode,
   activeItem: string,
 ): boolean => {
   let found = false;
   React.Children.forEach(nodes, (child) => {
-    if (found) {
-      return;
-    }
-    if (!React.isValidElement(child)) {
+    if (found || !React.isValidElement(child)) {
       return;
     }
 
+    const props = child.props as ChildWithProps;
+
     if (child.type === React.Fragment) {
-      if (
-        hasActiveChild(
-          (child as React.ReactElement<any>).props.children,
-          activeItem,
-        )
-      ) {
+      if (hasActiveChild(props.children, activeItem)) {
         found = true;
       }
       return;
     }
 
-    // Check if matching href
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((child.props as any).href === activeItem) {
+    if (props.href === activeItem) {
       found = true;
       return;
     }
 
-    // Recurse if children exist (e.g. wrapper components)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((child.props as any).children) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (hasActiveChild((child.props as any).children, activeItem)) {
+    if (props.children) {
+      if (hasActiveChild(props.children, activeItem)) {
         found = true;
       }
     }

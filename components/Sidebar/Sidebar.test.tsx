@@ -19,7 +19,6 @@ describe("Sidebar Component", () => {
       </Sidebar>,
     );
 
-    // getAllBy because content renders in both desktop and mobile
     expect(screen.getAllByText("Home").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
   });
@@ -70,7 +69,7 @@ describe("Sidebar Component", () => {
 
     const homeLinks = screen.getAllByRole("link", { name: /home/i });
     fireEvent.click(homeLinks[0]);
-    expect(onNavigate).toHaveBeenCalledWith("/home");
+    expect(onNavigate).toHaveBeenCalledWith("/home", expect.anything());
   });
 
   it("expands and collapses sections", () => {
@@ -204,5 +203,95 @@ describe("Sidebar Component", () => {
 
     const links = screen.getAllByRole("link", { name: /dashboard/i });
     expect(links[0]).toHaveAttribute("href", "/dashboard");
+  });
+
+  it("toggles groups within sections", () => {
+    render(
+      <Sidebar>
+        <Sidebar.Nav>
+          <Sidebar.Section expanded icon={<Home />} id="main" label="Main">
+            <Sidebar.Group icon={<Users />} id="users-group" label="Users">
+              <Sidebar.Item href="/users/list">User List</Sidebar.Item>
+            </Sidebar.Group>
+          </Sidebar.Section>
+        </Sidebar.Nav>
+      </Sidebar>,
+    );
+
+    const groupTriggers = screen.getAllByRole("button", { name: /users/i });
+    const groupTrigger = groupTriggers[0];
+    expect(groupTrigger).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(groupTrigger);
+    expect(groupTrigger).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(groupTrigger);
+    expect(groupTrigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("implements hover peek logic in collapsed rail mode", () => {
+    render(
+      <Sidebar collapsed withRail activeSection="main">
+        <Sidebar.Nav>
+          <Sidebar.Section icon={<Home />} id="main" label="Main">
+            <Sidebar.Item href="/home">Home Content</Sidebar.Item>
+          </Sidebar.Section>
+          <Sidebar.Section icon={<Users />} id="admin" label="Admin">
+            <Sidebar.Item href="/users">Admin Content</Sidebar.Item>
+          </Sidebar.Section>
+        </Sidebar.Nav>
+      </Sidebar>,
+    );
+
+    const desktopSidebar = screen.getByTestId("sidebar-desktop");
+
+    const panel = screen.getByTestId("sidebar-panel");
+    expect(panel.className).toMatch(/collapsed/);
+
+    const adminRailButton = within(desktopSidebar).getByRole("button", {
+      name: /admin/i,
+    });
+
+    fireEvent.mouseEnter(adminRailButton);
+
+    expect(panel.className).not.toMatch(/collapsed/);
+
+    expect(
+      within(desktopSidebar).getByText("Admin Content"),
+    ).toBeInTheDocument();
+
+    fireEvent.mouseLeave(desktopSidebar);
+    expect(panel.className).toMatch(/collapsed/);
+  });
+
+  it("clears peek state after navigation", () => {
+    const onNavigate = vi.fn();
+    render(
+      <Sidebar collapsed withRail activeSection="main" onNavigate={onNavigate}>
+        <Sidebar.Nav>
+          <Sidebar.Section icon={<Home />} id="main" label="Main">
+            <Sidebar.Item href="/home">Home</Sidebar.Item>
+          </Sidebar.Section>
+          <Sidebar.Section icon={<Users />} id="admin" label="Admin">
+            <Sidebar.Item href="/users">Users List</Sidebar.Item>
+          </Sidebar.Section>
+        </Sidebar.Nav>
+      </Sidebar>,
+    );
+
+    const desktopSidebar = screen.getByTestId("sidebar-desktop");
+    const adminRailButton = within(desktopSidebar).getByRole("button", {
+      name: /admin/i,
+    });
+
+    fireEvent.mouseEnter(adminRailButton);
+
+    const userLink = within(desktopSidebar).getByText("Users List");
+    fireEvent.click(userLink);
+
+    expect(onNavigate).toHaveBeenCalledWith("/users", expect.anything());
+
+    const panel = screen.getByTestId("sidebar-panel");
+    expect(panel.className).toMatch(/collapsed/);
   });
 });

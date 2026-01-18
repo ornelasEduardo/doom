@@ -8,6 +8,8 @@ export function Rail({
   sections,
   activeSection,
   onSectionClick,
+  onSectionMouseEnter,
+  onSectionMouseLeave,
   brandIcon,
 }: RailProps) {
   return (
@@ -24,6 +26,8 @@ export function Rail({
             )}
             type="button"
             onClick={() => onSectionClick(section.id)}
+            onMouseEnter={() => onSectionMouseEnter?.(section.id)}
+            onMouseLeave={() => onSectionMouseLeave?.()}
           >
             {section.icon}
           </button>

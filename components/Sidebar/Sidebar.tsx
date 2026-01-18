@@ -36,6 +36,10 @@ function SidebarRoot({
   >(activeSecProp ?? null);
 
   const activeSection = activeSecProp ?? internalActiveSection;
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+
+  const effectiveSection = hoveredSection ?? activeSection;
+  const isPeeking = collapsed && hoveredSection !== null;
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections((prev) =>
@@ -55,6 +59,7 @@ function SidebarRoot({
     (href: string, e?: React.MouseEvent) => {
       onNavigate?.(href, e);
       setMobileOpen(false);
+      setHoveredSection(null);
     },
     [onNavigate],
   );
@@ -67,7 +72,6 @@ function SidebarRoot({
     [onSecChangeProp],
   );
 
-  // Extract section info for rail
   const sectionInfo: Array<{
     id: string;
     icon: React.ReactNode;
@@ -89,26 +93,34 @@ function SidebarRoot({
     expandSection,
   };
 
+  const handleDesktopMouseLeave = useCallback(() => {
+    setHoveredSection(null);
+  }, []);
+
   const sidebarContent = (
     <Stack
-      className={clsx(styles.root, collapsed && styles.collapsed, className)}
+      className={clsx(
+        styles.root,
+        collapsed && !isPeeking && styles.collapsed,
+        className,
+      )}
       gap={0}
       width="100%"
     >
-      {withRail ? filterNodesForRail(children, activeSection) : children}
+      {withRail ? filterNodesForRail(children, effectiveSection) : children}
     </Stack>
   );
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      {/* Desktop sidebar */}
       <div
         className={clsx(
           styles.desktop,
           withRail && styles.withRail,
-          collapsed && styles.collapsed,
+          collapsed && !isPeeking && styles.collapsed,
         )}
         data-testid="sidebar-desktop"
+        onMouseLeave={handleDesktopMouseLeave}
       >
         {withRail && (
           <Rail
@@ -116,14 +128,20 @@ function SidebarRoot({
             brandIcon={brandIcon}
             sections={sectionInfo}
             onSectionClick={handleSectionChange}
+            onSectionMouseEnter={setHoveredSection}
           />
         )}
-        <div className={clsx(styles.panel, collapsed && styles.collapsed)}>
+        <div
+          className={clsx(
+            styles.panel,
+            collapsed && !isPeeking && styles.collapsed,
+          )}
+          data-testid="sidebar-panel"
+        >
           {sidebarContent}
         </div>
       </div>
 
-      {/* Mobile overlay */}
       <MobileOverlay isOpen={isMobileOpen} onClose={() => setMobileOpen(false)}>
         <SidebarContext.Provider value={{ ...contextValue, withRail: false }}>
           <Stack className={styles.root} gap={0} width="sidebar">
@@ -134,10 +152,6 @@ function SidebarRoot({
     </SidebarContext.Provider>
   );
 }
-
-// =============================================================================
-// Export
-// =============================================================================
 
 export const Sidebar = Object.assign(SidebarRoot, {
   Header,

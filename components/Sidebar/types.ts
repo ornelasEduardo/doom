@@ -68,6 +68,8 @@ export interface RailProps {
   sections: Array<{ id: string; icon: React.ReactNode; label: string }>;
   activeSection: string | null;
   onSectionClick: (id: string) => void;
+  onSectionMouseEnter?: (id: string) => void;
+  onSectionMouseLeave?: () => void;
   brandIcon?: React.ReactNode;
 }
 

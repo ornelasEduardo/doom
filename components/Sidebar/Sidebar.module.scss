@@ -68,7 +68,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted-foreground);
-  transition: all var(--duration-fast) var(--ease-in-out);
   gap: var(--spacing-3);
 
   &:hover {
@@ -110,7 +109,6 @@
   align-items: center;
   justify-content: center;
   color: var(--common-black);
-  transition: transform var(--duration-fast) var(--ease-in-out);
 }
 
 .sectionTrigger[aria-expanded="true"] .sectionChevron {
@@ -120,7 +118,6 @@
 .sectionContent {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows var(--duration-normal) var(--ease-in-out);
   overflow: hidden;
   margin-left: var(--spacing-6);
   padding-left: var(--spacing-3);
@@ -163,7 +160,6 @@
   font-weight: 500;
   color: var(--foreground);
   text-decoration: none;
-  transition: all var(--duration-fast) var(--ease-in-out);
   gap: var(--spacing-3);
   margin-bottom: var(--spacing-1);
 
@@ -188,7 +184,6 @@
     background-color: var(--primary);
     color: var(--primary-foreground);
     border-color: var(--border-strong);
-    font-weight: 700;
   }
 }
 
@@ -303,7 +298,6 @@
   border-radius: var(--radius);
   cursor: pointer;
   color: var(--primary-foreground);
-  transition: all var(--duration-fast) var(--ease-in-out);
 
   &:hover {
     background-color: transparent;

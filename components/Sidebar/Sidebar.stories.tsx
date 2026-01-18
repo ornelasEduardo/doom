@@ -249,16 +249,56 @@ export const WithRailCollapsed: Story = {
         </Sidebar.Header>
         <Sidebar.Nav>
           <Sidebar.Section icon={<Layers size={20} />} id="main" label="Main">
-            <Sidebar.Item href="/">Home</Sidebar.Item>
+            <Sidebar.Item href="/" icon={<Home size={20} />}>
+              Home
+            </Sidebar.Item>
+            <Sidebar.Item
+              href="/dashboard"
+              icon={<LayoutDashboard size={20} />}
+            >
+              Dashboard
+            </Sidebar.Item>
+            <Sidebar.Group
+              icon={<Settings size={20} />}
+              id="settings"
+              label="Settings"
+            >
+              <Sidebar.Item href="/settings/profile">Profile</Sidebar.Item>
+              <Sidebar.Item href="/settings/billing">Billing</Sidebar.Item>
+            </Sidebar.Group>
+            <Sidebar.Item href="/docs" icon={<FileText size={20} />}>
+              Documents
+            </Sidebar.Item>
           </Sidebar.Section>
           <Sidebar.Section
             icon={<Users size={20} />}
             id="admin"
             label="Administration"
           >
-            <Sidebar.Item href="/users">Users</Sidebar.Item>
+            <Sidebar.Item href="/users" icon={<User size={20} />}>
+              Users
+            </Sidebar.Item>
+            <Sidebar.Item href="/roles" icon={<Shield size={20} />}>
+              Roles
+            </Sidebar.Item>
+            <Sidebar.Item href="/permissions" icon={<Lock size={20} />}>
+              Permissions
+            </Sidebar.Item>
+          </Sidebar.Section>
+          <Sidebar.Section
+            icon={<BarChart3 size={20} />}
+            id="reports"
+            label="Reports"
+          >
+            <Sidebar.Item href="/reports/sales">Sales</Sidebar.Item>
+            <Sidebar.Item href="/reports/traffic">Traffic</Sidebar.Item>
           </Sidebar.Section>
         </Sidebar.Nav>
+        <Sidebar.Footer>
+          <Sidebar.Item href="/logout" icon={<LogOut size={20} />}>
+            Logout
+          </Sidebar.Item>
+        </Sidebar.Footer>
       </>
     ),
   },
