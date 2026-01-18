@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { ChevronRight } from "lucide-react";
 import React from "react";
 
-import { Stack } from "../../Layout/Layout";
-import { useSidebarContext } from "../context";
-import { useAutoExpand } from "../hooks";
-import styles from "../Sidebar.module.scss";
-import { SidebarGroupProps } from "../types";
+import { Stack } from "../../../Layout/Layout";
+import { useSidebarContext } from "../../context";
+import { useAutoExpand } from "../../hooks";
+import { SidebarGroupProps } from "../../types";
+import styles from "./Group.module.scss";
 
 export function Group({
   children,

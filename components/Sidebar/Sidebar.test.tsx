@@ -247,6 +247,7 @@ describe("Sidebar Component", () => {
 
     const panel = screen.getByTestId("sidebar-panel");
     expect(panel.className).toMatch(/collapsed/);
+    expect(panel.className).not.toMatch(/peeking/);
 
     const adminRailButton = within(desktopSidebar).getByRole("button", {
       name: /admin/i,
@@ -254,7 +255,9 @@ describe("Sidebar Component", () => {
 
     fireEvent.mouseEnter(adminRailButton);
 
-    expect(panel.className).not.toMatch(/collapsed/);
+    // Panel is still collapsed but now peeking
+    expect(panel.className).toMatch(/collapsed/);
+    expect(panel.className).toMatch(/peeking/);
 
     expect(
       within(desktopSidebar).getByText("Admin Content"),
@@ -262,6 +265,7 @@ describe("Sidebar Component", () => {
 
     fireEvent.mouseLeave(desktopSidebar);
     expect(panel.className).toMatch(/collapsed/);
+    expect(panel.className).not.toMatch(/peeking/);
   });
 
   it("clears peek state after navigation", () => {

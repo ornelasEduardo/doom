@@ -1,9 +1,9 @@
 import clsx from "clsx";
 import React from "react";
 
-import { useSidebarContext } from "../context";
-import styles from "../Sidebar.module.scss";
-import { SidebarItemProps } from "../types";
+import { useSidebarContext } from "../../context";
+import { SidebarItemProps } from "../../types";
+import styles from "./Item.module.scss";
 
 export function Item({
   children,
@@ -13,7 +13,8 @@ export function Item({
   appendContent,
   className,
 }: SidebarItemProps) {
-  const { activeItem, onNavigate } = useSidebarContext();
+  const { activeItem, onNavigate, itemToSection, onSectionChange } =
+    useSidebarContext();
   const isActive = activeItem === href;
 
   const handleClick = (
@@ -21,6 +22,11 @@ export function Item({
   ) => {
     if (href) {
       onNavigate(href, e);
+      // Update active section when item is clicked
+      const sectionId = itemToSection.get(href);
+      if (sectionId) {
+        onSectionChange(sectionId);
+      }
     }
     onClick?.(e);
   };
@@ -54,3 +60,5 @@ export function Item({
     </button>
   );
 }
+
+Item.displayName = "Item";

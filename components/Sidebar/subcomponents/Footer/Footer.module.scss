@@ -1,0 +1,8 @@
+@use "../../../../styles/mixins" as *;
+
+.footer {
+  padding: var(--spacing-4);
+  border-top: var(--border-width) solid var(--card-border);
+  flex-shrink: 0;
+  margin-top: auto;
+}

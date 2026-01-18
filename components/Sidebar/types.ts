@@ -4,6 +4,7 @@ export interface SidebarContextValue {
   withRail: boolean;
   activeSection: string | null;
   activeItem: string | null;
+  itemToSection: Map<string, string>;
   expandedSections: string[];
   isMobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;

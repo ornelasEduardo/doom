@@ -1,12 +1,64 @@
 import React from "react";
 
 import { Nav } from "./subcomponents/Nav";
-import { Section } from "./subcomponents/Section";
-import { SidebarSectionProps } from "./types";
+import { SidebarItemProps, SidebarSectionProps } from "./types";
+
+const isNavComponent = (child: React.ReactElement): boolean => {
+  const type = child.type;
+  if (typeof type === "function") {
+    return (type as React.FC).displayName === "Nav" || type.name === "Nav";
+  }
+  return false;
+};
+
+const isSectionComponent = (child: React.ReactElement): boolean => {
+  const type = child.type;
+  if (typeof type === "function") {
+    return (
+      (type as React.FC).displayName === "Section" || type.name === "Section"
+    );
+  }
+  return false;
+};
+
+const isItemComponent = (child: React.ReactElement): boolean => {
+  const type = child.type;
+  if (typeof type === "function") {
+    return (type as React.FC).displayName === "Item" || type.name === "Item";
+  }
+  return false;
+};
+
+// Recursively extract items from a section's children
+const extractItemsFromSection = (
+  nodes: React.ReactNode,
+  sectionId: string,
+  itemToSection: Map<string, string>,
+) => {
+  React.Children.forEach(nodes, (child) => {
+    if (!React.isValidElement(child)) {
+      return;
+    }
+
+    if (isItemComponent(child)) {
+      const href = (child.props as SidebarItemProps).href;
+      if (href) {
+        itemToSection.set(href, sectionId);
+      }
+    }
+
+    // Recurse into Groups and other containers
+    const childProps = child.props as { children?: React.ReactNode };
+    if (childProps.children) {
+      extractItemsFromSection(childProps.children, sectionId, itemToSection);
+    }
+  });
+};
 
 export const extractSections = (
   nodes: React.ReactNode,
   sectionInfo: Array<{ id: string; icon: React.ReactNode; label: string }>,
+  itemToSection: Map<string, string>,
 ) => {
   React.Children.forEach(nodes, (child) => {
     if (!React.isValidElement(child)) {
@@ -18,24 +70,32 @@ export const extractSections = (
         (child as React.ReactElement<{ children?: React.ReactNode }>).props
           .children,
         sectionInfo,
+        itemToSection,
       );
       return;
     }
 
-    if (child.type === Nav) {
+    if (isNavComponent(child)) {
       React.Children.forEach(
         (child as React.ReactElement<{ children?: React.ReactNode }>).props
           .children,
         (navChild) => {
           if (
             React.isValidElement<SidebarSectionProps>(navChild) &&
-            navChild.type === Section
+            isSectionComponent(navChild)
           ) {
+            const sectionId = navChild.props.id;
             sectionInfo.push({
-              id: navChild.props.id,
+              id: sectionId,
               icon: navChild.props.icon,
               label: navChild.props.label,
             });
+            // Extract items from this section
+            extractItemsFromSection(
+              navChild.props.children,
+              sectionId,
+              itemToSection,
+            );
           }
         },
       );
@@ -64,7 +124,7 @@ export const filterNodesForRail = (
       );
     }
 
-    if (child.type === Nav) {
+    if (isNavComponent(child)) {
       const navElement = child as React.ReactElement<{
         children?: React.ReactNode;
         className?: string;
@@ -74,7 +134,7 @@ export const filterNodesForRail = (
       ).filter((navChild) => {
         if (
           React.isValidElement<SidebarSectionProps>(navChild) &&
-          navChild.type === Section
+          isSectionComponent(navChild)
         ) {
           return navChild.props.id === activeSection;
         }
@@ -84,7 +144,7 @@ export const filterNodesForRail = (
       const activeSectionChild = filteredNavChildren.find(
         (navChild) =>
           React.isValidElement<SidebarSectionProps>(navChild) &&
-          navChild.type === Section &&
+          isSectionComponent(navChild) &&
           navChild.props.id === activeSection,
       );
 
@@ -92,6 +152,7 @@ export const filterNodesForRail = (
         activeSectionChild &&
         React.isValidElement<SidebarSectionProps>(activeSectionChild)
       ) {
+        // Just render the children - Items will look up their section from the registry
         return (
           <Nav {...navElement.props} className={navElement.props.className}>
             {activeSectionChild.props.children}
