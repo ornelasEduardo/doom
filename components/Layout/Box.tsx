@@ -18,6 +18,7 @@ const SIZING_MAP = {
 
   // Structural
   sidebar: "var(--width-sidebar)",
+  "sidebar-collapsed": "var(--width-sidebar-collapsed)",
   panel: "var(--width-panel)",
   "panel-wide": "var(--width-panel-wide)",
 

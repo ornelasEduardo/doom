@@ -1,0 +1,398 @@
+@use "../../styles/mixins" as *;
+
+// =============================================================================
+// Root
+// =============================================================================
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+// =============================================================================
+// Header
+// =============================================================================
+
+.header {
+  padding: var(--spacing-4);
+  border-bottom: var(--border-width) solid var(--card-border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  height: var(--header-height);
+  box-sizing: border-box;
+  border-top-right-radius: var(--radius);
+}
+
+// =============================================================================
+// Nav
+// =============================================================================
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-2);
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// =============================================================================
+// Section
+// =============================================================================
+
+.section {
+  margin-bottom: var(--spacing-1);
+}
+
+.sectionTrigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  gap: var(--spacing-3);
+
+  &:hover {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+
+  &.active {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+}
+
+.sectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.sectionLabel {
+  flex: 1;
+  text-align: left;
+}
+
+.sectionChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--card-border);
+}
+
+.sectionTrigger:hover .sectionChevron,
+.sectionTrigger:focus-visible .sectionChevron,
+.sectionTrigger.active .sectionChevron {
+  color: inherit;
+}
+
+.sectionTrigger[aria-expanded="true"] .sectionChevron {
+  transform: rotate(90deg);
+}
+
+.sectionContent {
+  display: none;
+  overflow: hidden;
+  margin-left: var(--spacing-6);
+  padding-left: var(--spacing-3);
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--border-width);
+    background-color: var(--card-border);
+  }
+
+  > * {
+    overflow: hidden;
+  }
+
+  &.expanded {
+    display: block;
+    margin-top: var(--spacing-2);
+  }
+}
+
+// =============================================================================
+// Item
+// =============================================================================
+
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--foreground);
+  text-decoration: none;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-1);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 var(--spacing-half)
+      color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+
+  &.active {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.itemLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.itemAppend {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+// =============================================================================
+// Footer
+// =============================================================================
+
+.footer {
+  padding: var(--spacing-4);
+  border-top: var(--border-width) solid var(--card-border);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+// =============================================================================
+// Desktop Layout
+// =============================================================================
+
+.desktop {
+  display: none;
+
+  @include mq("md") {
+    display: flex;
+    height: 100%;
+    width: var(--width-sidebar);
+    background-color: var(--card-bg);
+    border-top: var(--border-width) solid var(--card-border);
+    border-bottom: var(--border-width) solid var(--card-border);
+    border-right: var(--border-width) solid var(--card-border);
+    overflow: hidden;
+    @include brutalist-shadow("right", var(--spacing-2));
+    border-top-right-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+
+    &.withRail {
+      width: calc(var(--width-sidebar-collapsed) + var(--width-sidebar));
+    }
+
+    &.collapsed {
+      width: var(--width-sidebar-collapsed);
+
+      .panel {
+        display: none;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// Rail
+// =============================================================================
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  width: var(--width-sidebar-collapsed);
+  flex-shrink: 0;
+  border-right: var(--border-width) solid var(--card-border);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.railBrand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  height: var(--header-height);
+  border-bottom: none;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.railNav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-2);
+  gap: var(--spacing-2);
+}
+
+.railItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: var(--spacing-3);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--primary-foreground);
+
+  &:hover {
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+  }
+
+  &.active {
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+    border-radius: var(--radius);
+  }
+}
+
+// =============================================================================
+// Panel
+// =============================================================================
+
+.panel {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--card-bg);
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+// =============================================================================
+// Mobile
+// =============================================================================
+
+.mobileTrigger {
+  @include mq("md") {
+    display: none;
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, var(--overlay-opacity));
+  backdrop-filter: blur(var(--blur-standard));
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-normal) var(--ease-in-out),
+    visibility var(--duration-normal) var(--ease-in-out);
+  pointer-events: none;
+  z-index: var(--z-overlay);
+
+  &.isOpen {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+.mobilePanel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--width-sidebar);
+  max-width: 85vw;
+  background-color: var(--card-bg);
+  z-index: var(--z-drawer);
+  transform: translateX(calc(-100% - 20px));
+  transition:
+    transform var(--duration-normal) var(--ease-in-out),
+    visibility var(--duration-normal) var(--ease-in-out);
+  visibility: hidden;
+  border-right: var(--border-width) solid var(--card-border);
+
+  @include brutalist-shadow("right", var(--spacing-2));
+
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+
+  &.isOpen {
+    visibility: visible;
+    transform: translateX(0);
+  }
+}

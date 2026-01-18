@@ -112,6 +112,7 @@ function ThemeSwitcher() {
 - [breadcrumbs.md](components/breadcrumbs.md) — Navigation hierarchy
 - [link.md](components/link.md) — Anchor links
 - [pagination.md](components/pagination.md) — Page navigation
+- [sidebar.md](components/sidebar.md) — Multi-mode side navigation
 - [tabs.md](components/tabs.md) — Tab navigation
 
 ### Forms
