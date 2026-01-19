@@ -169,7 +169,7 @@ export const ComprehensiveForm: Story = {
                 min={0}
                 value={formData.volume}
                 onChange={(value) =>
-                  setFormData({ ...formData, volume: value })
+                  setFormData({ ...formData, volume: value as number })
                 }
               />
             </Field>

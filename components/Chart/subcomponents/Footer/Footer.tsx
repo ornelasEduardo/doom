@@ -3,22 +3,22 @@
 import clsx from "clsx";
 import React from "react";
 
-import { Flex } from "../Layout/Layout";
-import styles from "./Chart.module.scss";
+import { Flex } from "../../../Layout/Layout";
+import styles from "./Footer.module.scss";
 
-export interface ChartFooterProps {
+export interface FooterProps {
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
   align?: "start" | "center" | "end" | "between";
 }
 
-export function ChartFooter({
+export function Footer({
   className,
   style,
   children,
   align = "center",
-}: ChartFooterProps) {
+}: FooterProps) {
   if (!children) {
     return null;
   }
@@ -36,11 +36,10 @@ export function ChartFooter({
   return (
     <Flex
       align="center"
-      className={clsx(styles.chartFooter, className)}
+      className={clsx(styles.footer, className)}
       justify={justifyMap[align]}
       style={{
         width: "100%",
-        marginTop: "var(--spacing-4)",
         ...style,
       }}
     >

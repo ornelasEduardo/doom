@@ -3,13 +3,13 @@
 import clsx from "clsx";
 import React, { useMemo } from "react";
 
-import { Flex } from "../Layout/Layout";
-import { Text } from "../Text/Text";
-import styles from "./Chart.module.scss";
-import { useChartContext } from "./ChartContext";
-import { LegendItem } from "./types";
+import { Flex } from "../../../Layout/Layout";
+import { Text } from "../../../Text/Text";
+import { useChartContext } from "../../context";
+import { LegendItem } from "../../types";
+import styles from "./Legend.module.scss";
 
-export interface ChartLegendProps {
+export interface LegendProps {
   items?: LegendItem[] | ((items: LegendItem[]) => LegendItem[]);
   layout?: "horizontal" | "vertical";
   align?: "start" | "center" | "end";
@@ -17,13 +17,13 @@ export interface ChartLegendProps {
   style?: React.CSSProperties;
 }
 
-export function ChartLegend({
+export function Legend({
   items,
   layout = "horizontal",
   align = "start",
   className,
   style,
-}: ChartLegendProps) {
+}: LegendProps) {
   const { legendItems, type, render } = useChartContext();
 
   const contextItems = useMemo(() => {
@@ -56,7 +56,6 @@ export function ChartLegend({
       style={{
         flexWrap: "wrap",
         flexDirection: isVertical ? "column" : "row",
-
         justifyContent: isVertical ? "flex-start" : alignMap[align],
         alignItems: isVertical ? alignMap[align] : "center",
         ...style,

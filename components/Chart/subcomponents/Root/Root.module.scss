@@ -1,0 +1,80 @@
+@use "../../../../styles/mixins" as *;
+
+.chartContainer {
+  position: relative;
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
+  padding: var(--spacing-6);
+  overflow: visible;
+
+  display: flex;
+  flex-direction: column;
+
+  &.flat {
+    box-shadow: none;
+  }
+
+  &.frameless {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  &.solid {
+    @include solid-variant;
+    border-color: var(--border-strong);
+
+    :global(.tick) text {
+      fill: var(--solid-fg);
+    }
+
+    :global(.domain),
+    :global(.tick) line {
+      stroke: var(--solid-fg);
+    }
+
+    .tooltipCard {
+      background-color: var(--solid-bg);
+      border-color: var(--solid-fg);
+    }
+  }
+  &.mobile {
+    padding: var(--spacing-2);
+  }
+}
+
+.responsiveWrapper {
+  width: 100%;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  overflow: visible;
+}
+
+/* Tooltip Styles moved here from monolithic file */
+.tooltipWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+  will-change: transform;
+}
+
+.tooltipCard {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.tooltipLabel {
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-1);
+}

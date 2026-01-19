@@ -1,81 +1,60 @@
 "use client";
 
-import { Flex, Stack } from "../Layout/Layout";
-import { useChartContext } from "./ChartContext";
-import { ChartFooter } from "./ChartFooter";
-import { ChartHeader } from "./ChartHeader";
-import { ChartLegend } from "./ChartLegend";
-import { ChartPlot } from "./ChartPlot";
-import { ChartRoot } from "./ChartRoot";
+import {
+  Axis,
+  CursorWrapper,
+  Footer,
+  Grid,
+  Header,
+  InteractionLayer,
+  Legend,
+  Root,
+  Series,
+} from "./subcomponents";
 import { ChartProps } from "./types";
 
 export type {
+  Accessor,
   ChartConfig,
   ChartProps,
-  DrawContext,
   LegendConfig,
   LegendItem,
+  SeriesContext,
+  SeriesProps,
 } from "./types";
 
-function ChartInternal<T>(props: ChartProps<T>) {
-  const { title, subtitle, withLegend, type, render, renderTooltip } = props;
+function ChartComposed<T>(props: ChartProps<T>) {
+  if (props.children) {
+    return <Root {...props} />;
+  }
 
   return (
-    <ChartRoot {...props}>
-      <StandardChartLayout
-        render={render}
-        renderTooltip={renderTooltip}
-        subtitle={subtitle}
-        title={title}
-        type={type}
-        withLegend={withLegend}
-      />
-    </ChartRoot>
+    <Root {...props}>
+      <Grid />
+      <Axis />
+      {!props.render && <CursorWrapper mode="line" />}
+      <Series render={props.render} type={props.type} x={props.x} y={props.y} />
+      {!props.render && <CursorWrapper mode="dots" />}
+      {!props.render && <InteractionLayer />}
+    </Root>
   );
 }
 
-function StandardChartLayout<T>({
-  title,
-  subtitle,
-  withLegend,
-  type,
-  render,
-  renderTooltip,
-}: Pick<
-  ChartProps<T>,
-  "title" | "subtitle" | "withLegend" | "type" | "render" | "renderTooltip"
->) {
-  // Standard Layout:
-  // - Header (Title + Subtitle + Legend Top Right)
-  // - Plot
-  // - (No side/bottom legends in standard mode - usage Composition for that)
-  const { legendItems } = useChartContext();
+// NOTE: Root handles "Footer", "Legend", "Header" internally via props (title, etc.).
+// Checks:
+// Root renders Header if title/subtitle exists.
+// Root renders Legend if withLegend is true.
+// Root renders children inside wrapper.
+// So ChartComposed works perfectly.
 
-  const showLegend = withLegend && legendItems.length > 0;
-
-  return (
-    <Stack style={{ flex: 1, minHeight: 0 }}>
-      {/* HEADER & LEGEND */}
-      <Flex justify="space-between" style={{ width: "100%" }}>
-        <ChartHeader subtitle={subtitle} title={title}>
-          {showLegend && (
-            <ChartLegend align="end" items={legendItems} layout="horizontal" />
-          )}
-        </ChartHeader>
-      </Flex>
-
-      <Flex gap={8} style={{ flex: 1, minHeight: 0 }}>
-        {/* PLOT */}
-        <ChartPlot render={render} renderTooltip={renderTooltip} type={type} />
-      </Flex>
-    </Stack>
-  );
-}
-
-export const Chart = Object.assign(ChartInternal, {
-  Root: ChartRoot,
-  Header: ChartHeader,
-  Footer: ChartFooter,
-  Legend: ChartLegend,
-  Plot: ChartPlot,
+export const Chart = Object.assign(ChartComposed, {
+  Root,
+  Header,
+  Footer,
+  Legend,
+  Series,
+  Grid,
+  Axis,
+  InteractionLayer,
+  Cursor: CursorWrapper,
 });

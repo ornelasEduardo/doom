@@ -3,12 +3,11 @@
 import clsx from "clsx";
 import React from "react";
 
-import { Flex, Stack } from "../Layout/Layout";
-import { Text } from "../Text/Text";
-// Use relative import for styles to ensure sharing
-import styles from "./Chart.module.scss";
+import { Flex, Stack } from "../../../Layout/Layout";
+import { Text } from "../../../Text/Text";
+import styles from "./Header.module.scss";
 
-export interface ChartHeaderProps {
+export interface HeaderProps {
   title?: React.ReactNode;
   subtitle?: string;
   className?: string;
@@ -16,13 +15,13 @@ export interface ChartHeaderProps {
   children?: React.ReactNode;
 }
 
-export function ChartHeader({
+export function Header({
   title,
   subtitle,
   className,
   style,
   children,
-}: ChartHeaderProps) {
+}: HeaderProps) {
   const hasTitle = title || subtitle;
 
   if (!hasTitle && !children) {
@@ -32,7 +31,7 @@ export function ChartHeader({
   return (
     <Flex
       align="center"
-      className={clsx(styles.chartHeader, className)}
+      className={clsx(styles.header, className)}
       justify="space-between"
       style={{
         width: "100%",

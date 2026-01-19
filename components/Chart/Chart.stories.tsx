@@ -11,7 +11,7 @@ import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { Chart, type DrawContext } from "./Chart";
+import { Chart, DrawContext } from "./Chart";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -131,6 +131,19 @@ export const CustomRender1: Story = {
       grid: false,
       showAxes: false,
     },
+    renderTooltip: (data: any) => (
+      <Card style={{ padding: "8px 12px", minWidth: 150 }}>
+        <Text style={{ marginBottom: 4 }} variant="h6">
+          {data && data.label}
+        </Text>
+        <Text style={{ color: "var(--text-secondary)" }} variant="body">
+          Value:{" "}
+          <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+            {data && data.value}
+          </span>
+        </Text>
+      </Card>
+    ),
     render: (ctx: DrawContext<any>) => {
       const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
 
@@ -170,52 +183,65 @@ export const CustomRender1: Story = {
         .append("path")
         .attr("class", "arc")
         .attr("d", arc)
-        .attr("fill", (_, i) => colorScale[i % colorScale.length])
+        .attr("fill", (_: any, i: number) => colorScale[i % colorScale.length])
         .attr("stroke", "var(--card-bg)")
         .attr("stroke-width", "2px")
         .style("cursor", "crosshair")
         .style("touch-action", "none")
-        .on("mouseenter", (event) => {
+        .on("mouseenter", (event: any) => {
           select(event.currentTarget).style("opacity", 0.8);
         })
-        .on("mousemove touchmove touchstart", (event) => {
-          const result = ctx.resolveInteraction(event);
-          if (result && result.data && select(result.element).classed("arc")) {
-            const d: any = result.data;
-            const isTouch = event.type.startsWith("touch");
-            const svgNode = ctx.g.node()?.ownerSVGElement;
+        .on("mousemove touchmove touchstart", (event: any, d: any) => {
+          // Direct hover state update - no need for resolveInteraction since we have 'd'
+          const isTouch = event.type.startsWith("touch");
+          const svgNode = ctx.g.node()?.ownerSVGElement;
 
-            if (svgNode) {
-              const svgRect = svgNode.getBoundingClientRect();
-              let clientX: number;
-              let clientY: number;
-              if (event.touches && event.touches.length > 0) {
-                clientX = event.touches[0].clientX;
-                clientY = event.touches[0].clientY;
-              } else {
-                clientX = event.clientX;
-                clientY = event.clientY;
-              }
+          if (svgNode) {
+            const svgRect = svgNode.getBoundingClientRect();
+            let clientX: number;
+            let clientY: number;
 
-              const px = clientX - svgRect.left;
-              const py = clientY - svgRect.top;
-
-              ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
+            // Handle touch vs mouse coordinates
+            if (event.touches && event.touches.length > 0) {
+              clientX = event.touches[0].clientX;
+              clientY = event.touches[0].clientY;
+            } else {
+              clientX = event.clientX;
+              clientY = event.clientY;
             }
+
+            // Calculate raw tooltip position (relative to SVG/Wrapper)
+            // Note: tooltipX/Y should be consistent with how InteractionLayer reports them.
+            // InteractionLayer uses pointer() which is relative to the target, or handles it globally.
+            // HoverState usually expects:
+            // cursorLineX/Y: relative to SVG (usually inside margins? or raw svg coords?)
+            // tooltipX/Y: relative to the wrapper/SVG.
+
+            // Let's use d3.pointer for consistency if possible, or manual math relative to rect.
+            const rawX = clientX - svgRect.left;
+            const rawY = clientY - svgRect.top;
+
+            ctx.setHoverState({
+              cursorLineX: rawX, // Not used since cursor disabled, but needed for type
+              cursorLineY: rawY,
+              tooltipX: rawX,
+              tooltipY: rawY,
+              data: d.data,
+              isTouch,
+            });
           }
         })
-        .on("mouseleave touchend", (event) => {
+        .on("mouseleave touchend", (event: any) => {
           select(event.currentTarget).style("opacity", 1);
           ctx.hideTooltip();
         });
 
       arcs
-
         .append("text")
-        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+        .attr("transform", (d: any) => `translate(${arc.centroid(d)})`)
         .attr("text-anchor", "middle")
         .attr("dy", "0.35em")
-        .text((d) => d.data.label)
+        .text((d: any) => d.data.label)
         .style("fill", "var(--card-bg)")
         .style("font-size", "12px")
         .style("font-weight", "bold")
@@ -251,102 +277,116 @@ export const CustomRender2: Story = {
       grid: false,
       showAxes: false,
     },
-    render: async (ctx: DrawContext<any>) => {
-      const d3Hierarchy = await import("d3-hierarchy");
+    renderTooltip: (data: any) => (
+      <Card style={{ padding: "8px 12px", minWidth: 150 }}>
+        <Text style={{ marginBottom: 4 }} variant="h6">
+          {data && data.name}
+        </Text>
+        <Text style={{ color: "var(--text-secondary)" }} variant="body">
+          Value:{" "}
+          <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+            {data && data.value}
+          </span>
+        </Text>
+      </Card>
+    ),
+    render: (ctx: DrawContext<any>) => {
+      import("d3-hierarchy").then((d3Hierarchy) => {
+        const root = d3Hierarchy
+          .stratify<any>()
+          .id((d) => d.name)
+          .parentId((d) => d.parent)(ctx.data)
+          .sum((d) => d.value)
+          .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-      const root = d3Hierarchy
-        .stratify<any>()
-        .id((d) => d.name)
-        .parentId((d) => d.parent)(ctx.data)
-        .sum((d) => d.value)
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
+        d3Hierarchy
+          .treemap<any>()
+          .size([ctx.innerWidth, ctx.innerHeight])
+          .padding(4)(root);
 
-      d3Hierarchy
-        .treemap<any>()
-        .size([ctx.innerWidth, ctx.innerHeight])
-        .padding(4)(root);
+        const colors = [
+          "var(--primary)",
+          "var(--secondary)",
+          "var(--accent)",
+          "var(--success)",
+          "var(--warning)",
+        ];
 
-      const colors = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--success)",
-        "var(--warning)",
-      ];
+        const nodes = ctx.g
+          .selectAll("g")
+          .data(root.leaves())
+          .enter()
+          .append("g")
+          .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
 
-      const nodes = ctx.g
-        .selectAll("g")
-        .data(root.leaves())
-        .enter()
-        .append("g")
-        .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
+        nodes
+          .append("rect")
+          .attr("width", (d: any) => d.x1 - d.x0)
+          .attr("height", (d: any) => d.y1 - d.y0)
+          .attr("fill", (_: any, i: number) => colors[i % colors.length])
+          .attr("stroke", "var(--card-bg)")
+          .attr("fill-opacity", 0.8)
+          .style("rx", "var(--radius)")
+          .style("ry", "var(--radius)")
+          .style("cursor", "crosshair")
+          .style("touch-action", "none")
+          .on("mouseenter", (event: any) => {
+            select(event.currentTarget).attr("fill-opacity", 1);
+          })
+          .on("mousemove touchmove touchstart", (event: any, d: any) => {
+            const isTouch = event.type.startsWith("touch");
+            const svgNode = ctx.g.node()?.ownerSVGElement;
 
-      nodes
-        .append("rect")
-        .attr("width", (d: any) => d.x1 - d.x0)
-        .attr("height", (d: any) => d.y1 - d.y0)
-        .attr("fill", (_, i) => colors[i % colors.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("fill-opacity", 0.8)
-        .style("rx", "var(--radius)")
-        .style("ry", "var(--radius)")
-        .style("cursor", "crosshair")
-        .style("touch-action", "none")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 1);
-        })
-        .on("mousemove touchmove touchstart", (event) => {
-          const result = ctx.resolveInteraction(event);
-          if (result && result.data) {
-            const d: any = result.data;
-            if (typeof d.x0 === "number") {
-              const isTouch = event.type.startsWith("touch");
-              const svgNode = ctx.g.node()?.ownerSVGElement;
-
-              if (svgNode) {
-                const svgRect = svgNode.getBoundingClientRect();
-                let clientX: number;
-                let clientY: number;
-                if (event.touches && event.touches.length > 0) {
-                  clientX = event.touches[0].clientX;
-                  clientY = event.touches[0].clientY;
-                } else {
-                  clientX = event.clientX;
-                  clientY = event.clientY;
-                }
-
-                const px = clientX - svgRect.left;
-                const py = clientY - svgRect.top;
-
-                ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
+            if (svgNode) {
+              const svgRect = svgNode.getBoundingClientRect();
+              let clientX: number;
+              let clientY: number;
+              if (event.touches && event.touches.length > 0) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+              } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
               }
+
+              const rawX = clientX - svgRect.left;
+              const rawY = clientY - svgRect.top;
+
+              ctx.setHoverState({
+                cursorLineX: rawX,
+                cursorLineY: rawY,
+                tooltipX: rawX,
+                tooltipY: rawY,
+                data: d.data,
+                isTouch,
+              });
             }
-          }
-        })
-        .on("mouseleave touchend", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 0.8);
-          ctx.hideTooltip();
-        });
+          })
+          .on("mouseleave touchend", (event: any) => {
+            select(event.currentTarget).attr("fill-opacity", 0.8);
+            ctx.hideTooltip();
+          });
 
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 20)
-        .text((d) => d.data.name)
-        .style("font-size", "12px")
-        .style("font-weight", 600)
-        .style("fill", "var(--primary-foreground)")
-        .style("pointer-events", "none");
+        nodes
+          .append("text")
+          .attr("x", 8)
+          .attr("y", 20)
+          .text((d: any) => d.data.name)
+          .style("font-size", "12px")
+          .style("font-weight", 600)
+          .style("fill", "var(--primary-foreground)")
+          .style("pointer-events", "none");
 
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 36)
-        .text((d) => String(d.value))
-        .style("font-size", "10px")
-        .style("fill", "var(--primary-foreground)")
-        .style("opacity", "0.8")
-        .style("pointer-events", "none");
+        nodes
+          .append("text")
+          .attr("x", 8)
+          .attr("y", 36)
+          .text((d: any) => String(d.value))
+          .style("font-size", "10px")
+          .style("fill", "var(--primary-foreground)")
+          .style("opacity", "0.8")
+          .style("pointer-events", "none");
+      });
     },
   },
 };
@@ -381,6 +421,7 @@ export const IntegratedChart: Story = {
       showDots: false,
       showAxes: false,
       curve: d3Shape.curveMonotoneX,
+      margin: { top: 10, right: 0, bottom: 10, left: 0 },
     },
     style: {
       width: "100%",
@@ -650,7 +691,18 @@ export const CompositionExample: Story = {
             </Chart.Header>
 
             <Flex gap={4} style={{ flex: 1 }}>
-              <Chart.Plot color={chartColor} type={chartType} />
+              <Chart.Plot>
+                <Chart.Grid />
+                <Chart.Series
+                  color={chartColor}
+                  type={chartType}
+                  x="label"
+                  y="value"
+                />
+                <Chart.Axis />
+                <Chart.Cursor />
+                <Chart.InteractionLayer />
+              </Chart.Plot>
 
               <Chart.Legend
                 items={(legendItems) =>
@@ -678,6 +730,144 @@ export const CompositionExample: Story = {
           </Stack>
         </Chart.Root>
       </div>
+    );
+  },
+};
+
+// =============================================================================
+// NEW API DEMONSTRATIONS
+// =============================================================================
+
+/**
+ * String Accessors provide a cleaner DX - just pass the property name.
+ * Instead of `x={(d) => d.month}`, simply use `x="month"`
+ */
+export const StringAccessors: Story = {
+  render: () => {
+    const salesData = [
+      { month: "Jan", revenue: 15000 },
+      { month: "Feb", revenue: 28000 },
+      { month: "Mar", revenue: 22000 },
+      { month: "Apr", revenue: 35000 },
+      { month: "May", revenue: 42000 },
+      { month: "Jun", revenue: 38000 },
+    ];
+
+    return (
+      <Chart.Root
+        d3Config={{ grid: true, showDots: true }}
+        data={salesData}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+      >
+        <Chart.Header title="String Accessors Demo" />
+        <Chart.Series type="area" x="month" y="revenue" />
+      </Chart.Root>
+    );
+  },
+};
+
+/**
+ * Multi-series charts allow multiple data visualizations on a single chart.
+ * Each series can have its own y-accessor, color, and label.
+ */
+export const MultiSeries: Story = {
+  render: () => {
+    const data = [
+      { month: "Jan", revenue: 15000, users: 1200, expenses: 8000 },
+      { month: "Feb", revenue: 28000, users: 1800, expenses: 12000 },
+      { month: "Mar", revenue: 22000, users: 1500, expenses: 10000 },
+      { month: "Apr", revenue: 35000, users: 2200, expenses: 15000 },
+      { month: "May", revenue: 42000, users: 2800, expenses: 18000 },
+      { month: "Jun", revenue: 38000, users: 2500, expenses: 16000 },
+    ];
+
+    return (
+      <Chart.Root
+        d3Config={{ grid: true, showDots: true }}
+        data={data}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+      >
+        <Chart.Header title="Multi-Series Line Chart">
+          <Chart.Legend layout="horizontal" />
+        </Chart.Header>
+        <div
+          style={{
+            position: "relative",
+            flex: 1,
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <Chart.Series
+            color="var(--primary)"
+            label="Revenue"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+            }}
+            type="line"
+            x="month"
+            y="revenue"
+          />
+          <Chart.Series
+            color="var(--secondary)"
+            label="Expenses"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+            }}
+            type="line"
+            x="month"
+            y="expenses"
+          />
+        </div>
+      </Chart.Root>
+    );
+  },
+};
+
+/**
+ * Scatter plots support an optional `size` accessor for bubble charts.
+ */
+export const ScatterPlot: Story = {
+  render: () => {
+    const data = [
+      { income: 25000, happiness: 6.2, population: 5 },
+      { income: 45000, happiness: 7.1, population: 12 },
+      { income: 32000, happiness: 6.8, population: 8 },
+      { income: 78000, happiness: 7.8, population: 15 },
+      { income: 55000, happiness: 7.4, population: 10 },
+      { income: 92000, happiness: 8.2, population: 20 },
+      { income: 38000, happiness: 6.5, population: 7 },
+      { income: 65000, happiness: 7.6, population: 18 },
+    ];
+
+    return (
+      <Chart.Root
+        d3Config={{
+          grid: true,
+          xAxisLabel: "Annual Income ($)",
+          yAxisLabel: "Happiness Index",
+        }}
+        data={data}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+      >
+        <Chart.Header
+          subtitle="Bubble size represents population"
+          title="Income vs Happiness"
+        />
+        <Chart.Series
+          color="var(--primary)"
+          size="population"
+          type="scatter"
+          x="income"
+          y="happiness"
+        />
+      </Chart.Root>
     );
   },
 };

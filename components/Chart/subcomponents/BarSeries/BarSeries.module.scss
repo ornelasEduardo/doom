@@ -1,0 +1,12 @@
+.bar {
+  fill: var(--primary);
+  stroke: var(--card-border);
+  stroke-width: var(--border-width);
+  stroke-linejoin: round;
+  transition: opacity 0.2s;
+
+  &:hover {
+    cursor: crosshair;
+    filter: brightness(1.1);
+  }
+}

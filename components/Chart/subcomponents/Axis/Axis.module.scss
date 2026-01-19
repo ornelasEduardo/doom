@@ -1,0 +1,42 @@
+@use "../../../../styles/mixins" as *;
+
+.axes {
+  pointer-events: none;
+  font-family: var(
+    --font-montserrat
+  ); /* Keep this as it matches font-bold usually */
+  font-size: var(--text-xs);
+
+  :global(.domain) {
+    stroke: var(--card-border);
+    stroke-width: var(--border-width);
+
+    &.hideDomain {
+      stroke: none;
+    }
+  }
+
+  :global(.tick) {
+    line {
+      stroke: var(--card-border);
+      stroke-width: var(--border-width);
+      opacity: 1;
+    }
+    text {
+      fill: var(--foreground);
+      font-family: inherit;
+      font-weight: var(--font-bold);
+      text-transform: uppercase;
+      font-size: var(--text-xs);
+    }
+  }
+
+  /* This might be redundant if we target :global(.tick) text above, but keeping for safety if Axis.tsx uses .label */
+  .label {
+    fill: var(--foreground);
+    font-size: var(--text-xs);
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    text-anchor: middle;
+  }
+}

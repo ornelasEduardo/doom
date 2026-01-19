@@ -1,0 +1,30 @@
+.path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: calc(var(--border-width) * 1.5);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.area {
+  fill: var(--primary);
+  stroke: none;
+  /* opacity: 0.1; */
+}
+
+.dot {
+  fill: var(--primary);
+  stroke: var(--border-strong);
+  stroke-width: var(--border-width);
+  transition: r 0.2s;
+  z-index: var(--z-overlay);
+
+  // Note: Hover state logic is often handled by React state (r=8), but CSS hover works for pointer events if enabled.
+  /*
+  &:hover {
+    r: 8;
+    stroke-width: calc(var(--border-width) * 1.5);
+  }
+  */
+}
