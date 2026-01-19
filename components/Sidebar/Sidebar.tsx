@@ -114,10 +114,9 @@ function SidebarRoot({
     <SidebarContext.Provider value={contextValue}>
       <div
         className={clsx(
-          styles.container,
+          styles.shell,
           withRail && styles.withRail,
           collapsed && styles.collapsed,
-          isPeeking && styles.peeking,
         )}
         data-testid="sidebar-desktop"
         onMouseEnter={() => setHovered(true)}
@@ -128,7 +127,7 @@ function SidebarRoot({
       >
         <div
           className={clsx(
-            styles.visuals,
+            styles.frame,
             withRail && styles.withRail,
             collapsed && styles.collapsed,
             isPeeking && styles.peeking,
@@ -146,6 +145,7 @@ function SidebarRoot({
           <div
             className={clsx(
               styles.panel,
+              withRail && styles.withRail,
               collapsed && styles.collapsed,
               isPeeking && styles.peeking,
             )}
