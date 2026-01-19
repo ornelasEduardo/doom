@@ -1,0 +1,48 @@
+@use "../../../../styles/mixins" as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, var(--overlay-opacity));
+  backdrop-filter: blur(var(--blur-standard));
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--duration-normal) var(--ease-in-out),
+    visibility var(--duration-normal) var(--ease-in-out);
+  pointer-events: none;
+  z-index: var(--z-overlay);
+
+  &.isOpen {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+.mobilePanel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--width-sidebar);
+  max-width: 85vw;
+  background-color: var(--card-bg);
+  z-index: var(--z-drawer);
+  transform: translateX(calc(-100% - 20px));
+  transition:
+    transform var(--duration-normal) var(--ease-in-out),
+    visibility var(--duration-normal) var(--ease-in-out);
+  visibility: hidden;
+  border-right: var(--border-width) solid var(--card-border);
+
+  @include brutalist-shadow("right", var(--spacing-2));
+
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+
+  &.isOpen {
+    visibility: visible;
+    transform: translateX(0);
+  }
+}

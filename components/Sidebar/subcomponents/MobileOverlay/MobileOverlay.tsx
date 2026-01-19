@@ -4,8 +4,8 @@ import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import styles from "../Sidebar.module.scss";
-import { MobileOverlayProps } from "../types";
+import { MobileOverlayProps } from "../../types";
+import styles from "./MobileOverlay.module.scss";
 
 export function MobileOverlay({
   children,

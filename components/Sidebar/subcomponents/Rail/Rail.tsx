@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import React from "react";
 
-import styles from "../Sidebar.module.scss";
-import { RailProps } from "../types";
+import { RailProps } from "../../types";
+import styles from "./Rail.module.scss";
 
 export function Rail({
   sections,

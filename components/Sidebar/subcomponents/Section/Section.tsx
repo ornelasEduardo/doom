@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { ChevronRight } from "lucide-react";
 import React from "react";
 
-import { Stack } from "../../Layout/Layout";
-import { useSidebarContext } from "../context";
-import { useAutoExpand } from "../hooks";
-import styles from "../Sidebar.module.scss";
-import { SidebarSectionProps } from "../types";
+import { Stack } from "../../../Layout/Layout";
+import { useSidebarContext } from "../../context";
+import { useAutoExpand } from "../../hooks";
+import { SidebarSectionProps } from "../../types";
+import styles from "./Section.module.scss";
 
 export function Section({
   children,
@@ -59,3 +59,5 @@ export function Section({
     </div>
   );
 }
+
+Section.displayName = "Section";

@@ -1,0 +1,13 @@
+@use "../../../../styles/mixins" as *;
+
+.header {
+  padding: var(--spacing-4);
+  border-bottom: var(--border-width) solid var(--card-border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  height: var(--header-height);
+  box-sizing: border-box;
+  border-top-right-radius: var(--radius);
+}

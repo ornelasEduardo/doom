@@ -1,0 +1,7 @@
+@use "../../../../styles/mixins" as *;
+
+.mobileTrigger {
+  @include mq("md") {
+    display: none;
+  }
+}

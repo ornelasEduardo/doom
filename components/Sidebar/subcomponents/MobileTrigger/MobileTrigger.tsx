@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import React from "react";
 
-import { Button } from "../../Button/Button";
-import { Text } from "../../Text/Text";
-import { useSidebarContext } from "../context";
-import styles from "../Sidebar.module.scss";
-import { SidebarMobileTriggerProps } from "../types";
+import { Button } from "../../../Button/Button";
+import { Text } from "../../../Text/Text";
+import { useSidebarContext } from "../../context";
+import { SidebarMobileTriggerProps } from "../../types";
+import styles from "./MobileTrigger.module.scss";
 
 export function MobileTrigger({
   children,

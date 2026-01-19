@@ -1,0 +1,15 @@
+@use "../../../../styles/mixins" as *;
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-2);
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}

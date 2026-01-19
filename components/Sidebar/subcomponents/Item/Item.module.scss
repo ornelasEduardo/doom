@@ -1,0 +1,63 @@
+@use "../../../../styles/mixins" as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--foreground);
+  text-decoration: none;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-1);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 var(--spacing-half)
+      color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+
+  &.active {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--border-strong);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.itemLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.itemAppend {
+  flex-shrink: 0;
+  margin-left: auto;
+}

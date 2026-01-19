@@ -37,9 +37,10 @@ function SidebarRoot({
 
   const activeSection = activeSecProp ?? internalActiveSection;
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [isHovered, setHovered] = useState(false);
 
   const effectiveSection = hoveredSection ?? activeSection;
-  const isPeeking = collapsed && hoveredSection !== null;
+  const isPeeking = collapsed && (hoveredSection !== null || isHovered);
 
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections((prev) =>
@@ -77,13 +78,15 @@ function SidebarRoot({
     icon: React.ReactNode;
     label: string;
   }> = [];
+  const itemToSection = new Map<string, string>();
 
-  extractSections(children, sectionInfo);
+  extractSections(children, sectionInfo, itemToSection);
 
   const contextValue: SidebarContextValue = {
     withRail,
     activeSection,
     activeItem: activeItem ?? null,
+    itemToSection,
     expandedSections,
     isMobileOpen,
     setMobileOpen,
@@ -92,10 +95,6 @@ function SidebarRoot({
     toggleSection,
     expandSection,
   };
-
-  const handleDesktopMouseLeave = useCallback(() => {
-    setHoveredSection(null);
-  }, []);
 
   const sidebarContent = (
     <Stack
@@ -115,30 +114,45 @@ function SidebarRoot({
     <SidebarContext.Provider value={contextValue}>
       <div
         className={clsx(
-          styles.desktop,
+          styles.shell,
           withRail && styles.withRail,
-          collapsed && !isPeeking && styles.collapsed,
+          collapsed && styles.collapsed,
         )}
         data-testid="sidebar-desktop"
-        onMouseLeave={handleDesktopMouseLeave}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => {
+          setHovered(false);
+          setHoveredSection(null);
+        }}
       >
-        {withRail && (
-          <Rail
-            activeSection={activeSection}
-            brandIcon={brandIcon}
-            sections={sectionInfo}
-            onSectionClick={handleSectionChange}
-            onSectionMouseEnter={setHoveredSection}
-          />
-        )}
         <div
           className={clsx(
-            styles.panel,
-            collapsed && !isPeeking && styles.collapsed,
+            styles.frame,
+            withRail && styles.withRail,
+            collapsed && styles.collapsed,
+            isPeeking && styles.peeking,
           )}
-          data-testid="sidebar-panel"
         >
-          {sidebarContent}
+          {withRail && (
+            <Rail
+              activeSection={activeSection}
+              brandIcon={brandIcon}
+              sections={sectionInfo}
+              onSectionClick={handleSectionChange}
+              onSectionMouseEnter={setHoveredSection}
+            />
+          )}
+          <div
+            className={clsx(
+              styles.panel,
+              withRail && styles.withRail,
+              collapsed && styles.collapsed,
+              isPeeking && styles.peeking,
+            )}
+            data-testid="sidebar-panel"
+          >
+            {sidebarContent}
+          </div>
         </div>
       </div>
 

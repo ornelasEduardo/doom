@@ -1,0 +1,69 @@
+@use "../../../../styles/mixins" as *;
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  width: var(--width-sidebar-collapsed);
+  flex-shrink: 0;
+  border-right: var(--border-width) solid var(--card-border);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  overflow: hidden;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+.railBrand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  height: var(--header-height);
+  border-bottom: none;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.railNav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-2);
+  gap: var(--spacing-2);
+}
+
+.railItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: var(--spacing-3);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--primary-foreground);
+
+  &:hover {
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+  }
+
+  &.active {
+    background-color: transparent;
+    color: var(--primary-foreground);
+    border-color: var(--common-black);
+    opacity: 1;
+    border-radius: var(--radius);
+  }
+}

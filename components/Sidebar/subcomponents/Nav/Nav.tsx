@@ -1,9 +1,9 @@
 import clsx from "clsx";
 import React from "react";
 
-import { Stack } from "../../Layout/Layout";
-import styles from "../Sidebar.module.scss";
-import { SidebarNavProps } from "../types";
+import { Stack } from "../../../Layout/Layout";
+import { SidebarNavProps } from "../../types";
+import styles from "./Nav.module.scss";
 
 export function Nav({ children, className }: SidebarNavProps) {
   return (
@@ -15,3 +15,5 @@ export function Nav({ children, className }: SidebarNavProps) {
     </nav>
   );
 }
+
+Nav.displayName = "Nav";
