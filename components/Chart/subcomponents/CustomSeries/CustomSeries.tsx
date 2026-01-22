@@ -16,8 +16,6 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
     config,
     x: contextX,
     y: contextY,
-    showTooltip,
-    hideTooltip,
     setHoverState,
     resolveInteraction,
     isMobile,
@@ -110,8 +108,6 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
       styles: {},
       gradientId: "",
       isMobile,
-      showTooltip,
-      hideTooltip,
       setHoverState,
       resolveInteraction,
     } as any);
@@ -131,9 +127,6 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
     config,
     color,
     isMobile,
-    // callbacks - assuming stable or harmless if they change rarely
-    showTooltip,
-    hideTooltip,
     setHoverState,
     resolveInteraction,
   ]);

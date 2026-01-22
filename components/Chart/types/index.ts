@@ -2,6 +2,8 @@ import * as d3Scale from "d3-scale";
 import * as d3Selection from "d3-selection";
 import * as d3Shape from "d3-shape";
 
+import { ChartBehavior } from "./events";
+
 export type D3Selection = d3Selection.Selection<
   SVGGElement,
   unknown,
@@ -25,6 +27,15 @@ export type ChartYScale = d3Scale.ScaleLinear<number, number>;
 
 // Event type for chart interactions
 export type ChartEvent = MouseEvent | TouchEvent;
+
+export interface InteractionState {
+  chartX: number; // Relative to Plot 0,0
+  chartY: number; // Relative to Plot 0,0
+  containerX: number; // Relative to Container (for tooltips)
+  containerY: number; // Relative to Container (for tooltips)
+  isWithinPlot: boolean;
+  isTouch: boolean;
+}
 
 // =============================================================================
 // HOVER STATE - Mouse/touch interaction state for tooltips and cursors
@@ -116,6 +127,7 @@ export interface SeriesContext<T> {
 
   // Design system integration
   colors: string[];
+  color?: string; // Legacy support
   styles: Record<string, string>;
   gradientId: string;
 
@@ -124,9 +136,7 @@ export interface SeriesContext<T> {
   type?: SeriesType;
   isMobile: boolean;
 
-  // Interactions (managed by Chart)
-  showTooltip: (event: ChartEvent, data: T) => void;
-  hideTooltip: () => void;
+  // Interaction (managed by Chart)
   setHoverState: (state: HoverState<T> | null) => void;
 
   // Interaction helper
@@ -235,4 +245,8 @@ export interface ChartProps<T = unknown> {
   x?: Accessor<T, string | number>;
   y?: Accessor<T, number>;
   render?: (context: SeriesContext<T>) => void;
+  behaviors?: ChartBehavior[];
 }
+
+// Alias for backward compatibility
+export type DrawContext<T> = SeriesContext<T>;

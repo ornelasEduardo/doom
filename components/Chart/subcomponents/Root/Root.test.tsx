@@ -29,7 +29,7 @@ class MockResizeObserver {
           contentBoxSize: [
             { inlineSize: 500, blockSize: 300 } as ResizeObserverSize,
           ],
-        } as ResizeObserverEntry,
+        } as unknown as ResizeObserverEntry,
       ],
       this,
     );

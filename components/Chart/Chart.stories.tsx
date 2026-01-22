@@ -11,7 +11,9 @@ import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { Chart, DrawContext } from "./Chart";
+import { Chart } from "./Chart";
+import { useChartContext } from "./context";
+import { SeriesContext } from "./types";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -113,6 +115,7 @@ export const WithLegendAndSubtitle: Story = {
 
 export const CustomRender1: Story = {
   args: {
+    behaviors: [],
     data: [
       { label: "Chrome", value: 400 },
       { label: "Safari", value: 300 },
@@ -144,7 +147,7 @@ export const CustomRender1: Story = {
         </Text>
       </Card>
     ),
-    render: (ctx: DrawContext<any>) => {
+    render: (ctx: SeriesContext<any>) => {
       const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
 
       const g = ctx.g
@@ -217,23 +220,33 @@ export const CustomRender1: Story = {
             // cursorLineX/Y: relative to SVG (usually inside margins? or raw svg coords?)
             // tooltipX/Y: relative to the wrapper/SVG.
 
-            // Let's use d3.pointer for consistency if possible, or manual math relative to rect.
-            const rawX = clientX - svgRect.left;
-            const rawY = clientY - svgRect.top;
+            // Calculate tooltip position relative to CONTAINER (required for correct positioning)
+            const container = svgNode.closest("[data-chart-container]");
+            if (container) {
+              const containerRect = container.getBoundingClientRect();
+              const tooltipX = clientX - containerRect.left;
+              const tooltipY = clientY - containerRect.top;
 
-            ctx.setHoverState({
-              cursorLineX: rawX, // Not used since cursor disabled, but needed for type
-              cursorLineY: rawY,
-              tooltipX: rawX,
-              tooltipY: rawY,
-              data: d.data,
-              isTouch,
-            });
+              // For custom renders without axes, cursorLine coordinates aren't strictly needed,
+              // but we can pass local SVG coordinates if we want.
+              const svgRect = svgNode.getBoundingClientRect();
+              const rawX = clientX - svgRect.left;
+              const rawY = clientY - svgRect.top;
+
+              ctx.setHoverState({
+                cursorLineX: rawX,
+                cursorLineY: rawY,
+                tooltipX,
+                tooltipY,
+                data: d.data,
+                isTouch,
+              });
+            }
           }
         })
         .on("mouseleave touchend", (event: any) => {
           select(event.currentTarget).style("opacity", 1);
-          ctx.hideTooltip();
+          ctx.setHoverState(null);
         });
 
       arcs
@@ -252,6 +265,7 @@ export const CustomRender1: Story = {
 
 export const CustomRender2: Story = {
   args: {
+    behaviors: [],
     data: [
       { name: "Root", value: 0, parent: null },
       { name: "Tech", value: 0, parent: "Root" },
@@ -290,7 +304,7 @@ export const CustomRender2: Story = {
         </Text>
       </Card>
     ),
-    render: (ctx: DrawContext<any>) => {
+    render: (ctx: SeriesContext<any>) => {
       import("d3-hierarchy").then((d3Hierarchy) => {
         const root = d3Hierarchy
           .stratify<any>()
@@ -364,7 +378,7 @@ export const CustomRender2: Story = {
           })
           .on("mouseleave touchend", (event: any) => {
             select(event.currentTarget).attr("fill-opacity", 0.8);
-            ctx.hideTooltip();
+            ctx.setHoverState(null);
           });
 
         nodes
@@ -430,7 +444,7 @@ export const IntegratedChart: Story = {
     },
   },
   render: (args: any) => {
-    const [activeData, setActiveData] = useState<any>(null);
+    const { activeData, setActiveData } = useChartContext();
     const currentData = activeData || args.data[args.data.length - 1];
 
     const currentIndex = args.data.indexOf(currentData);
@@ -660,6 +674,8 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
+          layout="custom"
+          style={{ height: 400 }}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
         >
@@ -701,7 +717,6 @@ export const CompositionExample: Story = {
                 />
                 <Chart.Axis />
                 <Chart.Cursor />
-                <Chart.InteractionLayer />
               </Chart.Plot>
 
               <Chart.Legend

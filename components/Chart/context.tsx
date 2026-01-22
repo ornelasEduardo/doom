@@ -16,6 +16,9 @@ export interface ChartContextValue<T = unknown> {
   // Dimensions
   width: number;
   height: number;
+  setWidth?: (width: number) => void;
+  setHeight?: (height: number) => void;
+  setPlotRef?: (ref: HTMLElement | null) => void; // Allow subcomponents to register the plot area
   isMobile: boolean;
 
   // Config
@@ -30,13 +33,11 @@ export interface ChartContextValue<T = unknown> {
   // Hover state (for tooltip and cursor positioning)
   activeData: T | null;
   setActiveData: (data: T | null) => void;
-  hoverState: HoverState<T> | null;
-  setHoverState: (state: HoverState<T> | null) => void;
 
   // Interaction helpers
-  showTooltip: (event: any, data: T) => void;
-  hideTooltip: () => void;
-  resolveInteraction: (event: any) => { element: Element; data: T } | null;
+  resolveInteraction: (
+    event: React.MouseEvent | React.TouchEvent,
+  ) => { element: Element; data: T } | null;
 
   // Legend
   legendItems: LegendItem[];
@@ -50,6 +51,11 @@ export interface ChartContextValue<T = unknown> {
       left: number;
     }>,
   ) => void;
+
+  // Legacy Legacy support
+  // Some series might call showTooltip manually
+  setHoverState?: (state: HoverState<T> | null) => void;
+  hoverState?: HoverState<T> | null;
 
   // For shorthand API (optional - Series can override)
   type?: SeriesType;

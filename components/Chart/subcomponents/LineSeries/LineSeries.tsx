@@ -45,8 +45,6 @@ export function LineSeries<T>({
     x: contextX,
     y: contextY,
     registerSeries,
-    showTooltip,
-    hideTooltip,
     setHoverState,
     resolveInteraction,
     isMobile,
@@ -173,8 +171,6 @@ export function LineSeries<T>({
               styles: {},
               gradientId: "",
               isMobile,
-              showTooltip,
-              hideTooltip,
               setHoverState,
               resolveInteraction,
             } as any);

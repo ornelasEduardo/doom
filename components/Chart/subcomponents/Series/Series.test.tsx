@@ -38,6 +38,7 @@ const mockContext: ChartContextValue<{ label: string; value: number }> = {
   setHoverState: vi.fn(),
   legendItems: [],
   registerSeries: vi.fn().mockReturnValue(0),
+  resolveInteraction: vi.fn(),
   type: "line",
 };
 

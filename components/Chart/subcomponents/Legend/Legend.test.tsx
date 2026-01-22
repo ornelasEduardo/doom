@@ -25,6 +25,7 @@ const mockContext: ChartContextValue<unknown> = {
     { label: "Series A", color: "red" },
     { label: "Series B", color: "blue" },
   ],
+  resolveInteraction: vi.fn(),
   type: "line",
 };
 

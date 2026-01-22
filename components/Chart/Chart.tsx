@@ -6,8 +6,8 @@ import {
   Footer,
   Grid,
   Header,
-  InteractionLayer,
   Legend,
+  Plot,
   Root,
   Series,
 } from "./subcomponents";
@@ -35,7 +35,6 @@ function ChartComposed<T>(props: ChartProps<T>) {
       {!props.render && <CursorWrapper mode="line" />}
       <Series render={props.render} type={props.type} x={props.x} y={props.y} />
       {!props.render && <CursorWrapper mode="dots" />}
-      {!props.render && <InteractionLayer />}
     </Root>
   );
 }
@@ -55,6 +54,6 @@ export const Chart = Object.assign(ChartComposed, {
   Series,
   Grid,
   Axis,
-  InteractionLayer,
   Cursor: CursorWrapper,
+  Plot,
 });

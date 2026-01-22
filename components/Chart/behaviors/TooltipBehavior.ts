@@ -1,0 +1,111 @@
+import { ChartBehavior, ChartEvent } from "../types/events";
+import { resolveAccessor } from "../types/index";
+import { findNearestDataPoint } from "../utils/interaction";
+import { createScales } from "../utils/scales";
+
+export interface TooltipBehaviorConfig {
+  mode?: "nearest-x" | "nearest";
+  snapToData?: boolean;
+}
+
+export const TooltipBehavior = (
+  _config: TooltipBehaviorConfig = { mode: "nearest-x" },
+): ChartBehavior => {
+  return ({ on, off, getChartContext }) => {
+    // We defer accessing context until the event fires to ensure we always use the latest state
+    const updateTooltip = (event: ChartEvent) => {
+      const chartContext = getChartContext();
+      // Safety check in case context is not available
+      if (!chartContext) {
+        return;
+      }
+
+      const {
+        data,
+        width,
+        height,
+        config: chartConfig,
+        x,
+        y,
+        setHoverState,
+      } = chartContext;
+
+      const c = event.coordinates;
+
+      // Correct strict "isWithinPlot" check to avoid "Strange Places" bug
+      if (!c.isWithinPlot) {
+        setHoverState?.(null);
+        return;
+      }
+
+      if (!x || !y) {
+        return;
+      }
+
+      const { margin } = chartConfig;
+
+      const scaleCtx = createScales(
+        data,
+        width,
+        height,
+        margin,
+        resolveAccessor(x),
+        resolveAccessor(y),
+        chartConfig.type,
+      );
+
+      const { xScale } = scaleCtx;
+
+      // chartX is now relative to the inner plot group (already accounts for margins)
+      // Find nearest data point
+      const closestData = findNearestDataPoint(
+        c.chartX,
+        data,
+        xScale,
+        resolveAccessor(x),
+      );
+
+      if (closestData) {
+        let dataPointX = 0;
+
+        if ((xScale as any).bandwidth) {
+          const val = resolveAccessor(x)(closestData);
+          dataPointX =
+            (xScale(val as any) || 0) + (xScale as any).bandwidth() / 2;
+        } else {
+          const val = resolveAccessor(x)(closestData);
+          dataPointX = xScale(val as any) || 0;
+        }
+
+        const isTouch =
+          "touches" in event.nativeEvent ||
+          "changedTouches" in event.nativeEvent;
+
+        setHoverState?.({
+          cursorLineX: dataPointX + margin.left,
+          cursorLineY: c.chartY + margin.top, // Use actual cursor Y for now (could snap to data Y)
+          tooltipX: c.containerX,
+          tooltipY: c.containerY,
+          data: closestData,
+          isTouch,
+        });
+      }
+    };
+
+    const handleMove = (event: ChartEvent) => updateTooltip(event);
+    const handleLeave = () => {
+      const ctx = getChartContext();
+      ctx?.setHoverState?.(null);
+    };
+
+    on("CHART_POINTER_MOVE", handleMove);
+    on("CHART_POINTER_LEAVE", handleLeave);
+
+    return () => {
+      off("CHART_POINTER_MOVE", handleMove);
+      off("CHART_POINTER_LEAVE", handleLeave);
+    };
+  };
+};
+
+export default TooltipBehavior;
