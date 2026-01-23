@@ -35,11 +35,6 @@
     :global(.tick) line {
       stroke: var(--solid-fg);
     }
-
-    .tooltipCard {
-      background-color: var(--solid-bg);
-      border-color: var(--solid-fg);
-    }
   }
   &.mobile {
     padding: var(--spacing-2);

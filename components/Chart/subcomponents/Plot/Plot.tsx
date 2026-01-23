@@ -12,7 +12,7 @@ export interface PlotProps {
 }
 
 export function Plot({ children, className, style }: PlotProps) {
-  const { setWidth, setHeight, setPlotRef } = useChartContext();
+  const { setWidth, setHeight, setPlotRef, config } = useChartContext();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,11 +67,28 @@ export function Plot({ children, className, style }: PlotProps) {
     >
       {localWidth > 0 && localHeight > 0 && (
         <svg
+          data-chart-plot
           className="chart-plot"
           height={localHeight}
           style={{ overflow: "visible" }}
           width={localWidth}
         >
+          <g
+            data-chart-inner-plot
+            transform={`translate(${config.margin.left}, ${config.margin.top})`}
+          >
+            <rect
+              fill="transparent"
+              height={Math.max(
+                0,
+                localHeight - config.margin.top - config.margin.bottom,
+              )}
+              width={Math.max(
+                0,
+                localWidth - config.margin.left - config.margin.right,
+              )}
+            />
+          </g>
           {children}
         </svg>
       )}

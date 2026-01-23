@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useRef } from "react";
 
 import { Card } from "../../../Card/Card";
@@ -22,7 +23,7 @@ export function Tooltip<T>({
   renderTooltip,
 }: TooltipProps<T>) {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const { legendItems, x, y, config } = useChartContext<T>();
+  const { legendItems, x, y, config, variant } = useChartContext<T>();
 
   if (!activeData || !position) {
     return null;
@@ -57,6 +58,7 @@ export function Tooltip<T>({
           activeData={activeData}
           config={config as any}
           legendItems={legendItems}
+          variant={variant}
           x={x}
           y={y}
         />
@@ -75,6 +77,7 @@ interface DefaultTooltipContentProps<T> {
   x?: unknown;
   y?: unknown;
   config: { yAxisLabel?: string } & Record<string, unknown>;
+  variant?: "default" | "solid";
 }
 
 function DefaultTooltipContent<T>({
@@ -83,11 +86,14 @@ function DefaultTooltipContent<T>({
   x,
   y,
   config,
+  variant,
 }: DefaultTooltipContentProps<T>) {
   const xLabel = x ? String(resolveAccessor(x as any)(activeData)) : "Value";
 
   return (
-    <Card className={styles.tooltipCard}>
+    <Card
+      className={clsx(styles.tooltipCard, variant === "solid" && styles.solid)}
+    >
       <Text className={styles.tooltipLabel} variant="h6">
         {xLabel}
       </Text>

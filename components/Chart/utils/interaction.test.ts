@@ -93,4 +93,30 @@ describe("findNearestDataPoint", () => {
       y: 30,
     });
   });
+
+  it("handles unsorted data robustly (linear scan)", () => {
+    // Data unsorted by X: 0, 20, 10.
+    // If we used binary search/bisector, searching for 12 might fail to find 10.
+    // 0 (0px), 10 (50px), 20 (100px)
+    const unsortedData: Datum[] = [
+      { x: 0, y: 1 },
+      { x: 20, y: 3 },
+      { x: 10, y: 2 },
+    ];
+    const scale = d3.scaleLinear().domain([0, 20]).range([0, 100]);
+
+    // Target x=12 -> 60px.
+    // Distances:
+    // x=0 (0px): |60-0| = 60
+    // x=20 (100px): |60-100| = 40
+    // x=10 (50px): |60-50| = 10 -> Closest
+    //
+    // Binary search on [0, 20, 10] looking for 12:
+    // Mid(20) > 12 -> Go Left -> 0.
+    // Compare 0 and 20. Closest is 20.
+    // Would miss 10.
+
+    const result = findNearestDataPoint(60, unsortedData, scale, (d) => d.x);
+    expect(result).toEqual({ x: 10, y: 2 });
+  });
 });

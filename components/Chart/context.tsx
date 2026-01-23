@@ -29,6 +29,7 @@ export interface ChartContextValue<T = unknown> {
   // Design system
   colorPalette: string[];
   styles: Record<string, string>;
+  variant?: "default" | "solid";
 
   // Hover state (for tooltip and cursor positioning)
   activeData: T | null;

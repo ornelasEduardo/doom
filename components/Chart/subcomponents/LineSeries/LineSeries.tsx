@@ -8,6 +8,7 @@ import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 import { createScales } from "../../utils/scales";
+import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 import styles from "./LineSeries.module.scss";
 
 interface LineSeriesProps<T> {
@@ -48,6 +49,7 @@ export function LineSeries<T>({
     setHoverState,
     resolveInteraction,
     isMobile,
+    hoverState,
   } = useChartContext<T>();
 
   // Determine effective data and accessors
@@ -223,19 +225,23 @@ export function LineSeries<T>({
         d={paths.line || ""}
         style={{ stroke: strokeColor }}
       />
-      {/* Static Dots */}
+      {/* Static Dots with Hover Highlighting */}
       {(showDots || config.showDots) && scaleCtx && xAccessor && yAccessor && (
         <g className="chart-dots">
-          {data.map((d, i) => (
-            <circle
-              key={i}
-              className={styles.dot}
-              cx={(scaleCtx.xScale as any)(xAccessor(d))}
-              cy={scaleCtx.yScale(yAccessor(d))}
-              r={5}
-              style={{ fill: strokeColor }}
-            />
-          ))}
+          {data.map((d, i) => {
+            // Check if this dot's data point matches the hover state
+            const isHovered = hoverState?.data === d;
+
+            return (
+              <SeriesPoint
+                key={i}
+                color={strokeColor}
+                isHovered={isHovered}
+                x={(scaleCtx.xScale as any)(xAccessor(d))}
+                y={scaleCtx.yScale(yAccessor(d))}
+              />
+            );
+          })}
         </g>
       )}
     </g>

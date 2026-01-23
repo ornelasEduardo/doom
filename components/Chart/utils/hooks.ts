@@ -8,6 +8,7 @@ interface RegistrationProps<T> {
   color?: string;
   y?: Accessor<T, number>;
   hideCursor?: boolean;
+  interactionMode?: "x" | "xy";
 }
 
 export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
@@ -22,6 +23,7 @@ export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
           color: props.color,
           yAccessor: props.y,
           hideCursor: props.hideCursor,
+          interactionMode: props.interactionMode,
         },
       ]);
     }

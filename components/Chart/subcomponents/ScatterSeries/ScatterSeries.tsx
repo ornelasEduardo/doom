@@ -7,12 +7,13 @@ import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { useSeriesRegistration } from "../../utils/hooks";
 import { createScales } from "../../utils/scales";
-import styles from "./ScatterSeries.module.scss";
+import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
 interface ScatterSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
   y?: Accessor<T, number>;
+  size?: Accessor<T, number>; // New prop for bubble size
   color?: string;
   label?: string;
   hideCursor?: boolean;
@@ -22,6 +23,7 @@ export function ScatterSeries<T>({
   data: localData,
   x: localX,
   y: localY,
+  size: localSize,
   color,
   label,
   hideCursor,
@@ -43,13 +45,15 @@ export function ScatterSeries<T>({
   const yAccessor =
     (localY ? resolveAccessor(localY) : undefined) ||
     (contextY ? resolveAccessor(contextY) : undefined);
+  const sizeAccessor = localSize ? resolveAccessor(localSize) : undefined;
+
   const { margin } = config;
 
   const scaleCtx = useMemo(() => {
     if (!xAccessor || !yAccessor || !data.length || width <= 0 || height <= 0) {
       return null;
     }
-    return createScales(
+    const scales = createScales(
       data,
       width,
       height,
@@ -58,44 +62,81 @@ export function ScatterSeries<T>({
       yAccessor,
       "scatter",
     );
-  }, [data, width, height, margin, xAccessor, yAccessor]);
+
+    // Create size scale if accessor exists
+    let rScale: any = null;
+    if (sizeAccessor) {
+      // Find max value for size domain
+      const maxVal = Math.max(...data.map((d) => sizeAccessor(d) || 0));
+      // Use sqrt scale for circular area sizing (area ~ value)
+      // range: [minRadius, maxRadius] e.g. [4, 20]
+      rScale = (val: number) => {
+        const normalized = Math.sqrt(val) / Math.sqrt(maxVal);
+        // Simple linear interpolation of sqrt (0..1) to (4..20)?
+        // Or just import scaleSqrt from d3-scale?
+        return 4 + normalized * 16;
+      };
+      // Note: importing d3 scale would be cleaner but this works for now without extra imports.
+      // Actually `createScales` uses d3. We can import d3 from utils/d3.
+    }
+
+    return { ...scales, rScale };
+  }, [data, width, height, margin, xAccessor, yAccessor, sizeAccessor]);
 
   useSeriesRegistration({
     label: label || "Scatter Series",
     color: color,
     y: localY || contextY,
     hideCursor: hideCursor,
+    interactionMode: "xy",
   });
 
   if (!scaleCtx || !xAccessor || !yAccessor) {
     return null;
   }
-  const { xScale, yScale } = scaleCtx;
+  const { xScale, yScale, rScale } = scaleCtx;
   const strokeColor = color || "var(--primary)";
 
   return (
     <g className="chart-scatter-series">
-      {data.map((d, i) => {
-        const cx = (xScale as any)(xAccessor(d));
-        const cy = yScale(yAccessor(d));
-        const isHovered = hoverState && hoverState.data === d;
-        const isDimmed = hoverState && !isHovered;
+      {(() => {
+        const regularPoints: React.JSX.Element[] = [];
+        const activePoints: React.JSX.Element[] = [];
 
-        return (
-          <circle
-            key={i}
-            className={styles.dot}
-            cx={cx}
-            cy={cy}
-            r={isHovered ? 8 : 6}
-            style={{
-              stroke: strokeColor,
-              fill: isHovered ? strokeColor : undefined,
-              opacity: isDimmed ? 0.6 : 1,
-            }}
-          />
-        );
-      })}
+        data.forEach((d, i) => {
+          const cx = (xScale as any)(xAccessor(d));
+          const cy = yScale(yAccessor(d));
+          const isHovered = !!(hoverState && hoverState.data === d);
+          const isDimmed = !!(hoverState && !isHovered);
+
+          // Calculate radius
+          let radius = 6;
+          if (rScale && sizeAccessor) {
+            radius = rScale(sizeAccessor(d));
+          }
+
+          const point = (
+            <SeriesPoint
+              key={i}
+              color={strokeColor}
+              hoverRadius={radius}
+              isDimmed={isDimmed}
+              isHovered={isHovered}
+              radius={radius}
+              x={cx}
+              y={cy}
+            />
+          );
+
+          if (isHovered) {
+            activePoints.push(point);
+          } else {
+            regularPoints.push(point);
+          }
+        });
+
+        return [...regularPoints, ...activePoints];
+      })()}
     </g>
   );
 }

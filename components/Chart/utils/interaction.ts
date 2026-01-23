@@ -1,5 +1,51 @@
-import { d3 } from "./d3";
-import { ChartXScale } from "./scales";
+import { ChartXScale, ChartYScale } from "./scales";
+
+/**
+ * Finds the nearest data point to a given (x, y) coordinate using Euclidean distance.
+ * Best for scatter plots or 2D visualization where Y proximity matters.
+ */
+export function findNearestPoint2D<T>(
+  pointerX: number,
+  pointerY: number,
+  data: T[],
+  xScale: ChartXScale,
+  yScale: ChartYScale,
+  xAccessor: (d: T) => string | number,
+  yAccessor: (d: T) => number,
+): T | null {
+  let closestDist = Infinity;
+  let closestData: T | null = null;
+
+  for (const d of data) {
+    const valX = xAccessor(d);
+    const valY = yAccessor(d);
+
+    let xPos: number;
+    if ("bandwidth" in xScale) {
+      xPos = (xScale as any)(valX) + xScale.bandwidth() / 2;
+    } else {
+      xPos = (xScale as any)(valX) || 0;
+    }
+
+    const yPos = yScale(valY);
+
+    if (xPos === undefined || yPos === undefined) {
+      continue;
+    }
+
+    const dx = pointerX - xPos;
+    const dy = pointerY - yPos;
+    // Squared distance is enough for comparison, avoids sqrt
+    const distSq = dx * dx + dy * dy;
+
+    if (distSq < closestDist) {
+      closestDist = distSq;
+      closestData = d;
+    }
+  }
+
+  return closestData;
+}
 
 /**
  * Finds the nearest data point to a given X coordinate.
@@ -12,28 +58,31 @@ export function findNearestDataPoint<T>(
 ): T | null {
   if ("invert" in xScale && typeof xScale.invert === "function") {
     // Linear or time scale (continuous) - use bisector
+    // Generic linear scan - robust for unsorted data (O(N))
+    // We prefer robustness over O(log N) speed because chart datasets are usually
+    // small enough (< 5000 points) that linear scan is instant, and users often
+    // pass unsorted data.
+    let closestDist = Infinity;
+    let closestData: T | null = null;
     const x0 = xScale.invert(pointerX);
-    // For bisector, we need a numeric comparator
-    const bisect = d3.bisector<T, number>((d) => {
+    const targetVal = typeof x0 === "number" ? x0 : (x0 as Date).getTime();
+
+    for (const d of data) {
       const val = xAccessor(d);
-      return typeof val === "number" ? val : 0;
-    }).left;
-    // Convert x0 to number for comparison (handles Date by using getTime if needed)
-    const x0Num = typeof x0 === "number" ? x0 : (x0 as Date).getTime();
-    const i = bisect(data, x0Num, 1);
-    const d0 = data[i - 1];
-    const d1 = data[i];
+      if (val === undefined || val === null) {
+        continue;
+      }
 
-    if (!d0) {
-      return d1;
-    }
-    if (!d1) {
-      return d0;
-    }
+      const currentVal =
+        typeof val === "number" ? val : new Date(val).getTime();
+      const dist = Math.abs(currentVal - targetVal);
 
-    const d0Dist = Math.abs((x0 as number) - (xAccessor(d0) as number));
-    const d1Dist = Math.abs((xAccessor(d1) as number) - (x0 as number));
-    return d0Dist > d1Dist ? d1 : d0;
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestData = d;
+      }
+    }
+    return closestData;
   } else if ("bandwidth" in xScale && typeof xScale.bandwidth === "function") {
     // Band scale (categorical) - find closest band center
     let closestDist = Infinity;

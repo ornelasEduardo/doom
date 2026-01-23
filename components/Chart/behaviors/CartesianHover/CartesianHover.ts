@@ -1,6 +1,9 @@
 import { ChartBehavior, ChartEvent } from "../../types/events";
 import { resolveAccessor } from "../../types/index";
-import { findNearestDataPoint } from "../../utils/interaction";
+import {
+  findNearestDataPoint,
+  findNearestPoint2D,
+} from "../../utils/interaction";
 import { createScales } from "../../utils/scales";
 
 export interface CartesianHoverOptions {
@@ -59,16 +62,37 @@ export const CartesianHover = (
         chartConfig.type,
       );
 
-      const { xScale } = scaleCtx;
+      const { xScale, yScale } = scaleCtx;
 
       // chartX is now relative to the inner plot group (already accounts for margins)
-      // Find nearest data point
-      const closestData = findNearestDataPoint(
-        c.chartX,
-        data,
-        xScale,
-        resolveAccessor(x),
-      );
+      let closestData: any = null;
+
+      // Detect if we should use 2D nearest point search (for scatter plots, etc.)
+      const use2DSearch =
+        chartContext.legendItems &&
+        chartContext.legendItems.some(
+          (item: any) => item.interactionMode === "xy",
+        );
+
+      if (use2DSearch) {
+        closestData = findNearestPoint2D(
+          c.chartX,
+          c.chartY,
+          data,
+          xScale,
+          yScale,
+          resolveAccessor(x),
+          resolveAccessor(y),
+        );
+      } else {
+        // Find nearest data point (1D X-axis search)
+        closestData = findNearestDataPoint(
+          c.chartX,
+          data,
+          xScale,
+          resolveAccessor(x),
+        );
+      }
 
       if (closestData) {
         // Apply resolver if present
@@ -78,6 +102,8 @@ export const CartesianHover = (
         }
 
         let dataPointX = 0;
+        // For scatter, we might want cursor line to be at the exact point X?
+        // Or if we hide cursor line for scatter, it doesn't matter.
 
         if ((xScale as any).bandwidth) {
           const val = resolveAccessor(x)(closestData);

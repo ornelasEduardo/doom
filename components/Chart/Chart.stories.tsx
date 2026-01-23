@@ -607,6 +607,7 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
+          layout="custom"
           style={{ height: 400 }}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
@@ -640,6 +641,7 @@ export const CompositionExample: Story = {
 
             <Flex gap={4} style={{ flex: 1 }}>
               <Chart.Plot>
+                <Chart.Cursor />
                 <Chart.Grid />
                 <Chart.Series
                   color={chartColor}
@@ -648,7 +650,6 @@ export const CompositionExample: Story = {
                   y="value"
                 />
                 <Chart.Axis />
-                <Chart.Cursor />
               </Chart.Plot>
 
               <Chart.Legend
@@ -715,6 +716,7 @@ export const StringAccessors: Story = {
  */
 export const MultiSeries: Story = {
   render: () => {
+    // Generate some intricate data
     const data = [
       { month: "Jan", revenue: 15000, users: 1200, expenses: 8000 },
       { month: "Feb", revenue: 28000, users: 1800, expenses: 12000 },
@@ -728,27 +730,35 @@ export const MultiSeries: Story = {
       <Chart.Root
         d3Config={{ grid: true, showDots: true }}
         data={data}
+        layout="custom" // Use custom layout to support complex Header composition
         style={{ width: "100%", maxWidth: 800, height: 400 }}
         x="month"
-        y="revenue" // Primary y-accessor for Grid/Axis scale calculation
+        y="revenue"
       >
         <Chart.Header title="Multi-Series Line Chart">
           <Chart.Legend layout="horizontal" />
         </Chart.Header>
-        <Chart.Series
-          color="var(--primary)"
-          label="Revenue"
-          type="line"
-          x="month"
-          y="revenue"
-        />
-        <Chart.Series
-          color="var(--secondary)"
-          label="Expenses"
-          type="line"
-          x="month"
-          y="expenses"
-        />
+
+        {/* With layout="custom", we must explicitly define the plot and its layers */}
+        <Chart.Plot>
+          <Chart.Grid />
+          <Chart.Cursor />
+          <Chart.Series
+            color="var(--primary)"
+            label="Revenue"
+            type="line"
+            x="month"
+            y="revenue"
+          />
+          <Chart.Series
+            color="var(--secondary)"
+            label="Expenses"
+            type="line"
+            x="month"
+            y="expenses"
+          />
+          <Chart.Axis />
+        </Chart.Plot>
       </Chart.Root>
     );
   },
@@ -759,16 +769,19 @@ export const MultiSeries: Story = {
  */
 export const ScatterPlot: Story = {
   render: () => {
-    const data = [
-      { income: 25000, happiness: 6.2, population: 5 },
-      { income: 45000, happiness: 7.1, population: 12 },
-      { income: 32000, happiness: 6.8, population: 8 },
-      { income: 78000, happiness: 7.8, population: 15 },
-      { income: 55000, happiness: 7.4, population: 10 },
-      { income: 92000, happiness: 8.2, population: 20 },
-      { income: 38000, happiness: 6.5, population: 7 },
-      { income: 65000, happiness: 7.6, population: 18 },
-    ];
+    // Simple Linear Congruential Generator (LCG) for deterministic results
+    let seed = 123456789;
+    const seededRandom = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+
+    const data = Array.from({ length: 50 }, (_, i) => ({
+      income: Math.floor(15000 + seededRandom() * 85000),
+      happiness: Number((4 + seededRandom() * 5 + (i % 5) * 0.2).toFixed(1)),
+      population: Math.floor(2 + seededRandom() * 25),
+      group: i % 3 === 0 ? "A" : i % 3 === 1 ? "B" : "C",
+    })).sort((a, b) => a.income - b.income);
 
     return (
       <Chart.Root
@@ -776,18 +789,18 @@ export const ScatterPlot: Story = {
           grid: true,
           xAxisLabel: "Annual Income ($)",
           yAxisLabel: "Happiness Index",
+          showDots: true,
         }}
         data={data}
         style={{ width: "100%", maxWidth: 800, height: 400 }}
+        subtitle="Bubble size represents population density"
+        title="Income vs Happiness (50 Cities)"
         x="income"
         y="happiness"
       >
-        <Chart.Header
-          subtitle="Bubble size represents population"
-          title="Income vs Happiness"
-        />
         <Chart.Series
           color="var(--primary)"
+          label="Cities"
           size="population"
           type="scatter"
           x="income"

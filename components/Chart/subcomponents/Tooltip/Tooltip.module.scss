@@ -9,10 +9,16 @@
   will-change: transform;
 }
 
+.solid {
+  @include solid-variant;
+}
+
 .tooltipCard {
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--text-xs);
   white-space: nowrap;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hard);
 }
 
 .tooltipLabel {

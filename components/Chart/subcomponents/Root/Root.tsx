@@ -406,6 +406,7 @@ export function Root<T>({
       y: y ? (y as any) : undefined,
       setWidth,
       setHeight,
+      variant,
     }),
     [
       data,
@@ -424,6 +425,7 @@ export function Root<T>({
       requestLayoutAdjustment,
       x,
       y,
+      variant,
     ],
   );
 
@@ -494,19 +496,16 @@ export function Root<T>({
                   {/* Auto-inject Grid if using composition and not explicitly provided */}
                   {hasContent && !hasGrid && config.grid !== false && <Grid />}
 
+                  {/* Auto-inject CursorLine BEFORE children so it renders behind series */}
+                  {hasContent && !hasCursor && !render && (
+                    <CursorWrapper mode="line" />
+                  )}
+
                   {children}
 
                   {/* Auto-inject Axis if using composition and not explicitly provided */}
                   {hasContent && !hasAxis && config.showAxes !== false && (
                     <Axis />
-                  )}
-
-                  {/* Auto-inject Cursor if using composition and not explicitly provided */}
-                  {hasContent && !hasCursor && !render && (
-                    <>
-                      <CursorWrapper mode="line" />
-                      <CursorWrapper mode="dots" />
-                    </>
                   )}
 
                   {showShorthand && (
