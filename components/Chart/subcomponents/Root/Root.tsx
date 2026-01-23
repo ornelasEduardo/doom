@@ -21,6 +21,7 @@ import { Grid } from "../Grid/Grid";
 import { Header } from "../Header/Header";
 import { InputSensor } from "../InputLayer/InputSensor";
 import { Legend } from "../Legend/Legend";
+import { Plot } from "../Plot/Plot";
 import { Series } from "../Series/Series";
 import { Tooltip } from "../Tooltip/Tooltip";
 import styles from "./Root.module.scss";
@@ -57,7 +58,6 @@ export type RootProps<T> = Pick<
   | "renderTooltip"
 > & {
   children?: React.ReactNode;
-  layout?: "auto" | "custom";
   behaviors?: ChartBehavior[];
 };
 
@@ -79,7 +79,6 @@ export function Root<T>({
   subtitle,
   withLegend,
   renderTooltip,
-  layout = "auto",
   behaviors,
 }: RootProps<T>) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -382,8 +381,6 @@ export function Root<T>({
     [],
   );
 
-  const [layoutMode] = useState<"auto" | "custom">(layout);
-
   const value: ChartContextValue<T> = useMemo(
     () => ({
       data,
@@ -432,7 +429,9 @@ export function Root<T>({
   const hasContent = React.Children.count(children) > 0;
   const showShorthand = !hasContent && (type || render || x || y);
 
-  const isAutoLayout = layoutMode === "auto";
+  const hasPlot = hasContent && hasChildOfTypeDeep(children, Plot);
+
+  const isAutoLayout = !hasPlot;
 
   const hasGrid = hasContent && hasChildOfTypeDeep(children, Grid);
   const hasAxis = hasContent && hasChildOfTypeDeep(children, Axis);

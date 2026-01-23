@@ -607,7 +607,6 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
-          layout="custom"
           style={{ height: 400 }}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
@@ -730,7 +729,6 @@ export const MultiSeries: Story = {
       <Chart.Root
         d3Config={{ grid: true, showDots: true }}
         data={data}
-        layout="custom" // Use custom layout to support complex Header composition
         style={{ width: "100%", maxWidth: 800, height: 400 }}
         x="month"
         y="revenue"
