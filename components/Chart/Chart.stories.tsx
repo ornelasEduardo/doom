@@ -1,8 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import * as d3Hierarchy from "d3-hierarchy";
+import * as d3Scale from "d3-scale";
 import * as d3Shape from "d3-shape";
 import { Info } from "lucide-react";
 import { useState } from "react";
 
+import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
@@ -12,7 +15,7 @@ import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
 import { ElementHover } from "./behaviors";
 import { Chart } from "./Chart";
-import { SeriesContext } from "./types";
+import { ChartBehavior, SeriesContext } from "./types";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -112,6 +115,26 @@ export const WithLegendAndSubtitle: Story = {
   },
 };
 
+const ClickBehavior = (callback: (data: any) => void): ChartBehavior => {
+  return ({ on, off, getChartContext }) => {
+    const handleClick = (event: any) => {
+      const ctx = getChartContext();
+      if (!ctx || !ctx.resolveInteraction) {
+        return;
+      }
+
+      const result = ctx.resolveInteraction(event.nativeEvent);
+
+      if (result && result.data) {
+        callback(result.data);
+      }
+    };
+
+    on("CHART_POINTER_DOWN", handleClick);
+    return () => off("CHART_POINTER_DOWN", handleClick);
+  };
+};
+
 export const CustomRender1: Story = {
   args: {
     behaviors: [
@@ -119,18 +142,64 @@ export const CustomRender1: Story = {
         targetResolver: (el) =>
           el.tagName === "path" && el.classList.contains("arc"),
       }),
+      ClickBehavior((data) => {
+        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      }),
     ],
+    // Hierarchical data structure for Sunburst (wrapped in array to satisfy ChartProps constraint)
     data: [
-      { label: "Jan", value: 400 },
-      { label: "Feb", value: 300 },
-      { label: "Mar", value: 200 },
-      { label: "Apr", value: 278 },
-    ],
-    title: "Project Distribution (Custom Pie)",
+      {
+        name: "Total",
+        children: [
+          {
+            name: "Product",
+            children: [
+              { name: "R&D", value: 40 },
+              { name: "Design", value: 25 },
+              { name: "Engineering", value: 35 },
+              { name: "QA", value: 20 },
+            ],
+          },
+          {
+            name: "Marketing",
+            children: [
+              { name: "Social", value: 20 },
+              { name: "SEO", value: 15 },
+              { name: "Content", value: 15 },
+              { name: "Events", value: 25 },
+            ],
+          },
+          {
+            name: "Sales",
+            children: [
+              { name: "Direct", value: 30 },
+              { name: "Channel", value: 20 },
+            ],
+          },
+          {
+            name: "Operations",
+            children: [
+              { name: "IT", value: 25 },
+              { name: "Logistics", value: 20 },
+              { name: "Facilities", value: 15 },
+            ],
+          },
+          {
+            name: "HR",
+            children: [
+              { name: "Recruiting", value: 15 },
+              { name: "Training", value: 15 },
+              { name: "Benefits", value: 10 },
+            ],
+          },
+        ],
+      },
+    ] as any,
+    title: "Organization Staffing (Sunburst)",
     style: {
       width: "100%",
-      maxWidth: 400,
-      height: 400,
+      maxWidth: 600,
+      height: 600,
     },
     d3Config: {
       grid: false,
@@ -141,10 +210,10 @@ export const CustomRender1: Story = {
         style={{ padding: "8px 12px", minWidth: 150, pointerEvents: "none" }}
       >
         <Text style={{ marginBottom: 4 }} variant="h6">
-          {data && data.label}
+          {data && data.data.name}
         </Text>
         <Text style={{ color: "var(--text-secondary)" }} variant="body">
-          Value:{" "}
+          Personnel:{" "}
           <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
             {data && data.value}
           </span>
@@ -154,6 +223,9 @@ export const CustomRender1: Story = {
     render: (ctx: SeriesContext<any>) => {
       const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
 
+      // Clear previous rendering to avoid stale state on re-renders
+      ctx.g.selectAll("*").remove();
+
       const g = ctx.g
         .append("g")
         .attr(
@@ -161,60 +233,103 @@ export const CustomRender1: Story = {
           `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
         );
 
-      const colorScale = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--muted-foreground)",
-      ];
+      // Manual vivid palette for sunburst
+      // Use Theme colors (Doom Palette)
+      const colorScale = d3Scale.scaleOrdinal([
+        palette.purple[400],
+        palette.yellow[300],
+        palette.green[400],
+        palette.blue[400],
+        palette.red[400],
+        palette.slate[600],
+      ]);
 
-      const pie = d3Shape
-        .pie<any>()
-        .value((d) => d.value)
-        .sort(null);
+      // Extract root from array wrapper if needed
+      const hierarchyData = Array.isArray(ctx.data) ? ctx.data[0] : ctx.data;
+
+      // Create hierarchy
+      const root = d3Hierarchy
+        .hierarchy(hierarchyData)
+        .sum((d: any) => d.value)
+        .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+      // Create partition layout
+      const partition = d3Hierarchy.partition().size([2 * Math.PI, radius]);
+
+      partition(root);
 
       const arc = d3Shape
         .arc<any>()
-        .innerRadius(radius * 0.5)
-        .outerRadius(radius * 0.8)
+        .startAngle((d: any) => d.x0)
+        .endAngle((d: any) => d.x1)
+        .innerRadius((d: any) => d.y0)
+        .outerRadius((d: any) => d.y1)
+        .padAngle(0.005)
         .cornerRadius(4);
 
-      const arcs = g
-        .selectAll(".arc")
-        .data(pie(ctx.data))
+      // Draw arcs
+      const paths = g
+        .selectAll("path")
+        .data(root.descendants())
         .enter()
-        .append("g")
-        .attr("class", "arc");
-
-      arcs
         .append("path")
         .attr("class", "arc")
         .attr("d", arc)
-        .attr("fill", (_: any, i: number) => colorScale[i % colorScale.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("stroke-width", "2px")
-        .style("opacity", 0.8) // Default opacity
-        .style("cursor", "crosshair");
+        .style("fill", (d: any) => {
+          // Color based on parent to show hierarchy
+          if (d.depth === 0) {
+            return "#fff";
+          } // White center
+          while (d.depth > 1) {
+            d = d.parent;
+          }
+          return colorScale(d.data.name);
+        })
+        .style("stroke", "var(--card-bg)")
+        .style("stroke-width", "1px")
+        .style("opacity", 0.8)
+        .style("cursor", "pointer")
+        .style("transition", "opacity 0.2s ease");
 
-      // Highlight active arc (driven by state, not events!)
+      // Interactive opacity
       if (ctx.activeData) {
-        arcs
-          .filter((d: any) => d.data === ctx.activeData)
-          .select("path")
-          .style("opacity", 1)
-          .style("transform", "scale(1.05)");
+        // Find ancestry path
+        let current = ctx.activeData;
+        const path = new Set();
+        while (current) {
+          path.add(current);
+          current = current.parent;
+        }
+
+        paths.style("opacity", (d: any) => (path.has(d) ? 1 : 0.3));
+      } else {
+        paths.style("opacity", 0.8);
       }
 
-      arcs
+      // Add Labels
+      g.selectAll("text")
+        .data(
+          root
+            .descendants()
+            .filter(
+              (d: any) => d.depth && ((d.y0 + d.y1) / 2) * (d.x1 - d.x0) > 10,
+            ),
+        ) // Filter small segments
+        .enter()
         .append("text")
-        .attr("transform", (d: any) => `translate(${arc.centroid(d)})`)
-        .attr("text-anchor", "middle")
+        .attr("transform", function (d: any) {
+          const x = ((d.x0 + d.x1) / 2) * (180 / Math.PI);
+          const y = (d.y0 + d.y1) / 2;
+          return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+        })
         .attr("dy", "0.35em")
-        .text((d: any) => d.data.label)
-        .style("fill", "var(--card-bg)")
-        .style("font-size", "12px")
-        .style("font-weight", "bold")
-        .style("pointer-events", "none");
+        .text((d: any) => d.data.name)
+        .style("fill", "var(--foreground)")
+        .style("font-size", "10px")
+        .style("font-weight", "600")
+        .style("text-anchor", "middle")
+        .style("pointer-events", "none")
+        .style("text-shadow", "0px 0px 4px var(--card-bg)");
     },
   },
 };
@@ -255,7 +370,7 @@ export const CustomRender2: Story = {
     renderTooltip: (data: any) => (
       <Card style={{ padding: "8px 12px", minWidth: 150 }}>
         <Text style={{ marginBottom: 4 }} variant="h6">
-          {data && data.name}
+          {data && data.id}
         </Text>
         <Text style={{ color: "var(--text-secondary)" }} variant="body">
           Value:{" "}
