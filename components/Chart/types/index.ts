@@ -137,6 +137,7 @@ export interface SeriesContext<T> {
   isMobile: boolean;
 
   // Interaction (managed by Chart)
+  activeData: T | null;
   setHoverState: (state: HoverState<T> | null) => void;
 
   // Interaction helper

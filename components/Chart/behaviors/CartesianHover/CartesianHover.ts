@@ -1,15 +1,20 @@
-import { ChartBehavior, ChartEvent } from "../types/events";
-import { resolveAccessor } from "../types/index";
-import { findNearestDataPoint } from "../utils/interaction";
-import { createScales } from "../utils/scales";
+import { ChartBehavior, ChartEvent } from "../../types/events";
+import { resolveAccessor } from "../../types/index";
+import { findNearestDataPoint } from "../../utils/interaction";
+import { createScales } from "../../utils/scales";
 
-export interface TooltipBehaviorConfig {
+export interface CartesianHoverOptions {
   mode?: "nearest-x" | "nearest";
   snapToData?: boolean;
+  /**
+   * Resolver function to determine if a data point is a valid target.
+   * Returns true to allow snapping to this point.
+   */
+  dataResolver?: (data: any) => boolean;
 }
 
-export const TooltipBehavior = (
-  _config: TooltipBehaviorConfig = { mode: "nearest-x" },
+export const CartesianHover = (
+  config: CartesianHoverOptions = { mode: "nearest-x" },
 ): ChartBehavior => {
   return ({ on, off, getChartContext }) => {
     // We defer accessing context until the event fires to ensure we always use the latest state
@@ -66,6 +71,12 @@ export const TooltipBehavior = (
       );
 
       if (closestData) {
+        // Apply resolver if present
+        if (config.dataResolver && !config.dataResolver(closestData)) {
+          setHoverState?.(null);
+          return;
+        }
+
         let dataPointX = 0;
 
         if ((xScale as any).bandwidth) {
@@ -108,4 +119,4 @@ export const TooltipBehavior = (
   };
 };
 
-export default TooltipBehavior;
+export default CartesianHover;

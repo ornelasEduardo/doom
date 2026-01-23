@@ -24,7 +24,7 @@
 import { RefObject } from "react";
 
 import {
-  calculateEdgeCorrectedPosition,
+  checkOverflow,
   TOOLTIP_GAP_X,
   TOOLTIP_GAP_Y,
   TOUCH_OFFSET_Y,
@@ -194,74 +194,142 @@ export class Reposition {
     }
 
     const dims = this.dimensions ?? { width: 0, height: 0 };
-    let { x, y } = this.anchorPoint;
 
-    // Apply horizontal gap (position to the right of anchor by default)
-    x += this.gapX;
+    // -------------------------------------------------------------------------
+    // 1. Calculate Primary Position (Ideal state)
+    // -------------------------------------------------------------------------
 
-    // Apply vertical alignment
-    switch (this.verticalAlign) {
-      case "center":
-        y -= dims.height / 2;
-        break;
-      case "bottom":
-        y -= dims.height;
-        break;
-      case "top":
-      default:
-        // No adjustment needed - element top aligns with anchor
-        break;
+    // Calculate Y
+    let y = this.anchorPoint.y;
+    if (this.verticalAlign === "center") {
+      y -= dims.height / 2;
+    }
+    if (this.verticalAlign === "bottom") {
+      y -= dims.height;
     }
 
-    // Apply horizontal alignment
-    switch (this.horizontalAlign) {
-      case "center":
-        x -= dims.width / 2;
-        break;
-      case "right":
-        x -= dims.width;
-        break;
-      case "left":
-      default:
-        // No adjustment needed
-        break;
-    }
-
-    // Apply touch offset
     if (this.isTouch) {
       y -= this.touchOffsetValue;
     } else {
+      // For non-touch, standard Reposition behavior adds gapY (usually creates "Below" effect if top aligned)
       y += this.gapY;
     }
 
-    // Apply edge detection
-    if (this.shouldEdgeDetect) {
-      const containerRect = this.containerRef?.current?.getBoundingClientRect();
-      const containerLeft = containerRect?.left ?? 0;
-      const containerWidth =
-        containerRect?.width ??
-        (typeof window !== "undefined" ? window.innerWidth : 1920);
+    // Calculate X
+    let x = this.anchorPoint.x + this.gapX; // Always add gapX first (consistent with previous behavior)
 
-      const corrected = calculateEdgeCorrectedPosition(
-        {
-          anchorX: this.anchorPoint.x,
-          anchorY: this.anchorPoint.y,
-          tooltipWidth: dims.width,
-          tooltipHeight: dims.height,
-          containerLeft,
-          containerWidth,
-          isTouch: this.isTouch,
-        },
-        {
-          gapX: this.gapX,
-          gapY: this.gapY,
-          touchOffsetY: this.touchOffsetValue,
-        },
-      );
-
-      return corrected;
+    if (this.horizontalAlign === "center") {
+      x -= dims.width / 2;
+    }
+    if (this.horizontalAlign === "right") {
+      x -= dims.width;
     }
 
-    return { x, y, placement: "right" };
+    let placement: Placement = "right";
+
+    // If no edge detection, return primary immediately
+    if (!this.shouldEdgeDetect) {
+      return { x, y, placement };
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. Validate & Correct (Edge Detection)
+    // -------------------------------------------------------------------------
+    const containerRect = this.containerRef?.current?.getBoundingClientRect();
+
+    // Check Primary
+    const primaryStatus = checkOverflow({
+      x,
+      y,
+      width: dims.width,
+      height: dims.height,
+      containerRect,
+      margin: this.edgeMargin,
+    });
+
+    const offsetLeft = containerRect?.left ?? 0;
+    const offsetTop = containerRect?.top ?? 0;
+
+    // X Correction
+    if (primaryStatus.right) {
+      // Overflow Right
+      if (this.horizontalAlign === "left") {
+        // Attempt Flip Left (Anchor - Gap - Width)
+        const flipX = this.anchorPoint.x - this.gapX - dims.width;
+        const flipStatus = checkOverflow({
+          x: flipX,
+          y,
+          width: dims.width,
+          height: dims.height,
+          containerRect,
+          margin: this.edgeMargin,
+        });
+
+        if (!flipStatus.left) {
+          x = flipX;
+          placement = "left";
+        } else {
+          // Both overflow? Clamp to valid boundary
+          // We need relative coordinate for clamping: (Boundary - Offset - Width)
+          const maxRightX =
+            primaryStatus.boundary.right - offsetLeft - dims.width;
+          const maxLeftX = primaryStatus.boundary.left - offsetLeft;
+          x = Math.max(maxLeftX, maxRightX);
+        }
+      } else {
+        // Center/Right align: just clamp
+        const maxRightX =
+          primaryStatus.boundary.right - offsetLeft - dims.width;
+        x = Math.min(x, maxRightX);
+      }
+    } else if (primaryStatus.left) {
+      // Overflow Left -> Clamp
+      const maxLeftX = primaryStatus.boundary.left - offsetLeft;
+      x = Math.max(x, maxLeftX);
+    }
+
+    // Y Correction
+    if (primaryStatus.bottom) {
+      // Overflow Bottom
+      if (this.verticalAlign === "top") {
+        // Attempt Flip Above
+        const flipY = this.anchorPoint.y - dims.height - this.gapY;
+
+        const flipStatus = checkOverflow({
+          x,
+          y: flipY,
+          width: dims.width,
+          height: dims.height,
+          containerRect,
+          margin: this.edgeMargin,
+        });
+
+        if (!flipStatus.top) {
+          y = flipY;
+          placement = "above";
+        } else {
+          // Both overflow? Clamp to Bottom
+          const maxBottomY =
+            primaryStatus.boundary.bottom - offsetTop - dims.height;
+          y = Math.min(y, maxBottomY);
+        }
+      } else {
+        // Center/Bottom align: Clamp
+        const maxBottomY =
+          primaryStatus.boundary.bottom - offsetTop - dims.height;
+        y = Math.min(y, maxBottomY);
+      }
+    }
+
+    // Check Top overflow (Clamp)
+    const currentTopAbs = offsetTop + y;
+    if (currentTopAbs < primaryStatus.boundary.top) {
+      y = Math.max(y, primaryStatus.boundary.top - offsetTop);
+      if (placement === "above") {
+        placement = "below";
+      }
+    }
+
+    return { x, y, placement };
   }
 }

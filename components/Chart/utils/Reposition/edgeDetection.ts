@@ -55,99 +55,68 @@ export const TOUCH_OFFSET_Y = 40;
 // Main Function
 // ============================================================================
 
-export interface EdgeDetectionOptions {
-  /** Horizontal gap between anchor and tooltip (default: TOOLTIP_GAP_X) */
-  gapX?: number;
-  /** Vertical gap between anchor and tooltip (default: TOOLTIP_GAP_Y) */
-  gapY?: number;
-  /** Extra vertical offset for touch interactions (default: TOUCH_OFFSET_Y) */
-  touchOffsetY?: number;
+export interface OverflowCheckInput {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  containerRect?: DOMRect;
+  margin?: number;
+}
+
+export interface OverflowResult {
+  top: boolean;
+  right: boolean;
+  bottom: boolean;
+  left: boolean;
+  boundary: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
 }
 
 /**
- * Calculates edge-corrected tooltip position.
- *
- * Default behavior: tooltip appears to the right of the anchor.
- * Flips to left if it would overflow the right viewport edge.
- * Adjusts Y to keep tooltip within viewport bounds.
+ * Checks if a given rectangle overflows the boundaries.
+ * Does NOT calculate new positions. Purely a validator.
  */
-export function calculateEdgeCorrectedPosition(
-  input: EdgeDetectionInput,
-  options: EdgeDetectionOptions = {},
-): EdgeCorrectedPosition {
+export function checkOverflow(input: OverflowCheckInput): OverflowResult {
   const {
-    anchorX,
-    anchorY,
-    tooltipWidth,
-    tooltipHeight,
-    containerLeft,
-    containerWidth,
-    isTouch = false,
+    x,
+    y,
+    width,
+    height,
+    containerRect,
+    margin = VIEWPORT_MARGIN,
   } = input;
-
-  const gapX = options.gapX ?? TOOLTIP_GAP_X;
-  const gapY = options.gapY ?? TOOLTIP_GAP_Y;
-  const touchOffsetY = options.touchOffsetY ?? TOUCH_OFFSET_Y;
 
   const viewportWidth =
     typeof window !== "undefined" ? window.innerWidth : 1920;
   const viewportHeight =
     typeof window !== "undefined" ? window.innerHeight : 1080;
 
-  // Calculate X position
-  let x: number;
-  let placement: EdgeCorrectedPosition["placement"] = "right";
+  const containerLeft = containerRect?.left ?? 0;
+  const containerTop = containerRect?.top ?? 0;
 
-  // Check if tooltip would overflow right edge
-  const rightEdgeX = containerLeft + anchorX + gapX + tooltipWidth;
-  const wouldOverflowRight = rightEdgeX > viewportWidth - VIEWPORT_MARGIN;
+  // Calculate absolute positions (assuming x/y are relative to container)
+  const absoluteX = containerLeft + x;
+  const absoluteY = containerTop + y;
 
-  if (wouldOverflowRight) {
-    // Try left side
-    const leftEdgeX = containerLeft + anchorX - gapX - tooltipWidth;
-    const wouldOverflowLeft = leftEdgeX < VIEWPORT_MARGIN;
+  const boundary = {
+    top: margin,
+    right: viewportWidth - margin,
+    bottom: viewportHeight - margin,
+    left: margin,
+  };
 
-    if (wouldOverflowLeft) {
-      // Both sides overflow - prefer right but clamp to container
-      x = Math.min(
-        anchorX + gapX,
-        containerWidth - tooltipWidth - VIEWPORT_MARGIN,
-      );
-      placement = "right";
-    } else {
-      // Place on left
-      x = anchorX - gapX - tooltipWidth;
-      placement = "left";
-    }
-  } else {
-    // Place on right (default)
-    x = anchorX + gapX;
-  }
-
-  // Calculate Y position
-  const baseY = isTouch ? anchorY - touchOffsetY : anchorY + gapY;
-
-  // Clamp to viewport bounds
-  let y = baseY;
-  const absoluteY = containerLeft > 0 ? baseY : baseY; // Simplified - could factor in containerTop
-
-  if (absoluteY + tooltipHeight > viewportHeight - VIEWPORT_MARGIN) {
-    // Would overflow bottom - move up
-    y = anchorY - tooltipHeight - gapY;
-    if (placement === "right" || placement === "left") {
-      placement = "above";
-    }
-  }
-
-  if (y < VIEWPORT_MARGIN) {
-    // Would overflow top - clamp to top
-    y = VIEWPORT_MARGIN;
-    if (placement === "above") {
-      placement = "below";
-    }
-  }
-
-  return { x, y, placement };
+  return {
+    top: absoluteY < boundary.top,
+    right: absoluteX + width > boundary.right,
+    bottom: absoluteY + height > boundary.bottom,
+    left: absoluteX < boundary.left,
+    boundary,
+  };
 }
 
 /**

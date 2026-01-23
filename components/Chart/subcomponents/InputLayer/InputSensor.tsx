@@ -31,7 +31,9 @@ export function InputSensor() {
     const svg = container?.querySelector("[data-chart-plot]") as SVGSVGElement;
     // Try to find the inner plot group (where grid/series are drawn)
     // This is the <g> element translated by margin.left/top
-    const innerPlotGroup = svg?.querySelector("g") as SVGGElement;
+    const innerPlotGroup = svg?.querySelector(
+      "[data-chart-inner-plot]",
+    ) as SVGGElement;
 
     if (!container || !svg) {
       return;

@@ -19,10 +19,11 @@ export { Reposition } from "./Reposition";
 export type {
   EdgeCorrectedPosition,
   EdgeDetectionInput,
-  EdgeDetectionOptions,
+  OverflowCheckInput,
+  OverflowResult,
 } from "./edgeDetection";
 export {
-  calculateEdgeCorrectedPosition,
+  checkOverflow,
   TOOLTIP_GAP_X,
   TOOLTIP_GAP_Y,
   toTransformString,

@@ -249,5 +249,19 @@ describe("Reposition", () => {
       expect(afterGap).toBe(reposition);
       expect(afterAlign).toBe(reposition);
     });
+    it("maintains vertical center alignment when edge detection is enabled", () => {
+      // Regression test for bug where edge detection would reset vertical alignment
+      const element = mockElement(200, 100);
+      const anchor = { x: 500, y: 500 }; // Center of screen, no overflow risk
+
+      const pos = new Reposition(element)
+        .anchor(anchor)
+        .align({ vertical: "center" })
+        .edgeDetect()
+        .resolve();
+
+      // Expected: y = anchorY - height/2 + gapY(8) = 500 - 50 + 8 = 458
+      expect(pos.y).toBe(458);
+    });
   });
 });

@@ -9,11 +9,15 @@ import React, {
   useState,
 } from "react";
 
-import { TooltipBehavior } from "../../behaviors/TooltipBehavior";
+import { CartesianHover } from "../../behaviors";
 import { ChartContext, ChartContextValue } from "../../context";
 import { EventsProvider, useEventContext } from "../../state/EventContext";
 import { ChartConfig, ChartProps, HoverState, LegendItem } from "../../types";
 import { ChartBehavior } from "../../types/events";
+import { hasChildOfTypeDeep } from "../../utils/componentDetection";
+import { Axis } from "../Axis/Axis";
+import { CursorWrapper } from "../Cursor/Cursor";
+import { Grid } from "../Grid/Grid";
 import { Header } from "../Header/Header";
 import { InputSensor } from "../InputLayer/InputSensor";
 import { Legend } from "../Legend/Legend";
@@ -327,7 +331,7 @@ export function Root<T>({
     const { on, off } = eventsContext;
 
     useEffect(() => {
-      const activeBehaviors = behaviors || [TooltipBehavior()];
+      const activeBehaviors = behaviors || [CartesianHover()];
 
       const cleanups = activeBehaviors.map((behavior) => {
         return behavior({
@@ -361,15 +365,18 @@ export function Root<T>({
         clientY = (event as React.MouseEvent).clientY;
       }
 
-      const element = document.elementFromPoint(clientX, clientY);
-      if (!element) {
-        return null;
+      // Use elementsFromPoint to pierce through the InputSensor layer
+      const elements = document.elementsFromPoint(clientX, clientY);
+
+      for (const element of elements) {
+        // Skip the InputSensor itself (or any other non-data element if needed)
+        // We look for D3's __data__ property
+        const data = (element as any).__data__;
+        if (data) {
+          return { element: element as Element, data: data as T };
+        }
       }
 
-      const data = (element as any).__data__;
-      if (data) {
-        return { element, data: data as T };
-      }
       return null;
     },
     [],
@@ -422,11 +429,16 @@ export function Root<T>({
 
   const hasContent = React.Children.count(children) > 0;
   const showShorthand = !hasContent && (type || render || x || y);
+
   const isAutoLayout = layoutMode === "auto";
+
+  const hasGrid = hasContent && hasChildOfTypeDeep(children, Grid);
+  const hasAxis = hasContent && hasChildOfTypeDeep(children, Axis);
+  const hasCursor = hasContent && hasChildOfTypeDeep(children, CursorWrapper);
 
   // Determine active behaviors
   const effectiveBehaviors =
-    behaviors === undefined ? [TooltipBehavior()] : behaviors;
+    behaviors === undefined ? [CartesianHover()] : behaviors;
   const hasInteractions = effectiveBehaviors.length > 0;
 
   return (
@@ -466,7 +478,37 @@ export function Root<T>({
                   style={{ overflow: "visible" }}
                   width={width}
                 >
+                  {/* Inner plot wrapper for InputSensor coordinate detection */}
+                  <g
+                    data-chart-inner-plot
+                    transform={`translate(${config.margin.left}, ${config.margin.top})`}
+                  >
+                    {/* Transparent rect covering the inner plot area for bounding calculations */}
+                    <rect
+                      fill="transparent"
+                      height={height - config.margin.top - config.margin.bottom}
+                      width={width - config.margin.left - config.margin.right}
+                    />
+                  </g>
+
+                  {/* Auto-inject Grid if using composition and not explicitly provided */}
+                  {hasContent && !hasGrid && config.grid !== false && <Grid />}
+
                   {children}
+
+                  {/* Auto-inject Axis if using composition and not explicitly provided */}
+                  {hasContent && !hasAxis && config.showAxes !== false && (
+                    <Axis />
+                  )}
+
+                  {/* Auto-inject Cursor if using composition and not explicitly provided */}
+                  {hasContent && !hasCursor && !render && (
+                    <>
+                      <CursorWrapper mode="line" />
+                      <CursorWrapper mode="dots" />
+                    </>
+                  )}
+
                   {showShorthand && (
                     <Series
                       render={render}
