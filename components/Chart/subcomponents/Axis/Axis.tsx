@@ -9,11 +9,12 @@ import { createScales } from "../../utils/scales";
 import styles from "./Axis.module.scss";
 
 export function Axis() {
-  const { data, width, height, config, x, y } = useChartContext();
+  const { data, width, height, config, x, y, requestLayoutAdjustment } =
+    useChartContext();
   const { margin } = config;
   const gx = useRef<SVGGElement>(null);
   const gy = useRef<SVGGElement>(null);
-  const isMobile = false; // TODO: Context or hook
+  const isMobile = false;
 
   const ctx = useMemo(() => {
     if (
@@ -43,10 +44,8 @@ export function Axis() {
     }
     const { xScale, yScale, innerWidth, innerHeight } = ctx;
 
-    // X Axis
     const xAxis = d3.axisBottom(xScale as any);
     if ("bandwidth" in xScale) {
-      // Band scale logic (omit ticks if too many?)
       xAxis.ticks(5);
     } else {
       xAxis.ticks(5);
@@ -54,9 +53,7 @@ export function Axis() {
 
     d3.select(gx.current).call(xAxis);
 
-    // Y Axis
     const yAxis = d3.axisLeft(yScale).ticks(isMobile ? 3 : 5);
-    // Format logic from renderers.ts
     yAxis.tickFormat((d) => {
       const val = typeof d === "number" ? d : d.valueOf();
       if (val === 0) {
@@ -67,18 +64,32 @@ export function Axis() {
 
     d3.select(gy.current).call(yAxis);
 
-    // Custom styling from renderers.ts
     d3.select(gy.current)
       .selectAll("text")
       .attr("text-anchor", "end")
       .attr("x", -8)
       .attr("dy", "0.32em");
 
-    // Hide domain?
     if (config.hideYAxisDomain) {
       d3.select(gy.current).select(".domain").remove();
     }
-  }, [ctx, config.hideYAxisDomain, isMobile]);
+
+    try {
+      const yBBox = gy.current.getBBox();
+      if (yBBox.x < 0) {
+        requestLayoutAdjustment?.({ left: Math.abs(yBBox.x) + 20 });
+      }
+
+      const xBBox = gx.current.getBBox();
+      if (xBBox.y + xBBox.height > innerHeight) {
+        requestLayoutAdjustment?.({
+          bottom: Math.abs(xBBox.y + xBBox.height - innerHeight) + 20,
+        });
+      }
+    } catch {
+      // Ignore measurement errors if SVG not in DOM
+    }
+  }, [ctx, config.hideYAxisDomain, isMobile, requestLayoutAdjustment]);
 
   if (!ctx) {
     return null;
@@ -97,7 +108,7 @@ export function Axis() {
         <text
           className={styles.label}
           style={{ textAnchor: "middle" }}
-          transform={`translate(${innerWidth / 2}, ${innerHeight + 40})`} // Bottom center
+          transform={`translate(${innerWidth / 2}, ${innerHeight + 40})`}
         >
           {config.xAxisLabel}
         </text>
@@ -107,8 +118,8 @@ export function Axis() {
           className={styles.label}
           style={{ textAnchor: "middle" }}
           transform={`rotate(-90)`}
-          x={-innerHeight / 2} // Centered vertically (rotated)
-          y={-margin.left + 20} // Left of axis
+          x={-innerHeight / 2}
+          y={-margin.left + 20}
         >
           {config.yAxisLabel}
         </text>

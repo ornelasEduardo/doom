@@ -1,8 +1,10 @@
-"use strict";
-
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 
 import { useChartContext } from "../../context";
+import {
+  registerSeries,
+  unregisterSeries,
+} from "../../state/store/stores/series/series.store";
 import { SeriesProps } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
@@ -19,34 +21,25 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
     setHoverState,
     resolveInteraction,
     isMobile,
+    seriesStore,
   } = useChartContext<T>();
 
-  const { data: localData, x: localX, y: localY, render, color } = props;
+  const { data: localData, x: localX, y: localY, render, color, label } = props;
   const { margin } = config;
 
   // Determine effective data and accessors
   const data = localData || contextData;
   const xAccessor =
-    (localX ? resolveAccessor(localX) : undefined) || contextX
-      ? resolveAccessor(contextX!)
-      : undefined;
+    (localX ? resolveAccessor(localX) : undefined) ||
+    (contextX ? resolveAccessor(contextX) : undefined);
   const yAccessor =
-    (localY ? resolveAccessor(localY) : undefined) || contextY
-      ? resolveAccessor(contextY!)
-      : undefined;
+    (localY ? resolveAccessor(localY) : undefined) ||
+    (contextY ? resolveAccessor(contextY) : undefined);
 
-  // Re-create scales locally just in case the custom render needs them
-  // (e.g. mixed types). But for pure custom stuff like Pies, it might be
-  // unnecessary overhead. However, our SeriesContext interface expects them.
   const scaleCtx = useMemo(() => {
     if (!data.length || width <= 0 || height <= 0) {
       return null;
     }
-    // We try to create linear/point scales if accessors exist,
-    // otherwise we might just return defaults or null.
-    // Let's rely on createScales robust handling.
-    // If no accessors, createScales might fail or default.
-    // For custom renders, users might not pass x/y.
     if (xAccessor && yAccessor) {
       return createScales(
         data,
@@ -55,22 +48,43 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
         margin,
         xAccessor,
         yAccessor,
-        "line", // Default to line/point for scales
+        "line",
       );
     }
-    // Minimal fallback context if no accessors
     return {
       xScale: d3.scaleLinear(),
-      yScale: d3.scaleLinear(), // Dummy
+      yScale: d3.scaleLinear(),
       innerWidth: width - margin.left - margin.right,
       innerHeight: height - margin.top - margin.bottom,
     };
   }, [data, width, height, margin, xAccessor, yAccessor]);
 
   const gRef = useRef<SVGGElement>(null);
+  const seriesId = useId();
 
-  // Use a ref to track if we've rendered to handle StrictMode or fast updates
-  // avoiding duplicate render calls if not needed, though useEffect deps should handle it.
+  // Register CustomSeries so it appears in the Legend
+  useEffect(() => {
+    if (!seriesStore) {
+      return;
+    }
+
+    // Only register if we have a label or yAxisLabel to show
+    const effectiveLabel = label || config.yAxisLabel || "Series";
+
+    registerSeries(seriesStore, seriesId, [
+      {
+        label: effectiveLabel,
+        color: color || "var(--primary)",
+        y: yAccessor,
+        hideCursor: true, // Custom series usually handle their own interaction or don't use standard cursor
+        interactionMode: "x",
+      } as any,
+    ]); // Cast to any to allow interactionMode which might not be in generic SeriesProps yet
+
+    return () => {
+      unregisterSeries(seriesStore, seriesId);
+    };
+  }, [seriesStore, seriesId, label, config.yAxisLabel, color, yAccessor]);
 
   useEffect(() => {
     if (!render || !gRef.current || !data.length || width <= 0 || height <= 0) {
@@ -79,17 +93,44 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
 
     const selection = d3.select(gRef.current);
 
-    // Clear previous content to allow clean re-render?
-    // User's render function uses .enter() pattern which implies it handles updates,
-    // but often custom renders just append. To be safe and prevent duplicates if the
-    // user isn't handling update selections, we can optionally clear.
-    // However, robust D3 should handle it. Given the issue is "constantly re-rendering",
-    // simply stopping it from running on hover is the main fix.
-    // But if we want to be safe: selection.selectAll("*").remove();
-    // might be too aggressive if they want transitions.
-    // Let's assume the user's render function is idempotent or we just invoke it less often.
-    // Actually, for "custom render", clearing is often expected if it's a fresh draw.
-    // Let's stick to just invoking it.
+    const showTooltip = (event: any, dataPoint: T) => {
+      // Logic from CartesianHover essentially, but manual triggering
+      // We need to calculate positions.
+      // Simplification: Use event coordinates.
+      const clientX = event.clientX;
+      const clientY = event.clientY;
+      const containerRect = gRef.current
+        ?.closest("[data-chart-container]")
+        ?.getBoundingClientRect();
+
+      const tooltipX = clientX - (containerRect?.left || 0);
+      const tooltipY = clientY - (containerRect?.top || 0);
+
+      // For cursor line, we'd need scales.
+      // Let's pass sensible defaults or calculated if scales exist.
+      let cursorLineX = 0;
+      if (scaleCtx?.xScale && xAccessor) {
+        cursorLineX = (scaleCtx.xScale as any)(xAccessor(dataPoint)) ?? 0;
+        cursorLineX += margin.left;
+      }
+
+      if (setHoverState) {
+        setHoverState({
+          cursorLineX,
+          cursorLineY: tooltipY,
+          tooltipX,
+          tooltipY,
+          data: dataPoint,
+          isTouch: event.type === "touchmove" || event.type === "touchstart",
+        });
+      }
+    };
+
+    const hideTooltip = () => {
+      if (setHoverState) {
+        setHoverState(null);
+      }
+    };
 
     render({
       g: selection,
@@ -108,13 +149,11 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
       styles: {},
       gradientId: "",
       isMobile,
-      setHoverState,
-      resolveInteraction,
+      setHoverState: setHoverState!,
+      resolveInteraction: resolveInteraction!,
+      showTooltip,
+      hideTooltip,
     } as any);
-
-    // Dependencies: We explicitly omit setHoverState/resolveInteraction/utils if they are stable
-    // or if we trust them not to change meaningfully.
-    // In our Root, these are useCallbacks.
   }, [
     render,
     data,
@@ -130,9 +169,6 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
     setHoverState,
     resolveInteraction,
   ]);
-
-  // We DO NOT register this series. This relies on the Root "fallback legend item" logic
-  // which implies no cursor.
 
   if (!render) {
     return null;

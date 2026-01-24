@@ -37,13 +37,11 @@ export function createScales<T>(
   const firstValue = xValues[0];
 
   if (typeof firstValue === "number") {
-    // Numeric scale - use linear
     xScale = d3
       .scaleLinear()
       .domain(d3.extent(xValues as number[]) as [number, number])
       .range([0, innerWidth]);
   } else {
-    // String/categorical data - use point scale
     const uniqueXValues = Array.from(new Set(xValues as string[]));
     xScale = d3
       .scalePoint()

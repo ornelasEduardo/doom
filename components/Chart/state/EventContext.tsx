@@ -25,7 +25,6 @@ export function useEventContext() {
 }
 
 export function EventsProvider({ children }: { children: React.ReactNode }) {
-  // Event Bus Helpers
   const listenersRef = useRef<Map<ChartEventType, Set<ChartEventListener>>>(
     new Map(),
   );
@@ -54,7 +53,6 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   const [isWithinPlot, setIsWithinPlot] = useState(false);
 
   const emit = useCallback((event: ChartEvent) => {
-    // Update state snapshots
     if (
       event.type === "CHART_POINTER_MOVE" ||
       event.type === "CHART_POINTER_DOWN"
@@ -66,7 +64,6 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       setIsWithinPlot(false);
     }
 
-    // Broadcast
     const typeListeners = listenersRef.current.get(event.type);
     if (typeListeners) {
       typeListeners.forEach((listener) => listener(event));

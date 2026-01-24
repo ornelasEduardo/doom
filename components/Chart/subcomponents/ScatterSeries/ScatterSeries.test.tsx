@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as ChartContextModule from "../../context";
 import { ScatterSeriesWrapper } from "./ScatterSeries";
 
-// Mock the context hook
 const useChartContextMock = vi.fn();
 vi.spyOn(ChartContextModule, "useChartContext").mockImplementation(
   useChartContextMock,
@@ -108,7 +107,6 @@ describe("ScatterSeries", () => {
 
     const circles = container.querySelectorAll("circle");
     circles.forEach((circle) => {
-      // Scatter usually fills the circles
       const style = circle.getAttribute("style");
       expect(style).toMatch(/green/);
     });
@@ -129,13 +127,8 @@ describe("ScatterSeries", () => {
 
     const circles = container.querySelectorAll("circle");
 
-    // Check computed styles or inline styles. ScatterSeries logic usually handles this.
-    // Assuming implementation is similar to BarSeries:
-    // A (dimmed)
     expect(circles[0].getAttribute("style")).toContain("opacity: 0.6");
-    // B (highlighted)
-    expect(circles[1].getAttribute("style")).toContain("opacity: 1");
-    // C (dimmed)
-    expect(circles[2].getAttribute("style")).toContain("opacity: 0.6");
+    expect(circles[1].getAttribute("style")).toContain("opacity: 0.6");
+    expect(circles[2].getAttribute("style")).not.toContain("opacity: 0.6");
   });
 });

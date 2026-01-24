@@ -1,6 +1,7 @@
 "use strict";
 
 import { useChartContext } from "../../context";
+import { useSeries } from "../../state/store/stores/series/series.store";
 import styles from "./Cursor.module.scss";
 
 /**
@@ -8,22 +9,23 @@ import styles from "./Cursor.module.scss";
  * Used to indicate which data point is currently hovered.
  */
 export function CursorLine() {
-  const { config, hoverState, legendItems, height } = useChartContext();
+  const { config, hoverState, height } = useChartContext();
+  const series = useSeries();
+  const shouldShow =
+    series.length > 0 && series.some((s) => s.hideCursor !== true);
+
   const { margin } = config;
   const innerHeight = height - margin.top - margin.bottom;
 
-  // Don't render if no hover state
   if (!hoverState) {
     return null;
   }
 
-  // Check if any series wants to show the cursor
-  const showLine = legendItems.some((item) => !item.hideCursor);
-  if (!showLine) {
+  // Check if any registered series wants to show the cursor
+  if (!shouldShow || innerHeight <= 0) {
     return null;
   }
 
-  // cursorLineX is relative to SVG, subtract margin for group-local coords
   const cx = hoverState.cursorLineX - margin.left;
 
   return (
@@ -47,7 +49,6 @@ export function CursorLine() {
 export function CursorWrapper(props: { mode?: "line" | "dots" }) {
   const { config } = useChartContext();
 
-  // "dots" mode is deprecated - Series components handle their own highlighting
   if (props.mode === "dots") {
     return null;
   }

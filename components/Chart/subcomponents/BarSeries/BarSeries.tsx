@@ -1,11 +1,14 @@
 "use strict";
 
-import { useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import {
+  registerSeries,
+  unregisterSeries,
+} from "../../state/store/stores/series/series.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
-import { useSeriesRegistration } from "../../utils/hooks";
 import { createScales } from "../../utils/scales";
 import { createRoundedTopBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
@@ -16,6 +19,7 @@ interface BarSeriesProps<T> {
   y?: Accessor<T, number>;
   color?: string;
   hideCursor?: boolean;
+  label?: string;
 }
 
 export function BarSeries<T>({
@@ -24,6 +28,7 @@ export function BarSeries<T>({
   y: localY,
   color,
   hideCursor,
+  label,
 }: BarSeriesProps<T>) {
   const {
     data: contextData,
@@ -33,6 +38,7 @@ export function BarSeries<T>({
     x: contextX,
     y: contextY,
     hoverState,
+    seriesStore,
   } = useChartContext<T>();
 
   const data = localData || contextData;
@@ -56,17 +62,25 @@ export function BarSeries<T>({
       margin,
       xAccessor,
       yAccessor,
-      "bar", // Important for band scale
+      "bar",
     );
   }, [data, width, height, margin, xAccessor, yAccessor]);
 
-  // Registration
-  useSeriesRegistration({
-    label: "Bar Series",
-    color: color,
-    y: localY || contextY,
-    hideCursor: hideCursor ?? true,
-  });
+  const gradientId = useId();
+
+  useEffect(() => {
+    registerSeries(seriesStore, gradientId, [
+      {
+        label: label || "Bar Series",
+        color: color || "var(--primary)",
+        y: yAccessor,
+        hideCursor: hideCursor ?? true,
+      },
+    ]);
+    return () => {
+      unregisterSeries(seriesStore, gradientId);
+    };
+  }, [seriesStore, gradientId, color, yAccessor, label, hideCursor]);
 
   if (!scaleCtx || !xAccessor || !yAccessor) {
     return null;
@@ -85,10 +99,7 @@ export function BarSeries<T>({
         const h = innerHeight - yVal;
 
         const isHovered = hoverState && hoverState.data === d;
-        const isDimmed = hoverState && !isHovered; // Optional logic: dim others?
-
-        // If we follow interaction.ts logic, we might not have exact object equality if referentially unstable.
-        // But `data` is usually stable.
+        const isDimmed = hoverState && !isHovered;
 
         return (
           <path
@@ -97,8 +108,7 @@ export function BarSeries<T>({
             d={createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS)}
             style={{
               fill: fillColor,
-              opacity: isDimmed ? 0.6 : 1, // Dim others
-              // Highlight hovered?
+              opacity: isDimmed ? 0.6 : 1,
               filter: isHovered ? "brightness(1.1)" : "none",
             }}
           />

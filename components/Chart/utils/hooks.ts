@@ -1,6 +1,10 @@
 import { useEffect, useId } from "react";
 
 import { useChartContext } from "../context";
+import {
+  registerSeries,
+  unregisterSeries,
+} from "../state/store/stores/series/series.store";
 import { Accessor } from "./accessors";
 
 interface RegistrationProps<T> {
@@ -12,27 +16,31 @@ interface RegistrationProps<T> {
 }
 
 export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
-  const { registerSeries, unregisterSeries } = useChartContext();
+  const { seriesStore } = useChartContext();
   const id = useId();
 
   useEffect(() => {
-    if (registerSeries) {
-      registerSeries(id, [
-        {
-          label: props.label || "Series",
-          color: props.color,
-          yAccessor: props.y,
-          hideCursor: props.hideCursor,
-          interactionMode: props.interactionMode,
-        },
-      ]);
-    }
+    registerSeries(seriesStore, id, [
+      {
+        label: props.label || "Series",
+        color: props.color,
+        yAccessor: props.y,
+        hideCursor: props.hideCursor,
+        interactionMode: props.interactionMode,
+      },
+    ]);
     return () => {
-      if (unregisterSeries) {
-        unregisterSeries(id);
-      }
+      unregisterSeries(seriesStore, id);
     };
-  }, [registerSeries, unregisterSeries, id, props.label, props.color, props.y]);
+  }, [
+    seriesStore,
+    id,
+    props.label,
+    props.color,
+    props.y,
+    props.hideCursor,
+    props.interactionMode,
+  ]);
 
   return id;
 }

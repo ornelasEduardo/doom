@@ -1,49 +1,41 @@
 import { createContext, useContext } from "react";
 
+import type { SeriesStore } from "./state/store/stores/series/series.store";
 import {
   Accessor,
   ChartConfig,
   HoverState,
-  LegendItem,
   SeriesContext,
   SeriesType,
 } from "./types";
 
 export interface ChartContextValue<T = unknown> {
-  // Data
   data: T[];
 
-  // Dimensions
   width: number;
   height: number;
   setWidth?: (width: number) => void;
   setHeight?: (height: number) => void;
-  setPlotRef?: (ref: HTMLElement | null) => void; // Allow subcomponents to register the plot area
+  setPlotRef?: (ref: HTMLElement | null) => void;
   isMobile: boolean;
 
-  // Config
   config: ChartConfig & {
     margin: { top: number; right: number; bottom: number; left: number };
   };
 
-  // Design system
   colorPalette: string[];
   styles: Record<string, string>;
   variant?: "default" | "solid";
 
-  // Hover state (for tooltip and cursor positioning)
   activeData: T | null;
   setActiveData: (data: T | null) => void;
 
-  // Interaction helpers
   resolveInteraction: (
     event: React.MouseEvent | React.TouchEvent,
   ) => { element: Element; data: T } | null;
 
-  // Legend
-  legendItems: LegendItem[];
-  registerSeries?: (id: string, items: LegendItem[]) => number;
-  unregisterSeries?: (id: string) => void;
+  seriesStore: SeriesStore;
+
   requestLayoutAdjustment?: (
     suggestedMargin: Partial<{
       top: number;
@@ -53,12 +45,9 @@ export interface ChartContextValue<T = unknown> {
     }>,
   ) => void;
 
-  // Legacy Legacy support
-  // Some series might call showTooltip manually
   setHoverState?: (state: HoverState<T> | null) => void;
   hoverState?: HoverState<T> | null;
 
-  // For shorthand API (optional - Series can override)
   type?: SeriesType;
   render?: (context: SeriesContext<T>) => void;
   x?: Accessor<T, string | number>;

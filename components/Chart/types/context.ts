@@ -4,10 +4,6 @@ import { ChartNativeEvent, HoverState } from "./interaction";
 import { ChartXScale, ChartYScale } from "./scales";
 import { D3Selection } from "./selection";
 
-// =============================================================================
-// SERIES CONTEXT - Rich context for custom D3 rendering
-// =============================================================================
-
 export interface SeriesContext<T> {
   // D3 essentials
   g: D3Selection;

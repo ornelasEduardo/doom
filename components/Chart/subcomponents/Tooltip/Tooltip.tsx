@@ -1,12 +1,11 @@
-"use client";
-
 import clsx from "clsx";
 import { useRef } from "react";
 
 import { Card } from "../../../Card/Card";
 import { Text } from "../../../Text/Text";
 import { useChartContext } from "../../context";
-import { LegendItem, resolveAccessor } from "../../types";
+import { useSeries } from "../../state/store/stores/series/series.store";
+import { resolveAccessor, Series } from "../../types";
 import {
   Reposition,
   TOOLTIP_GAP_X,
@@ -23,7 +22,8 @@ export function Tooltip<T>({
   renderTooltip,
 }: TooltipProps<T>) {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const { legendItems, x, y, config, variant } = useChartContext<T>();
+  const { x, y, config, variant } = useChartContext<T>();
+  const series = useSeries();
 
   if (!activeData || !position) {
     return null;
@@ -57,7 +57,7 @@ export function Tooltip<T>({
         <DefaultTooltipContent
           activeData={activeData}
           config={config as any}
-          legendItems={legendItems}
+          series={series}
           variant={variant}
           x={x}
           y={y}
@@ -67,13 +67,9 @@ export function Tooltip<T>({
   );
 }
 
-// =============================================================================
-// Default Tooltip Content
-// =============================================================================
-
 interface DefaultTooltipContentProps<T> {
   activeData: T;
-  legendItems: LegendItem[];
+  series: Series[];
   x?: unknown;
   y?: unknown;
   config: { yAxisLabel?: string } & Record<string, unknown>;
@@ -82,7 +78,7 @@ interface DefaultTooltipContentProps<T> {
 
 function DefaultTooltipContent<T>({
   activeData,
-  legendItems,
+  series,
   x,
   y,
   config,
@@ -98,7 +94,7 @@ function DefaultTooltipContent<T>({
         {xLabel}
       </Text>
 
-      {legendItems.length > 0 ? (
+      {series.length > 0 ? (
         <div
           style={{
             display: "flex",
@@ -106,13 +102,13 @@ function DefaultTooltipContent<T>({
             gap: 4,
           }}
         >
-          {legendItems.map((item, i) => (
-            <TooltipLegendItem
+          {series.map((item, i) => (
+            <TooltipSeriesItem
               key={i}
               activeData={activeData}
               config={config}
               fallbackY={y}
-              item={item}
+              series={item}
             />
           ))}
         </div>
@@ -125,24 +121,20 @@ function DefaultTooltipContent<T>({
   );
 }
 
-// =============================================================================
-// Tooltip Legend Item
-// =============================================================================
-
-interface TooltipLegendItemProps<T> {
-  item: LegendItem;
+interface TooltipSeriesItemProps<T> {
+  series: Series;
   activeData: T;
   fallbackY?: unknown;
   config: { yAxisLabel?: string } & Record<string, unknown>;
 }
 
-function TooltipLegendItem<T>({
-  item,
+function TooltipSeriesItem<T>({
+  series,
   activeData,
   fallbackY,
   config,
-}: TooltipLegendItemProps<T>) {
-  const accessor = item.yAccessor ? resolveAccessor(item.yAccessor) : null;
+}: TooltipSeriesItemProps<T>) {
+  const accessor = series.yAccessor ? resolveAccessor(series.yAccessor) : null;
   const val = accessor
     ? accessor(activeData)
     : fallbackY
@@ -171,11 +163,11 @@ function TooltipLegendItem<T>({
           width: 8,
           height: 8,
           borderRadius: "50%",
-          backgroundColor: item.color,
+          backgroundColor: series.color,
         }}
       />
       <Text style={{ color: "var(--text-secondary)" }} variant="body">
-        {item.label}:
+        {series.label}:
       </Text>
       <Text variant="h6">{formattedVal}</Text>
     </div>

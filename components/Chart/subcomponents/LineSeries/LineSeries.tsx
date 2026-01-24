@@ -4,6 +4,10 @@ import { CurveFactory } from "d3-shape";
 import { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import {
+  registerSeries,
+  unregisterSeries,
+} from "../../state/store/stores/series/series.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
@@ -45,34 +49,31 @@ export function LineSeries<T>({
     config,
     x: contextX,
     y: contextY,
-    registerSeries,
     setHoverState,
     resolveInteraction,
     isMobile,
     hoverState,
+    seriesStore,
   } = useChartContext<T>();
 
-  // Determine effective data and accessors
   const data = localData || contextData;
-  const xAccessor =
-    (localX ? resolveAccessor(localX) : undefined) ||
-    (contextX ? resolveAccessor(contextX) : undefined);
-  const yAccessor =
-    (localY ? resolveAccessor(localY) : undefined) ||
-    (contextY ? resolveAccessor(contextY) : undefined);
+
+  const xAccessor = useMemo(
+    () =>
+      (localX ? resolveAccessor(localX) : undefined) ||
+      (contextX ? resolveAccessor(contextX) : undefined),
+    [localX, contextX],
+  );
+
+  const yAccessor = useMemo(
+    () =>
+      (localY ? resolveAccessor(localY) : undefined) ||
+      (contextY ? resolveAccessor(contextY) : undefined),
+    [localY, contextY],
+  );
 
   const { margin } = config;
 
-  // Custom render support
-  // const { render } = props as any; // REMOVED
-  // const gRef = useId();
-
-  // If render is provided, we need to expose the context and let it run
-  // But strictly speaking, custom render usually needs a ref to the G element.
-  // The current architecture is declarative.
-  // If `render` provided, we return a <g ref={...} /> and runs the effect?
-
-  // Re-create scales locally
   const scaleCtx = useMemo(() => {
     if (!xAccessor || !yAccessor || !data.length || width <= 0 || height <= 0) {
       return null;
@@ -88,26 +89,23 @@ export function LineSeries<T>({
     );
   }, [data, width, height, margin, xAccessor, yAccessor]);
 
-  // Define variables needed for effects
   const gradientId = useId().replace(/:/g, "");
   const strokeColor = color || "var(--primary)";
 
-  // Register series with Root for Legend and Cursor
   useEffect(() => {
-    registerSeries?.(gradientId, [
+    registerSeries(seriesStore, gradientId, [
       {
         label: label || (config.yAxisLabel ?? "Series"),
         color: strokeColor,
-        // We pass the resolved accessor function as yAccessor
-        yAccessor: yAccessor as any,
+        y: yAccessor,
         hideCursor: hideCursor,
       },
     ]);
     return () => {
-      // unregisterSeries(gradientId);
+      unregisterSeries(seriesStore, gradientId);
     };
   }, [
-    registerSeries,
+    seriesStore,
     gradientId,
     strokeColor,
     config.yAxisLabel,
@@ -115,7 +113,6 @@ export function LineSeries<T>({
     label,
     hideCursor,
   ]);
-  // ... (rest of component)
 
   const paths = useMemo(() => {
     if (!scaleCtx || !xAccessor || !yAccessor) {
@@ -142,20 +139,12 @@ export function LineSeries<T>({
     };
   }, [scaleCtx, data, xAccessor, yAccessor, curve, config.curve]);
 
-  // Support for custom render
   if (render && scaleCtx) {
-    // We need to pass the context to the render function.
-    // But render usually expects to Manipulate DOM.
-    // We can use a callback ref.
     return (
       <g
         ref={(node) => {
           if (node) {
-            // Create a selection
             const selection = d3.select(node);
-            // Create context
-            // This is expensive to construct here fully matching types.ts if proper approaches are missing.
-            // But let's try our best or relax the type.
             render({
               g: selection,
               data,
@@ -182,20 +171,15 @@ export function LineSeries<T>({
     );
   }
 
-  // Render logic
-
   if (!paths) {
     return null;
   }
 
-  // Only render area IF it is strictly an area chart.
-  // We respect `withGradient` only if we are in area mode.
   const isArea = type === "area" || config.type === "area";
   const showGradient = isArea && config.withGradient !== false;
 
   return (
     <g className="chart-line-series">
-      {/* Gradient Defs */}
       {showGradient && (
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
@@ -205,31 +189,23 @@ export function LineSeries<T>({
         </defs>
       )}
 
-      {/* Area */}
       {showGradient && (
         <path
           className={styles.area}
           d={paths.area || ""}
           style={{
             fill: `url(#${gradientId})`,
-            // Fallback or if gradient fails? No, if showGradient is true we use it.
-            // Wait, if !withGradient but is area, maybe solid fill?
-            // Legacy usually implied gradient for area.
-            // If implicit area, let's assume gradient for now or check specifically.
           }}
         />
       )}
-      {/* Line */}
       <path
         className={styles.path}
         d={paths.line || ""}
         style={{ stroke: strokeColor }}
       />
-      {/* Static Dots with Hover Highlighting */}
       {(showDots || config.showDots) && scaleCtx && xAccessor && yAccessor && (
         <g className="chart-dots">
           {data.map((d, i) => {
-            // Check if this dot's data point matches the hover state
             const isHovered = hoverState?.data === d;
 
             return (
@@ -244,11 +220,23 @@ export function LineSeries<T>({
           })}
         </g>
       )}
+
+      {!(showDots || config.showDots) &&
+        hoverState &&
+        scaleCtx &&
+        xAccessor &&
+        yAccessor && (
+          <SeriesPoint
+            color={strokeColor}
+            isHovered={true}
+            x={(scaleCtx.xScale as any)(xAccessor(hoverState.data))}
+            y={scaleCtx.yScale(yAccessor(hoverState.data))}
+          />
+        )}
     </g>
   );
 }
 
-// Wrapper for margins
 export function LineSeriesWrapper({
   className,
   style,

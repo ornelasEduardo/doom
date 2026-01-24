@@ -18,12 +18,7 @@ describe("SeriesPoint", () => {
       <SeriesPoint isHovered color="red" x={10} y={20} />,
     );
     const circle = container.querySelector("circle");
-    // We can't easily check computed styles in jsdom without better mocking,
-    // but we can check if attributes update if we used attributes.
-    // Here we use style prop.
-    // stroke-width should be 2 when hovered.
-    // stroke-width should be 2 when hovered.
-    expect(circle?.style.strokeWidth).toBe("2");
+    expect(circle).toHaveAttribute("r", "8");
   });
 
   it("renders nothing if coordinates are invalid", () => {

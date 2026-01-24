@@ -6,10 +6,6 @@ import { ChartConfig } from "./config";
 import { SeriesContext } from "./context";
 import { ChartBehavior } from "./events";
 
-// =============================================================================
-// CHART PROPS - Root component props
-// =============================================================================
-
 export interface ChartProps<T = unknown> {
   data: T[];
   d3Config?: ChartConfig;

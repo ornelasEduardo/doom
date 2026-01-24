@@ -67,12 +67,11 @@ export const CartesianHover = (
       // chartX is now relative to the inner plot group (already accounts for margins)
       let closestData: any = null;
 
-      // Detect if we should use 2D nearest point search (for scatter plots, etc.)
+      const processedSeries =
+        chartContext.seriesStore.getState().processedSeries;
       const use2DSearch =
-        chartContext.legendItems &&
-        chartContext.legendItems.some(
-          (item: any) => item.interactionMode === "xy",
-        );
+        processedSeries &&
+        processedSeries.some((s) => s.interactionMode === "xy");
 
       if (use2DSearch) {
         closestData = findNearestPoint2D(

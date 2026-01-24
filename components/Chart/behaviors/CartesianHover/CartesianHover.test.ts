@@ -88,6 +88,9 @@ describe("CartesianHover", () => {
       x: (d: any) => d.x,
       y: (d: any) => d.y,
       setHoverState,
+      seriesStore: {
+        getState: () => ({ derivedLegendItems: [] }),
+      },
     });
 
     const behavior = CartesianHover({

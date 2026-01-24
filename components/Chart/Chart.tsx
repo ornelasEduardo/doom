@@ -39,13 +39,6 @@ function ChartComposed<T>(props: ChartProps<T>) {
   );
 }
 
-// NOTE: Root handles "Footer", "Legend", "Header" internally via props (title, etc.).
-// Checks:
-// Root renders Header if title/subtitle exists.
-// Root renders Legend if withLegend is true.
-// Root renders children inside wrapper.
-// So ChartComposed works perfectly.
-
 export const Chart = Object.assign(ChartComposed, {
   Root,
   Header,

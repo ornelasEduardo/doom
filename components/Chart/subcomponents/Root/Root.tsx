@@ -12,7 +12,8 @@ import React, {
 import { CartesianHover } from "../../behaviors";
 import { ChartContext, ChartContextValue } from "../../context";
 import { EventsProvider, useEventContext } from "../../state/EventContext";
-import { ChartConfig, ChartProps, HoverState, LegendItem } from "../../types";
+import { createSeriesStore } from "../../state/store/stores/series/series.store";
+import { ChartConfig, ChartProps, HoverState } from "../../types";
 import { ChartBehavior } from "../../types/events";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
 import { Axis } from "../Axis/Axis";
@@ -28,7 +29,6 @@ import styles from "./Root.module.scss";
 
 const EMPTY_STYLES = {};
 
-// Theme-compatible color palette for auto-assigned legend colors
 const LEGEND_PALETTE = [
   "var(--primary)",
   "var(--secondary)",
@@ -87,27 +87,22 @@ export function Root<T>({
   const [activeData, setActiveData] = useState<T | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Stable reference to activeData for use in callbacks without triggering re-creation
   const activeDataRef = useRef(activeData);
   useEffect(() => {
     activeDataRef.current = activeData;
   }, [activeData]);
 
-  // Volatile state for 60fps tooltip positioning (DOES NOT TRIGGER CONTEXT UPDATES)
   const [tooltipPosition, setTooltipPosition] = useState<{
     x: number;
     y: number;
     isTouch: boolean;
   } | null>(null);
 
-  // Stable state for Context consumption (Series highlighting, Cursor snapping)
-  // Only updates when the DATA point changes or snap position changes.
   const [stableHoverState, setStableHoverState] =
     useState<HoverState<T> | null>(null);
 
   const setHoverStateCallback = useCallback(
     (state: HoverState<T> | null) => {
-      // Always update volatile tooltip position
       if (state) {
         setTooltipPosition({
           x: state.tooltipX,
@@ -118,30 +113,18 @@ export function Root<T>({
         setTooltipPosition(null);
       }
 
-      // Only update stable state if data reference changes (optimization)
-      // or if we have no state (reset)
       const nextData = state?.data || null;
 
       if (nextData !== activeDataRef.current) {
         activeDataRef.current = nextData;
         setActiveData(nextData);
         onValueChange?.(nextData);
-        // Only trigger context update when data actually changes
         setStableHoverState(state);
       } else if (state === null && activeDataRef.current !== null) {
-        // Handle clearing state
         activeDataRef.current = null;
         setActiveData(null);
         onValueChange?.(null);
         setStableHoverState(null);
-      } else if (state && activeDataRef.current === nextData) {
-        // Data is same, but we might want to update cursorLine if it's different?
-        // For "nearest-x", cursorLineX is usually the same for same data.
-        // If we don't update this, Cursor might look laggy if it's supposed to follow mouse?
-        // If cursor follows mouse, it should subscribe to volatile state...
-        // But Cursor component currently reads from Context.
-        // Let's assume Cursor snaps to data (stable).
-        // So we DON'T update stableHoverState here to save re-renders.
       }
     },
     [onValueChange],
@@ -156,21 +139,29 @@ export function Root<T>({
   );
 
   const [margin, setMargin] = useState({
-    top: d3Config?.margin?.top ?? 40, // Increased to provide space for Header
+    top: d3Config?.margin?.top ?? 40,
     right: d3Config?.margin?.right ?? 20,
-    bottom: d3Config?.margin?.bottom ?? 50, // Reduced - X label is closer now
-    left: d3Config?.margin?.left ?? 70, // Reduced - Y tick labels are end-anchored
+    bottom: d3Config?.margin?.bottom ?? 50,
+    left: d3Config?.margin?.left ?? 70,
   });
 
-  // Reset margins if config changes
+  const lastUserMarginRef = useRef(d3Config?.margin);
   useEffect(() => {
-    setMargin({
-      top: d3Config?.margin?.top ?? 40,
-      right: d3Config?.margin?.right ?? 20,
-      bottom: d3Config?.margin?.bottom ?? 50,
-      left: d3Config?.margin?.left ?? 70,
-    });
-  }, [d3Config]);
+    if (
+      d3Config?.margin?.top !== lastUserMarginRef.current?.top ||
+      d3Config?.margin?.left !== lastUserMarginRef.current?.left ||
+      d3Config?.margin?.bottom !== lastUserMarginRef.current?.bottom ||
+      d3Config?.margin?.right !== lastUserMarginRef.current?.right
+    ) {
+      lastUserMarginRef.current = d3Config?.margin;
+      setMargin({
+        top: d3Config?.margin?.top ?? 40,
+        right: d3Config?.margin?.right ?? 20,
+        bottom: d3Config?.margin?.bottom ?? 50,
+        left: d3Config?.margin?.left ?? 70,
+      });
+    }
+  }, [d3Config?.margin]);
 
   const requestLayoutAdjustment = useCallback(
     (
@@ -181,7 +172,6 @@ export function Root<T>({
         left: number;
       }>,
     ) => {
-      // Cap margins at reasonable maximums to prevent runaway growth
       const MAX_MARGIN = 150;
 
       setMargin((prev) => {
@@ -231,8 +221,8 @@ export function Root<T>({
     return {
       showAxes: true,
       ...d3Config,
-      type, // Add chart type to config
-      margin, // Use state-managed margin
+      type,
+      margin,
     } as ChartConfig & {
       margin: { top: number; right: number; bottom: number; left: number };
       type?: string;
@@ -258,7 +248,6 @@ export function Root<T>({
 
     resizeObserver.observe(wrapperRef.current);
 
-    // Mobile check
     const checkMobile = () => {
       setIsMobile(window.matchMedia("(max-width: 600px)").matches);
     };
@@ -271,55 +260,9 @@ export function Root<T>({
     };
   }, []);
 
-  const seriesMapRef = useRef<Map<string, LegendItem[]>>(new Map());
-  const [, forceUpdate] = useState({});
+  // Create a new store instance for this chart
+  const seriesStoreInstance = useMemo(() => createSeriesStore(), []);
 
-  const registerSeries = useCallback((id: string, items: LegendItem[]) => {
-    seriesMapRef.current.set(id, items);
-    forceUpdate({});
-    return Array.from(seriesMapRef.current.keys()).indexOf(id);
-  }, []);
-
-  const unregisterSeries = useCallback((id: string) => {
-    if (seriesMapRef.current.has(id)) {
-      seriesMapRef.current.delete(id);
-      forceUpdate({});
-    }
-  }, []);
-
-  // Sync ref map to state for Legend consumption
-  // Actually, we can just derive legendItems from the ref on every render!
-  const legendItems = useMemo<LegendItem[]>(() => {
-    const items: LegendItem[] = [];
-    seriesMapRef.current.forEach((val) => items.push(...val));
-
-    if (items.length > 0) {
-      return items.map((item, index) => ({
-        ...item,
-        color: item.color || LEGEND_PALETTE[index % LEGEND_PALETTE.length],
-      }));
-    }
-
-    if (d3Config?.yAxisLabel) {
-      return [
-        {
-          label: d3Config.yAxisLabel,
-          color: LEGEND_PALETTE[0],
-          // Fallback item implies no series are registered (e.g. custom render).
-          // We shouldn't assume a cursor line is desired for custom visualizations.
-          hideCursor: true,
-        },
-      ];
-    }
-
-    return [];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seriesMapRef.current.size, d3Config?.yAxisLabel]);
-
-  // Sync internal refs with state refs for legacy support if needed
-  // (We use state for context propagation, but refs for immediate callback access if needed)
-
-  // Internal component to consume contexts and run effects
   const BehaviorRunner = () => {
     const eventsContext = useEventContext();
     const chartContext = value;
@@ -342,7 +285,7 @@ export function Root<T>({
       return () => {
         cleanups.forEach((cleanup) => cleanup());
       };
-    }, [behaviors, on, off]);
+    }, [behaviors, on, off, eventsContext]);
 
     return null;
   };
@@ -364,14 +307,11 @@ export function Root<T>({
         clientY = (event as React.MouseEvent).clientY;
       }
 
-      // Use elementsFromPoint to pierce through the InputSensor layer
       const elements = document.elementsFromPoint(clientX, clientY);
 
       for (const element of elements) {
-        // Skip the InputSensor itself (or any other non-data element if needed)
-        // We look for D3's __data__ property
         const data = (element as any).__data__;
-        if (data) {
+        if (data && !Array.isArray(data)) {
           return { element: element as Element, data: data as T };
         }
       }
@@ -394,11 +334,9 @@ export function Root<T>({
       setHoverState: setHoverStateCallback,
       resolveInteraction,
       isMobile,
-      registerSeries,
-      unregisterSeries,
       requestLayoutAdjustment,
       colorPalette: LEGEND_PALETTE,
-      legendItems,
+      seriesStore: seriesStoreInstance,
       x: x ? (x as any) : undefined,
       y: y ? (y as any) : undefined,
       setWidth,
@@ -416,10 +354,8 @@ export function Root<T>({
       setHoverStateCallback,
       resolveInteraction,
       isMobile,
-      legendItems,
-      registerSeries,
-      unregisterSeries,
       requestLayoutAdjustment,
+      seriesStoreInstance,
       x,
       y,
       variant,
@@ -428,16 +364,11 @@ export function Root<T>({
 
   const hasContent = React.Children.count(children) > 0;
   const showShorthand = !hasContent && (type || render || x || y);
-
   const hasPlot = hasContent && hasChildOfTypeDeep(children, Plot);
-
   const isAutoLayout = !hasPlot;
-
   const hasGrid = hasContent && hasChildOfTypeDeep(children, Grid);
   const hasAxis = hasContent && hasChildOfTypeDeep(children, Axis);
   const hasCursor = hasContent && hasChildOfTypeDeep(children, CursorWrapper);
-
-  // Determine active behaviors
   const effectiveBehaviors =
     behaviors === undefined ? [CartesianHover()] : behaviors;
   const hasInteractions = effectiveBehaviors.length > 0;
@@ -479,12 +410,10 @@ export function Root<T>({
                   style={{ overflow: "visible" }}
                   width={width}
                 >
-                  {/* Inner plot wrapper for InputSensor coordinate detection */}
                   <g
                     data-chart-inner-plot
                     transform={`translate(${config.margin.left}, ${config.margin.top})`}
                   >
-                    {/* Transparent rect covering the inner plot area for bounding calculations */}
                     <rect
                       fill="transparent"
                       height={height - config.margin.top - config.margin.bottom}
@@ -492,17 +421,14 @@ export function Root<T>({
                     />
                   </g>
 
-                  {/* Auto-inject Grid if using composition and not explicitly provided */}
                   {hasContent && !hasGrid && config.grid !== false && <Grid />}
 
-                  {/* Auto-inject CursorLine BEFORE children so it renders behind series */}
                   {hasContent && !hasCursor && !render && (
                     <CursorWrapper mode="line" />
                   )}
 
                   {children}
 
-                  {/* Auto-inject Axis if using composition and not explicitly provided */}
                   {hasContent && !hasAxis && config.showAxes !== false && (
                     <Axis />
                   )}
@@ -520,7 +446,6 @@ export function Root<T>({
               )}
             </div>
           ) : (
-            // Custom layout: Render children directly. Children must include <Plot> (or similar) to render chart.
             children
           )}
 

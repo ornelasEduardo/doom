@@ -1,16 +1,9 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { Chart } from "./Chart";
 
-// Mock ResizeObserver
 class MockResizeObserver {
   callback: ResizeObserverCallback;
   constructor(callback: ResizeObserverCallback) {
@@ -33,8 +26,6 @@ class MockResizeObserver {
 beforeAll(() => {
   global.ResizeObserver = MockResizeObserver;
 
-  // Force Polyfill SVG methods (JSDOM implementation might be partial or
-  // missing methods like inverse/matrixTransform)
   SVGSVGElement.prototype.createSVGPoint = function () {
     return {
       x: 0,
@@ -72,6 +63,13 @@ beforeAll(() => {
       }
     }
     (global as any).PointerEvent = MockPointerEvent;
+  }
+
+  if (!document.elementsFromPoint) {
+    document.elementsFromPoint = function (x: number, y: number) {
+      const el = document.elementFromPoint(x, y);
+      return el ? [el] : [];
+    } as any;
   }
 });
 
@@ -154,12 +152,7 @@ describe("Chart", () => {
       capturedCtx.showTooltip(event, data[0]);
     });
 
-    // Check if Tooltip rendered.
-    // Value is "10", Label is "A".
     await waitFor(() => {
-      // Use role heading to distinguish from axis text if necessary, or just
-      // by check document
-      // Note: Text variant="h4" usually renders h4
       expect(screen.getByRole("heading", { name: "10" })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "A" })).toBeInTheDocument();
     });
@@ -178,7 +171,6 @@ describe("Chart", () => {
   it("shows tooltip on mouse interaction", async () => {
     const { container } = render(<Chart data={data} x={x} y={y} />);
 
-    // Wait for chart to be ready (look for SVG)
     await waitFor(() => {
       expect(container.querySelector("svg")).toBeInTheDocument();
     });
@@ -187,34 +179,45 @@ describe("Chart", () => {
     const svg = container.querySelector("svg");
     const wrapper = svg?.parentElement as HTMLElement;
 
-    // Mock getBoundingClientRect for both container and plot wrapper
-    // Container
     vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-      left: 100,
-      top: 100,
+      left: 0,
+      top: 0,
       width: 500,
       height: 300,
-      x: 100,
-      y: 100,
-      bottom: 400,
-      right: 600,
+      x: 0,
+      y: 0,
+      bottom: 300,
+      right: 500,
       toJSON: () => {},
     } as DOMRect);
 
-    // Plot Wrapper (same dims for auto-layout effectively)
     vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue({
-      left: 100,
-      top: 100,
+      left: 0,
+      top: 0,
       width: 500,
       height: 300,
-      x: 100,
-      y: 100,
-      bottom: 400,
-      right: 600,
+      x: 0,
+      y: 0,
+      bottom: 300,
+      right: 500,
       toJSON: () => {},
     } as DOMRect);
 
-    // Also need container style for borders (Root reads computed style)
+    const innerPlot = container.querySelector("[data-chart-inner-plot]");
+    if (innerPlot) {
+      vi.spyOn(innerPlot, "getBoundingClientRect").mockReturnValue({
+        left: 70,
+        top: 40,
+        width: 410,
+        height: 210,
+        x: 70,
+        y: 40,
+        bottom: 250,
+        right: 480,
+        toJSON: () => {},
+      } as DOMRect);
+    }
+
     vi.spyOn(window, "getComputedStyle").mockImplementation((el) => {
       if (el === root) {
         return {
@@ -225,29 +228,18 @@ describe("Chart", () => {
       return {} as CSSStyleDeclaration;
     });
 
-    // Simulate mouse move
-    // clientX 160. Container Left 100. -> ContainerX = 60.
-    // Chart Left 100. -> ChartX = 60.
-    // Margin Left defaults to 70? Or calculated?
-    // In Chart.stories or implementation, default might be different.
-    // Usually margin is { left: 50... }.
-    // If left margin is > 60, we might clamp or miss.
-    // Let's use a clear value. Center of char: 100 + 250 = 350.
-
     act(() => {
-      const event = new MouseEvent("mousemove", {
+      const event = new PointerEvent("pointermove", {
         bubbles: true,
         clientX: 350,
         clientY: 250,
+        pointerType: "mouse",
+        isPrimary: true,
       });
-      // Dispatch on root container (where listener is)
       root.dispatchEvent(event);
     });
 
     await waitFor(() => {
-      // Should find active data tooltip. Data "A" or "B".
-      // At 350 (midway), likely between A and B or near B?
-      // Just check for *any* heading which indicates tooltip content.
       expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
     });
   });
@@ -287,17 +279,30 @@ describe("Chart", () => {
       toJSON: () => {},
     } as DOMRect);
 
+    const innerPlot = container.querySelector("[data-chart-inner-plot]");
+    if (innerPlot) {
+      vi.spyOn(innerPlot, "getBoundingClientRect").mockReturnValue({
+        left: 70,
+        top: 40,
+        width: 430,
+        height: 210,
+        x: 70,
+        y: 40,
+        bottom: 250,
+        right: 480,
+        toJSON: () => {},
+      } as DOMRect);
+    }
+
     act(() => {
-      // Simulate touch as pointer event (React abstracts this anyway, or we can use touchStart/Move)
-      // But Root uses onPointerMove.
-      // So let's fire pointerMove with isPrimary/pointerType='touch'
-      fireEvent.pointerMove(root, {
+      const event = new PointerEvent("pointermove", {
         bubbles: true,
         clientX: 150,
         clientY: 150,
         pointerType: "touch",
         isPrimary: true,
       });
+      root.dispatchEvent(event);
     });
 
     await waitFor(() => {
@@ -305,7 +310,7 @@ describe("Chart", () => {
     });
   });
 
-  it.skip("correctly resolves element data and ignores background", async () => {
+  it("correctly resolves element data and ignores background", async () => {
     let capturedCtx: any;
     render(
       <Chart
@@ -322,11 +327,9 @@ describe("Chart", () => {
     const mockElement = document.createElement("div");
     (mockElement as any).__data__ = data[0];
 
-    // Mock elementFromPoint to return our element
     const originalElementFromPoint = document.elementFromPoint;
     document.elementFromPoint = vi.fn(() => mockElement);
 
-    // Test successful resolution
     const result = capturedCtx.resolveInteraction({
       type: "touchmove",
       touches: [{ clientX: 10, clientY: 10 }],
@@ -338,7 +341,6 @@ describe("Chart", () => {
     expect(result.element).toBe(mockElement);
     expect(result.data).toBe(data[0]);
 
-    // Test Array data (background/group) - should be ignored
     (mockElement as any).__data__ = data;
     const badResult = capturedCtx.resolveInteraction({
       type: "touchmove",
@@ -349,7 +351,6 @@ describe("Chart", () => {
 
     expect(badResult).toBeNull();
 
-    // Cleanup
     document.elementFromPoint = originalElementFromPoint;
   });
 
@@ -357,7 +358,6 @@ describe("Chart", () => {
     const { container } = render(<Chart data={data} type="area" x={x} y={y} />);
 
     await waitFor(() => {
-      // Area charts should have both a fill path and a line path
       const paths = container.querySelectorAll("path");
       expect(paths.length).toBeGreaterThanOrEqual(2);
     });
@@ -375,7 +375,6 @@ describe("Chart", () => {
     );
 
     await waitFor(() => {
-      // Should have a gradient definition
       const defs = container.querySelector("defs");
       expect(defs).toBeInTheDocument();
 
@@ -390,7 +389,6 @@ describe("Chart", () => {
     );
 
     await waitFor(() => {
-      // Grid renders lines in a group
       const gridLines = container.querySelectorAll("line");
       expect(gridLines.length).toBeGreaterThan(0);
     });
@@ -413,19 +411,18 @@ describe("Chart", () => {
     });
   });
 
-  // TODO: Restore auto-layout logic in Axis component
-  it.skip("adjusts margins when labels are large (Auto-Layout)", async () => {
-    // Mock getBBox to return large width
+  it("adjusts margins when labels are large (Auto-Layout)", async () => {
     const originalGetBBox = SVGGraphicsElement.prototype.getBBox;
     SVGGraphicsElement.prototype.getBBox = function () {
-      // console.log("getBBox called on:", this.tagName);
-      // If this is a text element (axis label), return large width
-      if (this.tagName.toLowerCase() === "text") {
+      if (
+        this.tagName.toLowerCase() === "text" ||
+        this.tagName.toLowerCase() === "g"
+      ) {
         return {
-          x: -100, // Starts way to the left
+          x: -100,
           y: 0,
           width: 100,
-          height: 20,
+          height: 200,
         } as DOMRect;
       }
       return { x: 0, y: 0, width: 0, height: 0 } as DOMRect;
@@ -440,18 +437,11 @@ describe("Chart", () => {
       />,
     );
 
-    // Initial render might have left: 40.
-    // The auto-layout logic should run and detect minX = -100.
-    // Required left = 100 + 20 = 120.
-    // So margin.left should become 120.
-
     await waitFor(() => {
       const g = container.querySelector("g");
-      // transform="translate(120,20)"
-      expect(g).toHaveAttribute("transform", "translate(120,20)");
+      expect(g).toHaveAttribute("transform", "translate(120, 20)");
     });
 
-    // Cleanup
     SVGGraphicsElement.prototype.getBBox = originalGetBBox;
   });
 });

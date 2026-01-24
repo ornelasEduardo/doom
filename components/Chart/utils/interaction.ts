@@ -35,7 +35,6 @@ export function findNearestPoint2D<T>(
 
     const dx = pointerX - xPos;
     const dy = pointerY - yPos;
-    // Squared distance is enough for comparison, avoids sqrt
     const distSq = dx * dx + dy * dy;
 
     if (distSq < closestDist) {
@@ -57,11 +56,6 @@ export function findNearestDataPoint<T>(
   xAccessor: (d: T) => string | number,
 ): T | null {
   if ("invert" in xScale && typeof xScale.invert === "function") {
-    // Linear or time scale (continuous) - use bisector
-    // Generic linear scan - robust for unsorted data (O(N))
-    // We prefer robustness over O(log N) speed because chart datasets are usually
-    // small enough (< 5000 points) that linear scan is instant, and users often
-    // pass unsorted data.
     let closestDist = Infinity;
     let closestData: T | null = null;
     const x0 = xScale.invert(pointerX);
@@ -88,8 +82,6 @@ export function findNearestDataPoint<T>(
     let closestDist = Infinity;
     let closestData: T | null = null;
 
-    // TODO: Optimize this for large datasets (currently O(N))
-    // We could pre-calculate band centers or use scale.step() to estimate index
     for (const d of data) {
       const bandCenter =
         (xScale as (val: string | number) => number)(xAccessor(d)) +
@@ -102,15 +94,6 @@ export function findNearestDataPoint<T>(
     }
     return closestData;
   } else if ("step" in xScale) {
-    // Point scale (categorical)
-    const domain = xScale.domain();
-    const range = xScale.range();
-    const step = xScale.step();
-    // Estimate index based on range?
-    // Point scales are evenly spaced.
-    // range[0] is start, step is distance.
-    // pointerX approx index * step + range[0]
-    // let's stick to the simple iteration for now for correctness with Point scales which can be weird
     let closestDist = Infinity;
     let closestData: T | null = null;
 

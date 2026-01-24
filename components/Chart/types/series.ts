@@ -42,3 +42,12 @@ export interface SeriesProps<T> {
   // Behavior
   hideCursor?: boolean;
 }
+
+export interface Series {
+  id: string;
+  label: string;
+  color: string;
+  yAccessor?: Accessor<any, number>;
+  hideCursor?: boolean;
+  interactionMode?: "x" | "xy";
+}

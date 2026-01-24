@@ -13,7 +13,7 @@ interface ScatterSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
   y?: Accessor<T, number>;
-  size?: Accessor<T, number>; // New prop for bubble size
+  size?: Accessor<T, number>;
   color?: string;
   label?: string;
   hideCursor?: boolean;
@@ -63,21 +63,14 @@ export function ScatterSeries<T>({
       "scatter",
     );
 
-    // Create size scale if accessor exists
     let rScale: any = null;
     if (sizeAccessor) {
-      // Find max value for size domain
       const maxVal = Math.max(...data.map((d) => sizeAccessor(d) || 0));
       // Use sqrt scale for circular area sizing (area ~ value)
-      // range: [minRadius, maxRadius] e.g. [4, 20]
       rScale = (val: number) => {
         const normalized = Math.sqrt(val) / Math.sqrt(maxVal);
-        // Simple linear interpolation of sqrt (0..1) to (4..20)?
-        // Or just import scaleSqrt from d3-scale?
         return 4 + normalized * 16;
       };
-      // Note: importing d3 scale would be cleaner but this works for now without extra imports.
-      // Actually `createScales` uses d3. We can import d3 from utils/d3.
     }
 
     return { ...scales, rScale };
@@ -109,7 +102,6 @@ export function ScatterSeries<T>({
           const isHovered = !!(hoverState && hoverState.data === d);
           const isDimmed = !!(hoverState && !isHovered);
 
-          // Calculate radius
           let radius = 6;
           if (rScale && sizeAccessor) {
             radius = rScale(sizeAccessor(d));

@@ -1,9 +1,5 @@
 import { ChartCoordinates } from "../utils/coordinates";
 
-// =============================================================================
-// CHART EVENTS
-// =============================================================================
-
 export type ChartEventType =
   | "CHART_POINTER_DOWN"
   | "CHART_POINTER_MOVE"
@@ -19,10 +15,6 @@ export interface ChartEvent {
 
 export type ChartEventListener = (event: ChartEvent) => void;
 
-// =============================================================================
-// CHART EVENT CONTEXT
-// =============================================================================
-
 export interface EventContextValue<T = unknown> {
   // The Event Bus
   on: (type: ChartEventType, listener: ChartEventListener) => void;
@@ -33,10 +25,6 @@ export interface EventContextValue<T = unknown> {
   pointerPosition: ChartCoordinates | null;
   isWithinPlot: boolean;
 }
-
-// =============================================================================
-// BEHAVIORS
-// =============================================================================
 
 /**
  * A ChartBehavior is a function that attaches itself to the ChartContext/EventContext

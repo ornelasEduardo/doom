@@ -48,8 +48,6 @@ const data = [
   { label: "Jun", value: 45 },
 ];
 
-// --- TYPES ---
-
 export const LineChart: Story = {
   args: {
     data,
@@ -146,7 +144,6 @@ export const CustomRender1: Story = {
         alert(`You clicked on ${data.data.name}: ${data.value}`);
       }),
     ],
-    // Hierarchical data structure for Sunburst (wrapped in array to satisfy ChartProps constraint)
     data: [
       {
         name: "Total",
@@ -223,7 +220,6 @@ export const CustomRender1: Story = {
     render: (ctx: SeriesContext<any>) => {
       const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
 
-      // Clear previous rendering to avoid stale state on re-renders
       ctx.g.selectAll("*").remove();
 
       const g = ctx.g
@@ -418,8 +414,7 @@ export const CustomRender2: Story = {
           .attr("stroke", "var(--card-bg)")
           .attr("fill-opacity", 0.8)
           .style("rx", "var(--radius)")
-          .style("ry", "var(--radius)")
-          .style("cursor", "crosshair");
+          .style("ry", "var(--radius)");
 
         // Highlight based on state
         if (ctx.activeData) {
