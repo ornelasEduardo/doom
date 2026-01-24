@@ -3,6 +3,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
+import { InteractionType } from "../../types/interaction";
 import { ScatterSeriesWrapper } from "./ScatterSeries";
 
 const useChartContextMock = vi.fn();
@@ -26,7 +27,10 @@ describe("ScatterSeries", () => {
     config: { margin: { top: 0, left: 0, right: 0, bottom: 0 } },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
-    hoverState: null,
+    interactionStore: {
+      useStore: (selector: any) => selector({ interactions: new Map() }),
+      getState: () => ({ interactions: new Map() }),
+    },
   };
 
   beforeEach(() => {
@@ -113,10 +117,31 @@ describe("ScatterSeries", () => {
   });
 
   it("applies dimming opacity when another point is hovered", () => {
-    // Hover the second item
+    const localData = [
+      { id: 1, x: 10, y: 100 },
+      { id: 2, x: 20, y: 200 },
+      { id: 3, x: 30, y: 150 },
+    ];
+    const targetedPoint = localData[1];
+
+    const interactionState = {
+      interactions: new Map([
+        [
+          InteractionType.HOVER,
+          {
+            target: { data: targetedPoint, coordinate: { x: 20, y: 200 } },
+          },
+        ],
+      ]),
+    };
+
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      hoverState: { data: defaultContext.data[1] },
+      data: localData,
+      interactionStore: {
+        ...defaultContext.interactionStore,
+        useStore: (selector: any) => selector(interactionState),
+      },
     });
 
     const { container } = render(
@@ -127,8 +152,16 @@ describe("ScatterSeries", () => {
 
     const circles = container.querySelectorAll("circle");
 
-    expect(circles[0].getAttribute("style")).toContain("opacity: 0.6");
-    expect(circles[1].getAttribute("style")).toContain("opacity: 0.6");
-    expect(circles[2].getAttribute("style")).not.toContain("opacity: 0.6");
+    const getPoint = (idx: number) =>
+      Array.from(circles).find(
+        (c) => c.getAttribute("data-index") === String(idx),
+      );
+
+    // Point 0 (x=10) - Not hovered, should be dimmed
+    expect(getPoint(0)?.getAttribute("style")).toMatch(/opacity:\s*0\.6/);
+    // Point 1 (x=20) - Hovered, should NOT be dimmed
+    expect(getPoint(1)?.getAttribute("style")).not.toMatch(/opacity:\s*0\.6/);
+    // Point 2 (x=30) - Not hovered, should be dimmed
+    expect(getPoint(2)?.getAttribute("style")).toMatch(/opacity:\s*0\.6/);
   });
 });

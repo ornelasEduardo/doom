@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
 import { Accessor } from "../../types";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { useSeriesRegistration } from "../../utils/hooks";
 import { createScales } from "../../utils/scales";
@@ -17,6 +19,26 @@ interface ScatterSeriesProps<T> {
   color?: string;
   label?: string;
   hideCursor?: boolean;
+}
+
+/**
+ * Resolves the visual interaction state for a specific data point.
+ */
+function getPointInteractionState<T>(
+  data: T,
+  hover: HoverInteraction<T> | null,
+  cx: number,
+  cy: number,
+) {
+  const isHovered =
+    hover?.target?.data === data ||
+    (hover?.target?.coordinate &&
+      Math.abs(hover.target.coordinate.x - cx) < 0.1 &&
+      Math.abs(hover.target.coordinate.y - cy) < 0.1);
+
+  const isDimmed = !!hover?.target && !isHovered;
+
+  return { isHovered, isDimmed };
 }
 
 export function ScatterSeries<T>({
@@ -35,8 +57,9 @@ export function ScatterSeries<T>({
     config,
     x: contextX,
     y: contextY,
-    hoverState,
   } = useChartContext<T>();
+
+  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
 
   const data = localData || contextData;
   const xAccessor =
@@ -99,8 +122,13 @@ export function ScatterSeries<T>({
         data.forEach((d, i) => {
           const cx = (xScale as any)(xAccessor(d));
           const cy = yScale(yAccessor(d));
-          const isHovered = !!(hoverState && hoverState.data === d);
-          const isDimmed = !!(hoverState && !isHovered);
+
+          const { isHovered, isDimmed } = getPointInteractionState(
+            d,
+            hover,
+            cx,
+            cy,
+          );
 
           let radius = 6;
           if (rScale && sizeAccessor) {
@@ -111,7 +139,8 @@ export function ScatterSeries<T>({
             <SeriesPoint
               key={i}
               color={strokeColor}
-              hoverRadius={radius}
+              data-index={i}
+              hoverRadius={radius + 4}
               isDimmed={isDimmed}
               isHovered={isHovered}
               radius={radius}

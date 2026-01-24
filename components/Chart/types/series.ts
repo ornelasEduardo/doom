@@ -2,7 +2,7 @@ import React from "react";
 
 import { Accessor } from "./accessors";
 import { SeriesType } from "./common";
-import { SeriesContext } from "./context";
+import { RenderFrame } from "./context";
 
 // =============================================================================
 // SERIES PROPS - Per-series configuration
@@ -33,7 +33,7 @@ export interface SeriesProps<T> {
   renderTooltip?: (data: T) => React.ReactNode;
 
   // Full D3 control - overrides type/x/y
-  render?: (ctx: SeriesContext<T>) => void;
+  render?: (frame: RenderFrame<T>) => void;
 
   // Layout
   className?: string;

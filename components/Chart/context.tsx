@@ -1,13 +1,8 @@
 import { createContext, useContext } from "react";
 
+import type { InteractionStore } from "./state/store/stores/interaction/interaction.store";
 import type { SeriesStore } from "./state/store/stores/series/series.store";
-import {
-  Accessor,
-  ChartConfig,
-  HoverState,
-  SeriesContext,
-  SeriesType,
-} from "./types";
+import { Accessor, ChartConfig, SeriesContext, SeriesType } from "./types";
 
 export interface ChartContextValue<T = unknown> {
   data: T[];
@@ -32,6 +27,7 @@ export interface ChartContextValue<T = unknown> {
   ) => { element: Element; data: T } | null;
 
   seriesStore: SeriesStore;
+  interactionStore: InteractionStore;
 
   requestLayoutAdjustment?: (
     suggestedMargin: Partial<{
@@ -41,9 +37,6 @@ export interface ChartContextValue<T = unknown> {
       left: number;
     }>,
   ) => void;
-
-  setHoverState?: (state: HoverState<T> | null) => void;
-  hoverState?: HoverState<T> | null;
 
   type?: SeriesType;
   render?: (context: SeriesContext<T>) => void;

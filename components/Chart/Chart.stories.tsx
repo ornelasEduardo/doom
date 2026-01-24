@@ -9,13 +9,14 @@ import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
+import { Chip } from "../Chip/Chip";
 import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { ElementHover } from "./behaviors";
+import { Highlight, ElementHover } from "./behaviors";
 import { Chart } from "./Chart";
-import { ChartBehavior, SeriesContext } from "./types";
+import { ChartBehavior, RenderFrame } from "./types";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -140,6 +141,16 @@ export const CustomRender1: Story = {
         targetResolver: (el) =>
           el.tagName === "path" && el.classList.contains("arc"),
       }),
+      Highlight({
+        selector: ".arc",
+        identify: (d) => d.data.name,
+        onUpdate: (selection, { isHighlighted, isDimmed }) => {
+          selection
+            .transition()
+            .duration(200)
+            .style("opacity", isHighlighted ? 1 : isDimmed ? 0.3 : 0.8);
+        },
+      }),
       ClickBehavior((data) => {
         alert(`You clicked on ${data.data.name}: ${data.value}`);
       }),
@@ -217,17 +228,15 @@ export const CustomRender1: Story = {
         </Text>
       </Card>
     ),
-    render: (ctx: SeriesContext<any>) => {
-      const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
+    render: (frame: RenderFrame<any>) => {
+      const { container, size } = frame;
+      const radius = size.radius;
 
-      ctx.g.selectAll("*").remove();
+      container.selectAll("*").remove();
 
-      const g = ctx.g
+      const g = container
         .append("g")
-        .attr(
-          "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
-        );
+        .attr("transform", `translate(${size.width / 2},${size.height / 2})`);
 
       // Manual vivid palette for sunburst
       // Use Theme colors (Doom Palette)
@@ -241,7 +250,9 @@ export const CustomRender1: Story = {
       ]);
 
       // Extract root from array wrapper if needed
-      const hierarchyData = Array.isArray(ctx.data) ? ctx.data[0] : ctx.data;
+      const hierarchyData = Array.isArray(frame.container.datum())
+        ? (frame.container.datum() as any)[0]
+        : frame.container.datum();
 
       // Create hierarchy
       const root = d3Hierarchy
@@ -264,8 +275,7 @@ export const CustomRender1: Story = {
         .cornerRadius(4);
 
       // Draw arcs
-      const paths = g
-        .selectAll("path")
+      g.selectAll("path")
         .data(root.descendants())
         .enter()
         .append("path")
@@ -286,21 +296,6 @@ export const CustomRender1: Story = {
         .style("opacity", 0.8)
         .style("cursor", "pointer")
         .style("transition", "opacity 0.2s ease");
-
-      // Interactive opacity
-      if (ctx.activeData) {
-        // Find ancestry path
-        let current = ctx.activeData;
-        const path = new Set();
-        while (current) {
-          path.add(current);
-          current = current.parent;
-        }
-
-        paths.style("opacity", (d: any) => (path.has(d) ? 1 : 0.3));
-      } else {
-        paths.style("opacity", 0.8);
-      }
 
       // Add Labels
       g.selectAll("text")
@@ -336,6 +331,13 @@ export const CustomRender2: Story = {
       ElementHover({
         targetResolver: (el) =>
           el.tagName === "rect" && el.classList.contains("treemap-node"),
+      }),
+      Highlight({
+        selector: ".treemap-node",
+        identify: (d) => d.data.name,
+        onUpdate: (selection, { isHighlighted }) => {
+          selection.attr("fill-opacity", isHighlighted ? 1 : 0.8);
+        },
       }),
     ],
     data: [
@@ -376,19 +378,22 @@ export const CustomRender2: Story = {
         </Text>
       </Card>
     ),
-    render: (ctx: SeriesContext<any>) => {
+    render: (frame: RenderFrame<any>) => {
+      const { container, size } = frame;
       import("d3-hierarchy").then((d3Hierarchy) => {
+        // Extraction of original data from hierarchy if needed
+        const rawData = container.datum() as any[];
+
         const root = d3Hierarchy
           .stratify<any>()
           .id((d) => d.name)
-          .parentId((d) => d.parent)(ctx.data)
+          .parentId((d) => d.parent)(rawData)
           .sum((d) => d.value)
           .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-        d3Hierarchy
-          .treemap<any>()
-          .size([ctx.innerWidth, ctx.innerHeight])
-          .padding(4)(root);
+        d3Hierarchy.treemap<any>().size([size.width, size.height]).padding(4)(
+          root,
+        );
 
         const colors = [
           "var(--primary)",
@@ -398,7 +403,7 @@ export const CustomRender2: Story = {
           "var(--warning)",
         ];
 
-        const nodes = ctx.g
+        const nodes = container
           .selectAll("g")
           .data(root.leaves())
           .enter()
@@ -415,14 +420,6 @@ export const CustomRender2: Story = {
           .attr("fill-opacity", 0.8)
           .style("rx", "var(--radius)")
           .style("ry", "var(--radius)");
-
-        // Highlight based on state
-        if (ctx.activeData) {
-          nodes
-            .filter((d: any) => d.data === ctx.activeData)
-            .select("rect")
-            .attr("fill-opacity", 1);
-        }
 
         nodes
           .append("text")
@@ -487,8 +484,8 @@ export const IntegratedChart: Story = {
     },
   },
   render: (args: any) => {
-    const [activeData, setActiveData] = useState<any>(null);
-    const currentData = activeData || args.data[args.data.length - 1];
+    const [hoveredData, setHoveredData] = useState<any>(null);
+    const currentData = hoveredData || args.data[args.data.length - 1];
 
     const currentIndex = args.data.indexOf(currentData);
     const prevData = args.data[currentIndex - 1];
@@ -527,7 +524,7 @@ export const IntegratedChart: Story = {
           <Chart
             {...args}
             renderTooltip={() => null}
-            onValueChange={setActiveData}
+            onValueChange={setHoveredData}
           />
         </Stack>
         <Stack gap={4} style={{ padding: "0 20px 20px" }}>
@@ -900,6 +897,52 @@ export const ScatterPlot: Story = {
           showDots: true,
         }}
         data={data}
+        renderTooltip={(data: any) => (
+          <Card
+            className="p-3"
+            style={{
+              minWidth: 220,
+            }}
+          >
+            <Stack gap={4}>
+              {/* Header */}
+              <Flex align="center" justify="space-between">
+                <Text variant="body">City Analytics</Text>
+                <Chip size="xs" variant="primary">
+                  <Text variant="small">Group {data.group}</Text>
+                </Chip>
+              </Flex>
+
+              {/* Main Value */}
+              <Text variant="h3">{data.happiness.toFixed(2)}</Text>
+
+              {/* Divider */}
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: "#1a1f26",
+                  width: "100%",
+                }}
+              />
+
+              {/* Metadata */}
+              <Stack gap={2}>
+                <Flex align="center" justify="space-between">
+                  <Text color="muted" variant="small">
+                    Annual Income
+                  </Text>
+                  <Text variant="body">${data.income.toLocaleString()}</Text>
+                </Flex>
+                <Flex align="center" justify="space-between">
+                  <Text color="muted" variant="small">
+                    Population Density
+                  </Text>
+                  <Text variant="body">{data.population}k</Text>
+                </Flex>
+              </Stack>
+            </Stack>
+          </Card>
+        )}
         style={{ width: "100%", maxWidth: 800, height: 400 }}
         subtitle="Bubble size represents population density"
         title="Income vs Happiness (50 Cities)"

@@ -1,14 +1,20 @@
 "use strict";
 
 import { CurveFactory } from "d3-shape";
-import { useEffect, useId, useMemo } from "react";
+import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import {
+  removeInteraction,
+  upsertInteraction,
+  useInteraction,
+} from "../../state/store/stores/interaction/interaction.store";
 import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/stores/series/series.store";
 import { Accessor } from "../../types";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 import { createScales } from "../../utils/scales";
@@ -49,12 +55,13 @@ export function LineSeries<T>({
     config,
     x: contextX,
     y: contextY,
-    setHoverState,
+    interactionStore,
     resolveInteraction,
     isMobile,
-    hoverState,
     seriesStore,
   } = useChartContext<T>();
+
+  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
 
   const data = localData || contextData;
 
@@ -162,8 +169,29 @@ export function LineSeries<T>({
               styles: {},
               gradientId: "",
               isMobile,
-              setHoverState,
+              interactionStore,
               resolveInteraction,
+              showTooltip: (event: any, dataPoint: T) => {
+                let dataPointX = 0;
+                if (scaleCtx.xScale && xAccessor) {
+                  dataPointX =
+                    (scaleCtx.xScale as any)(xAccessor(dataPoint)) ?? 0;
+                }
+                const containerRect = node
+                  .closest("[data-chart-container]")
+                  ?.getBoundingClientRect();
+                const tooltipX = event.clientX - (containerRect?.left || 0);
+                const tooltipY = event.clientY - (containerRect?.top || 0);
+                upsertInteraction(interactionStore, InteractionType.HOVER, {
+                  pointer: { x: tooltipX, y: tooltipY, isTouch: false },
+                  target: {
+                    data: dataPoint,
+                    coordinate: { x: dataPointX, y: tooltipY - margin.top },
+                  },
+                });
+              },
+              hideTooltip: () =>
+                removeInteraction(interactionStore, InteractionType.HOVER),
             } as any);
           }
         }}
@@ -206,7 +234,7 @@ export function LineSeries<T>({
       {(showDots || config.showDots) && scaleCtx && xAccessor && yAccessor && (
         <g className="chart-dots">
           {data.map((d, i) => {
-            const isHovered = hoverState?.data === d;
+            const isHovered = hover?.target?.data === d;
 
             return (
               <SeriesPoint
@@ -222,15 +250,15 @@ export function LineSeries<T>({
       )}
 
       {!(showDots || config.showDots) &&
-        hoverState &&
+        hover?.target &&
         scaleCtx &&
         xAccessor &&
         yAccessor && (
           <SeriesPoint
             color={strokeColor}
             isHovered={true}
-            x={(scaleCtx.xScale as any)(xAccessor(hoverState.data))}
-            y={scaleCtx.yScale(yAccessor(hoverState.data))}
+            x={(scaleCtx.xScale as any)(xAccessor(hover.target.data))}
+            y={scaleCtx.yScale(yAccessor(hover.target.data))}
           />
         )}
     </g>

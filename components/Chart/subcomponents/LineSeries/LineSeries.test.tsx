@@ -23,6 +23,10 @@ describe("LineSeries", () => {
     config: { margin: { top: 0, left: 0, right: 0, bottom: 0 } },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
+    interactionStore: {
+      useStore: (selector: any) => selector({ interactions: new Map() }),
+      getState: () => ({ interactions: new Map() }),
+    },
     seriesStore: {
       getState: () => ({ series: new Map(), processedSeries: [] }),
       setState: vi.fn(),

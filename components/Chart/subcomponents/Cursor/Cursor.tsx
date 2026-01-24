@@ -1,7 +1,7 @@
-"use strict";
-
 import { useChartContext } from "../../context";
+import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
 import { useSeries } from "../../state/store/stores/series/series.store";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import styles from "./Cursor.module.scss";
 
 /**
@@ -9,15 +9,17 @@ import styles from "./Cursor.module.scss";
  * Used to indicate which data point is currently hovered.
  */
 export function CursorLine() {
-  const { config, hoverState, height } = useChartContext();
+  const { config, height } = useChartContext();
   const series = useSeries();
+  const hover = useInteraction<HoverInteraction>(InteractionType.HOVER);
+
   const shouldShow =
-    series.length > 0 && series.some((s) => s.hideCursor !== true);
+    series.length > 0 && series.some((s: any) => s.hideCursor !== true);
 
   const { margin } = config;
   const innerHeight = height - margin.top - margin.bottom;
 
-  if (!hoverState) {
+  if (!hover?.target) {
     return null;
   }
 
@@ -26,7 +28,7 @@ export function CursorLine() {
     return null;
   }
 
-  const cx = hoverState.cursorLineX - margin.left;
+  const cx = hover.target.coordinate.x;
 
   return (
     <line

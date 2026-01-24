@@ -24,9 +24,8 @@ export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
       {
         label: props.label || "Series",
         color: props.color,
-        yAccessor: props.y,
+        y: props.y,
         hideCursor: props.hideCursor,
-        interactionMode: props.interactionMode,
       },
     ]);
     return () => {

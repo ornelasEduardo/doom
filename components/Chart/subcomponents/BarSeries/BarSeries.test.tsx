@@ -3,6 +3,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
+import { InteractionType } from "../../types/interaction";
 import { BarSeriesWrapper } from "./BarSeries";
 
 // Mock the context hook
@@ -28,7 +29,10 @@ describe("BarSeries", () => {
     config: { margin: { top: 0, left: 0, right: 0, bottom: 0 } },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
-    hoverState: null,
+    interactionStore: {
+      useStore: (selector: any) => selector({ interactions: new Map() }),
+      getState: () => ({ interactions: new Map() }),
+    },
     seriesStore: {
       getState: () => ({ series: new Map(), processedSeries: [] }),
       setState: vi.fn(),
@@ -120,9 +124,23 @@ describe("BarSeries", () => {
 
   it("applies dimming opacity when another bar is hovered", () => {
     // Hover the second item (B)
+    const hoverState = {
+      interactions: new Map([
+        [
+          InteractionType.HOVER,
+          {
+            target: { data: defaultContext.data[1] },
+          },
+        ],
+      ]),
+    };
+
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      hoverState: { data: defaultContext.data[1] },
+      interactionStore: {
+        ...defaultContext.interactionStore,
+        useStore: (selector: any) => selector(hoverState),
+      },
     });
 
     const { container } = render(

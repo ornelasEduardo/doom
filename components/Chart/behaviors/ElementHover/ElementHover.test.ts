@@ -1,6 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as interactionOps from "../../state/store/stores/interaction/interaction.store";
+import { InteractionType } from "../../types/interaction";
 import { ElementHover } from "./ElementHover";
+
+vi.mock("../../state/store/stores/interaction/interaction.store", () => ({
+  upsertInteraction: vi.fn(),
+  removeInteraction: vi.fn(),
+  useInteraction: vi.fn(),
+}));
 
 const createMockContext = (overrides: Record<string, unknown> = {}) => ({
   on: vi.fn(),
@@ -13,6 +21,10 @@ const createMockContext = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("ElementHover", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("registers event listeners", () => {
     const mockContext = createMockContext();
 
@@ -48,11 +60,11 @@ describe("ElementHover", () => {
   });
 
   it("updates hover state when targetResolver returns true", () => {
-    const setHoverState = vi.fn();
     const resolveInteraction = vi.fn();
+    const interactionStore = { getState: vi.fn(), setState: vi.fn() };
     const getChartContext = vi.fn().mockReturnValue({
       resolveInteraction,
-      setHoverState,
+      interactionStore,
     });
 
     const mockContext = createMockContext({ getChartContext });
@@ -80,24 +92,24 @@ describe("ElementHover", () => {
       coordinates: { chartX: 10, chartY: 20, containerX: 30, containerY: 40 },
     });
 
-    expect(setHoverState).toHaveBeenCalledWith(
+    expect(interactionOps.upsertInteraction).toHaveBeenCalledWith(
+      interactionStore,
+      InteractionType.HOVER,
       expect.objectContaining({
-        data: mockData,
-        cursorLineX: 10,
-        cursorLineY: 20,
-        tooltipX: 30,
-        tooltipY: 40,
-        isTouch: false,
+        target: {
+          data: mockData,
+          coordinate: { x: 10, y: 20 },
+        },
       }),
     );
   });
 
   it("does not update hover state when targetResolver returns false", () => {
-    const setHoverState = vi.fn();
     const resolveInteraction = vi.fn();
+    const interactionStore = { getState: vi.fn(), setState: vi.fn() };
     const getChartContext = vi.fn().mockReturnValue({
       resolveInteraction,
-      setHoverState,
+      interactionStore,
     });
 
     const mockContext = createMockContext({ getChartContext });
@@ -122,15 +134,18 @@ describe("ElementHover", () => {
       coordinates: { chartX: 0, chartY: 0, containerX: 0, containerY: 0 },
     });
 
-    expect(setHoverState).toHaveBeenCalledWith(null);
+    expect(interactionOps.removeInteraction).toHaveBeenCalledWith(
+      interactionStore,
+      InteractionType.HOVER,
+    );
   });
 
   it("transforms data using getData", () => {
-    const setHoverState = vi.fn();
     const resolveInteraction = vi.fn();
+    const interactionStore = { getState: vi.fn(), setState: vi.fn() };
     const getChartContext = vi.fn().mockReturnValue({
       resolveInteraction,
-      setHoverState,
+      interactionStore,
     });
 
     const mockContext = createMockContext({ getChartContext });
@@ -155,16 +170,20 @@ describe("ElementHover", () => {
       coordinates: { chartX: 0, chartY: 0, containerX: 0, containerY: 0 },
     });
 
-    expect(setHoverState).toHaveBeenCalledWith(
+    expect(interactionOps.upsertInteraction).toHaveBeenCalledWith(
+      interactionStore,
+      InteractionType.HOVER,
       expect.objectContaining({
-        data: { original: true, transformed: true },
+        target: expect.objectContaining({
+          data: { original: true, transformed: true },
+        }),
       }),
     );
   });
 
   it("clears hover state on leave", () => {
-    const setHoverState = vi.fn();
-    const getChartContext = vi.fn().mockReturnValue({ setHoverState });
+    const interactionStore = { getState: vi.fn(), setState: vi.fn() };
+    const getChartContext = vi.fn().mockReturnValue({ interactionStore });
 
     const mockContext = createMockContext({ getChartContext });
 
@@ -178,6 +197,9 @@ describe("ElementHover", () => {
 
     handleLeave?.();
 
-    expect(setHoverState).toHaveBeenCalledWith(null);
+    expect(interactionOps.removeInteraction).toHaveBeenCalledWith(
+      interactionStore,
+      InteractionType.HOVER,
+    );
   });
 });

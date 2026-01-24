@@ -12,9 +12,11 @@ import React, {
 import { CartesianHover } from "../../behaviors";
 import { ChartContext, ChartContextValue } from "../../context";
 import { EventsProvider, useEventContext } from "../../state/EventContext";
+import { createInteractionStore } from "../../state/store/stores/interaction/interaction.store";
 import { createSeriesStore } from "../../state/store/stores/series/series.store";
-import { ChartConfig, ChartProps, HoverState } from "../../types";
+import { ChartConfig, ChartProps } from "../../types";
 import { ChartBehavior } from "../../types/events";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
@@ -84,59 +86,29 @@ export function Root<T>({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(0);
-  const [activeData, setActiveData] = useState<T | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  const activeDataRef = useRef(activeData);
+  // Create stores
+  const seriesStoreInstance = useMemo(() => createSeriesStore(), []);
+  const interactionStoreInstance = useMemo(() => createInteractionStore(), []);
+
+  // Handle onValueChange via subscription
+  const lastValueRef = useRef<T | null>(null);
   useEffect(() => {
-    activeDataRef.current = activeData;
-  }, [activeData]);
+    return interactionStoreInstance.subscribe(() => {
+      const state = interactionStoreInstance.getState();
+      const hover = state.interactions.get(
+        InteractionType.HOVER,
+      ) as HoverInteraction<T>;
+      const data = hover?.target?.data ?? null;
 
-  const [tooltipPosition, setTooltipPosition] = useState<{
-    x: number;
-    y: number;
-    isTouch: boolean;
-  } | null>(null);
-
-  const [stableHoverState, setStableHoverState] =
-    useState<HoverState<T> | null>(null);
-
-  const setHoverStateCallback = useCallback(
-    (state: HoverState<T> | null) => {
-      if (state) {
-        setTooltipPosition({
-          x: state.tooltipX,
-          y: state.tooltipY,
-          isTouch: state.isTouch,
-        });
-      } else {
-        setTooltipPosition(null);
+      // Only notify if value actually changed
+      if (data !== lastValueRef.current) {
+        lastValueRef.current = data;
+        onValueChange?.(data);
       }
-
-      const nextData = state?.data || null;
-
-      if (nextData !== activeDataRef.current) {
-        activeDataRef.current = nextData;
-        setActiveData(nextData);
-        onValueChange?.(nextData);
-        setStableHoverState(state);
-      } else if (state === null && activeDataRef.current !== null) {
-        activeDataRef.current = null;
-        setActiveData(null);
-        onValueChange?.(null);
-        setStableHoverState(null);
-      }
-    },
-    [onValueChange],
-  );
-
-  const setActiveDataCallback = useCallback(
-    (d: T | null) => {
-      setActiveData(d);
-      onValueChange?.(d);
-    },
-    [onValueChange],
-  );
+    });
+  }, [interactionStoreInstance, onValueChange]);
 
   const [margin, setMargin] = useState({
     top: d3Config?.margin?.top ?? 40,
@@ -260,9 +232,6 @@ export function Root<T>({
     };
   }, []);
 
-  // Create a new store instance for this chart
-  const seriesStoreInstance = useMemo(() => createSeriesStore(), []);
-
   const BehaviorRunner = () => {
     const eventsContext = useEventContext();
     const chartContext = value;
@@ -329,13 +298,12 @@ export function Root<T>({
       height,
 
       styles: EMPTY_STYLES,
-      hoverState: stableHoverState,
-      setHoverState: setHoverStateCallback,
       resolveInteraction,
       isMobile,
       requestLayoutAdjustment,
       colorPalette: LEGEND_PALETTE,
       seriesStore: seriesStoreInstance,
+      interactionStore: interactionStoreInstance,
       x: x ? (x as any) : undefined,
       y: y ? (y as any) : undefined,
       setWidth,
@@ -347,12 +315,11 @@ export function Root<T>({
       config,
       width,
       height,
-      stableHoverState,
-      setHoverStateCallback,
       resolveInteraction,
       isMobile,
       requestLayoutAdjustment,
       seriesStoreInstance,
+      interactionStoreInstance,
       x,
       y,
       variant,
@@ -446,16 +413,9 @@ export function Root<T>({
             children
           )}
 
-          {isAutoLayout && withLegend && <Legend />}
+          {withLegend && <Legend />}
 
-          {activeData && tooltipPosition && (
-            <Tooltip
-              activeData={activeData}
-              containerRef={wrapperRef}
-              position={tooltipPosition}
-              renderTooltip={renderTooltip}
-            />
-          )}
+          <Tooltip containerRef={wrapperRef} renderTooltip={renderTooltip} />
         </div>
       </EventsProvider>
     </ChartContext.Provider>

@@ -4,8 +4,10 @@ import { useRef } from "react";
 import { Card } from "../../../Card/Card";
 import { Text } from "../../../Text/Text";
 import { useChartContext } from "../../context";
+import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
 import { useSeries } from "../../state/store/stores/series/series.store";
 import { resolveAccessor, Series } from "../../types";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import {
   Reposition,
   TOOLTIP_GAP_X,
@@ -15,25 +17,24 @@ import {
 import styles from "./Tooltip.module.scss";
 import { TooltipProps } from "./types";
 
-export function Tooltip<T>({
-  activeData,
-  position,
-  containerRef,
-  renderTooltip,
-}: TooltipProps<T>) {
+export function Tooltip<T>({ containerRef, renderTooltip }: TooltipProps<T>) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { x, y, config, variant } = useChartContext<T>();
   const series = useSeries();
+
+  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
+
+  const activeData = hover?.target?.data;
+  const position = hover?.pointer;
 
   if (!activeData || !position) {
     return null;
   }
 
-  // Calculate position using Reposition utility
   const { x: newX, y: newY } = new Reposition(tooltipRef.current)
     .anchor(position)
     .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
-    .align({ vertical: "center" }) // Center vertically on data point
+    .align({ vertical: "center" })
     .touchOffset(TOUCH_OFFSET_Y, position.isTouch ?? false)
     .edgeDetect({ container: containerRef })
     .resolve();

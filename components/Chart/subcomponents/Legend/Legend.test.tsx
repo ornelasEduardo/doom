@@ -17,8 +17,6 @@ const mockContext: ChartContextValue<unknown> = {
   },
   colorPalette: ["var(--primary)", "var(--secondary)"],
   styles: {},
-  hoverState: null,
-  setHoverState: vi.fn(),
   resolveInteraction: vi.fn(),
   type: "line",
   seriesStore: {

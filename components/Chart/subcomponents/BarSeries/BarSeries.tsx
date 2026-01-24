@@ -3,11 +3,13 @@
 import { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
 import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/stores/series/series.store";
 import { Accessor } from "../../types";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { createScales } from "../../utils/scales";
 import { createRoundedTopBarPath } from "../../utils/shapes";
@@ -37,9 +39,10 @@ export function BarSeries<T>({
     config,
     x: contextX,
     y: contextY,
-    hoverState,
     seriesStore,
   } = useChartContext<T>();
+
+  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
 
   const data = localData || contextData;
   const xAccessor =
@@ -98,8 +101,8 @@ export function BarSeries<T>({
         const w = "bandwidth" in xScale ? xScale.bandwidth() : 10;
         const h = innerHeight - yVal;
 
-        const isHovered = hoverState && hoverState.data === d;
-        const isDimmed = hoverState && !isHovered;
+        const isHovered = hover?.target?.data === d;
+        const isDimmed = !!hover?.target && !isHovered;
 
         return (
           <path

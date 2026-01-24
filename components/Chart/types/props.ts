@@ -3,7 +3,7 @@ import React from "react";
 import { Accessor } from "./accessors";
 import { SeriesType } from "./common";
 import { ChartConfig } from "./config";
-import { SeriesContext } from "./context";
+import { RenderFrame } from "./context";
 import { ChartBehavior } from "./events";
 
 export interface ChartProps<T = unknown> {
@@ -25,9 +25,9 @@ export interface ChartProps<T = unknown> {
   type?: SeriesType;
   x?: Accessor<T, string | number>;
   y?: Accessor<T, number>;
-  render?: (context: SeriesContext<T>) => void;
+  render?: (frame: RenderFrame<T>) => void;
   behaviors?: ChartBehavior[];
 }
 
 // Alias for backward compatibility
-export type DrawContext<T> = SeriesContext<T>;
+export type DrawContext<T> = RenderFrame<T>;

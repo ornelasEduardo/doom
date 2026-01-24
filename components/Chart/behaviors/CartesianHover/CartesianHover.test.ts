@@ -1,7 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  removeInteraction,
+  upsertInteraction,
+} from "../../state/store/stores/interaction/interaction.store";
 import { findNearestDataPoint } from "../../utils/interaction";
 import { CartesianHover } from "./CartesianHover";
+
+vi.mock("../../state/store/stores/interaction/interaction.store", () => ({
+  upsertInteraction: vi.fn(),
+  removeInteraction: vi.fn(),
+}));
 
 vi.mock("../../utils/interaction", () => ({
   findNearestDataPoint: vi.fn(),
@@ -73,7 +82,7 @@ describe("CartesianHover", () => {
 
   it("updates hover state based on dataResolver", () => {
     const on = vi.fn();
-    const setHoverState = vi.fn();
+    const interactionStore = { getState: vi.fn() };
     const getChartContext = vi.fn().mockReturnValue({
       data: [
         { x: 1, y: 10 },
@@ -87,9 +96,9 @@ describe("CartesianHover", () => {
       },
       x: (d: any) => d.x,
       y: (d: any) => d.y,
-      setHoverState,
+      interactionStore,
       seriesStore: {
-        getState: () => ({ derivedLegendItems: [] }),
+        getState: () => ({ processedSeries: [] }),
       },
     });
 
@@ -134,14 +143,18 @@ describe("CartesianHover", () => {
       },
     } as any);
 
-    expect(setHoverState).toHaveBeenCalledWith(
+    expect(upsertInteraction).toHaveBeenCalledWith(
+      interactionStore,
+      "hover",
       expect.objectContaining({
-        data: mockDataPoint,
+        target: expect.objectContaining({
+          data: mockDataPoint,
+        }),
       }),
     );
 
     // Case 2: Resolver returns FALSE (should CLEAR hover state)
-    setHoverState.mockClear();
+    vi.mocked(removeInteraction).mockClear();
     // y=10 is <= 15, should fail resolver
     (findNearestDataPoint as any).mockReturnValue({ x: 1, y: 10 });
 
@@ -156,6 +169,6 @@ describe("CartesianHover", () => {
       },
     } as any);
 
-    expect(setHoverState).toHaveBeenCalledWith(null);
+    expect(removeInteraction).toHaveBeenCalledWith(interactionStore, "hover");
   });
 });

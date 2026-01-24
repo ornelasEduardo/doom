@@ -16,41 +16,52 @@ export interface InteractionState {
 // HOVER STATE - Mouse/touch interaction state for tooltips and cursors
 // =============================================================================
 
+// =============================================================================
+// INTERACTION STORE TYPES
+// =============================================================================
+
+export enum InteractionType {
+  HOVER = "hover",
+  SELECTION = "selection",
+  ZOOM = "zoom",
+  PAN = "pan",
+  BRUSH = "brush",
+}
+
+export interface HoverInteraction<T = any> {
+  // The raw pointer position relative to the chart plot area
+  pointer: {
+    x: number;
+    y: number;
+    isTouch: boolean;
+  };
+
+  // The data point that was "snapped" to (if any)
+  target: {
+    data: T;
+    // The exact coordinates of this active data point (e.g. for snapping cursor)
+    coordinate: { x: number; y: number };
+  } | null;
+}
+
+export interface SelectionInteraction<T = any> {
+  selection: T[]; // Array of selected data objects
+  mode: "continuous" | "discrete"; // e.g. Brush vs Click
+}
+
+// =============================================================================
+// LEGACY Types (To be deprecated/removed)
+// =============================================================================
+
 /**
+ * @deprecated Use HoverInteraction from InteractionStore instead
  * Represents the current hover state during chart interaction.
- * Contains position data for both the cursor line (snapped to data) and
- * the tooltip (follows mouse).
  */
 export interface HoverState<T> {
-  /**
-   * X position for the cursor line (snapped to nearest data point).
-   * Relative to the chart SVG element, includes margin offset.
-   */
   cursorLineX: number;
-
-  /**
-   * Y position for the cursor line.
-   * Relative to the chart SVG element, includes margin offset.
-   */
   cursorLineY: number;
-
-  /**
-   * Raw pointer X position for tooltip tracking.
-   * Follows the actual mouse/touch position, not snapped to data.
-   * Relative to the chart wrapper element.
-   */
   tooltipX: number;
-
-  /**
-   * Raw pointer Y position for tooltip tracking.
-   * Follows the actual mouse/touch position.
-   * Relative to the chart wrapper element.
-   */
   tooltipY: number;
-
-  /** The data point being hovered */
   data: T;
-
-  /** Whether this is a touch interaction (vs mouse) */
   isTouch: boolean;
 }

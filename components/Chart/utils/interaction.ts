@@ -110,3 +110,14 @@ export function findNearestDataPoint<T>(
 
   return null;
 }
+
+/**
+ * Resolves the X coordinate for a given data value on the scale.
+ * Handles bandwidth centering for categorical scales.
+ */
+export function snapToData(scale: ChartXScale, value: string | number): number {
+  if ("bandwidth" in scale && typeof scale.bandwidth === "function") {
+    return (scale as any)(value) + scale.bandwidth() / 2;
+  }
+  return (scale as any)(value) ?? 0;
+}

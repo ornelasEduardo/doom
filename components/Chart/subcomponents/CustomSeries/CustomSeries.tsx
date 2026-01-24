@@ -6,6 +6,7 @@ import {
   unregisterSeries,
 } from "../../state/store/stores/series/series.store";
 import { SeriesProps } from "../../types";
+import { D3Selection } from "../../types/selection";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 import { createScales } from "../../utils/scales";
@@ -16,10 +17,6 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
     width,
     height,
     config,
-    x: contextX,
-    y: contextY,
-    setHoverState,
-    resolveInteraction,
     isMobile,
     seriesStore,
   } = useChartContext<T>();
@@ -29,12 +26,8 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
 
   // Determine effective data and accessors
   const data = localData || contextData;
-  const xAccessor =
-    (localX ? resolveAccessor(localX) : undefined) ||
-    (contextX ? resolveAccessor(contextX) : undefined);
-  const yAccessor =
-    (localY ? resolveAccessor(localY) : undefined) ||
-    (contextY ? resolveAccessor(contextY) : undefined);
+  const xAccessor = localX ? resolveAccessor(localX) : undefined;
+  const yAccessor = localY ? resolveAccessor(localY) : undefined;
 
   const scaleCtx = useMemo(() => {
     if (!data.length || width <= 0 || height <= 0) {
@@ -91,84 +84,26 @@ export function CustomSeries<T>(props: SeriesProps<T>) {
       return;
     }
 
-    const selection = d3.select(gRef.current);
-
-    const showTooltip = (event: any, dataPoint: T) => {
-      // Logic from CartesianHover essentially, but manual triggering
-      // We need to calculate positions.
-      // Simplification: Use event coordinates.
-      const clientX = event.clientX;
-      const clientY = event.clientY;
-      const containerRect = gRef.current
-        ?.closest("[data-chart-container]")
-        ?.getBoundingClientRect();
-
-      const tooltipX = clientX - (containerRect?.left || 0);
-      const tooltipY = clientY - (containerRect?.top || 0);
-
-      // For cursor line, we'd need scales.
-      // Let's pass sensible defaults or calculated if scales exist.
-      let cursorLineX = 0;
-      if (scaleCtx?.xScale && xAccessor) {
-        cursorLineX = (scaleCtx.xScale as any)(xAccessor(dataPoint)) ?? 0;
-        cursorLineX += margin.left;
-      }
-
-      if (setHoverState) {
-        setHoverState({
-          cursorLineX,
-          cursorLineY: tooltipY,
-          tooltipX,
-          tooltipY,
-          data: dataPoint,
-          isTouch: event.type === "touchmove" || event.type === "touchstart",
-        });
-      }
-    };
-
-    const hideTooltip = () => {
-      if (setHoverState) {
-        setHoverState(null);
-      }
-    };
+    const container = d3.select(gRef.current) as unknown as D3Selection<T>;
 
     render({
-      g: selection,
-      data,
-      width,
-      height,
-      innerWidth: scaleCtx?.innerWidth ?? width - margin.left - margin.right,
-      innerHeight: scaleCtx?.innerHeight ?? height - margin.top - margin.bottom,
-      margin,
-      xScale: scaleCtx?.xScale,
-      yScale: scaleCtx?.yScale,
-      x: xAccessor,
-      y: yAccessor,
+      container,
+      size: {
+        width: scaleCtx?.innerWidth ?? width - margin.left - margin.right,
+        height: scaleCtx?.innerHeight ?? height - margin.top - margin.bottom,
+        radius: Math.min(width, height) / 2,
+      },
+      scales: {
+        x: scaleCtx?.xScale,
+        y: scaleCtx?.yScale,
+      },
+      theme: {
+        colors: [color || "var(--primary)"],
+        isMobile,
+      },
       config,
-      colors: [color || "var(--primary)"],
-      styles: {},
-      gradientId: "",
-      isMobile,
-      setHoverState: setHoverState!,
-      resolveInteraction: resolveInteraction!,
-      showTooltip,
-      hideTooltip,
-    } as any);
-  }, [
-    render,
-    data,
-    width,
-    height,
-    margin,
-    scaleCtx,
-    xAccessor,
-    yAccessor,
-    config,
-    color,
-    isMobile,
-    setHoverState,
-    resolveInteraction,
-  ]);
+    });
+  }, [render, data, width, height, margin, scaleCtx, config, color, isMobile]);
 
   if (!render) {
     return null;

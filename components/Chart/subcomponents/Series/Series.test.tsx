@@ -32,8 +32,11 @@ const mockContext: ChartContextValue<{ label: string; value: number }> = {
   },
   colorPalette: ["var(--primary)", "var(--secondary)"],
   styles: {},
-  hoverState: null,
-  setHoverState: vi.fn(),
+  interactionStore: {
+    useStore: (selector: any) => selector({ interactions: new Map() }),
+    getState: () => ({ interactions: new Map() }),
+    subscribe: vi.fn(() => vi.fn()),
+  } as any,
   resolveInteraction: vi.fn(),
   type: "line",
   seriesStore: {

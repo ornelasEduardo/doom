@@ -1,4 +1,9 @@
+import {
+  removeInteraction,
+  upsertInteraction,
+} from "../../state/store/stores/interaction/interaction.store";
 import { ChartBehavior, ChartEvent } from "../../types/events";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 
 export interface ElementHoverOptions {
   /**
@@ -20,7 +25,7 @@ export const ElementHover = (
   return ({ on, off, getChartContext }) => {
     const handleMove = (event: ChartEvent) => {
       const ctx = getChartContext();
-      if (!ctx || !ctx.resolveInteraction) {
+      if (!ctx || !ctx.resolveInteraction || !ctx.interactionStore) {
         return;
       }
 
@@ -34,12 +39,7 @@ export const ElementHover = (
           options.targetResolver &&
           !options.targetResolver(element as Element)
         ) {
-          // Found an element with data, but it didn't match the resolver.
-          // Should we clear hover state? Maybe. For now, let's assume if we are over *something* but it's not a target,
-          // we might want to clear.
-          // But maybe we are moving from target A to target B.
-          // If interaction returns something but resolver fails, it effectively means "nothing of interest here".
-          ctx.setHoverState?.(null);
+          removeInteraction(ctx.interactionStore, InteractionType.HOVER);
           return;
         }
 
@@ -48,44 +48,42 @@ export const ElementHover = (
           ? options.getData(element as Element, d3Data)
           : d3Data;
 
-        // We need to calculate tooltip positioning.
-        // Since we are doing Element hovering, we likely want the tooltip relative to the element OR cursor.
-        // ctx.setHoverState expects tooltipX/Y.
-
-        // Let's use the cursor position from the event for now as the "anchor",
-        // but ideally we could support element bounds.
-        // The Reposition class in the Tooltip component will handle the actual layout relative to this point.
-        // However, Reposition.anchor() takes a point.
-
-        // If we want to anchor to the Element, we should pass element bounds?
-        // Current setHoverState interface expects cursorLineX/Y and tooltipX/Y.
-        // Let's pass the cursor coordinates as the anchor.
-
         const isTouch =
           "touches" in event.nativeEvent ||
           "changedTouches" in event.nativeEvent;
 
-        ctx.setHoverState?.({
-          cursorLineX: event.coordinates.chartX, // Approximated
-          cursorLineY: event.coordinates.chartY,
-          tooltipX: event.coordinates.containerX,
-          tooltipY: event.coordinates.containerY,
-          data: finalData,
-          isTouch,
-        });
+        upsertInteraction<HoverInteraction>(
+          ctx.interactionStore,
+          InteractionType.HOVER,
+          {
+            pointer: {
+              x: event.coordinates.containerX,
+              y: event.coordinates.containerY,
+              isTouch,
+            },
+            target: {
+              data: finalData,
+              coordinate: {
+                x: event.coordinates.chartX,
+                y: event.coordinates.chartY,
+              },
+            },
+          },
+        );
       } else {
-        ctx.setHoverState?.(null);
+        removeInteraction(ctx.interactionStore, InteractionType.HOVER);
       }
     };
 
     const handleLeave = () => {
       const ctx = getChartContext();
-      ctx?.setHoverState?.(null);
+      if (ctx?.interactionStore) {
+        removeInteraction(ctx.interactionStore, InteractionType.HOVER);
+      }
     };
 
     on("CHART_POINTER_MOVE", handleMove);
     on("CHART_POINTER_LEAVE", handleLeave);
-    // Also handle click or down/up if needed? For hover, move is enough.
 
     return () => {
       off("CHART_POINTER_MOVE", handleMove);

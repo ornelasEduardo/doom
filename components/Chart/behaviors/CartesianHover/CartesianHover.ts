@@ -1,5 +1,10 @@
+import {
+  removeInteraction,
+  upsertInteraction,
+} from "../../state/store/stores/interaction/interaction.store";
 import { ChartBehavior, ChartEvent } from "../../types/events";
 import { resolveAccessor } from "../../types/index";
+import { HoverInteraction, InteractionType } from "../../types/interaction";
 import {
   findNearestDataPoint,
   findNearestPoint2D,
@@ -20,10 +25,8 @@ export const CartesianHover = (
   config: CartesianHoverOptions = { mode: "nearest-x" },
 ): ChartBehavior => {
   return ({ on, off, getChartContext }) => {
-    // We defer accessing context until the event fires to ensure we always use the latest state
     const updateTooltip = (event: ChartEvent) => {
       const chartContext = getChartContext();
-      // Safety check in case context is not available
       if (!chartContext) {
         return;
       }
@@ -35,14 +38,13 @@ export const CartesianHover = (
         config: chartConfig,
         x,
         y,
-        setHoverState,
+        interactionStore,
       } = chartContext;
 
       const c = event.coordinates;
 
-      // Correct strict "isWithinPlot" check to avoid "Strange Places" bug
       if (!c.isWithinPlot) {
-        setHoverState?.(null);
+        removeInteraction(interactionStore, InteractionType.HOVER);
         return;
       }
 
@@ -64,14 +66,13 @@ export const CartesianHover = (
 
       const { xScale, yScale } = scaleCtx;
 
-      // chartX is now relative to the inner plot group (already accounts for margins)
       let closestData: any = null;
 
       const processedSeries =
         chartContext.seriesStore.getState().processedSeries;
       const use2DSearch =
         processedSeries &&
-        processedSeries.some((s) => s.interactionMode === "xy");
+        processedSeries.some((s: any) => s.interactionMode === "xy");
 
       if (use2DSearch) {
         closestData = findNearestPoint2D(
@@ -84,7 +85,6 @@ export const CartesianHover = (
           resolveAccessor(y),
         );
       } else {
-        // Find nearest data point (1D X-axis search)
         closestData = findNearestDataPoint(
           c.chartX,
           data,
@@ -94,16 +94,12 @@ export const CartesianHover = (
       }
 
       if (closestData) {
-        // Apply resolver if present
         if (config.dataResolver && !config.dataResolver(closestData)) {
-          setHoverState?.(null);
+          removeInteraction(interactionStore, InteractionType.HOVER);
           return;
         }
 
         let dataPointX = 0;
-        // For scatter, we might want cursor line to be at the exact point X?
-        // Or if we hide cursor line for scatter, it doesn't matter.
-
         if ((xScale as any).bandwidth) {
           const val = resolveAccessor(x)(closestData);
           dataPointX =
@@ -113,25 +109,41 @@ export const CartesianHover = (
           dataPointX = xScale(val as any) || 0;
         }
 
+        // Default coordinate: snapped X, actual cursor Y
+        // (Could be expanded to snap Y if using findNearestPoint2D)
+        const coordinate = {
+          x: dataPointX,
+          y: c.chartY,
+        };
+
+        if (use2DSearch) {
+          coordinate.y = yScale(resolveAccessor(y)(closestData) as any);
+        }
+
         const isTouch =
           "touches" in event.nativeEvent ||
           "changedTouches" in event.nativeEvent;
 
-        setHoverState?.({
-          cursorLineX: dataPointX + margin.left,
-          cursorLineY: c.chartY + margin.top, // Use actual cursor Y for now (could snap to data Y)
-          tooltipX: c.containerX,
-          tooltipY: c.containerY,
-          data: closestData,
-          isTouch,
-        });
+        upsertInteraction<HoverInteraction>(
+          interactionStore,
+          InteractionType.HOVER,
+          {
+            pointer: { x: c.containerX, y: c.containerY, isTouch },
+            target: {
+              data: closestData,
+              coordinate,
+            },
+          },
+        );
       }
     };
 
     const handleMove = (event: ChartEvent) => updateTooltip(event);
     const handleLeave = () => {
       const ctx = getChartContext();
-      ctx?.setHoverState?.(null);
+      if (ctx?.interactionStore) {
+        removeInteraction(ctx.interactionStore, InteractionType.HOVER);
+      }
     };
 
     on("CHART_POINTER_MOVE", handleMove);
