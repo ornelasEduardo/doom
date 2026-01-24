@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as ChartContextModule from "../../context";
 import { CustomSeries } from "./CustomSeries";
 
-// Mock the context hook
 const useChartContextMock = vi.fn();
 vi.spyOn(ChartContextModule, "useChartContext").mockImplementation(
   useChartContextMock,
@@ -22,7 +21,12 @@ describe("CustomSeries", () => {
     config: { margin: { top: 0, left: 0, right: 0, bottom: 0 } },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
-    registerSeries: vi.fn(),
+    seriesStore: {
+      getState: () => ({ series: new Map(), processedSeries: [] }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn(),
+    },
   };
 
   beforeEach(() => {
@@ -44,18 +48,6 @@ describe("CustomSeries", () => {
     expect(context).toHaveProperty("g");
     expect(context).toHaveProperty("innerWidth");
     expect(context).toHaveProperty("innerHeight");
-  });
-
-  it("does NOT register a series", () => {
-    useChartContextMock.mockReturnValue(defaultContext);
-    // CustomSeries should bypass series registration
-    render(
-      <svg>
-        <CustomSeries render={() => {}} />
-      </svg>,
-    );
-
-    expect(defaultContext.registerSeries).not.toHaveBeenCalled();
   });
 
   it("renders null if no render prop is provided", () => {
@@ -80,18 +72,14 @@ describe("CustomSeries", () => {
 
     expect(renderSpy).toHaveBeenCalledTimes(1);
 
-    // clear the mock to ensure clean slate
     renderSpy.mockClear();
 
-    // Re-render with SAME props (simulating parent re-render)
-    // or context update that doesn't change critical config
     rerender(
       <svg>
         <CustomSeries render={renderSpy} />
       </svg>,
     );
 
-    // Should NOT have called render again because dependencies didn't change
     expect(renderSpy).not.toHaveBeenCalled();
   });
 });

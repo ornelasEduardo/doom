@@ -27,9 +27,6 @@ export interface ChartContextValue<T = unknown> {
   styles: Record<string, string>;
   variant?: "default" | "solid";
 
-  activeData: T | null;
-  setActiveData: (data: T | null) => void;
-
   resolveInteraction: (
     event: React.MouseEvent | React.TouchEvent,
   ) => { element: Element; data: T } | null;

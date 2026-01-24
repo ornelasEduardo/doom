@@ -29,6 +29,12 @@ describe("BarSeries", () => {
     x: (d: any) => d.x,
     y: (d: any) => d.y,
     hoverState: null,
+    seriesStore: {
+      getState: () => ({ series: new Map(), processedSeries: [] }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn(),
+    },
   };
 
   beforeEach(() => {

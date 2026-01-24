@@ -23,7 +23,12 @@ describe("LineSeries", () => {
     config: { margin: { top: 0, left: 0, right: 0, bottom: 0 } },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
-    registerSeries: vi.fn(),
+    seriesStore: {
+      getState: () => ({ series: new Map(), processedSeries: [] }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn(),
+    },
   };
 
   beforeEach(() => {

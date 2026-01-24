@@ -30,7 +30,20 @@ describe("Cursor", () => {
       data: { x: 50, y: 20 },
       isTouch: false,
     },
-    legendItems: [{ id: "series1", color: "red", yAccessor: (d: any) => d.y }],
+
+    seriesStore: {
+      getState: () => ({ series: new Map(), processedSeries: [] }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: (selector: any) => {
+        const state = {
+          series: new Map(),
+          processedSeries: [{ id: "series1", hideCursor: false }],
+        };
+
+        return selector(state);
+      },
+    },
   };
 
   beforeEach(() => {
@@ -147,6 +160,14 @@ describe("Cursor", () => {
         legendItems: [
           { label: "Series 1", color: "red", hideCursor: true }, // Bar series
         ],
+        seriesStore: {
+          ...defaultContext.seriesStore,
+          useStore: (selector: any) =>
+            selector({
+              series: new Map(),
+              processedSeries: [{ id: "series1", hideCursor: true }],
+            }),
+        },
       });
 
       const { container } = render(

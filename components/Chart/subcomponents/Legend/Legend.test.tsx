@@ -17,16 +17,29 @@ const mockContext: ChartContextValue<unknown> = {
   },
   colorPalette: ["var(--primary)", "var(--secondary)"],
   styles: {},
-  activeData: null,
-  setActiveData: vi.fn(),
   hoverState: null,
   setHoverState: vi.fn(),
-  legendItems: [
-    { label: "Series A", color: "red" },
-    { label: "Series B", color: "blue" },
-  ],
   resolveInteraction: vi.fn(),
   type: "line",
+  seriesStore: {
+    getState: () => ({
+      series: new Map(),
+      processedSeries: [
+        { id: "series-a", label: "Series A", color: "red" },
+        { id: "series-b", label: "Series B", color: "blue" },
+      ],
+    }),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    useStore: (selector: any) =>
+      selector({
+        series: new Map(),
+        processedSeries: [
+          { id: "series-a", label: "Series A", color: "red" },
+          { id: "series-b", label: "Series B", color: "blue" },
+        ],
+      }),
+  },
 };
 
 const renderWithContext = (
@@ -61,7 +74,15 @@ describe("Legend", () => {
   });
 
   it("returns null when no items", () => {
-    const emptyContext = { ...mockContext, legendItems: [] };
+    const emptyContext = {
+      ...mockContext,
+      legendItems: [],
+      seriesStore: {
+        ...mockContext.seriesStore,
+        useStore: (selector: any) =>
+          selector({ series: new Map(), processedSeries: [] }),
+      },
+    };
     const { container } = renderWithContext(<Legend />, emptyContext);
     expect(container.firstChild).toBeNull();
   });

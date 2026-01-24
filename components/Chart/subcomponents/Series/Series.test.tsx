@@ -32,14 +32,16 @@ const mockContext: ChartContextValue<{ label: string; value: number }> = {
   },
   colorPalette: ["var(--primary)", "var(--secondary)"],
   styles: {},
-  activeData: null,
-  setActiveData: vi.fn(),
   hoverState: null,
   setHoverState: vi.fn(),
-  legendItems: [],
-  registerSeries: vi.fn().mockReturnValue(0),
   resolveInteraction: vi.fn(),
   type: "line",
+  seriesStore: {
+    getState: () => ({ series: new Map(), processedSeries: [] }),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    useStore: vi.fn(),
+  },
 };
 
 const renderWithContext = (
@@ -66,13 +68,6 @@ describe("Series", () => {
       <Series className="custom-series" type="line" x="label" y="value" />,
     );
     expect(container.querySelector("g")).toHaveClass("custom-series");
-  });
-
-  it("registers with context for legend", () => {
-    renderWithContext(
-      <Series label="Test Series" type="line" x="label" y="value" />,
-    );
-    expect(mockContext.registerSeries).toHaveBeenCalled();
   });
 
   it("uses series-specific data when provided", () => {

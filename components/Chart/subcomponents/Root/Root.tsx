@@ -327,8 +327,7 @@ export function Root<T>({
       config,
       width,
       height,
-      activeData,
-      setActiveData: setActiveDataCallback,
+
       styles: EMPTY_STYLES,
       hoverState: stableHoverState,
       setHoverState: setHoverStateCallback,
@@ -348,8 +347,6 @@ export function Root<T>({
       config,
       width,
       height,
-      activeData,
-      setActiveDataCallback,
       stableHoverState,
       setHoverStateCallback,
       resolveInteraction,
