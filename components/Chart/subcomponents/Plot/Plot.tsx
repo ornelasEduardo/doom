@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 
 import { useChartContext } from "../../context";
+import { updateChartDimensions } from "../../state/store/chart.store";
 import styles from "../Root/Root.module.scss";
 
 export interface PlotProps {
@@ -12,19 +13,25 @@ export interface PlotProps {
 }
 
 export function Plot({ children, className, style }: PlotProps) {
-  const { setWidth, setHeight, setPlotRef, config } = useChartContext();
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const { chartStore } = useChartContext();
+  const dimensions = chartStore.useStore((s) => s.dimensions);
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const plotRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
-    if (wrapperRef.current) {
-      setPlotRef?.(wrapperRef.current);
-    }
-  }, [setPlotRef]);
-  const [localWidth, setLocalWidth] = React.useState(0);
-  const [localHeight, setLocalHeight] = React.useState(0);
+    chartStore.setState((prev) => ({
+      elements: {
+        ...prev.elements,
+        svg: svgRef.current,
+        plot: plotRef.current,
+      },
+    }));
+  }, [chartStore]);
 
   useEffect(() => {
-    if (!wrapperRef.current) {
+    const parent = svgRef.current?.parentElement;
+    if (!parent) {
       return;
     }
 
@@ -39,59 +46,44 @@ export function Plot({ children, className, style }: PlotProps) {
           w = entry.contentRect.width;
           h = entry.contentRect.height;
         }
-        setLocalWidth(w);
-        setLocalHeight(h);
-
-        // Update context if setters are available
-        if (setWidth) {
-          setWidth(w);
-        }
-        if (setHeight) {
-          setHeight(h);
-        }
+        updateChartDimensions(chartStore, w, h);
       }
     });
 
-    resizeObserver.observe(wrapperRef.current);
+    resizeObserver.observe(parent);
+    return () => resizeObserver.disconnect();
+  }, [chartStore]);
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [setWidth, setHeight]);
+  if (dimensions.width <= 0) {
+    return null;
+  }
 
   return (
     <div
-      ref={wrapperRef}
       className={`${styles.responsiveWrapper} ${className || ""}`}
       style={{ flex: 1, position: "relative", minHeight: 0, ...style }}
     >
-      {localWidth > 0 && localHeight > 0 && (
-        <svg
-          data-chart-plot
-          className="chart-plot"
-          height={localHeight}
-          style={{ overflow: "visible" }}
-          width={localWidth}
+      <svg
+        ref={svgRef}
+        data-chart-plot
+        className="chart-plot"
+        height={dimensions.height}
+        style={{ overflow: "visible" }}
+        width={dimensions.width}
+      >
+        <g
+          ref={plotRef}
+          data-chart-inner-plot
+          transform={`translate(${dimensions.margin.left}, ${dimensions.margin.top})`}
         >
-          <g
-            data-chart-inner-plot
-            transform={`translate(${config.margin.left}, ${config.margin.top})`}
-          >
-            <rect
-              fill="transparent"
-              height={Math.max(
-                0,
-                localHeight - config.margin.top - config.margin.bottom,
-              )}
-              width={Math.max(
-                0,
-                localWidth - config.margin.left - config.margin.right,
-              )}
-            />
-          </g>
-          {children}
-        </svg>
-      )}
+          <rect
+            fill="transparent"
+            height={dimensions.innerHeight}
+            width={dimensions.innerWidth}
+          />
+        </g>
+        {children}
+      </svg>
     </div>
   );
 }

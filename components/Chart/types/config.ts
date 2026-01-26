@@ -2,7 +2,7 @@ import * as d3Shape from "d3-shape";
 
 import { SeriesType } from "./common";
 
-export interface ChartConfig {
+export interface Config {
   margin?: { top: number; right: number; bottom: number; left: number };
   width?: number;
   height?: number;

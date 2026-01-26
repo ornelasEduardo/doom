@@ -77,8 +77,8 @@ describe("Reposition", () => {
     it("sets anchor point correctly", () => {
       const pos = new Reposition(null).anchor({ x: 150, y: 200 }).resolve();
 
-      // Default gap is 12 horizontal, 8 vertical
-      expect(pos.x).toBe(150 + 12); // anchor + gapX
+      // Default gap is 24 horizontal, 8 vertical
+      expect(pos.x).toBe(150 + 24); // anchor + gapX
       expect(pos.y).toBe(200 + 8); // anchor + gapY
     });
   });
@@ -154,8 +154,8 @@ describe("Reposition", () => {
         .align({ horizontal: "center" })
         .resolve();
 
-      // x = anchorX + gapX - (width/2) = 100 + 12 - 100 = 12
-      expect(pos.x).toBe(12);
+      // x = anchorX + gapX - (width/2) = 100 + 24 - 100 = 24
+      expect(pos.x).toBe(24);
     });
 
     it("horizontal right alignment", () => {
@@ -165,8 +165,8 @@ describe("Reposition", () => {
         .align({ horizontal: "right" })
         .resolve();
 
-      // x = anchorX + gapX - width = 100 + 12 - 200 = -88
-      expect(pos.x).toBe(-88);
+      // x = anchorX + gapX - width = 100 + 24 - 200 = -76
+      expect(pos.x).toBe(-76);
     });
   });
 

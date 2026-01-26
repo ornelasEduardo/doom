@@ -24,6 +24,74 @@ describe("Axis", () => {
     },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
+    chartStore: {
+      getState: () => ({
+        series: new Map(),
+        processedSeries: [],
+        interactions: new Map(),
+        scales: {
+          x: Object.assign(
+            vi.fn((val: any) => val),
+            {
+              domain: vi.fn(),
+              range: vi.fn(() => [0, 200]),
+              copy: vi.fn(() => vi.fn((val: any) => val)),
+              ticks: vi.fn(() => [0, 50, 100]),
+            },
+          ),
+          y: Object.assign(
+            vi.fn((val: any) => val),
+            {
+              domain: vi.fn(),
+              range: vi.fn(() => [200, 0]),
+              copy: vi.fn(() => vi.fn((val: any) => val)),
+              ticks: vi.fn(() => [0, 10, 20]),
+            },
+          ),
+        },
+        dimensions: {
+          width: 200,
+          height: 200,
+          margin: { top: 20, right: 20, bottom: 20, left: 20 },
+        },
+        data: [],
+      }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn((selector) =>
+        selector({
+          series: new Map(),
+          processedSeries: [],
+          interactions: new Map(),
+          scales: {
+            x: Object.assign(
+              vi.fn((val: any) => val),
+              {
+                domain: vi.fn(),
+                range: vi.fn(() => [0, 200]),
+                copy: vi.fn(() => vi.fn((val: any) => val)),
+                ticks: vi.fn(() => [0, 50, 100]),
+              },
+            ),
+            y: Object.assign(
+              vi.fn((val: any) => val),
+              {
+                domain: vi.fn(),
+                range: vi.fn(() => [200, 0]),
+                copy: vi.fn(() => vi.fn((val: any) => val)),
+                ticks: vi.fn(() => [0, 10, 20]),
+              },
+            ),
+          },
+          dimensions: {
+            width: 200,
+            height: 200,
+            margin: { top: 20, right: 20, bottom: 20, left: 20 },
+          },
+          data: [],
+        }),
+      ),
+    } as any,
   };
 
   beforeEach(() => {

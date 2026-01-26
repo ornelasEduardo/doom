@@ -1,7 +1,8 @@
+"use client";
+
+import { CursorOptions } from "../../behaviors/Cursor";
 import { useChartContext } from "../../context";
-import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
-import { useSeries } from "../../state/store/stores/series/series.store";
-import { HoverInteraction, InteractionType } from "../../types/interaction";
+import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import styles from "./Cursor.module.scss";
 
 /**
@@ -9,35 +10,63 @@ import styles from "./Cursor.module.scss";
  * Used to indicate which data point is currently hovered.
  */
 export function CursorLine() {
-  const { config, height } = useChartContext();
-  const series = useSeries();
-  const hover = useInteraction<HoverInteraction>(InteractionType.HOVER);
+  const { chartStore } = useChartContext();
+  const series = chartStore.useStore((s) => s.processedSeries);
+  const dimensions = chartStore.useStore((s) => s.dimensions);
+  const interactions = chartStore.useStore((s) => s.interactions);
 
-  const shouldShow =
-    series.length > 0 && series.some((s: any) => s.hideCursor !== true);
+  const cursorConfig = interactions.get(
+    InteractionChannel.CURSOR_CONFIG,
+  ) as CursorOptions;
+  const on = cursorConfig?.on || InteractionChannel.PRIMARY_HOVER;
+  const hover = interactions.get(on) as HoverInteraction;
 
-  const { margin } = config;
-  const innerHeight = height - margin.top - margin.bottom;
-
-  if (!hover?.target) {
+  // If no cursor config, don't show
+  if (!cursorConfig) {
     return null;
   }
 
-  // Check if any registered series wants to show the cursor
+  const shouldShow =
+    series.length > 0 &&
+    series.some((s: any) => s.hideCursor !== true) &&
+    cursorConfig.showX !== false;
+
+  const { innerWidth, innerHeight } = dimensions;
+
+  // Use primary target or first target in list
+  const target = hover?.targets?.[0] ?? null;
+  // Use pointer for fallback or if target is missing
+  const point = target ? target.coordinate : ((hover?.pointer as any) ?? null);
+
+  if (!point) {
+    return null;
+  }
+
   if (!shouldShow || innerHeight <= 0) {
     return null;
   }
 
-  const cx = hover.target.coordinate.x;
-
   return (
-    <line
-      className={styles.cursorLine}
-      x1={cx}
-      x2={cx}
-      y1={0}
-      y2={innerHeight}
-    />
+    <>
+      {cursorConfig.showX !== false && (
+        <line
+          className={styles.cursorLine}
+          x1={point.x}
+          x2={point.x}
+          y1={0}
+          y2={innerHeight}
+        />
+      )}
+      {cursorConfig.showY && (
+        <line
+          className={styles.cursorLine}
+          x1={0}
+          x2={innerWidth}
+          y1={point.y}
+          y2={point.y}
+        />
+      )}
+    </>
   );
 }
 
@@ -49,17 +78,12 @@ export function CursorLine() {
  * which now handle their own hover highlighting.
  */
 export function CursorWrapper(props: { mode?: "line" | "dots" }) {
-  const { config } = useChartContext();
-
   if (props.mode === "dots") {
     return null;
   }
 
   return (
-    <g
-      style={{ pointerEvents: "none" }}
-      transform={`translate(${config.margin.left}, ${config.margin.top})`}
-    >
+    <g style={{ pointerEvents: "none" }}>
       <CursorLine />
     </g>
   );

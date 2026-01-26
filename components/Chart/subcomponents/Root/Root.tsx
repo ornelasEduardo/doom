@@ -9,20 +9,30 @@ import React, {
   useState,
 } from "react";
 
-import { CartesianHover } from "../../behaviors";
-import { ChartContext, ChartContextValue } from "../../context";
-import { EventsProvider, useEventContext } from "../../state/EventContext";
-import { createInteractionStore } from "../../state/store/stores/interaction/interaction.store";
-import { createSeriesStore } from "../../state/store/stores/series/series.store";
-import { ChartConfig, ChartProps } from "../../types";
-import { ChartBehavior } from "../../types/events";
-import { HoverInteraction, InteractionType } from "../../types/interaction";
+import { ChartContext } from "../../context";
+import { useChartBehaviors } from "../../hooks/useChartBehaviors";
+import { SensorManager } from "../../sensors/SensorManager/SensorManager";
+import { EventsProvider } from "../../state/EventContext";
+import {
+  createChartStore,
+  Store,
+  updateChartDimensions,
+} from "../../state/store/chart.store";
+import {
+  Behavior,
+  Config,
+  ContextValue,
+  InteractionChannel,
+  Props,
+} from "../../types";
+import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
+import { calculateInnerDimensions } from "../../utils/coordinates";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
 import { Grid } from "../Grid/Grid";
 import { Header } from "../Header/Header";
-import { InputSensor } from "../InputLayer/InputSensor";
+import { InteractionLayer } from "../InteractionLayer/InteractionLayer";
 import { Legend } from "../Legend/Legend";
 import { Plot } from "../Plot/Plot";
 import { Series } from "../Series/Series";
@@ -41,7 +51,7 @@ const LEGEND_PALETTE = [
 ];
 
 export type RootProps<T> = Pick<
-  ChartProps<T>,
+  Props<T>,
   | "data"
   | "d3Config"
   | "className"
@@ -50,19 +60,84 @@ export type RootProps<T> = Pick<
   | "variant"
   | "flat"
   | "withFrame"
-  | "type"
-  | "render"
-  | "x"
-  | "y"
   | "title"
   | "subtitle"
   | "withLegend"
-  | "renderTooltip"
-> & {
-  children?: React.ReactNode;
-  behaviors?: ChartBehavior[];
-};
+  | "children"
+  | "type"
+  | "x"
+  | "y"
+  | "render"
+  | "behaviors"
+  | "sensors"
+>;
 
+/**
+ * The internal bridge for managing behaviors and sensors.
+ */
+function BehaviorManager<T>({
+  behaviors,
+  value,
+}: {
+  behaviors?: Behavior<T>[];
+  value: ContextValue<T>;
+}) {
+  useChartBehaviors(value, behaviors);
+  return null;
+}
+
+/**
+ * Functional component that provides the plot area container.
+ */
+function RootPlot({
+  children,
+  chartStore,
+}: {
+  children: React.ReactNode;
+  chartStore: Store;
+}) {
+  const plotRef = useRef<SVGGElement>(null);
+  const frameRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (plotRef.current && frameRef.current) {
+      chartStore.setState((prev: any) => ({
+        elements: {
+          ...prev.elements,
+          plot: plotRef.current,
+          frame: frameRef.current,
+        },
+      }));
+    }
+  }, [chartStore]);
+
+  const dimensions = chartStore.useStore((s: any) => s.dimensions);
+
+  return (
+    <svg
+      ref={frameRef}
+      className={styles.svg}
+      data-chart-plot="true"
+      height={dimensions.height}
+      viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+      width={dimensions.width}
+    >
+      <g
+        ref={plotRef}
+        className={styles.plot}
+        transform={`translate(${dimensions.margin.left}, ${dimensions.margin.top})`}
+      >
+        {children}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Root component for the Doom Chart system.
+ * It initializes the core state (chartStore) and provides the context
+ * required by all subcomponents and behaviors.
+ */
 export function Root<T>({
   data,
   d3Config,
@@ -70,70 +145,62 @@ export function Root<T>({
   style,
   onValueChange,
   variant = "default",
-  flat,
+  flat = false,
   withFrame = true,
+  title,
+  subtitle,
+  withLegend = false,
   children,
   type,
   render,
   x,
   y,
-  title,
-  subtitle,
-  withLegend,
-  renderTooltip,
   behaviors,
+  sensors,
 }: RootProps<T>) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-  const [height, setHeight] = useState(0);
+  const [chartStore] = useState(() =>
+    createChartStore({ ...d3Config, type }, x, y),
+  );
   const [isMobile, setIsMobile] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const lastValueRef = useRef<any>(null);
 
-  // Create stores
-  const seriesStoreInstance = useMemo(() => createSeriesStore(), []);
-  const interactionStoreInstance = useMemo(() => createInteractionStore(), []);
-
-  // Handle onValueChange via subscription
-  const lastValueRef = useRef<T | null>(null);
+  // Sync data to store
   useEffect(() => {
-    return interactionStoreInstance.subscribe(() => {
-      const state = interactionStoreInstance.getState();
-      const hover = state.interactions.get(
-        InteractionType.HOVER,
-      ) as HoverInteraction<T>;
-      const data = hover?.target?.data ?? null;
+    chartStore.setState((prev: any) => {
+      const { innerWidth, innerHeight } = calculateInnerDimensions(
+        prev.dimensions.width,
+        prev.dimensions.height,
+        prev.dimensions.margin,
+      );
 
-      // Only notify if value actually changed
-      if (data !== lastValueRef.current) {
-        lastValueRef.current = data;
-        onValueChange?.(data);
+      return {
+        data,
+        type: type || prev.type,
+        dimensions: {
+          ...prev.dimensions,
+          innerWidth,
+          innerHeight,
+        },
+      };
+    });
+  }, [chartStore, data, type]);
+
+  // Handle onValueChange proxy from Interaction Store
+  useEffect(() => {
+    return chartStore.subscribe(() => {
+      const state = chartStore.getState();
+      const hover = state.interactions.get(
+        InteractionChannel.PRIMARY_HOVER,
+      ) as HoverInteraction<T>;
+      const hoverData = hover?.targets[0]?.data ?? null;
+
+      if (hoverData !== lastValueRef.current) {
+        lastValueRef.current = hoverData;
+        onValueChange?.(hoverData);
       }
     });
-  }, [interactionStoreInstance, onValueChange]);
-
-  const [margin, setMargin] = useState({
-    top: d3Config?.margin?.top ?? 40,
-    right: d3Config?.margin?.right ?? 20,
-    bottom: d3Config?.margin?.bottom ?? 50,
-    left: d3Config?.margin?.left ?? 70,
-  });
-
-  const lastUserMarginRef = useRef(d3Config?.margin);
-  useEffect(() => {
-    if (
-      d3Config?.margin?.top !== lastUserMarginRef.current?.top ||
-      d3Config?.margin?.left !== lastUserMarginRef.current?.left ||
-      d3Config?.margin?.bottom !== lastUserMarginRef.current?.bottom ||
-      d3Config?.margin?.right !== lastUserMarginRef.current?.right
-    ) {
-      lastUserMarginRef.current = d3Config?.margin;
-      setMargin({
-        top: d3Config?.margin?.top ?? 40,
-        right: d3Config?.margin?.right ?? 20,
-        bottom: d3Config?.margin?.bottom ?? 50,
-        left: d3Config?.margin?.left ?? 70,
-      });
-    }
-  }, [d3Config?.margin]);
+  }, [chartStore, onValueChange]);
 
   const requestLayoutAdjustment = useCallback(
     (
@@ -145,48 +212,61 @@ export function Root<T>({
       }>,
     ) => {
       const MAX_MARGIN = 150;
+      const state = chartStore.getState();
+      const currentMargin = state.dimensions.margin;
 
-      setMargin((prev) => {
-        let changed = false;
-        const next = { ...prev };
+      let changed = false;
+      const next = { ...currentMargin };
 
-        if (
-          suggested.left &&
-          suggested.left > prev.left &&
-          suggested.left <= MAX_MARGIN
-        ) {
-          next.left = Math.min(suggested.left, MAX_MARGIN);
-          changed = true;
-        }
-        if (
-          suggested.bottom &&
-          suggested.bottom > prev.bottom &&
-          suggested.bottom <= MAX_MARGIN
-        ) {
-          next.bottom = Math.min(suggested.bottom, MAX_MARGIN);
-          changed = true;
-        }
-        if (
-          suggested.right &&
-          suggested.right > prev.right &&
-          suggested.right <= MAX_MARGIN
-        ) {
-          next.right = Math.min(suggested.right, MAX_MARGIN);
-          changed = true;
-        }
-        if (
-          suggested.top &&
-          suggested.top > prev.top &&
-          suggested.top <= MAX_MARGIN
-        ) {
-          next.top = Math.min(suggested.top, MAX_MARGIN);
-          changed = true;
-        }
+      if (
+        suggested.left &&
+        suggested.left > currentMargin.left &&
+        suggested.left <= MAX_MARGIN
+      ) {
+        next.left = Math.min(suggested.left, MAX_MARGIN);
+        changed = true;
+      }
+      if (
+        suggested.bottom &&
+        suggested.bottom > currentMargin.bottom &&
+        suggested.bottom <= MAX_MARGIN
+      ) {
+        next.bottom = Math.min(suggested.bottom, MAX_MARGIN);
+        changed = true;
+      }
+      if (
+        suggested.right &&
+        suggested.right > currentMargin.right &&
+        suggested.right <= MAX_MARGIN
+      ) {
+        next.right = Math.min(suggested.right, MAX_MARGIN);
+        changed = true;
+      }
+      if (
+        suggested.top &&
+        suggested.top > currentMargin.top &&
+        suggested.top <= MAX_MARGIN
+      ) {
+        next.top = Math.min(suggested.top, MAX_MARGIN);
+        changed = true;
+      }
 
-        return changed ? next : prev;
-      });
+      if (changed) {
+        chartStore.setState((prev: any) => ({
+          dimensions: {
+            ...prev.dimensions,
+            margin: next,
+          },
+        }));
+        // Trigger re-calculation
+        updateChartDimensions(
+          chartStore,
+          state.dimensions.width,
+          state.dimensions.height,
+        );
+      }
     },
-    [],
+    [chartStore],
   );
 
   const config = useMemo(() => {
@@ -194,12 +274,10 @@ export function Root<T>({
       showAxes: true,
       ...d3Config,
       type,
-      margin,
-    } as ChartConfig & {
-      margin: { top: number; right: number; bottom: number; left: number };
+    } as Config & {
       type?: string;
     };
-  }, [d3Config, margin, type]);
+  }, [d3Config, type]);
 
   useEffect(() => {
     if (!wrapperRef.current) {
@@ -208,13 +286,15 @@ export function Root<T>({
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        let w, h;
         if (entry.contentBoxSize) {
-          setWidth(entry.contentBoxSize[0].inlineSize);
-          setHeight(entry.contentBoxSize[0].blockSize);
+          w = entry.contentBoxSize[0].inlineSize;
+          h = entry.contentBoxSize[0].blockSize;
         } else {
-          setWidth(entry.contentRect.width);
-          setHeight(entry.contentRect.height);
+          w = entry.contentRect.width;
+          h = entry.contentRect.height;
         }
+        updateChartDimensions(chartStore, w, h);
       }
     });
 
@@ -230,34 +310,7 @@ export function Root<T>({
       resizeObserver.disconnect();
       window.removeEventListener("resize", checkMobile);
     };
-  }, []);
-
-  const BehaviorRunner = () => {
-    const eventsContext = useEventContext();
-    const chartContext = value;
-
-    const chartContextRef = useRef(chartContext);
-    chartContextRef.current = chartContext;
-
-    const { on, off } = eventsContext;
-
-    useEffect(() => {
-      const activeBehaviors = behaviors || [CartesianHover()];
-
-      const cleanups = activeBehaviors.map((behavior) => {
-        return behavior({
-          ...eventsContext,
-          getChartContext: () => chartContextRef.current,
-        });
-      });
-
-      return () => {
-        cleanups.forEach((cleanup) => cleanup());
-      };
-    }, [behaviors, on, off, eventsContext]);
-
-    return null;
-  };
+  }, [chartStore]);
 
   const resolveInteraction = useCallback(
     (event: React.MouseEvent | React.TouchEvent) => {
@@ -279,7 +332,7 @@ export function Root<T>({
       const elements = document.elementsFromPoint(clientX, clientY);
 
       for (const element of elements) {
-        const data = (element as any).__data__;
+        const data = (element as unknown as { __data__: unknown }).__data__;
         if (data && !Array.isArray(data)) {
           return { element: element as Element, data: data as T };
         }
@@ -290,36 +343,33 @@ export function Root<T>({
     [],
   );
 
-  const value: ChartContextValue<T> = useMemo(
+  const value: ContextValue<T> = useMemo(
     () => ({
+      chartStore,
       data,
-      config,
-      width,
-      height,
+      config: config as any,
+      width: chartStore.getState().dimensions.width,
+      height: chartStore.getState().dimensions.height,
 
       styles: EMPTY_STYLES,
       resolveInteraction,
       isMobile,
       requestLayoutAdjustment,
       colorPalette: LEGEND_PALETTE,
-      seriesStore: seriesStoreInstance,
-      interactionStore: interactionStoreInstance,
+      // Internal bridges - maintained for system stability during architectural shift
+      seriesStore: chartStore as any,
+      interactionStore: chartStore as any,
       x: x ? (x as any) : undefined,
       y: y ? (y as any) : undefined,
-      setWidth,
-      setHeight,
       variant,
     }),
     [
+      chartStore,
       data,
       config,
-      width,
-      height,
       resolveInteraction,
       isMobile,
       requestLayoutAdjustment,
-      seriesStoreInstance,
-      interactionStoreInstance,
       x,
       y,
       variant,
@@ -333,18 +383,15 @@ export function Root<T>({
   const hasGrid = hasContent && hasChildOfTypeDeep(children, Grid);
   const hasAxis = hasContent && hasChildOfTypeDeep(children, Axis);
   const hasCursor = hasContent && hasChildOfTypeDeep(children, CursorWrapper);
-  const effectiveBehaviors =
-    behaviors === undefined ? [CartesianHover()] : behaviors;
-  const hasInteractions = effectiveBehaviors.length > 0;
 
   return (
-    <ChartContext.Provider
-      value={value as unknown as ChartContextValue<unknown>}
-    >
+    <ChartContext.Provider value={value as any}>
       <EventsProvider>
-        <BehaviorRunner />
+        <BehaviorManager behaviors={behaviors as any} value={value as any} />
         <div
           data-chart-container
+          aria-describedby={subtitle ? "chart-subtitle" : undefined}
+          aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
           className={clsx(
             styles.chartContainer,
             variant === "solid" && styles.solid,
@@ -353,9 +400,13 @@ export function Root<T>({
             !withFrame && styles.frameless,
             className,
           )}
+          role="region"
           style={style}
+          tabIndex={0}
         >
-          {hasInteractions && <InputSensor />}
+          <InteractionLayer />
+          <SensorManager sensors={sensors as any} />
+
           {isAutoLayout && (title || subtitle) && (
             <Header subtitle={subtitle} title={title} />
           )}
@@ -366,48 +417,19 @@ export function Root<T>({
               className={styles.responsiveWrapper}
               style={{ flex: 1, position: "relative" }}
             >
-              {width > 0 && height > 0 && (
-                <svg
-                  data-chart-plot
-                  className="chart-plot"
-                  height={height}
-                  style={{ overflow: "visible" }}
-                  width={width}
-                >
-                  <g
-                    data-chart-inner-plot
-                    transform={`translate(${config.margin.left}, ${config.margin.top})`}
-                  >
-                    <rect
-                      fill="transparent"
-                      height={height - config.margin.top - config.margin.bottom}
-                      width={width - config.margin.left - config.margin.right}
-                    />
-                  </g>
+              <RootPlot chartStore={chartStore}>
+                {!hasGrid && config.grid !== false && <Grid />}
 
-                  {hasContent && !hasGrid && config.grid !== false && <Grid />}
+                {!hasCursor && !render && <CursorWrapper mode="line" />}
 
-                  {hasContent && !hasCursor && !render && (
-                    <CursorWrapper mode="line" />
-                  )}
+                {children}
 
-                  {children}
+                {!hasAxis && config.showAxes !== false && <Axis />}
 
-                  {hasContent && !hasAxis && config.showAxes !== false && (
-                    <Axis />
-                  )}
-
-                  {showShorthand && (
-                    <Series
-                      render={render}
-                      renderTooltip={renderTooltip}
-                      type={type}
-                      x={x}
-                      y={y}
-                    />
-                  )}
-                </svg>
-              )}
+                {showShorthand && (
+                  <Series render={render} type={type} x={x} y={y} />
+                )}
+              </RootPlot>
             </div>
           ) : (
             children
@@ -415,7 +437,7 @@ export function Root<T>({
 
           {withLegend && <Legend />}
 
-          <Tooltip containerRef={wrapperRef} renderTooltip={renderTooltip} />
+          <Tooltip containerRef={wrapperRef} />
         </div>
       </EventsProvider>
     </ChartContext.Provider>

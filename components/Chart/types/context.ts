@@ -1,67 +1,64 @@
-import { InteractionStore } from "../state/store/stores/interaction/interaction.store";
-import { ChartConfig } from "./config";
-import { ChartNativeEvent } from "./interaction";
-import { ChartXScale, ChartYScale } from "./scales";
+import { Store } from "../state/store/chart.store";
+import { Accessor, Config, SeriesType } from "./index";
+import { XScale, YScale } from "./scales";
 import { D3Selection } from "./selection";
 
 export interface RenderFrame<T = unknown> {
-  /** The primary D3 container selection for this series */
   container: D3Selection<T>;
-
-  /** Pre-calculated inner drawable dimensions and radius */
-  size: {
-    width: number;
-    height: number;
-    radius: number; // min(width, height) / 2
-  };
-
-  /** The generated D3 scales for x and y axes */
-  scales: {
-    x?: ChartXScale;
-    y?: ChartYScale;
-  };
-
-  /** Theme and responsive state */
-  theme: {
-    colors: string[];
-    isMobile: boolean;
-  };
-
-  /** Global chart configuration */
-  config: ChartConfig;
+  size: { width: number; height: number; radius: number };
+  scales: { x?: XScale; y?: YScale };
+  theme: { colors: string[]; isMobile: boolean };
+  config: Config;
 }
 
+/**
+ * Main context value for the Chart system.
+ * Internal components use this via the useChartContext hook.
+ */
+export interface ContextValue<T = unknown> {
+  chartStore: Store;
+  config: Config;
+  isMobile: boolean;
+  colorPalette: string[];
+  styles: Record<string, string>;
+  variant?: "default" | "solid";
+
+  resolveInteraction: (
+    event: React.MouseEvent | React.TouchEvent,
+  ) => { element: Element; data: T } | null;
+
+  requestLayoutAdjustment?: (
+    suggestedMargin: Partial<{
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+    }>,
+  ) => void;
+
+  type?: SeriesType;
+  render?: (context: SeriesContext<T>) => void;
+  x?: Accessor<T, string | number>;
+  y?: Accessor<T, number>;
+}
+
+/**
+ * Extended context provided to Series renderers.
+ */
 export interface SeriesContext<T> extends RenderFrame<T> {
-  // Legacy/Internal - to be phased out for behaviors
   g: D3Selection<T>;
   data: T[];
-
-  // Direct dimensions
   width: number;
   height: number;
   innerWidth: number;
   innerHeight: number;
   margin: { top: number; right: number; bottom: number; left: number };
-
-  // Direct Scales
-  xScale?: ChartXScale;
-  yScale?: ChartYScale;
-
-  // Direct Accessors
+  xScale?: XScale;
+  yScale?: YScale;
   x?: (d: T) => string | number;
   y?: (d: T) => number;
-
-  // Direct Theme
   colors: string[];
-  color?: string; // Legacy support
   styles: Record<string, string>;
   isMobile: boolean;
-
-  // Interaction (Internal use only)
-  interactionStore: InteractionStore;
-  showTooltip: (event: ChartNativeEvent, data: T) => void;
-  hideTooltip: () => void;
-  resolveInteraction: (
-    event: ChartNativeEvent,
-  ) => { element: Element; data: T } | null;
+  chartStore: Store;
 }

@@ -30,7 +30,6 @@ export interface SeriesProps<T> {
   label?: string;
 
   // Tooltip
-  renderTooltip?: (data: T) => React.ReactNode;
 
   // Full D3 control - overrides type/x/y
   render?: (frame: RenderFrame<T>) => void;
@@ -47,7 +46,11 @@ export interface Series {
   id: string;
   label: string;
   color: string;
+  data?: any[];
+  xAccessor?: Accessor<any, string | number>;
   yAccessor?: Accessor<any, number>;
   hideCursor?: boolean;
   interactionMode?: "x" | "xy";
+  type?: SeriesType | string;
+  strategy?: import("../sensors/utils/strategies/types").InteractionStrategy<any>;
 }

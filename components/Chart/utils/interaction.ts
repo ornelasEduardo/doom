@@ -56,37 +56,56 @@ export function findNearestDataPoint<T>(
   xAccessor: (d: T) => string | number,
 ): T | null {
   if ("invert" in xScale && typeof xScale.invert === "function") {
-    let closestDist = Infinity;
     let closestData: T | null = null;
-    const x0 = xScale.invert(pointerX);
-    const targetVal = typeof x0 === "number" ? x0 : (x0 as Date).getTime();
+    let minDiff = Infinity;
 
+    // Use linear scan with PIXEL distance to ensure visual accuracy
+    // and support unsorted data.
     for (const d of data) {
       const val = xAccessor(d);
       if (val === undefined || val === null) {
         continue;
       }
 
-      const currentVal =
-        typeof val === "number" ? val : new Date(val).getTime();
-      const dist = Math.abs(currentVal - targetVal);
+      const pixelPos = (xScale as any)(val);
+      if (typeof pixelPos !== "number") {
+        continue;
+      }
 
-      if (dist < closestDist) {
-        closestDist = dist;
+      const diff = Math.abs(pointerX - pixelPos);
+
+      // Use <= to favor the right-most point in case of ties (optional, but standardizes behavior)
+      // or < to favor left-most.
+      // D3 usually favors the closest.
+      if (diff < minDiff) {
+        minDiff = diff;
         closestData = d;
       }
     }
     return closestData;
-  } else if ("bandwidth" in xScale && typeof xScale.bandwidth === "function") {
+  } else if (
+    "bandwidth" in xScale &&
+    typeof xScale.bandwidth === "function" &&
+    xScale.bandwidth() > 0
+  ) {
     // Band scale (categorical) - find closest band center
     let closestDist = Infinity;
     let closestData: T | null = null;
 
     for (const d of data) {
-      const bandCenter =
-        (xScale as (val: string | number) => number)(xAccessor(d)) +
-        xScale.bandwidth() / 2;
+      const start = (xScale as (val: string | number) => number)(xAccessor(d));
+      const bandwidth = xScale.bandwidth();
+      const end = start + bandwidth;
+
+      // Hitbox check: if inside band, distance is effectively 0
+      if (pointerX >= start && pointerX <= end) {
+        return d;
+      }
+
+      // Fallback: Distance to center
+      const bandCenter = start + bandwidth / 2;
       const dist = Math.abs(pointerX - bandCenter);
+
       if (dist < closestDist) {
         closestDist = dist;
         closestData = d;

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -56,6 +56,61 @@ describe("Cursor", () => {
         return selector(state);
       },
     },
+    chartStore: {
+      getState: () => ({
+        series: new Map(),
+        processedSeries: [{ id: "series1", hideCursor: false }],
+        interactions: new Map([
+          ["cursor-config", { on: "primary-hover", showX: true }],
+          [
+            "primary-hover",
+            {
+              pointer: { x: 60, y: 50, isTouch: false },
+              target: {
+                coordinate: { x: 50, y: 50 },
+                data: { x: 50, y: 20 },
+              },
+              targets: [
+                {
+                  coordinate: { x: 50, y: 50 },
+                  data: { x: 50, y: 20 },
+                },
+              ],
+            },
+          ],
+        ]),
+        scales: { x: (val: any) => val, y: (val: any) => val },
+        dimensions: { width: 100, height: 100, innerHeight: 80 },
+      }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: (selector: any) =>
+        selector({
+          series: new Map(),
+          processedSeries: [{ id: "series1", hideCursor: false }],
+          interactions: new Map([
+            ["cursor-config", { on: "primary-hover", showX: true }],
+            [
+              "primary-hover",
+              {
+                pointer: { x: 60, y: 50, isTouch: false },
+                target: {
+                  coordinate: { x: 50, y: 50 },
+                  data: { x: 50, y: 20 },
+                },
+                targets: [
+                  {
+                    coordinate: { x: 50, y: 50 },
+                    data: { x: 50, y: 20 },
+                  },
+                ],
+              },
+            ],
+          ]),
+          scales: { x: (val: any) => val, y: (val: any) => val },
+          dimensions: { width: 100, height: 100, innerHeight: 80 },
+        }),
+    } as any,
   };
 
   beforeEach(() => {
@@ -81,9 +136,16 @@ describe("Cursor", () => {
     const emptyState = { interactions: new Map() };
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      interactionStore: {
-        ...defaultContext.interactionStore,
-        useStore: (selector: any) => selector(emptyState),
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            series: new Map(),
+            processedSeries: [], // No series
+            interactions: new Map(), // Empty interactions
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: { width: 100, height: 100, innerHeight: 100 },
+          }),
       },
     });
 
@@ -101,6 +163,17 @@ describe("Cursor", () => {
       ...defaultContext,
       width: 0,
       height: 0,
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            series: new Map(),
+            processedSeries: [{ id: "series1", hideCursor: false }],
+            interactions: new Map(), // irrelevant if dims zero, but for consistency
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: { width: 0, height: 0, innerHeight: 0 },
+          }),
+      },
     });
 
     const { container } = render(
@@ -131,9 +204,34 @@ describe("Cursor", () => {
 
       useChartContextMock.mockReturnValue({
         ...defaultContext,
-        interactionStore: {
-          ...defaultContext.interactionStore,
-          useStore: (selector: any) => selector(specificState),
+        chartStore: {
+          ...defaultContext.chartStore,
+          useStore: (selector: any) =>
+            selector({
+              series: new Map(),
+              processedSeries: [{ id: "series1", hideCursor: false }],
+              interactions: new Map([
+                ["cursor-config", { on: "primary-hover", showX: true }],
+                [
+                  "primary-hover",
+                  {
+                    pointer: { x: 100, y: 50, isTouch: false },
+                    target: {
+                      coordinate: { x: 70, y: 50 },
+                      data: { x: 50, y: 20 },
+                    },
+                    targets: [
+                      {
+                        coordinate: { x: 70, y: 50 },
+                        data: { x: 50, y: 20 },
+                      },
+                    ],
+                  },
+                ],
+              ]),
+              scales: { x: (val: any) => val, y: (val: any) => val },
+              dimensions: { width: 100, height: 100, innerHeight: 80 },
+            }),
         },
       });
 
@@ -151,12 +249,28 @@ describe("Cursor", () => {
     it("does not render cursor line when series hides cursor", () => {
       useChartContextMock.mockReturnValue({
         ...defaultContext,
-        seriesStore: {
-          ...defaultContext.seriesStore,
+        chartStore: {
+          ...defaultContext.chartStore,
           useStore: (selector: any) =>
             selector({
               series: new Map(),
               processedSeries: [{ id: "series1", hideCursor: true }],
+              interactions: new Map([
+                ["cursor-config", { on: "primary-hover", showX: true }],
+                [
+                  "primary-hover",
+                  {
+                    pointer: { x: 60, y: 50, isTouch: false },
+                    target: {
+                      coordinate: { x: 50, y: 50 },
+                      data: { x: 50, y: 20 },
+                    },
+                    targets: [],
+                  },
+                ],
+              ]),
+              scales: { x: (val: any) => val, y: (val: any) => val },
+              dimensions: { width: 100, height: 100, innerHeight: 80 },
             }),
         },
       });

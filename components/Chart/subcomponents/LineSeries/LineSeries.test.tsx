@@ -33,6 +33,47 @@ describe("LineSeries", () => {
       subscribe: vi.fn(() => vi.fn()),
       useStore: vi.fn(),
     },
+    chartStore: {
+      getState: () => ({
+        series: new Map(),
+        processedSeries: [],
+        interactions: new Map(),
+        scales: { x: (val: any) => val, y: (val: any) => val },
+        dimensions: {
+          width: 500,
+          height: 300,
+          innerHeight: 250,
+          innerWidth: 440,
+          margin: { top: 0, left: 0 },
+        },
+        data: [
+          { x: 0, y: 10 },
+          { x: 50, y: 20 },
+          { x: 100, y: 5 },
+        ],
+      }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn((selector) =>
+        selector({
+          series: new Map(),
+          processedSeries: [],
+          interactions: new Map(),
+          scales: { x: (val: any) => val, y: (val: any) => val },
+          dimensions: {
+            width: 500,
+            height: 300,
+            innerHeight: 250,
+            innerWidth: 440,
+          },
+          data: [
+            { x: 0, y: 10 },
+            { x: 50, y: 20 },
+            { x: 100, y: 5 },
+          ],
+        }),
+      ),
+    } as any,
   };
 
   beforeEach(() => {
@@ -58,7 +99,21 @@ describe("LineSeries", () => {
   it("renders nothing when data is empty", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      data: [],
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: {
+              width: 500,
+              height: 300,
+              innerHeight: 250,
+              innerWidth: 440,
+              margin: { top: 0, left: 0 },
+            },
+            data: [],
+          }),
+      },
     });
 
     const { container } = render(
@@ -73,8 +128,24 @@ describe("LineSeries", () => {
   it("renders nothing when dimensions are zero", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      width: 0,
-      height: 0,
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: {
+              width: 0,
+              height: 0,
+              innerHeight: 0,
+              innerWidth: 0,
+              margin: { top: 0, left: 0 },
+            },
+            data: [
+              { x: 0, y: 10 },
+              { x: 50, y: 20 },
+            ],
+          }),
+      },
     });
 
     const { container } = render(

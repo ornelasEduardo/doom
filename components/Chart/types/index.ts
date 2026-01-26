@@ -2,7 +2,13 @@ export * from "./accessors";
 export * from "./common";
 export * from "./config";
 export * from "./context";
-export type { ChartBehavior, ChartEvent, EventContextValue } from "./events";
+export type {
+  Behavior,
+  ChartEvent,
+  Coordinates,
+  EventType,
+  Sensor,
+} from "./events";
 export * from "./interaction";
 export * from "./legend";
 export * from "./props";

@@ -45,6 +45,36 @@ const mockContext: ChartContextValue<{ label: string; value: number }> = {
     subscribe: vi.fn(() => vi.fn()),
     useStore: vi.fn(),
   },
+  chartStore: {
+    getState: () => ({
+      series: new Map(),
+      processedSeries: [],
+      interactions: new Map(),
+      scales: { x: null, y: null },
+      dimensions: {
+        width: 500,
+        height: 300,
+        innerHeight: 250,
+        innerWidth: 440,
+      },
+    }),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    useStore: vi.fn((selector) =>
+      selector({
+        series: new Map(),
+        processedSeries: [],
+        interactions: new Map(),
+        scales: { x: null, y: null },
+        dimensions: {
+          width: 500,
+          height: 300,
+          innerHeight: 250,
+          innerWidth: 440,
+        },
+      }),
+    ),
+  } as any,
 };
 
 const renderWithContext = (

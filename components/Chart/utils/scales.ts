@@ -43,11 +43,13 @@ export function createScales<T>(
       .range([0, innerWidth]);
   } else {
     const uniqueXValues = Array.from(new Set(xValues as string[]));
+    const isDiscreteScatter =
+      type === "scatter" || (type as string) === "bubble";
     xScale = d3
       .scalePoint()
       .domain(uniqueXValues)
       .range([0, innerWidth])
-      .padding(0);
+      .padding(isDiscreteScatter ? 0.5 : 0);
   }
 
   if (type === "bar") {

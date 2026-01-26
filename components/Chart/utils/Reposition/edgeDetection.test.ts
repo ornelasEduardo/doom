@@ -163,11 +163,11 @@ describe("edgeDetection (via Reposition)", () => {
         const result = new Reposition(element)
           .anchor(baseAnchor) // x=100
           .align({ horizontal: "center" })
-          // Horizontal center logic: x -= width/2 -> 100 + 12(gap) - 75 = 37.
+          // Horizontal center logic: x -= width/2 -> 100 + 24(gap) - 75 = 49.
           .edgeDetect()
           .resolve();
 
-        expect(result.x).toBe(37);
+        expect(result.x).toBe(49);
       });
     });
 

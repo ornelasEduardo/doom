@@ -1,14 +1,14 @@
 "use strict";
 
-import { useMemo } from "react";
+import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
-import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
+import {
+  registerSeries,
+  unregisterSeries,
+} from "../../state/store/chart.store";
 import { Accessor } from "../../types";
-import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
-import { useSeriesRegistration } from "../../utils/hooks";
-import { createScales } from "../../utils/scales";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
 interface ScatterSeriesProps<T> {
@@ -21,27 +21,7 @@ interface ScatterSeriesProps<T> {
   hideCursor?: boolean;
 }
 
-/**
- * Resolves the visual interaction state for a specific data point.
- */
-function getPointInteractionState<T>(
-  data: T,
-  hover: HoverInteraction<T> | null,
-  cx: number,
-  cy: number,
-) {
-  const isHovered =
-    hover?.target?.data === data ||
-    (hover?.target?.coordinate &&
-      Math.abs(hover.target.coordinate.x - cx) < 0.1 &&
-      Math.abs(hover.target.coordinate.y - cy) < 0.1);
-
-  const isDimmed = !!hover?.target && !isHovered;
-
-  return { isHovered, isDimmed };
-}
-
-export function ScatterSeries<T>({
+const ScatterSeriesComponent = <T,>({
   data: localData,
   x: localX,
   y: localY,
@@ -49,123 +29,124 @@ export function ScatterSeries<T>({
   color,
   label,
   hideCursor,
-}: ScatterSeriesProps<T>) {
-  const {
-    data: contextData,
-    width,
-    height,
-    config,
-    x: contextX,
-    y: contextY,
-  } = useChartContext<T>();
+}: ScatterSeriesProps<T>) => {
+  const { chartStore, x: contextX, y: contextY } = useChartContext<T>();
 
-  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
+  const data = chartStore.useStore((s) => localData || s.data);
+  const xScale = chartStore.useStore((s) => s.scales.x);
+  const yScale = chartStore.useStore((s) => s.scales.y);
 
-  const data = localData || contextData;
-  const xAccessor =
-    (localX ? resolveAccessor(localX) : undefined) ||
-    (contextX ? resolveAccessor(contextX) : undefined);
-  const yAccessor =
-    (localY ? resolveAccessor(localY) : undefined) ||
-    (contextY ? resolveAccessor(contextY) : undefined);
-  const sizeAccessor = localSize ? resolveAccessor(localSize) : undefined;
+  const dimensions = chartStore.useStore((s) => s.dimensions);
 
-  const { margin } = config;
+  const xAccessor = useMemo(
+    () =>
+      (localX ? resolveAccessor(localX) : undefined) ||
+      (contextX ? resolveAccessor(contextX) : undefined),
+    [localX, contextX],
+  );
 
-  const scaleCtx = useMemo(() => {
-    if (!xAccessor || !yAccessor || !data.length || width <= 0 || height <= 0) {
+  const yAccessor = useMemo(
+    () =>
+      (localY ? resolveAccessor(localY) : undefined) ||
+      (contextY ? resolveAccessor(contextY) : undefined),
+    [localY, contextY],
+  );
+  const sizeAccessor = useMemo(
+    () => (localSize ? resolveAccessor(localSize) : undefined),
+    [localSize],
+  );
+
+  const rScale = useMemo(() => {
+    if (!data.length || !sizeAccessor) {
       return null;
     }
-    const scales = createScales(
-      data,
-      width,
-      height,
-      margin,
-      xAccessor,
-      yAccessor,
-      "scatter",
+    const maxVal = Math.max(
+      ...data.map((d) => (sizeAccessor(d) as number) || 0),
     );
+    // Use sqrt scale for circular area sizing (area ~ value)
+    return (val: number) => {
+      const normalized = Math.sqrt(val) / Math.sqrt(maxVal || 1);
+      return 4 + normalized * 16;
+    };
+  }, [data, sizeAccessor]);
 
-    let rScale: any = null;
-    if (sizeAccessor) {
-      const maxVal = Math.max(...data.map((d) => sizeAccessor(d) || 0));
-      // Use sqrt scale for circular area sizing (area ~ value)
-      rScale = (val: number) => {
-        const normalized = Math.sqrt(val) / Math.sqrt(maxVal);
-        return 4 + normalized * 16;
-      };
+  const seriesId = useId();
+  const strokeColor = color || "var(--primary)";
+
+  useEffect(() => {
+    if (!yAccessor) {
+      return;
     }
+    registerSeries(chartStore, seriesId, [
+      {
+        label: label || "Scatter Series",
+        color: strokeColor,
+        x: xAccessor,
+        y: yAccessor,
+        hideCursor: hideCursor ?? true,
+        interactionMode: "xy",
+      } as any,
+    ]);
+    return () => {
+      unregisterSeries(chartStore, seriesId);
+    };
+  }, [
+    chartStore,
+    seriesId,
+    strokeColor,
+    yAccessor,
+    xAccessor,
+    label,
+    hideCursor,
+    data,
+  ]);
 
-    return { ...scales, rScale };
-  }, [data, width, height, margin, xAccessor, yAccessor, sizeAccessor]);
-
-  useSeriesRegistration({
-    label: label || "Scatter Series",
-    color: color,
-    y: localY || contextY,
-    hideCursor: hideCursor,
-    interactionMode: "xy",
-  });
-
-  if (!scaleCtx || !xAccessor || !yAccessor) {
+  if (
+    !xScale ||
+    !yScale ||
+    !xAccessor ||
+    !yAccessor ||
+    dimensions.width <= 0 ||
+    dimensions.height <= 0
+  ) {
     return null;
   }
-  const { xScale, yScale, rScale } = scaleCtx;
-  const strokeColor = color || "var(--primary)";
 
   return (
     <g className="chart-scatter-series">
-      {(() => {
-        const regularPoints: React.JSX.Element[] = [];
-        const activePoints: React.JSX.Element[] = [];
+      {data.map((d, i) => {
+        const cx = (xScale as any)(xAccessor(d));
+        const cy = yScale(yAccessor(d));
 
-        data.forEach((d, i) => {
-          const cx = (xScale as any)(xAccessor(d));
-          const cy = yScale(yAccessor(d));
+        let radius = 6;
+        if (rScale && sizeAccessor) {
+          radius = rScale(sizeAccessor(d));
+        }
 
-          const { isHovered, isDimmed } = getPointInteractionState(
-            d,
-            hover,
-            cx,
-            cy,
-          );
-
-          let radius = 6;
-          if (rScale && sizeAccessor) {
-            radius = rScale(sizeAccessor(d));
-          }
-
-          const point = (
-            <SeriesPoint
-              key={i}
-              color={strokeColor}
-              data-index={i}
-              hoverRadius={radius + 4}
-              isDimmed={isDimmed}
-              isHovered={isHovered}
-              radius={radius}
-              x={cx}
-              y={cy}
-            />
-          );
-
-          if (isHovered) {
-            activePoints.push(point);
-          } else {
-            regularPoints.push(point);
-          }
-        });
-
-        return [...regularPoints, ...activePoints];
-      })()}
+        return (
+          <SeriesPoint
+            key={i}
+            color={strokeColor}
+            data-index={i}
+            datum={d}
+            hoverRadius={radius + 4}
+            radius={radius}
+            x={cx}
+            y={cy}
+          />
+        );
+      })}
     </g>
   );
-}
+};
+
+export const ScatterSeries = React.memo(
+  ScatterSeriesComponent,
+) as typeof ScatterSeriesComponent;
 
 export function ScatterSeriesWrapper(props: ScatterSeriesProps<any>) {
-  const { config } = useChartContext();
   return (
-    <g transform={`translate(${config.margin.left}, ${config.margin.top})`}>
+    <g>
       <ScatterSeries {...props} />
     </g>
   );

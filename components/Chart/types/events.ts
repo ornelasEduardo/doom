@@ -1,37 +1,76 @@
-import { ChartCoordinates } from "../utils/coordinates";
+import { Selection } from "d3-selection";
 
-export type ChartEventType =
-  | "CHART_POINTER_DOWN"
-  | "CHART_POINTER_MOVE"
-  | "CHART_POINTER_UP"
-  | "CHART_POINTER_LEAVE"
-  | "CHART_POINTER_ENTER";
+import { ContextValue } from "./context";
+import { Interaction } from "./interaction";
 
-export interface ChartEvent {
-  type: ChartEventType;
-  coordinates: ChartCoordinates;
-  nativeEvent: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent;
-}
-
-export type ChartEventListener = (event: ChartEvent) => void;
-
-export interface EventContextValue<T = unknown> {
-  // The Event Bus
-  on: (type: ChartEventType, listener: ChartEventListener) => void;
-  off: (type: ChartEventType, listener: ChartEventListener) => void;
-  emit: (event: ChartEvent) => void;
-
-  // Current State (Snapshots for immediate access)
-  pointerPosition: ChartCoordinates | null;
+/**
+ * Spatial coordinates normalized to the chart container and plot area.
+ */
+export interface Coordinates {
+  containerX: number;
+  containerY: number;
+  chartX: number;
+  chartY: number;
   isWithinPlot: boolean;
 }
 
 /**
- * A ChartBehavior is a function that attaches itself to the ChartContext/EventContext
- * and performs logic. It returns a cleanup function.
+ * Standard pointer and keyboard events supported by the Chart system.
  */
-export type ChartBehavior<T = unknown> = (
-  context: EventContextValue & {
-    getChartContext: () => any; // Should be ChartContextValue<T> but avoiding circular deps for now
-  },
-) => () => void;
+export type EventType =
+  | "CHART_POINTER_MOVE"
+  | "CHART_POINTER_DOWN"
+  | "CHART_POINTER_UP"
+  | "CHART_POINTER_LEAVE"
+  | "CHART_KEY_DOWN"
+  | "CHART_KEY_UP"
+  | "CHART_CLICK"
+  | "CHART_DOUBLE_CLICK";
+
+/**
+ * Represents a normalized event within the Doom Chart system.
+ * Wraps native browser events with chart-specific spatial coordinates.
+ *
+ */
+export interface ChartEvent {
+  type: EventType;
+  nativeEvent: React.SyntheticEvent | UIEvent | KeyboardEvent | TouchEvent;
+  coordinates: Coordinates;
+}
+
+export type EventListener = (event: ChartEvent) => void;
+
+export type Cleanup = () => void;
+
+/**
+ * BehaviorContext provides the execution environment for behaviors.
+ */
+export interface BehaviorContext<T = any> {
+  getChartContext: () => ContextValue<T> & {
+    g: Selection<SVGGElement, unknown, null, undefined> | null;
+  };
+  getInteraction: (name: string) => Interaction | null;
+  upsertInteraction: (name: string, interaction: any) => void;
+  removeInteraction: (name: string) => void;
+}
+
+/**
+ * A Behavior is a pure function that attaches logic to a chart.
+ */
+export type Behavior<T = any> = (context: BehaviorContext<T>) => Cleanup | void;
+
+/**
+ * SensorContext provides the event backbone for sensors.
+ */
+export interface SensorContext<T = unknown> {
+  on: (type: EventType, listener: EventListener) => void;
+  off: (type: EventType, listener: EventListener) => void;
+  getChartContext: () => ContextValue<T>;
+  upsertInteraction: (name: string, interaction: Interaction) => void;
+  removeInteraction: (name: string) => void;
+}
+
+/**
+ * A Sensor is a function that detects user intent and updates the interaction store.
+ */
+export type Sensor<T = unknown> = (context: SensorContext<T>) => Cleanup | void;

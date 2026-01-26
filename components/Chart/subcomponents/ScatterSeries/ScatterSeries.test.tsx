@@ -3,7 +3,6 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
-import { InteractionType } from "../../types/interaction";
 import { ScatterSeriesWrapper } from "./ScatterSeries";
 
 const useChartContextMock = vi.fn();
@@ -31,6 +30,22 @@ describe("ScatterSeries", () => {
       useStore: (selector: any) => selector({ interactions: new Map() }),
       getState: () => ({ interactions: new Map() }),
     },
+    chartStore: {
+      useStore: (selector: any) =>
+        selector({
+          scales: { x: (val: any) => val, y: (val: any) => val },
+          data: [
+            { x: 10, y: 100 },
+            { x: 20, y: 200 },
+            { x: 30, y: 150 },
+          ],
+          dimensions: { width: 300, height: 200, innerHeight: 200 },
+          interactions: new Map(),
+        }),
+      getState: () => ({}),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+    } as any,
   };
 
   beforeEach(() => {
@@ -56,6 +71,26 @@ describe("ScatterSeries", () => {
   it("renders nothing when data is empty", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,
+      interactionStore: {
+        ...defaultContext.interactionStore,
+        // Override useStore to return empty data and keep other defaults
+        useStore: (selector: any) =>
+          selector({
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            data: [],
+            dimensions: { width: 300, height: 200, innerHeight: 200 },
+          }),
+      },
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            data: [],
+            dimensions: { width: 300, height: 200, innerHeight: 200 },
+            interactions: new Map(),
+          }),
+      },
       data: [],
     });
 
@@ -73,6 +108,20 @@ describe("ScatterSeries", () => {
       ...defaultContext,
       width: 0,
       height: 0,
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            data: [
+              { x: 10, y: 100 },
+              { x: 20, y: 200 },
+              { x: 30, y: 150 },
+            ],
+            dimensions: { width: 0, height: 0, innerHeight: 0 },
+            interactions: new Map(),
+          }),
+      },
     });
 
     const { container } = render(
@@ -114,54 +163,5 @@ describe("ScatterSeries", () => {
       const style = circle.getAttribute("style");
       expect(style).toMatch(/green/);
     });
-  });
-
-  it("applies dimming opacity when another point is hovered", () => {
-    const localData = [
-      { id: 1, x: 10, y: 100 },
-      { id: 2, x: 20, y: 200 },
-      { id: 3, x: 30, y: 150 },
-    ];
-    const targetedPoint = localData[1];
-
-    const interactionState = {
-      interactions: new Map([
-        [
-          InteractionType.HOVER,
-          {
-            target: { data: targetedPoint, coordinate: { x: 20, y: 200 } },
-          },
-        ],
-      ]),
-    };
-
-    useChartContextMock.mockReturnValue({
-      ...defaultContext,
-      data: localData,
-      interactionStore: {
-        ...defaultContext.interactionStore,
-        useStore: (selector: any) => selector(interactionState),
-      },
-    });
-
-    const { container } = render(
-      <svg>
-        <ScatterSeriesWrapper />
-      </svg>,
-    );
-
-    const circles = container.querySelectorAll("circle");
-
-    const getPoint = (idx: number) =>
-      Array.from(circles).find(
-        (c) => c.getAttribute("data-index") === String(idx),
-      );
-
-    // Point 0 (x=10) - Not hovered, should be dimmed
-    expect(getPoint(0)?.getAttribute("style")).toMatch(/opacity:\s*0\.6/);
-    // Point 1 (x=20) - Hovered, should NOT be dimmed
-    expect(getPoint(1)?.getAttribute("style")).not.toMatch(/opacity:\s*0\.6/);
-    // Point 2 (x=30) - Not hovered, should be dimmed
-    expect(getPoint(2)?.getAttribute("style")).toMatch(/opacity:\s*0\.6/);
   });
 });

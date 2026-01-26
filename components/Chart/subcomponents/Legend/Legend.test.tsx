@@ -38,6 +38,31 @@ const mockContext: ChartContextValue<unknown> = {
         ],
       }),
   },
+  chartStore: {
+    getState: () => ({
+      series: new Map(),
+      processedSeries: [
+        { id: "series-a", label: "Series A", color: "red" },
+        { id: "series-b", label: "Series B", color: "blue" },
+      ],
+      interactions: new Map(),
+      scales: { x: null, y: null },
+      dimensions: { width: 500, height: 300 },
+    }),
+    setState: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    useStore: (selector: any) =>
+      selector({
+        series: new Map(),
+        processedSeries: [
+          { id: "series-a", label: "Series A", color: "red" },
+          { id: "series-b", label: "Series B", color: "blue" },
+        ],
+        interactions: new Map(),
+        scales: { x: null, y: null },
+        dimensions: { width: 500, height: 300 },
+      }),
+  } as any,
 };
 
 const renderWithContext = (
@@ -77,6 +102,11 @@ describe("Legend", () => {
       legendItems: [],
       seriesStore: {
         ...mockContext.seriesStore,
+        useStore: (selector: any) =>
+          selector({ series: new Map(), processedSeries: [] }),
+      },
+      chartStore: {
+        ...mockContext.chartStore,
         useStore: (selector: any) =>
           selector({ series: new Map(), processedSeries: [] }),
       },

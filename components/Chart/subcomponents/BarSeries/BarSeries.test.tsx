@@ -3,7 +3,6 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
-import { InteractionType } from "../../types/interaction";
 import { BarSeriesWrapper } from "./BarSeries";
 
 // Mock the context hook
@@ -39,6 +38,48 @@ describe("BarSeries", () => {
       subscribe: vi.fn(() => vi.fn()),
       useStore: vi.fn(),
     },
+    chartStore: {
+      getState: () => ({
+        series: new Map(),
+        processedSeries: [],
+        interactions: new Map(),
+        scales: { x: (val: any) => val, y: (val: any) => val },
+        dimensions: {
+          width: 500,
+          height: 300,
+          innerHeight: 250,
+          innerWidth: 440,
+          margin: { top: 0, left: 0 },
+        },
+        data: [
+          { x: "A", y: 10 },
+          { x: "B", y: 20 },
+          { x: "C", y: 5 },
+        ],
+      }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn((selector) =>
+        selector({
+          series: new Map(),
+          processedSeries: [],
+          interactions: new Map(),
+          scales: { x: (val: any) => val, y: (val: any) => val },
+          dimensions: {
+            width: 500,
+            height: 300,
+            innerHeight: 250,
+            innerWidth: 440,
+            margin: { top: 0, left: 0 },
+          },
+          data: [
+            { x: "A", y: 10 },
+            { x: "B", y: 20 },
+            { x: "C", y: 5 },
+          ],
+        }),
+      ),
+    } as any,
   };
 
   beforeEach(() => {
@@ -62,7 +103,24 @@ describe("BarSeries", () => {
   it("renders nothing when data is empty", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      data: [],
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            series: new Map(),
+            processedSeries: [],
+            interactions: new Map(),
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: {
+              width: 300,
+              height: 200,
+              innerHeight: 250,
+              innerWidth: 440,
+              margin: { top: 0, left: 0 },
+            },
+            data: [],
+          }),
+      },
     });
 
     const { container } = render(
@@ -77,8 +135,27 @@ describe("BarSeries", () => {
   it("renders nothing when dimensions are zero", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      width: 0,
-      height: 0,
+      chartStore: {
+        ...defaultContext.chartStore,
+        useStore: (selector: any) =>
+          selector({
+            series: new Map(),
+            processedSeries: [],
+            interactions: new Map(),
+            scales: { x: (val: any) => val, y: (val: any) => val },
+            dimensions: {
+              width: 0,
+              height: 0,
+              innerHeight: 0,
+              innerWidth: 0,
+              margin: { top: 0, left: 0 },
+            },
+            data: [
+              { x: "A", y: 10 },
+              { x: "B", y: 20 },
+            ],
+          }),
+      },
     });
 
     const { container } = render(
@@ -120,41 +197,5 @@ describe("BarSeries", () => {
       const style = path.getAttribute("style");
       expect(style).toMatch(/blue/);
     });
-  });
-
-  it("applies dimming opacity when another bar is hovered", () => {
-    // Hover the second item (B)
-    const hoverState = {
-      interactions: new Map([
-        [
-          InteractionType.HOVER,
-          {
-            target: { data: defaultContext.data[1] },
-          },
-        ],
-      ]),
-    };
-
-    useChartContextMock.mockReturnValue({
-      ...defaultContext,
-      interactionStore: {
-        ...defaultContext.interactionStore,
-        useStore: (selector: any) => selector(hoverState),
-      },
-    });
-
-    const { container } = render(
-      <svg>
-        <BarSeriesWrapper />
-      </svg>,
-    );
-
-    const paths = container.querySelectorAll("path");
-    // A (dimmed)
-    expect(paths[0].getAttribute("style")).toContain("opacity: 0.6");
-    // B (highlighted/normal)
-    expect(paths[1].getAttribute("style")).toContain("opacity: 1");
-    // C (dimmed)
-    expect(paths[2].getAttribute("style")).toContain("opacity: 0.6");
   });
 });

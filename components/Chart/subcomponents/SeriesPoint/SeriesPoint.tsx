@@ -10,6 +10,7 @@ export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
   isDimmed?: boolean;
   radius?: number;
   hoverRadius?: number;
+  datum?: unknown;
 }
 
 export const SeriesPoint = memo(
@@ -41,13 +42,30 @@ export const SeriesPoint = memo(
       ...style,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const datum = (props as any).datum;
+
     return (
       <circle
+        ref={(node) => {
+          if (node) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (node as any).__data__ = datum;
+          }
+        }}
+        aria-label={
+          datum ? `Data point: ${JSON.stringify(datum)}` : "Data point"
+        }
+        aria-roledescription="data point"
         className={`${styles.point} ${className || ""}`}
         cx={x}
         cy={y}
         r={isHovered ? hoverRadius : radius}
-        style={computedStyle}
+        role="graphics-symbol"
+        style={{
+          ...computedStyle,
+          pointerEvents: "all",
+        }}
         {...props}
       />
     );

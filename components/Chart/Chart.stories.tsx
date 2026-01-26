@@ -14,9 +14,10 @@ import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { Highlight, ElementHover } from "./behaviors";
+import { Cursor, Dim, SelectionUpdate, Tooltip } from "./behaviors";
 import { Chart } from "./Chart";
-import { ChartBehavior, RenderFrame } from "./types";
+import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
+import { RenderFrame } from "./types";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -114,18 +115,14 @@ export const WithLegendAndSubtitle: Story = {
   },
 };
 
-const ClickBehavior = (callback: (data: any) => void): ChartBehavior => {
+const ClickSensor = (callback: (data: any) => void): ChartSensor => {
   return ({ on, off, getChartContext }) => {
     const handleClick = (event: any) => {
       const ctx = getChartContext();
-      if (!ctx || !ctx.resolveInteraction) {
-        return;
-      }
 
-      const result = ctx.resolveInteraction(event.nativeEvent);
-
-      if (result && result.data) {
-        callback(result.data);
+      const target = event.nativeEvent.target as any;
+      if (target && target.__data__) {
+        callback(target.__data__);
       }
     };
 
@@ -136,23 +133,48 @@ const ClickBehavior = (callback: (data: any) => void): ChartBehavior => {
 
 export const CustomRender1: Story = {
   args: {
-    behaviors: [
-      ElementHover({
-        targetResolver: (el) =>
-          el.tagName === "path" && el.classList.contains("arc"),
+    sensors: [
+      DataHoverSensor({
+        mode: "exact",
+        name: "HOVER",
       }),
-      Highlight({
+      ClickSensor((data) => {
+        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      }),
+    ],
+    behaviors: [
+      SelectionUpdate({
         selector: ".arc",
-        identify: (d) => d.data.name,
-        onUpdate: (selection, { isHighlighted, isDimmed }) => {
-          selection
-            .transition()
-            .duration(200)
-            .style("opacity", isHighlighted ? 1 : isDimmed ? 0.3 : 0.8);
+        fn: (selection, activeData: any) => {
+          (selection as any).style("opacity", (d: any) => {
+            if (!activeData) {
+              return 0.8;
+            }
+            const isHighlighted = d.data.name === activeData.data.name;
+            return isHighlighted ? 1 : 0.3;
+          });
         },
       }),
-      ClickBehavior((data) => {
-        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      Tooltip({
+        render: (data: any) => (
+          <Card
+            style={{
+              padding: "8px 12px",
+              minWidth: 150,
+              pointerEvents: "none",
+            }}
+          >
+            <Text style={{ marginBottom: 4 }} variant="h6">
+              {data && data.data.name}
+            </Text>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+              Personnel:{" "}
+              <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+                {data && data.value}
+              </span>
+            </Text>
+          </Card>
+        ),
       }),
     ],
     data: [
@@ -213,21 +235,6 @@ export const CustomRender1: Story = {
       grid: false,
       showAxes: false,
     },
-    renderTooltip: (data: any) => (
-      <Card
-        style={{ padding: "8px 12px", minWidth: 150, pointerEvents: "none" }}
-      >
-        <Text style={{ marginBottom: 4 }} variant="h6">
-          {data && data.data.name}
-        </Text>
-        <Text style={{ color: "var(--text-secondary)" }} variant="body">
-          Personnel:{" "}
-          <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
-            {data && data.value}
-          </span>
-        </Text>
-      </Card>
-    ),
     render: (frame: RenderFrame<any>) => {
       const { container, size } = frame;
       const radius = size.radius;
@@ -327,17 +334,38 @@ export const CustomRender1: Story = {
 
 export const CustomRender2: Story = {
   args: {
-    behaviors: [
-      ElementHover({
-        targetResolver: (el) =>
-          el.tagName === "rect" && el.classList.contains("treemap-node"),
+    sensors: [
+      DataHoverSensor({
+        mode: "exact",
+        name: "HOVER",
       }),
-      Highlight({
+    ],
+    behaviors: [
+      SelectionUpdate({
         selector: ".treemap-node",
-        identify: (d) => d.data.name,
-        onUpdate: (selection, { isHighlighted }) => {
-          selection.attr("fill-opacity", isHighlighted ? 1 : 0.8);
+        fn: (selection, activeData) => {
+          selection.attr("fill-opacity", (d: any) => {
+            if (!activeData) {
+              return 0.8;
+            }
+            return d.data.name === activeData.data.name ? 1 : 0.8; // Simple highlight logic
+          });
         },
+      }),
+      Tooltip({
+        render: (data: any) => (
+          <Card style={{ padding: "8px 12px", minWidth: 150 }}>
+            <Text style={{ marginBottom: 4 }} variant="h6">
+              {data && data.id}
+            </Text>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+              Value:{" "}
+              <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+                {data && data.value}
+              </span>
+            </Text>
+          </Card>
+        ),
       }),
     ],
     data: [
@@ -365,19 +393,6 @@ export const CustomRender2: Story = {
       grid: false,
       showAxes: false,
     },
-    renderTooltip: (data: any) => (
-      <Card style={{ padding: "8px 12px", minWidth: 150 }}>
-        <Text style={{ marginBottom: 4 }} variant="h6">
-          {data && data.id}
-        </Text>
-        <Text style={{ color: "var(--text-secondary)" }} variant="body">
-          Value:{" "}
-          <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
-            {data && data.value}
-          </span>
-        </Text>
-      </Card>
-    ),
     render: (frame: RenderFrame<any>) => {
       const { container, size } = frame;
       import("d3-hierarchy").then((d3Hierarchy) => {
@@ -523,7 +538,7 @@ export const IntegratedChart: Story = {
           </Flex>
           <Chart
             {...args}
-            renderTooltip={() => null}
+            behaviors={[Tooltip({ render: () => null })]}
             onValueChange={setHoveredData}
           />
         </Stack>
@@ -617,69 +632,76 @@ export const DetailedTooltip: Story = {
       showDots: true,
       curve: d3Shape.curveMonotoneX,
     },
-    renderTooltip: (data: any) => (
-      <Card style={{ padding: "12px", minWidth: "200px" }}>
-        <div
-          style={{
-            borderBottom: "1px solid var(--border-width)",
-            paddingBottom: "8px",
-            marginBottom: "8px",
-          }}
-        >
-          <Text
-            style={{
-              color: "var(--text-secondary)",
-              textTransform: "uppercase",
-            }}
-            variant="h6"
-          >
-            {data.month} 2024
-          </Text>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Revenue
-            </Text>
-            <Text style={{ fontWeight: 800 }} variant="h6">
-              ${data.revenue.toLocaleString()}
-            </Text>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Active Users
-            </Text>
-            <Text variant="h6">{data.users}</Text>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Churn Rate
-            </Text>
-            <Text style={{ color: "var(--error)" }} variant="h6">
-              {data.churn}
-            </Text>
-          </div>
-        </div>
-      </Card>
-    ),
+    behaviors: [
+      Tooltip({
+        render: (data: any) => (
+          <Card style={{ padding: "12px", minWidth: "200px" }}>
+            <div
+              style={{
+                borderBottom: "1px solid var(--border-width)",
+                paddingBottom: "8px",
+                marginBottom: "8px",
+              }}
+            >
+              <Text
+                style={{
+                  color: "var(--text-secondary)",
+                  textTransform: "uppercase",
+                }}
+                variant="h6"
+              >
+                {data.month} 2024
+              </Text>
+            </div>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Revenue
+                </Text>
+                <Text style={{ fontWeight: 800 }} variant="h6">
+                  ${data.revenue.toLocaleString()}
+                </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Active Users
+                </Text>
+                <Text variant="h6">{data.users}</Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Churn Rate
+                </Text>
+                <Text style={{ color: "var(--error)" }} variant="h6">
+                  {data.churn}
+                </Text>
+              </div>
+            </div>
+          </Card>
+        ),
+      }),
+      Cursor(),
+    ],
   },
 };
 
@@ -890,6 +912,60 @@ export const ScatterPlot: Story = {
 
     return (
       <Chart.Root
+        behaviors={[
+          Tooltip({
+            render: (data: any) => (
+              <Card
+                className="p-3"
+                style={{
+                  minWidth: 220,
+                }}
+              >
+                <Stack gap={4}>
+                  {/* Header */}
+                  <Flex align="center" justify="space-between">
+                    <Text variant="body">City Analytics</Text>
+                    <Chip size="xs" variant="primary">
+                      <Text variant="small">Group {data.group}</Text>
+                    </Chip>
+                  </Flex>
+
+                  {/* Main Value */}
+                  <Text variant="h3">{data.happiness.toFixed(2)}</Text>
+
+                  {/* Divider */}
+                  <div
+                    style={{
+                      height: "1px",
+                      backgroundColor: "#1a1f26",
+                      width: "100%",
+                    }}
+                  />
+
+                  {/* Metadata */}
+                  <Stack gap={2}>
+                    <Flex align="center" justify="space-between">
+                      <Text color="muted" variant="small">
+                        Annual Income
+                      </Text>
+                      <Text variant="body">
+                        ${data.income.toLocaleString()}
+                      </Text>
+                    </Flex>
+                    <Flex align="center" justify="space-between">
+                      <Text color="muted" variant="small">
+                        Population Density
+                      </Text>
+                      <Text variant="body">{data.population}k</Text>
+                    </Flex>
+                  </Stack>
+                </Stack>
+              </Card>
+            ),
+          }),
+          Cursor(),
+          Dim({ selector: "circle" }),
+        ]}
         d3Config={{
           grid: true,
           xAxisLabel: "Annual Income ($)",
@@ -897,52 +973,6 @@ export const ScatterPlot: Story = {
           showDots: true,
         }}
         data={data}
-        renderTooltip={(data: any) => (
-          <Card
-            className="p-3"
-            style={{
-              minWidth: 220,
-            }}
-          >
-            <Stack gap={4}>
-              {/* Header */}
-              <Flex align="center" justify="space-between">
-                <Text variant="body">City Analytics</Text>
-                <Chip size="xs" variant="primary">
-                  <Text variant="small">Group {data.group}</Text>
-                </Chip>
-              </Flex>
-
-              {/* Main Value */}
-              <Text variant="h3">{data.happiness.toFixed(2)}</Text>
-
-              {/* Divider */}
-              <div
-                style={{
-                  height: "1px",
-                  backgroundColor: "#1a1f26",
-                  width: "100%",
-                }}
-              />
-
-              {/* Metadata */}
-              <Stack gap={2}>
-                <Flex align="center" justify="space-between">
-                  <Text color="muted" variant="small">
-                    Annual Income
-                  </Text>
-                  <Text variant="body">${data.income.toLocaleString()}</Text>
-                </Flex>
-                <Flex align="center" justify="space-between">
-                  <Text color="muted" variant="small">
-                    Population Density
-                  </Text>
-                  <Text variant="body">{data.population}k</Text>
-                </Flex>
-              </Stack>
-            </Stack>
-          </Card>
-        )}
         style={{ width: "100%", maxWidth: 800, height: 400 }}
         subtitle="Bubble size represents population density"
         title="Income vs Happiness (50 Cities)"

@@ -119,4 +119,25 @@ describe("findNearestDataPoint", () => {
     const result = findNearestDataPoint(60, unsortedData, scale, (d) => d.x);
     expect(result).toEqual({ x: 10, y: 2 });
   });
+  it("successfully finds visually closest point on Log scale using pixel distance metric", () => {
+    // Log Scale: 1 -> 0px, 10 -> 50px, 100 -> 100px
+    const logData: Datum[] = [
+      { x: 1, y: 10 },
+      { x: 100, y: 100 },
+    ];
+    const scale = d3.scaleLog().domain([1, 100]).range([0, 100]);
+
+    // Pixel 55. Slightly closer to 100px (val 100) than 0px (val 1).
+    // Invert(55): x ~= 12.58
+    // Dist to 1: |1 - 12.58| = 11.58
+    // Dist to 100: |100 - 12.58| = 87.42
+    // Old Algorithm picked 1 because 11.58 < 87.42.
+    // New Algorithm checks pixel diff: |55 - 0| = 55 vs |55 - 100| = 45.
+    // Should pick 100.
+
+    const result = findNearestDataPoint(55, logData, scale, (d) => d.x);
+
+    // Correct behavior:
+    expect(result).toEqual({ x: 100, y: 100 });
+  });
 });

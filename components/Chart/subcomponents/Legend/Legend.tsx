@@ -5,7 +5,8 @@ import React, { useMemo } from "react";
 
 import { Flex } from "../../../Layout/Layout";
 import { Text } from "../../../Text/Text";
-import { useSeries } from "../../state/store/stores/series/series.store";
+import { useChartContext } from "../../context";
+import { State } from "../../state/store/chart.store";
 import { LegendItem } from "../../types";
 import styles from "./Legend.module.scss";
 
@@ -24,18 +25,15 @@ export function Legend({
   className,
   style,
 }: LegendProps) {
-  const series = useSeries();
+  const { chartStore } = useChartContext();
+  const series = chartStore.useStore((s: State) => s.processedSeries);
 
-  const legendItems = useMemo(() => {
+  const contextItems = useMemo(() => {
     return series.map((s) => ({
       label: s.label,
       color: s.color,
     }));
   }, [series]);
-
-  const contextItems = useMemo(() => {
-    return legendItems;
-  }, [legendItems]);
 
   const activeItems =
     typeof items === "function" ? items(contextItems) : (items ?? contextItems);

@@ -1,17 +1,14 @@
 "use strict";
 
-import { useEffect, useId, useMemo } from "react";
+import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
-import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
 import {
   registerSeries,
   unregisterSeries,
-} from "../../state/store/stores/series/series.store";
+} from "../../state/store/chart.store";
 import { Accessor } from "../../types";
-import { HoverInteraction, InteractionType } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
-import { createScales } from "../../utils/scales";
 import { createRoundedTopBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
 
@@ -24,71 +21,78 @@ interface BarSeriesProps<T> {
   label?: string;
 }
 
-export function BarSeries<T>({
+const BarSeriesComponent = <T,>({
   data: localData,
   x: localX,
   y: localY,
   color,
   hideCursor,
   label,
-}: BarSeriesProps<T>) {
-  const {
-    data: contextData,
-    width,
-    height,
-    config,
-    x: contextX,
-    y: contextY,
-    seriesStore,
-  } = useChartContext<T>();
+}: BarSeriesProps<T>) => {
+  const { chartStore, config, x: contextX, y: contextY } = useChartContext<T>();
 
-  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
+  const data = chartStore.useStore((s) => localData || s.data);
+  const xScale = chartStore.useStore((s) => s.scales.x);
+  const yScale = chartStore.useStore((s) => s.scales.y);
+  const innerHeight = chartStore.useStore((s) => s.dimensions.innerHeight);
 
-  const data = localData || contextData;
-  const xAccessor =
-    (localX ? resolveAccessor(localX) : undefined) ||
-    (contextX ? resolveAccessor(contextX) : undefined);
-  const yAccessor =
-    (localY ? resolveAccessor(localY) : undefined) ||
-    (contextY ? resolveAccessor(contextY) : undefined);
+  const dimensions = chartStore.useStore((s) => s.dimensions);
 
-  const { margin } = config;
+  const xAccessor = useMemo(
+    () =>
+      (localX ? resolveAccessor(localX) : undefined) ||
+      (contextX ? resolveAccessor(contextX) : undefined),
+    [localX, contextX],
+  );
 
-  const scaleCtx = useMemo(() => {
-    if (!xAccessor || !yAccessor || !data.length || width <= 0 || height <= 0) {
-      return null;
-    }
-    return createScales(
-      data,
-      width,
-      height,
-      margin,
-      xAccessor,
-      yAccessor,
-      "bar",
-    );
-  }, [data, width, height, margin, xAccessor, yAccessor]);
+  const yAccessor = useMemo(
+    () =>
+      (localY ? resolveAccessor(localY) : undefined) ||
+      (contextY ? resolveAccessor(contextY) : undefined),
+    [localY, contextY],
+  );
 
   const gradientId = useId();
 
   useEffect(() => {
-    registerSeries(seriesStore, gradientId, [
+    if (!yAccessor) {
+      return;
+    }
+    registerSeries(chartStore, gradientId, [
       {
         label: label || "Bar Series",
         color: color || "var(--primary)",
+        x: xAccessor,
         y: yAccessor,
         hideCursor: hideCursor ?? true,
+        type: "bar",
+        data,
       },
     ]);
     return () => {
-      unregisterSeries(seriesStore, gradientId);
+      unregisterSeries(chartStore, gradientId);
     };
-  }, [seriesStore, gradientId, color, yAccessor, label, hideCursor]);
+  }, [
+    chartStore,
+    gradientId,
+    color,
+    yAccessor,
+    xAccessor,
+    label,
+    hideCursor,
+    data,
+  ]);
 
-  if (!scaleCtx || !xAccessor || !yAccessor) {
+  if (
+    !xScale ||
+    !yScale ||
+    !xAccessor ||
+    !yAccessor ||
+    dimensions.width <= 0 ||
+    dimensions.height <= 0
+  ) {
     return null;
   }
-  const { xScale, yScale, innerHeight } = scaleCtx;
 
   const BAR_RADIUS = 4;
   const fillColor = color || "var(--primary)";
@@ -96,35 +100,63 @@ export function BarSeries<T>({
   return (
     <g className="chart-bar-series">
       {data.map((d, i) => {
-        const xVal = (xScale as any)(xAccessor(d)) ?? 0;
+        const xPos = (xScale as any)(xAccessor(d)) ?? 0;
         const yVal = yScale(yAccessor(d));
-        const w = "bandwidth" in xScale ? xScale.bandwidth() : 10;
-        const h = innerHeight - yVal;
+        let w = 10;
+        let offset = 0;
 
-        const isHovered = hover?.target?.data === d;
-        const isDimmed = !!hover?.target && !isHovered;
+        if ("bandwidth" in xScale && typeof xScale.bandwidth === "function") {
+          w = xScale.bandwidth();
+          if (w === 0 && "step" in xScale) {
+            // Fallback for ScalePoint (bandwidth=0) -> use 80% of step
+            w = (xScale as any).step() * 0.8;
+            offset = w / 2;
+          }
+        } else if ("step" in xScale) {
+          w = (xScale as any).step() * 0.8;
+          offset = w / 2;
+        }
+
+        const finalX = xPos - offset;
+
+        const h = innerHeight - yVal;
 
         return (
           <path
             key={i}
-            className={styles.bar}
-            d={createRoundedTopBarPath(xVal, yVal, w, h, BAR_RADIUS)}
+            ref={(node) => {
+              if (node) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (node as any).__data__ = d;
+              }
+            }}
+            aria-label={
+              label
+                ? `${label}: ${JSON.stringify(d)}`
+                : `Bar: ${JSON.stringify(d)}`
+            }
+            aria-roledescription="bar"
+            className={`${styles.bar} chart-bar`}
+            d={createRoundedTopBarPath(finalX, yVal, w, h, BAR_RADIUS)}
+            role="graphics-symbol"
             style={{
               fill: fillColor,
-              opacity: isDimmed ? 0.6 : 1,
-              filter: isHovered ? "brightness(1.1)" : "none",
+              pointerEvents: "all",
             }}
           />
         );
       })}
     </g>
   );
-}
+};
+
+export const BarSeries = React.memo(
+  BarSeriesComponent,
+) as typeof BarSeriesComponent;
 
 export function BarSeriesWrapper(props: BarSeriesProps<any>) {
-  const { config } = useChartContext();
   return (
-    <g transform={`translate(${config.margin.left}, ${config.margin.top})`}>
+    <g>
       <BarSeries {...props} />
     </g>
   );

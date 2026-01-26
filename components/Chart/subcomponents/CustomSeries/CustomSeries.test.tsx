@@ -27,6 +27,42 @@ describe("CustomSeries", () => {
       subscribe: vi.fn(() => vi.fn()),
       useStore: vi.fn(),
     },
+    chartStore: {
+      getState: () => ({
+        series: new Map(),
+        processedSeries: [],
+        interactions: new Map(),
+        scales: { x: null, y: null },
+        dimensions: {
+          width: 100,
+          height: 100,
+          margin: { top: 0, left: 0, right: 0, bottom: 0 },
+        },
+        data: [
+          { x: 0, y: 10 },
+          { x: 50, y: 20 },
+        ],
+      }),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+      useStore: vi.fn((selector) =>
+        selector({
+          series: new Map(),
+          processedSeries: [],
+          interactions: new Map(),
+          scales: { x: null, y: null },
+          dimensions: {
+            width: 100,
+            height: 100,
+            margin: { top: 0, left: 0, right: 0, bottom: 0 },
+          },
+          data: [
+            { x: 0, y: 10 },
+            { x: 50, y: 20 },
+          ],
+        }),
+      ),
+    } as any,
   };
 
   beforeEach(() => {
@@ -45,9 +81,9 @@ describe("CustomSeries", () => {
 
     expect(renderSpy).toHaveBeenCalled();
     const context = renderSpy.mock.calls[0][0];
-    expect(context).toHaveProperty("g");
-    expect(context).toHaveProperty("innerWidth");
-    expect(context).toHaveProperty("innerHeight");
+    expect(context).toHaveProperty("container");
+    expect(context.size).toHaveProperty("width");
+    expect(context.size).toHaveProperty("height");
   });
 
   it("renders null if no render prop is provided", () => {

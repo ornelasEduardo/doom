@@ -3,29 +3,37 @@
  */
 export type ChartNativeEvent = MouseEvent | TouchEvent;
 
-export interface InteractionState {
-  chartX: number; // Relative to Plot 0,0
-  chartY: number; // Relative to Plot 0,0
-  containerX: number; // Relative to Container (for tooltips)
-  containerY: number; // Relative to Container (for tooltips)
-  isWithinPlot: boolean;
-  isTouch: boolean;
-}
-
-// =============================================================================
-// HOVER STATE - Mouse/touch interaction state for tooltips and cursors
-// =============================================================================
-
 // =============================================================================
 // INTERACTION STORE TYPES
 // =============================================================================
 
+/**
+ * Standard Interaction Channels used as keys in the store's interactions Map.
+ * This allows multiple sensors to write to different logical streams.
+ */
+export enum InteractionChannel {
+  PRIMARY_HOVER = "primary-hover",
+  SELECTION = "selection",
+  CROSSHAIR = "crosshair",
+  TOOLTIP_CONFIG = "tooltip-config",
+  CURSOR_CONFIG = "cursor-config",
+}
+
 export enum InteractionType {
   HOVER = "hover",
   SELECTION = "selection",
-  ZOOM = "zoom",
-  PAN = "pan",
-  BRUSH = "brush",
+}
+
+export type HoverMode = "nearest-x" | "nearest-y" | "closest" | "exact";
+
+export interface InteractionTarget<T = any> {
+  data: T;
+  // The exact coordinates of this active data point (e.g. for snapping cursor)
+  coordinate: { x: number; y: number };
+  // Which series this point belongs to
+  seriesId?: string;
+  seriesColor?: string;
+  suppressMarker?: boolean;
 }
 
 export interface HoverInteraction<T = any> {
@@ -33,35 +41,26 @@ export interface HoverInteraction<T = any> {
   pointer: {
     x: number;
     y: number;
+    containerX: number;
+    containerY: number;
     isTouch: boolean;
   };
 
-  // The data point that was "snapped" to (if any)
-  target: {
-    data: T;
-    // The exact coordinates of this active data point (e.g. for snapping cursor)
-    coordinate: { x: number; y: number };
-  } | null;
+  /**
+   * For professional crosshairs, we often want to highlight MULTIPLE points
+   * at a specific X-index across all series.
+   */
+  targets: InteractionTarget<T>[];
+  target?: InteractionTarget<T>;
 }
+
+// =============================================================================
+// SELECTION STATE
+// =============================================================================
 
 export interface SelectionInteraction<T = any> {
   selection: T[]; // Array of selected data objects
   mode: "continuous" | "discrete"; // e.g. Brush vs Click
 }
 
-// =============================================================================
-// LEGACY Types (To be deprecated/removed)
-// =============================================================================
-
-/**
- * @deprecated Use HoverInteraction from InteractionStore instead
- * Represents the current hover state during chart interaction.
- */
-export interface HoverState<T> {
-  cursorLineX: number;
-  cursorLineY: number;
-  tooltipX: number;
-  tooltipY: number;
-  data: T;
-  isTouch: boolean;
-}
+export type Interaction = HoverInteraction | SelectionInteraction;

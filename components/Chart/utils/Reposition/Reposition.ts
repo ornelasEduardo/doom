@@ -16,8 +16,6 @@
  *   .align({ vertical: 'center' })
  *   .edgeDetect()
  *   .resolve();
- *
- * // pos = { x: 150, y: 80, placement: 'right' }
  * ```
  */
 

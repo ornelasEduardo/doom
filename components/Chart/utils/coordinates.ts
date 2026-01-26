@@ -75,3 +75,13 @@ export function normalizeCoordinates(
     isWithinPlot,
   };
 }
+export function calculateInnerDimensions(
+  width: number,
+  height: number,
+  margin: { top: number; right: number; bottom: number; left: number },
+) {
+  return {
+    innerWidth: Math.max(0, width - margin.left - margin.right),
+    innerHeight: Math.max(0, height - margin.top - margin.bottom),
+  };
+}

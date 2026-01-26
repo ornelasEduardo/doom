@@ -4,7 +4,7 @@ import { useChartContext } from "../context";
 import {
   registerSeries,
   unregisterSeries,
-} from "../state/store/stores/series/series.store";
+} from "../state/store/chart.store";
 import { Accessor } from "./accessors";
 
 interface RegistrationProps<T> {
@@ -16,11 +16,11 @@ interface RegistrationProps<T> {
 }
 
 export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
-  const { seriesStore } = useChartContext();
+  const { chartStore } = useChartContext();
   const id = useId();
 
   useEffect(() => {
-    registerSeries(seriesStore, id, [
+    registerSeries(chartStore, id, [
       {
         label: props.label || "Series",
         color: props.color,
@@ -29,10 +29,10 @@ export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
       },
     ]);
     return () => {
-      unregisterSeries(seriesStore, id);
+      unregisterSeries(chartStore, id);
     };
   }, [
-    seriesStore,
+    chartStore,
     id,
     props.label,
     props.color,

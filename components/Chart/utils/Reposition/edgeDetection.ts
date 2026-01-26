@@ -40,7 +40,7 @@ export interface EdgeCorrectedPosition {
 // ============================================================================
 
 /** Horizontal gap between anchor and tooltip edge */
-export const TOOLTIP_GAP_X = 12;
+export const TOOLTIP_GAP_X = 24;
 
 /** Vertical gap between anchor and tooltip */
 export const TOOLTIP_GAP_Y = 8;

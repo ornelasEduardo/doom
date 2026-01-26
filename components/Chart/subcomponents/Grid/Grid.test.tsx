@@ -24,6 +24,28 @@ describe("Grid", () => {
     },
     x: (d: any) => d.x,
     y: (d: any) => d.y,
+    chartStore: {
+      useStore: (selector: any) =>
+        selector({
+          scales: {
+            x: (val: any) => val,
+            y: (() => {
+              const fn = (val: any) => val;
+              (fn as any).ticks = () => [0, 10, 20];
+              return fn;
+            })(),
+          },
+          dimensions: {
+            width: 200,
+            height: 200,
+            innerHeight: 200,
+            innerWidth: 200,
+          },
+        }),
+      getState: () => ({}),
+      setState: vi.fn(),
+      subscribe: vi.fn(() => vi.fn()),
+    } as any,
   };
 
   beforeEach(() => {

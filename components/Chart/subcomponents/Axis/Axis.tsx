@@ -1,48 +1,27 @@
 "use strict";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { useChartContext } from "../../context";
-import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
-import { createScales } from "../../utils/scales";
 import styles from "./Axis.module.scss";
 
 export function Axis() {
-  const { data, width, height, config, x, y, requestLayoutAdjustment } =
+  const { chartStore, config, requestLayoutAdjustment, isMobile } =
     useChartContext();
-  const { margin } = config;
+  const dimensions = chartStore.useStore((s) => s.dimensions);
+  const scales = chartStore.useStore((s) => s.scales);
+
+  const { margin, innerWidth, innerHeight } = dimensions;
+  const { x: xScale, y: yScale } = scales;
+
   const gx = useRef<SVGGElement>(null);
   const gy = useRef<SVGGElement>(null);
-  const isMobile = false;
-
-  const ctx = useMemo(() => {
-    if (
-      !data.length ||
-      !x ||
-      !y ||
-      !config.showAxes ||
-      width <= 0 ||
-      height <= 0
-    ) {
-      return null;
-    }
-    return createScales(
-      data,
-      width,
-      height,
-      margin,
-      resolveAccessor(x),
-      resolveAccessor(y),
-      config.type as any,
-    );
-  }, [data, width, height, margin, x, y, config.type]);
 
   useEffect(() => {
-    if (!ctx || !gx.current || !gy.current) {
+    if (!xScale || !yScale || !gx.current || !gy.current) {
       return;
     }
-    const { xScale, yScale, innerWidth, innerHeight } = ctx;
 
     const xAxis = d3.axisBottom(xScale as any);
     if ("bandwidth" in xScale) {
@@ -77,7 +56,8 @@ export function Axis() {
     try {
       const yBBox = gy.current.getBBox();
       if (yBBox.x < 0) {
-        requestLayoutAdjustment?.({ left: Math.abs(yBBox.x) + 20 });
+        const padding = config.yAxisLabel ? 50 : 20;
+        requestLayoutAdjustment?.({ left: Math.abs(yBBox.x) + padding });
       }
 
       const xBBox = gx.current.getBBox();
@@ -89,21 +69,28 @@ export function Axis() {
     } catch {
       // Ignore measurement errors if SVG not in DOM
     }
-  }, [ctx, config.hideYAxisDomain, isMobile, requestLayoutAdjustment]);
+  }, [
+    xScale,
+    yScale,
+    config.hideYAxisDomain,
+    config.yAxisLabel,
+    isMobile,
+    requestLayoutAdjustment,
+    innerHeight,
+  ]);
 
-  if (!ctx) {
+  if (!xScale || !yScale) {
     return null;
   }
 
-  const { innerWidth, innerHeight } = ctx;
-
   return (
-    <g
-      className={styles.axes}
-      transform={`translate(${margin.left}, ${margin.top})`}
-    >
-      <g ref={gx} transform={`translate(0, ${innerHeight})`} />
-      <g ref={gy} />
+    <g aria-hidden="true" className={styles.axes}>
+      <g
+        ref={gx}
+        aria-label="X Axis"
+        transform={`translate(0, ${innerHeight})`}
+      />
+      <g ref={gy} aria-label="Y Axis" />
       {config.xAxisLabel && (
         <text
           className={styles.label}

@@ -1,13 +1,14 @@
+"use client";
+
 import clsx from "clsx";
-import { useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { Card } from "../../../Card/Card";
 import { Text } from "../../../Text/Text";
+import { TooltipOptions } from "../../behaviors/Tooltip";
 import { useChartContext } from "../../context";
-import { useInteraction } from "../../state/store/stores/interaction/interaction.store";
-import { useSeries } from "../../state/store/stores/series/series.store";
 import { resolveAccessor, Series } from "../../types";
-import { HoverInteraction, InteractionType } from "../../types/interaction";
+import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import {
   Reposition,
   TOOLTIP_GAP_X,
@@ -17,27 +18,58 @@ import {
 import styles from "./Tooltip.module.scss";
 import { TooltipProps } from "./types";
 
-export function Tooltip<T>({ containerRef, renderTooltip }: TooltipProps<T>) {
+/**
+ * The Tooltip component is a pure reactor that renders the chart's tooltip.
+ * It reads its configuration and active data from the interaction store and
+ * uses the `Reposition` utility for viewport-aware placement.
+ *
+ * It supports both the default Doom styling and custom renderers provided via
+ * the `Tooltip` behavior.
+ */
+export function Tooltip<T>({
+  containerRef,
+}: Omit<TooltipProps<T>, "renderTooltip">) {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const { x, y, config, variant } = useChartContext<T>();
-  const series = useSeries();
+  const { chartStore, x, y, config, variant } = useChartContext<T>();
 
-  const hover = useInteraction<HoverInteraction<T>>(InteractionType.HOVER);
+  const series = chartStore.useStore((s) => s.processedSeries);
+  const interactions = chartStore.useStore((s) => s.interactions);
 
-  const activeData = hover?.target?.data;
+  const tooltipConfig = interactions.get(
+    InteractionChannel.TOOLTIP_CONFIG,
+  ) as TooltipOptions<T>;
+
+  const interactionType = tooltipConfig?.on || InteractionChannel.PRIMARY_HOVER;
+  const hover = interactions.get(interactionType) as HoverInteraction<T>;
+
+  // Use primary target for positioning, but pass all targets or primary data to renderer
+  const target = hover?.targets?.[0] ?? null;
   const position = hover?.pointer;
 
-  if (!activeData || !position) {
+  const [layout, setLayout] = useState({ x: 0, y: 0, visible: false });
+
+  useLayoutEffect(() => {
+    if (!tooltipRef.current || !target || !position) {
+      return;
+    }
+
+    const { x, y } = new Reposition(tooltipRef.current)
+      .anchor({
+        x: (position as { containerX?: number }).containerX ?? position.x,
+        y: (position as { containerY?: number }).containerY ?? position.y,
+      })
+      .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
+      .align({ vertical: "center" })
+      .touchOffset(TOUCH_OFFSET_Y, position.isTouch ?? false)
+      .edgeDetect({ container: containerRef })
+      .resolve();
+
+    setLayout({ x, y, visible: true });
+  }, [target, position, containerRef]);
+
+  if (!target || !position) {
     return null;
   }
-
-  const { x: newX, y: newY } = new Reposition(tooltipRef.current)
-    .anchor(position)
-    .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
-    .align({ vertical: "center" })
-    .touchOffset(TOUCH_OFFSET_Y, position.isTouch ?? false)
-    .edgeDetect({ container: containerRef })
-    .resolve();
 
   return (
     <div
@@ -48,15 +80,21 @@ export function Tooltip<T>({ containerRef, renderTooltip }: TooltipProps<T>) {
         position: "absolute",
         top: 0,
         left: 0,
-        transform: `translate(${newX}px, ${newY}px)`,
+        transform: `translate(${layout.x}px, ${layout.y}px)`,
         zIndex: 10,
+        opacity: layout.visible ? 1 : 0,
+        transition: "opacity 0.1s ease-out",
       }}
     >
-      {renderTooltip ? (
-        renderTooltip(activeData)
+      {tooltipConfig?.render ? (
+        tooltipConfig.render(
+          hover.targets && hover.targets.length > 1
+            ? hover.targets.map((t) => t.data)
+            : target.data,
+        )
       ) : (
         <DefaultTooltipContent
-          activeData={activeData}
+          activeData={target.data}
           config={config as any}
           series={series}
           variant={variant}

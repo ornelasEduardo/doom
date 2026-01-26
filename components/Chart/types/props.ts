@@ -2,13 +2,13 @@ import React from "react";
 
 import { Accessor } from "./accessors";
 import { SeriesType } from "./common";
-import { ChartConfig } from "./config";
+import { Config } from "./config";
 import { RenderFrame } from "./context";
-import { ChartBehavior } from "./events";
+import { Behavior, Sensor } from "./events";
 
-export interface ChartProps<T = unknown> {
+export interface Props<T = unknown> {
   data: T[];
-  d3Config?: ChartConfig;
+  d3Config?: Config;
   className?: string;
   style?: React.CSSProperties;
   onValueChange?: (data: T | null) => void;
@@ -18,7 +18,6 @@ export interface ChartProps<T = unknown> {
   title?: string | React.ReactNode;
   subtitle?: string;
   withLegend?: boolean;
-  renderTooltip?: (data: T) => React.ReactNode;
   children?: React.ReactNode;
 
   // For shorthand API - single series defined at root level
@@ -26,8 +25,6 @@ export interface ChartProps<T = unknown> {
   x?: Accessor<T, string | number>;
   y?: Accessor<T, number>;
   render?: (frame: RenderFrame<T>) => void;
-  behaviors?: ChartBehavior[];
+  behaviors?: Behavior[];
+  sensors?: Sensor[];
 }
-
-// Alias for backward compatibility
-export type DrawContext<T> = RenderFrame<T>;

@@ -8,22 +8,25 @@ import {
   Header,
   Legend,
   Plot,
-  Root,
   Series,
 } from "./subcomponents";
-import { ChartProps } from "./types";
+import { Root } from "./subcomponents/Root/Root";
+import { Props } from "./types";
 
 export type {
   Accessor,
-  ChartConfig,
-  ChartProps,
+  Config,
+  ContextValue,
+  EventType,
   LegendConfig,
   LegendItem,
-  SeriesContext,
+  Props,
+  RenderFrame,
   SeriesProps,
+  SeriesType,
 } from "./types";
 
-function ChartComposed<T>(props: ChartProps<T>) {
+function ChartComposed<T>(props: Props<T>) {
   if (props.children) {
     return <Root {...props} />;
   }
