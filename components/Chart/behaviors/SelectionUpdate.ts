@@ -7,6 +7,18 @@ export interface SelectionUpdateOptions<T> {
    * Defaults to `InteractionChannel.SELECTION`, but can be set to `PRIMARY_HOVER` for hover effects.
    */
   on?: InteractionChannel | string;
+
+  /**
+   * CSS selector to target elements for updates.
+   * Defaults to ".chart-bar, .chart-point, path".
+   */
+  selector?: string;
+
+  /**
+   * Optional custom update function.
+   * If provided, this function is called with the D3 selection of matched elements and the interaction payload.
+   */
+  fn?: (selection: any, activeData: any) => void;
 }
 
 /**
@@ -21,7 +33,11 @@ export interface SelectionUpdateOptions<T> {
 export const SelectionUpdate = <T = unknown>(
   options: SelectionUpdateOptions<T> = {},
 ): Behavior => {
-  const { on = InteractionChannel.SELECTION } = options;
+  const {
+    on = InteractionChannel.SELECTION,
+    selector = ".chart-bar, .chart-point, path",
+    fn,
+  } = options;
 
   return ({ getChartContext, getInteraction }) => {
     const ctx = getChartContext();
@@ -33,25 +49,32 @@ export const SelectionUpdate = <T = unknown>(
 
     const update = () => {
       const interaction = getInteraction(on) as any;
-      // Selection interactions might have a different structure (e.g. { selection: [], mode: ... })
-      // But assuming normalized structure or handling both:
       const targets = interaction?.targets || [];
-      const selection =
-        interaction?.selection || targets.map((t: any) => t.data);
+      // If we have a direct selection (e.g. from ClickSensor), use it.
+      // Otherwise map targets (from HoverSensor) to data.
+      let activeData = interaction?.data; // Direct data payload from some sensors
+      if (!activeData && targets.length > 0) {
+        activeData = targets[0]; // Wrapper { element, data }
+      }
 
-      const activeSet = new Set(selection);
+      // For the custom function, we might want the raw interaction or the processed data
+      // Let's pass the interaction payload or the 'primary' target data.
+      // The Story uses `fn: (selection, activeData) => ...` where activeData seems to be the target object.
+
+      const selectionSet = g.selectAll(selector);
+
+      if (fn) {
+        fn(selectionSet, activeData);
+        return;
+      }
+
+      // Default behavior: toggle classes
+      const selectionData =
+        interaction?.selection || targets.map((t: any) => t.data);
+      const activeSet = new Set(selectionData);
       const hasSelection = activeSet.size > 0;
 
-      // Example: toggle 'selected' class on mapped elements
-      // This requires elements to have data bound.
-      // We'll target a broad set of common elements if no specific selector is updated (Wait, SelectionUpdate usually takes a selector too? The interface didn't have one).
-      // Let's stick to a generic ".chart-series-group *" or similar, or just leave it as a mental placeholder if we lack the selector.
-      // Actually, without a selector, we can't efficiently find elements to update unless we scan everything.
-      // Let's use a default selector like Dim does.
-
-      const selector = ".chart-bar, .chart-point, path"; // Default guess
-
-      g.selectAll(selector)
+      selectionSet
         .classed("selected", function () {
           const d = (this as any).__data__;
           return activeSet.has(d);
@@ -68,8 +91,11 @@ export const SelectionUpdate = <T = unknown>(
 
     return () => {
       unsubscribe();
-      const selector = ".chart-bar, .chart-point, path";
-      g.selectAll(selector).classed("selected", false).classed("dimmed", false);
+      if (!fn) {
+        g.selectAll(selector)
+          .classed("selected", false)
+          .classed("dimmed", false);
+      }
     };
   };
 };

@@ -13,21 +13,16 @@ import { d3 } from "../../utils/d3";
 const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
   const { chartStore, config, isMobile } = useChartContext<T>();
 
-  const {
-    data: stateData,
-    dimensions,
-    scales,
-  } = chartStore.useStore((s) => ({
-    data: s.data,
-    dimensions: s.dimensions,
-    scales: s.scales,
-  }));
+  const stateData = chartStore.useStore((s) => s.data);
+  const dimensions = chartStore.useStore((s) => s.dimensions);
+  const scales = chartStore.useStore((s) => s.scales);
 
   const { data: localData, x: localX, y: localY, render, color, label } = props;
-  const { margin, innerWidth, innerHeight } = dimensions;
+  const { innerWidth, innerHeight } = dimensions;
 
   // Determine effective data and accessors
   const data = localData || stateData;
+  const xAccessor = localX ? resolveAccessor(localX) : undefined;
   const yAccessor = localY ? resolveAccessor(localY) : undefined;
 
   const gRef = useRef<SVGGElement>(null);
@@ -43,15 +38,26 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         label: effectiveLabel,
         color: color || "var(--primary)",
         yAccessor,
-        hideCursor: true, // Custom series usually handle their own interaction or don't use standard cursor
+        xAccessor,
+        hideCursor: true,
         interactionMode: "x",
+        data,
       } as any,
     ]);
 
     return () => {
       unregisterSeries(chartStore, seriesId);
     };
-  }, [chartStore, seriesId, label, config.yAxisLabel, color, yAccessor]);
+  }, [
+    chartStore,
+    seriesId,
+    label,
+    config.yAxisLabel,
+    color,
+    yAccessor,
+    xAccessor,
+    data,
+  ]);
 
   useEffect(() => {
     if (
@@ -65,9 +71,11 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     }
 
     const container = d3.select(gRef.current) as unknown as D3Selection<T>;
+    container.datum(data as any);
 
     render({
       container,
+      data,
       size: {
         width: innerWidth,
         height: innerHeight,
@@ -99,9 +107,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     return null;
   }
 
-  return (
-    <g ref={gRef} transform={`translate(${margin.left}, ${margin.top})`} />
-  );
+  return <g ref={gRef} />;
 };
 
 export const CustomSeries = React.memo(

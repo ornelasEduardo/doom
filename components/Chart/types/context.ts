@@ -5,6 +5,7 @@ import { D3Selection } from "./selection";
 
 export interface RenderFrame<T = unknown> {
   container: D3Selection<T>;
+  data: T[];
   size: { width: number; height: number; radius: number };
   scales: { x?: XScale; y?: YScale };
   theme: { colors: string[]; isMobile: boolean };

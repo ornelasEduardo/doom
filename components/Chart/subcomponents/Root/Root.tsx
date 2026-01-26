@@ -17,6 +17,7 @@ import {
   createChartStore,
   Store,
   updateChartDimensions,
+  updateChartState,
 } from "../../state/store/chart.store";
 import {
   Behavior,
@@ -27,7 +28,6 @@ import {
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
-import { calculateInnerDimensions } from "../../utils/coordinates";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
 import { Grid } from "../Grid/Grid";
@@ -167,22 +167,10 @@ export function Root<T>({
 
   // Sync data to store
   useEffect(() => {
-    chartStore.setState((prev: any) => {
-      const { innerWidth, innerHeight } = calculateInnerDimensions(
-        prev.dimensions.width,
-        prev.dimensions.height,
-        prev.dimensions.margin,
-      );
-
-      return {
-        data,
-        type: type || prev.type,
-        dimensions: {
-          ...prev.dimensions,
-          innerWidth,
-          innerHeight,
-        },
-      };
+    updateChartState(chartStore, {
+      data,
+      type,
+      dimensions: chartStore.getState().dimensions,
     });
   }, [chartStore, data, type]);
 

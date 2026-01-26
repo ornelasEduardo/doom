@@ -34,7 +34,7 @@ function ChartComposed<T>(props: Props<T>) {
   return (
     <Root {...props}>
       <Grid />
-      <Axis />
+      {props.d3Config?.showAxes !== false && <Axis />}
       {!props.render && <CursorWrapper mode="line" />}
       <Series render={props.render} type={props.type} x={props.x} y={props.y} />
       {!props.render && <CursorWrapper mode="dots" />}

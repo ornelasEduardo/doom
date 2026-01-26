@@ -18,6 +18,7 @@ import { Cursor, Dim, SelectionUpdate, Tooltip } from "./behaviors";
 import { Chart } from "./Chart";
 import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
 import { RenderFrame } from "./types";
+import { Sensor, SensorContext } from "./types/events";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -115,11 +116,9 @@ export const WithLegendAndSubtitle: Story = {
   },
 };
 
-const ClickSensor = (callback: (data: any) => void): ChartSensor => {
-  return ({ on, off, getChartContext }) => {
+const ClickSensor = (callback: (data: any) => void): Sensor => {
+  return ({ on, off }: SensorContext) => {
     const handleClick = (event: any) => {
-      const ctx = getChartContext();
-
       const target = event.nativeEvent.target as any;
       if (target && target.__data__) {
         callback(target.__data__);
@@ -136,7 +135,6 @@ export const CustomRender1: Story = {
     sensors: [
       DataHoverSensor({
         mode: "exact",
-        name: "HOVER",
       }),
       ClickSensor((data) => {
         alert(`You clicked on ${data.data.name}: ${data.value}`);
@@ -235,8 +233,10 @@ export const CustomRender1: Story = {
       grid: false,
       showAxes: false,
     },
+    x: (d: any) => d.name,
+    y: (d: any) => d.value,
     render: (frame: RenderFrame<any>) => {
-      const { container, size } = frame;
+      const { container, size, data } = frame;
       const radius = size.radius;
 
       container.selectAll("*").remove();
@@ -256,10 +256,12 @@ export const CustomRender1: Story = {
         palette.slate[600],
       ]);
 
-      // Extract root from array wrapper if needed
-      const hierarchyData = Array.isArray(frame.container.datum())
-        ? (frame.container.datum() as any)[0]
-        : frame.container.datum();
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      // Hierarchy data is usually the first element of the dataset if it's a single root
+      const hierarchyData = data[0];
 
       // Create hierarchy
       const root = d3Hierarchy
@@ -337,7 +339,6 @@ export const CustomRender2: Story = {
     sensors: [
       DataHoverSensor({
         mode: "exact",
-        name: "HOVER",
       }),
     ],
     behaviors: [
@@ -394,10 +395,12 @@ export const CustomRender2: Story = {
       showAxes: false,
     },
     render: (frame: RenderFrame<any>) => {
-      const { container, size } = frame;
+      const { container, size, data } = frame;
       import("d3-hierarchy").then((d3Hierarchy) => {
-        // Extraction of original data from hierarchy if needed
-        const rawData = container.datum() as any[];
+        if (!data || data.length === 0) {
+          return;
+        }
+        const rawData = data;
 
         const root = d3Hierarchy
           .stratify<any>()
@@ -417,6 +420,9 @@ export const CustomRender2: Story = {
           "var(--success)",
           "var(--warning)",
         ];
+
+        // Clear previous render to prevent duplicates
+        container.selectAll("*").remove();
 
         const nodes = container
           .selectAll("g")
@@ -490,7 +496,7 @@ export const IntegratedChart: Story = {
       showDots: false,
       showAxes: false,
       curve: d3Shape.curveMonotoneX,
-      margin: { top: 10, right: 0, bottom: 10, left: 0 },
+      margin: { top: 10, right: 2, bottom: 10, left: 2 },
     },
     style: {
       width: "100%",
@@ -538,7 +544,7 @@ export const IntegratedChart: Story = {
           </Flex>
           <Chart
             {...args}
-            behaviors={[Tooltip({ render: () => null })]}
+            behaviors={[Tooltip({ render: () => null }), Cursor()]}
             onValueChange={setHoveredData}
           />
         </Stack>
@@ -737,6 +743,7 @@ export const CompositionExample: Story = {
           }}
           data={data}
           style={{ height: 400 }}
+          type={chartType}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
         >

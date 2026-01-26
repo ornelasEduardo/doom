@@ -22,12 +22,12 @@ export const calculateInnerDimensions = (
 });
 
 export const getDimensionsInitialState = (config: Config): DimensionsSlice => {
-  const margin = config.margin || {
-    top: 20,
-    right: 20,
-    bottom: 40,
-    left: 50,
-  };
+  const defaultMargin =
+    config.showAxes === false
+      ? { top: 20, right: 10, bottom: 20, left: 10 }
+      : { top: 20, right: 20, bottom: 40, left: 50 };
+
+  const margin = config.margin || defaultMargin;
 
   const width = config.width || 0;
   const height = config.height || 0;

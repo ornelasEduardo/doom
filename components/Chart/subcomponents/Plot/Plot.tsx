@@ -54,10 +54,6 @@ export function Plot({ children, className, style }: PlotProps) {
     return () => resizeObserver.disconnect();
   }, [chartStore]);
 
-  if (dimensions.width <= 0) {
-    return null;
-  }
-
   return (
     <div
       className={`${styles.responsiveWrapper} ${className || ""}`}
@@ -81,8 +77,8 @@ export function Plot({ children, className, style }: PlotProps) {
             height={dimensions.innerHeight}
             width={dimensions.innerWidth}
           />
+          {children}
         </g>
-        {children}
       </svg>
     </div>
   );

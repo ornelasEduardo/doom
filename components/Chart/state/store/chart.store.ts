@@ -119,6 +119,50 @@ export const updateChartData = <T>(store: Store, data: T[]) => {
 };
 
 /**
+ * Synchronizes the chart state from props (Data, Type, Dimensions).
+ */
+export const updateChartState = <T>(
+  store: Store,
+  props: { data: T[]; type?: string; dimensions: Dimensions },
+) => {
+  store.setState((prev) => {
+    const { data, type, dimensions } = props;
+    const { margin } = dimensions;
+
+    // Recalculate inner dimensions based on new outer dimensions
+    const { innerWidth, innerHeight } = calculateInnerDimensions(
+      dimensions.width,
+      dimensions.height,
+      margin,
+    );
+
+    const nextDimensions = {
+      ...dimensions,
+      innerWidth,
+      innerHeight,
+    };
+
+    // Recalculate scales based on new data/type/dimensions
+    const nextScales = calculateScales(
+      data,
+      nextDimensions,
+      { ...prev, type: type || prev.type } as State, // Use new type for calculation
+    );
+
+    return {
+      data,
+      type: type || prev.type,
+      dimensions: nextDimensions,
+      scales: nextScales,
+      status:
+        nextDimensions.width > 0 && nextDimensions.height > 0
+          ? "ready"
+          : "idle",
+    } as Partial<State>;
+  });
+};
+
+/**
  * Registers a series id and its configurations.
  * Often called by the `<Series />` component or sub-series layers.
  */
