@@ -233,8 +233,6 @@ export const CustomRender1: Story = {
       grid: false,
       showAxes: false,
     },
-    x: (d: any) => d.name,
-    y: (d: any) => d.value,
     render: (frame: RenderFrame<any>) => {
       const { container, size, data } = frame;
       const radius = size.radius;
@@ -866,6 +864,7 @@ export const MultiSeries: Story = {
         d3Config={{ grid: true, showDots: true }}
         data={data}
         style={{ width: "100%", maxWidth: 800, height: 400 }}
+        type="line"
         x="month"
         y="revenue"
       >

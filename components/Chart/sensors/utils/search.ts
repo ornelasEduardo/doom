@@ -19,17 +19,10 @@ export const findClosestTargets = (
   mode: HoverMode,
   state: State,
 ): InteractionTarget[] => {
-  const { processedSeries, scales } = state;
-  const { x: xScale, y: yScale } = scales;
-
-  if (!xScale || !yScale) {
-    return [];
-  }
-
   const chartX = event.coordinates.chartX;
   const chartY = event.coordinates.chartY;
 
-  // Exact target finding (DOM fallback)
+  // Exact target finding (DOM fallback) - Does NOT require global scales
   if (mode === "exact") {
     const domTarget = event.nativeEvent.target as any;
     if (domTarget && domTarget.__data__) {
@@ -40,6 +33,13 @@ export const findClosestTargets = (
         },
       ];
     }
+    return [];
+  }
+
+  const { processedSeries, scales } = state;
+  const { x: xScale, y: yScale } = scales;
+
+  if (!xScale || !yScale) {
     return [];
   }
 

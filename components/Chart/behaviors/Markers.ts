@@ -67,7 +67,6 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
         .attr("stroke-width", 2)
         .attr("cx", (d) => d.coordinate.x)
         .attr("cy", (d) => d.coordinate.y)
-        .attr("cy", (d) => d.coordinate.y)
         .style("opacity", 1);
 
       // Update
