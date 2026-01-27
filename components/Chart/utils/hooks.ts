@@ -1,10 +1,7 @@
 import { useEffect, useId } from "react";
 
 import { useChartContext } from "../context";
-import {
-  registerSeries,
-  unregisterSeries,
-} from "../state/store/chart.store";
+import { registerSeries, unregisterSeries } from "../state/store/chart.store";
 import { Accessor } from "./accessors";
 
 interface RegistrationProps<T> {

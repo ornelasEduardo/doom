@@ -4,7 +4,9 @@ import { Card } from "../../../Card/Card";
 import { Text } from "../../../Text/Text";
 
 export const DefaultTooltip = (data: any) => {
-  if (!data) return null;
+  if (!data) {
+    return null;
+  }
 
   // Handle simple value/label pairs or complex objects
   const label = data.label || data.x || "Value";
@@ -18,7 +20,7 @@ export const DefaultTooltip = (data: any) => {
       >
         {label}
       </Text>
-      <Text variant="body" style={{ fontWeight: 600 }}>
+      <Text style={{ fontWeight: 600 }} variant="body">
         {value}
       </Text>
     </Card>
