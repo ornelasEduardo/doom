@@ -88,9 +88,9 @@ export function Tooltip<T>({
     >
       {tooltipConfig?.render ? (
         tooltipConfig.render(
-          hover.targets && hover.targets.length > 1
+          (hover.targets && hover.targets.length > 1
             ? hover.targets.map((t) => t.data)
-            : target.data,
+            : target.data) as any,
         )
       ) : (
         <DefaultTooltipContent

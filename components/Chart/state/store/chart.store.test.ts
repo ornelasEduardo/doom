@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ChartConfig } from "../../types";
+import { Config } from "../../types";
 import {
   createChartStore,
   registerSeries,
@@ -10,7 +10,7 @@ import {
 } from "./chart.store";
 
 describe("ChartStore", () => {
-  const mockConfig: ChartConfig = {
+  const mockConfig: Config = {
     width: 500,
     height: 300,
     type: "line",

@@ -1,7 +1,7 @@
 import { bisector } from "d3-array";
 
 import { InteractionTarget } from "../../../../types/interaction";
-import { ChartScale } from "../../../../types/scales";
+import { Scale } from "../../../../types/scales";
 import { Series } from "../../../../types/series";
 import { resolveAccessor } from "../../../../utils/accessors";
 import { InteractionStrategy } from "../types";
@@ -32,8 +32,8 @@ export class BinaryXStrategy<T = any> implements InteractionStrategy<T> {
     x: number,
     _y: number,
     radius: number,
-    xScale: ChartScale,
-    yScale: ChartScale,
+    xScale: Scale,
+    yScale: Scale,
   ): InteractionTarget<T> | null {
     // 1. Invert the pixel X to domain X (if possible)
     let domainX: any;

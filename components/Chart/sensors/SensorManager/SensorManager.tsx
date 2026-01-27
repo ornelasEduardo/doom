@@ -8,7 +8,8 @@ import {
   removeInteraction,
   upsertInteraction,
 } from "../../state/store/chart.store";
-import { SeriesContext } from "../../types";
+import { ContextValue } from "../../types";
+import { Sensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DataHoverSensor } from "../DataHoverSensor/DataHoverSensor";
 import { KeyboardSensor } from "../KeyboardSensor";
@@ -20,7 +21,7 @@ import { KeyboardSensor } from "../KeyboardSensor";
  * to the interaction store.
  */
 export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
-  const { chartStore, config } = useChartContext();
+  const { chartStore, config, colorPalette } = useChartContext();
   const eventContext = useEventContext();
 
   // Subscribe to status and data for lifecycle protection
@@ -85,24 +86,29 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
             ...state,
             xScale: state.scales.x,
             yScale: state.scales.y,
+            colorPalette: colorPalette || [],
             chartStore,
-          } as unknown as SeriesContext<any>;
+          } as unknown as ContextValue<any>;
         },
 
-        getInteraction: (name) => {
+        getInteraction: (name: string) => {
           return chartStore.getState().interactions.get(name) || null;
         },
-        upsertInteraction: (name, value) => {
+        upsertInteraction: (name: string, value: any) => {
           upsertInteraction(chartStore, name, value);
         },
-        removeInteraction: (name) => {
+        removeInteraction: (name: string) => {
           removeInteraction(chartStore, name);
         },
       });
     });
 
     return () => {
-      cleanups.forEach((cleanup) => cleanup());
+      cleanups.forEach((cleanup) => {
+        if (typeof cleanup === "function") {
+          cleanup();
+        }
+      });
     };
   }, [activeSensors, eventContext, chartStore, status, data.length]);
 

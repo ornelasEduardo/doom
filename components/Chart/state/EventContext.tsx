@@ -7,7 +7,12 @@ import React, {
   useState,
 } from "react";
 
-import { ChartEvent, EventContextValue } from "../types/events";
+import {
+  ChartEvent,
+  Coordinates,
+  EventContextValue,
+  EventType,
+} from "../types/events";
 
 type EventListener = (event: ChartEvent) => void;
 

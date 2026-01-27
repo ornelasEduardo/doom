@@ -1,3 +1,5 @@
+import { State } from "../state/store/chart.store";
+import { Behavior, BehaviorContext } from "../types/events";
 import { InteractionChannel } from "../types/interaction";
 
 export interface SelectionOptions<T = any> {
@@ -31,7 +33,7 @@ export const Selection = <T = any>(
 ): Behavior<T> => {
   const { on = InteractionChannel.SELECTION, onSelectionChange } = options;
 
-  return ({ getChartContext }) => {
+  return ({ getChartContext }: BehaviorContext<T>) => {
     const ctx = getChartContext();
     if (!ctx || !ctx.chartStore) {
       return () => {};
@@ -50,7 +52,7 @@ export const Selection = <T = any>(
 
     return () => {
       unsubscribe();
-      chartStore.setState((prev) => {
+      chartStore.setState((prev: State<T>) => {
         const next = new Map(prev.interactions);
         next.delete(on);
         return { interactions: next };

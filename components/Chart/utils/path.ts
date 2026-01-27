@@ -13,8 +13,8 @@ export function createLinePath<T>(
   console.log("createLinePath", { dataLength: data.length });
   const lineGenerator = d3
     .line<T>()
-    .x(x)
-    .y(y)
+    .x(x as any)
+    .y(y as any)
     .curve(curve || defaultCurve || d3.curveLinear);
 
   return lineGenerator(data);
@@ -30,9 +30,9 @@ export function createAreaPath<T>(
 ): string | null {
   const areaGenerator = d3
     .area<T>()
-    .x(x)
+    .x(x as any)
     .y0(y0)
-    .y1(y)
+    .y1(y as any)
     .curve(curve || defaultCurve || d3.curveLinear);
 
   return areaGenerator(data);

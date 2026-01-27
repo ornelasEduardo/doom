@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { ChartState } from "../../state/store/chart.store";
 import { d3 } from "../../utils/d3";
 import { findClosestTargets } from "./search";
 
@@ -17,7 +16,7 @@ describe("findClosestTargets - Interaction Radius", () => {
         yAccessor: (d: any) => d.y,
         color: "red",
         strategy: {
-          find: (chartX, chartY, radius, xScale, yScale) => {
+          find: (chartX: number, chartY: number, radius: number) => {
             // Mock strategy calculation
             // Simple distance check against the single point (50, 50)
             const dx = Math.abs(chartX - 50);
@@ -43,7 +42,7 @@ describe("findClosestTargets - Interaction Radius", () => {
         yAccessor: (d: any) => d.y,
         color: "blue",
         strategy: {
-          find: (chartX, chartY, radius, xScale, yScale) => {
+          find: (chartX: number, chartY: number, radius: number) => {
             const dx = Math.abs(chartX - 50);
             const dy = Math.abs(chartY - 50);
             const dist = Math.sqrt(dx * dx + dy * dy);

@@ -9,6 +9,7 @@
     "tests",
     "**/*.stories.tsx",
     "**/*.test.tsx",
+    "**/*.test.ts",
     "scripts",
     "components/A2UI/promptUtils.ts"
   ]

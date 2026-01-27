@@ -66,11 +66,23 @@ export interface SensorContext<T = unknown> {
   on: (type: EventType, listener: EventListener) => void;
   off: (type: EventType, listener: EventListener) => void;
   getChartContext: () => ContextValue<T>;
+  getInteraction: (name: string) => Interaction | null;
   upsertInteraction: (name: string, interaction: Interaction) => void;
   removeInteraction: (name: string) => void;
+  emit: (event: ChartEvent) => void;
+  pointerPosition: Coordinates | null;
+  isWithinPlot: boolean;
 }
 
 /**
  * A Sensor is a function that detects user intent and updates the interaction store.
  */
 export type Sensor<T = unknown> = (context: SensorContext<T>) => Cleanup | void;
+
+export interface EventContextValue {
+  on: (type: EventType, listener: EventListener) => void;
+  off: (type: EventType, listener: EventListener) => void;
+  emit: (event: ChartEvent) => void;
+  pointerPosition: Coordinates | null;
+  isWithinPlot: boolean;
+}

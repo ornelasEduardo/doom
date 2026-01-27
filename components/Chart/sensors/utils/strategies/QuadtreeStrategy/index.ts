@@ -1,7 +1,7 @@
 import { Quadtree, quadtree } from "d3-quadtree";
 
 import { InteractionTarget } from "../../../../types/interaction";
-import { ChartScale } from "../../../../types/scales";
+import { Scale } from "../../../../types/scales";
 import { Series } from "../../../../types/series";
 import { resolveAccessor } from "../../../../utils/accessors";
 import { InteractionStrategy } from "../types";
@@ -10,8 +10,8 @@ export class QuadtreeStrategy<T = any> implements InteractionStrategy<T> {
   name = "QuadtreeStrategy";
 
   private tree: Quadtree<T> | null = null;
-  private lastXScale: ChartScale | null = null;
-  private lastYScale: ChartScale | null = null;
+  private lastXScale: Scale | null = null;
+  private lastYScale: Scale | null = null;
 
   private xAccessor: (d: T) => any;
   private yAccessor: (d: T) => any;
@@ -28,7 +28,7 @@ export class QuadtreeStrategy<T = any> implements InteractionStrategy<T> {
       : (d: any) => d[1];
   }
 
-  private rebuildTree(xScale: ChartScale, yScale: ChartScale) {
+  private rebuildTree(xScale: Scale, yScale: Scale) {
     // Map data to pixels
     this.tree = quadtree<T>()
       .x((d) => (xScale as any)(this.xAccessor(d)) ?? NaN)
@@ -43,8 +43,8 @@ export class QuadtreeStrategy<T = any> implements InteractionStrategy<T> {
     x: number,
     y: number,
     radius: number,
-    xScale: ChartScale,
-    yScale: ChartScale,
+    xScale: Scale,
+    yScale: Scale,
   ): InteractionTarget<T> | null {
     // Lazy rebuild if scales change (e.g. resize, zoom)
     if (

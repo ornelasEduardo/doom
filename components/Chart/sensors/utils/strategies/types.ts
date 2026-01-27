@@ -1,5 +1,5 @@
 import { InteractionTarget } from "../../../types/interaction";
-import { ChartScale } from "../../../types/scales";
+import { Scale } from "../../../types/scales";
 
 export interface InteractionStrategy<T = any> {
   /**
@@ -19,7 +19,7 @@ export interface InteractionStrategy<T = any> {
     x: number,
     y: number,
     radius: number,
-    xScale: ChartScale,
-    yScale: ChartScale,
+    xScale: Scale,
+    yScale: Scale,
   ): InteractionTarget<T> | null;
 }
