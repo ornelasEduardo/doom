@@ -1,0 +1,36 @@
+@use "../../../../styles/mixins" as *;
+
+.legend {
+  align-items: center;
+  justify-content: flex-start;
+
+  &.legendBottom {
+    justify-content: center;
+  }
+}
+
+.legendItem {
+  align-items: center;
+}
+
+.legendDot {
+  width: var(--spacing-4);
+  height: var(--spacing-2);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  border: var(--border-width) solid var(--border-strong);
+}
+
+.legendLabel {
+  color: var(--foreground);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.legendVertical {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-2);
+}

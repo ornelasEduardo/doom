@@ -1,0 +1,10 @@
+@use "../../../../styles/mixins" as *;
+
+.header {
+  padding-right: 0;
+}
+
+.subtitle {
+  color: var(--muted-foreground);
+  margin: 0;
+}

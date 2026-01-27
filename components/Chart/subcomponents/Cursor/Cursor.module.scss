@@ -1,0 +1,16 @@
+@use "../../../../styles/mixins" as *;
+
+.cursorLine {
+  stroke: var(--muted-foreground);
+  stroke-width: var(--border-width);
+  stroke-dasharray: 4 4;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.cursorPoint {
+  fill: var(--primary);
+  stroke: var(--border-strong);
+  stroke-width: var(--border-width);
+  pointer-events: none;
+}

@@ -223,7 +223,7 @@ p {
 body {
   // Typography Colors & Sizes
   $text-sizes:
-    "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl";
+    "2xs", "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl";
   @each $size in $text-sizes {
     .text-#{$size} {
       font-size: var(--text-#{$size});

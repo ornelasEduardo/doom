@@ -1,17 +1,24 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { select } from "d3-selection";
+import * as d3Hierarchy from "d3-hierarchy";
+import * as d3Scale from "d3-scale";
 import * as d3Shape from "d3-shape";
 import { Info } from "lucide-react";
 import { useState } from "react";
 
+import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
+import { Chip } from "../Chip/Chip";
 import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { Chart, type DrawContext } from "./Chart";
+import { Cursor, Dim, SelectionUpdate, Tooltip } from "./behaviors";
+import { Chart } from "./Chart";
+import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
+import { RenderFrame } from "./types";
+import { Sensor, SensorContext } from "./types/events";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -43,8 +50,6 @@ const data = [
   { label: "May", value: 60 },
   { label: "Jun", value: 45 },
 ];
-
-// --- TYPES ---
 
 export const LineChart: Story = {
   args: {
@@ -111,121 +116,257 @@ export const WithLegendAndSubtitle: Story = {
   },
 };
 
+const ClickSensor = (callback: (data: any) => void): Sensor => {
+  return ({ on, off }: SensorContext) => {
+    const handleClick = (event: any) => {
+      const target = event.nativeEvent.target as any;
+      if (target && target.__data__) {
+        callback(target.__data__);
+      }
+    };
+
+    on("CHART_POINTER_DOWN", handleClick);
+    return () => off("CHART_POINTER_DOWN", handleClick);
+  };
+};
+
 export const CustomRender1: Story = {
   args: {
-    data: [
-      { label: "Chrome", value: 400 },
-      { label: "Safari", value: 300 },
-      { label: "Firefox", value: 300 },
-      { label: "Edge", value: 200 },
+    sensors: [
+      DataHoverSensor({
+        mode: "exact",
+      }),
+      ClickSensor((data) => {
+        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      }),
     ],
-    title: "Browser Share (Custom Pie)",
-    x: (d: any) => d.label,
-    y: (d: any) => d.value,
+    behaviors: [
+      SelectionUpdate({
+        selector: ".arc",
+        fn: (selection, activeData: any) => {
+          (selection as any).style("opacity", (d: any) => {
+            if (!activeData) {
+              return 0.8;
+            }
+            const isHighlighted = d.data.name === activeData.data.name;
+            return isHighlighted ? 1 : 0.3;
+          });
+        },
+      }),
+      Tooltip({
+        render: (data: any) => (
+          <Card
+            style={{
+              padding: "8px 12px",
+              minWidth: 150,
+              pointerEvents: "none",
+            }}
+          >
+            <Text style={{ marginBottom: 4 }} variant="h6">
+              {data && data.data.name}
+            </Text>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+              Personnel:{" "}
+              <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+                {data && data.value}
+              </span>
+            </Text>
+          </Card>
+        ),
+      }),
+    ],
+    data: [
+      {
+        name: "Total",
+        children: [
+          {
+            name: "Product",
+            children: [
+              { name: "R&D", value: 40 },
+              { name: "Design", value: 25 },
+              { name: "Engineering", value: 35 },
+              { name: "QA", value: 20 },
+            ],
+          },
+          {
+            name: "Marketing",
+            children: [
+              { name: "Social", value: 20 },
+              { name: "SEO", value: 15 },
+              { name: "Content", value: 15 },
+              { name: "Events", value: 25 },
+            ],
+          },
+          {
+            name: "Sales",
+            children: [
+              { name: "Direct", value: 30 },
+              { name: "Channel", value: 20 },
+            ],
+          },
+          {
+            name: "Operations",
+            children: [
+              { name: "IT", value: 25 },
+              { name: "Logistics", value: 20 },
+              { name: "Facilities", value: 15 },
+            ],
+          },
+          {
+            name: "HR",
+            children: [
+              { name: "Recruiting", value: 15 },
+              { name: "Training", value: 15 },
+              { name: "Benefits", value: 10 },
+            ],
+          },
+        ],
+      },
+    ] as any,
+    title: "Organization Staffing (Sunburst)",
     style: {
       width: "100%",
-      maxWidth: 800,
-      height: 500,
+      maxWidth: 600,
+      height: 600,
     },
     d3Config: {
       grid: false,
       showAxes: false,
     },
-    render: (ctx: DrawContext<any>) => {
-      const radius = Math.min(ctx.innerWidth, ctx.innerHeight) / 2;
+    render: (frame: RenderFrame<any>) => {
+      const { container, size, data } = frame;
+      const radius = size.radius;
 
-      const g = ctx.g
+      container.selectAll("*").remove();
+
+      const g = container
         .append("g")
-        .attr(
-          "transform",
-          `translate(${ctx.innerWidth / 2},${ctx.innerHeight / 2})`,
-        );
+        .attr("transform", `translate(${size.width / 2},${size.height / 2})`);
 
-      const colorScale = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--muted-foreground)",
-      ];
+      // Manual vivid palette for sunburst
+      // Use Theme colors (Doom Palette)
+      const colorScale = d3Scale.scaleOrdinal([
+        palette.purple[400],
+        palette.yellow[300],
+        palette.green[400],
+        palette.blue[400],
+        palette.red[400],
+        palette.slate[600],
+      ]);
 
-      const pie = d3Shape
-        .pie<any>()
-        .value((d) => d.value)
-        .sort(null);
+      if (!data || data.length === 0) {
+        return;
+      }
+
+      // Hierarchy data is usually the first element of the dataset if it's a single root
+      const hierarchyData = data[0];
+
+      // Create hierarchy
+      const root = d3Hierarchy
+        .hierarchy(hierarchyData)
+        .sum((d: any) => d.value)
+        .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+      // Create partition layout
+      const partition = d3Hierarchy.partition().size([2 * Math.PI, radius]);
+
+      partition(root);
 
       const arc = d3Shape
         .arc<any>()
-        .innerRadius(radius * 0.5)
-        .outerRadius(radius * 0.8)
+        .startAngle((d: any) => d.x0)
+        .endAngle((d: any) => d.x1)
+        .innerRadius((d: any) => d.y0)
+        .outerRadius((d: any) => d.y1)
+        .padAngle(0.005)
         .cornerRadius(4);
 
-      const arcs = g
-        .selectAll(".arc")
-        .data(pie(ctx.data))
+      // Draw arcs
+      g.selectAll("path")
+        .data(root.descendants())
         .enter()
-        .append("g")
-        .attr("class", "arc");
-
-      arcs
         .append("path")
         .attr("class", "arc")
         .attr("d", arc)
-        .attr("fill", (_, i) => colorScale[i % colorScale.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("stroke-width", "2px")
-        .style("cursor", "crosshair")
-        .style("touch-action", "none")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).style("opacity", 0.8);
-        })
-        .on("mousemove touchmove touchstart", (event) => {
-          const result = ctx.resolveInteraction(event);
-          if (result && result.data && select(result.element).classed("arc")) {
-            const d: any = result.data;
-            const isTouch = event.type.startsWith("touch");
-            const svgNode = ctx.g.node()?.ownerSVGElement;
-
-            if (svgNode) {
-              const svgRect = svgNode.getBoundingClientRect();
-              let clientX: number;
-              let clientY: number;
-              if (event.touches && event.touches.length > 0) {
-                clientX = event.touches[0].clientX;
-                clientY = event.touches[0].clientY;
-              } else {
-                clientX = event.clientX;
-                clientY = event.clientY;
-              }
-
-              const px = clientX - svgRect.left;
-              const py = clientY - svgRect.top;
-
-              ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
-            }
+        .style("fill", (d: any) => {
+          // Color based on parent to show hierarchy
+          if (d.depth === 0) {
+            return "#fff";
+          } // White center
+          while (d.depth > 1) {
+            d = d.parent;
           }
+          return colorScale(d.data.name);
         })
-        .on("mouseleave touchend", (event) => {
-          select(event.currentTarget).style("opacity", 1);
-          ctx.hideTooltip();
-        });
+        .style("stroke", "var(--card-bg)")
+        .style("stroke-width", "1px")
+        .style("opacity", 0.8)
+        .style("cursor", "pointer")
+        .style("transition", "opacity 0.2s ease");
 
-      arcs
-
+      // Add Labels
+      g.selectAll("text")
+        .data(
+          root
+            .descendants()
+            .filter(
+              (d: any) => d.depth && ((d.y0 + d.y1) / 2) * (d.x1 - d.x0) > 10,
+            ),
+        ) // Filter small segments
+        .enter()
         .append("text")
-        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-        .attr("text-anchor", "middle")
+        .attr("transform", function (d: any) {
+          const x = ((d.x0 + d.x1) / 2) * (180 / Math.PI);
+          const y = (d.y0 + d.y1) / 2;
+          return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+        })
         .attr("dy", "0.35em")
-        .text((d) => d.data.label)
-        .style("fill", "var(--card-bg)")
-        .style("font-size", "12px")
-        .style("font-weight", "bold")
-        .style("pointer-events", "none");
+        .text((d: any) => d.data.name)
+        .style("fill", "var(--foreground)")
+        .style("font-size", "10px")
+        .style("font-weight", "600")
+        .style("text-anchor", "middle")
+        .style("pointer-events", "none")
+        .style("text-shadow", "0px 0px 4px var(--card-bg)");
     },
   },
 };
 
 export const CustomRender2: Story = {
   args: {
+    sensors: [
+      DataHoverSensor({
+        mode: "exact",
+      }),
+    ],
+    behaviors: [
+      SelectionUpdate({
+        selector: ".treemap-node",
+        fn: (selection, activeData) => {
+          selection.attr("fill-opacity", (d: any) => {
+            if (!activeData) {
+              return 0.8;
+            }
+            return d.data.name === activeData.data.name ? 1 : 0.8; // Simple highlight logic
+          });
+        },
+      }),
+      Tooltip({
+        render: (data: any) => (
+          <Card style={{ padding: "8px 12px", minWidth: 150 }}>
+            <Text style={{ marginBottom: 4 }} variant="h6">
+              {data && data.id}
+            </Text>
+            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+              Value:{" "}
+              <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
+                {data && data.value}
+              </span>
+            </Text>
+          </Card>
+        ),
+      }),
+    ],
     data: [
       { name: "Root", value: 0, parent: null },
       { name: "Tech", value: 0, parent: "Root" },
@@ -251,102 +392,74 @@ export const CustomRender2: Story = {
       grid: false,
       showAxes: false,
     },
-    render: async (ctx: DrawContext<any>) => {
-      const d3Hierarchy = await import("d3-hierarchy");
+    render: (frame: RenderFrame<any>) => {
+      const { container, size, data } = frame;
+      import("d3-hierarchy").then((d3Hierarchy) => {
+        if (!data || data.length === 0) {
+          return;
+        }
+        const rawData = data;
 
-      const root = d3Hierarchy
-        .stratify<any>()
-        .id((d) => d.name)
-        .parentId((d) => d.parent)(ctx.data)
-        .sum((d) => d.value)
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
+        const root = d3Hierarchy
+          .stratify<any>()
+          .id((d) => d.name)
+          .parentId((d) => d.parent)(rawData)
+          .sum((d) => d.value)
+          .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-      d3Hierarchy
-        .treemap<any>()
-        .size([ctx.innerWidth, ctx.innerHeight])
-        .padding(4)(root);
+        d3Hierarchy.treemap<any>().size([size.width, size.height]).padding(4)(
+          root,
+        );
 
-      const colors = [
-        "var(--primary)",
-        "var(--secondary)",
-        "var(--accent)",
-        "var(--success)",
-        "var(--warning)",
-      ];
+        const colors = [
+          "var(--primary)",
+          "var(--secondary)",
+          "var(--accent)",
+          "var(--success)",
+          "var(--warning)",
+        ];
 
-      const nodes = ctx.g
-        .selectAll("g")
-        .data(root.leaves())
-        .enter()
-        .append("g")
-        .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
+        // Clear previous render to prevent duplicates
+        container.selectAll("*").remove();
 
-      nodes
-        .append("rect")
-        .attr("width", (d: any) => d.x1 - d.x0)
-        .attr("height", (d: any) => d.y1 - d.y0)
-        .attr("fill", (_, i) => colors[i % colors.length])
-        .attr("stroke", "var(--card-bg)")
-        .attr("fill-opacity", 0.8)
-        .style("rx", "var(--radius)")
-        .style("ry", "var(--radius)")
-        .style("cursor", "crosshair")
-        .style("touch-action", "none")
-        .on("mouseenter", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 1);
-        })
-        .on("mousemove touchmove touchstart", (event) => {
-          const result = ctx.resolveInteraction(event);
-          if (result && result.data) {
-            const d: any = result.data;
-            if (typeof d.x0 === "number") {
-              const isTouch = event.type.startsWith("touch");
-              const svgNode = ctx.g.node()?.ownerSVGElement;
+        const nodes = container
+          .selectAll("g")
+          .data(root.leaves())
+          .enter()
+          .append("g")
+          .attr("transform", (d: any) => `translate(${d.x0},${d.y0})`);
 
-              if (svgNode) {
-                const svgRect = svgNode.getBoundingClientRect();
-                let clientX: number;
-                let clientY: number;
-                if (event.touches && event.touches.length > 0) {
-                  clientX = event.touches[0].clientX;
-                  clientY = event.touches[0].clientY;
-                } else {
-                  clientX = event.clientX;
-                  clientY = event.clientY;
-                }
+        nodes
+          .append("rect")
+          .attr("class", "treemap-node")
+          .attr("width", (d: any) => d.x1 - d.x0)
+          .attr("height", (d: any) => d.y1 - d.y0)
+          .attr("fill", (_: any, i: number) => colors[i % colors.length])
+          .attr("stroke", "var(--card-bg)")
+          .attr("fill-opacity", 0.8)
+          .style("rx", "var(--radius)")
+          .style("ry", "var(--radius)");
 
-                const px = clientX - svgRect.left;
-                const py = clientY - svgRect.top;
+        nodes
+          .append("text")
+          .attr("x", 8)
+          .attr("y", 20)
+          .text((d: any) => d.data.name)
+          .style("font-size", "12px")
+          .style("font-weight", 600)
+          .style("fill", "var(--primary-foreground)")
+          .style("pointer-events", "none");
 
-                ctx.setHoverState({ x: px, y: py, data: d.data, isTouch });
-              }
-            }
-          }
-        })
-        .on("mouseleave touchend", (event) => {
-          select(event.currentTarget).attr("fill-opacity", 0.8);
-          ctx.hideTooltip();
-        });
-
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 20)
-        .text((d) => d.data.name)
-        .style("font-size", "12px")
-        .style("font-weight", 600)
-        .style("fill", "var(--primary-foreground)")
-        .style("pointer-events", "none");
-
-      nodes
-        .append("text")
-        .attr("x", 8)
-        .attr("y", 36)
-        .text((d) => String(d.value))
-        .style("font-size", "10px")
-        .style("fill", "var(--primary-foreground)")
-        .style("opacity", "0.8")
-        .style("pointer-events", "none");
+        nodes
+          .append("text")
+          .attr("x", 8)
+          .attr("y", 36)
+          .text((d: any) => String(d.value))
+          .style("font-size", "10px")
+          .style("fill", "var(--primary-foreground)")
+          .style("opacity", "0.8")
+          .style("pointer-events", "none");
+      });
     },
   },
 };
@@ -381,6 +494,7 @@ export const IntegratedChart: Story = {
       showDots: false,
       showAxes: false,
       curve: d3Shape.curveMonotoneX,
+      margin: { top: 10, right: 2, bottom: 10, left: 2 },
     },
     style: {
       width: "100%",
@@ -389,8 +503,8 @@ export const IntegratedChart: Story = {
     },
   },
   render: (args: any) => {
-    const [activeData, setActiveData] = useState<any>(null);
-    const currentData = activeData || args.data[args.data.length - 1];
+    const [hoveredData, setHoveredData] = useState<any>(null);
+    const currentData = hoveredData || args.data[args.data.length - 1];
 
     const currentIndex = args.data.indexOf(currentData);
     const prevData = args.data[currentIndex - 1];
@@ -428,8 +542,8 @@ export const IntegratedChart: Story = {
           </Flex>
           <Chart
             {...args}
-            renderTooltip={() => null}
-            onValueChange={setActiveData}
+            behaviors={[Tooltip({ render: () => null }), Cursor()]}
+            onValueChange={setHoveredData}
           />
         </Stack>
         <Stack gap={4} style={{ padding: "0 20px 20px" }}>
@@ -522,69 +636,76 @@ export const DetailedTooltip: Story = {
       showDots: true,
       curve: d3Shape.curveMonotoneX,
     },
-    renderTooltip: (data: any) => (
-      <Card style={{ padding: "12px", minWidth: "200px" }}>
-        <div
-          style={{
-            borderBottom: "1px solid var(--border-width)",
-            paddingBottom: "8px",
-            marginBottom: "8px",
-          }}
-        >
-          <Text
-            style={{
-              color: "var(--text-secondary)",
-              textTransform: "uppercase",
-            }}
-            variant="h6"
-          >
-            {data.month} 2024
-          </Text>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Revenue
-            </Text>
-            <Text style={{ fontWeight: 800 }} variant="h6">
-              ${data.revenue.toLocaleString()}
-            </Text>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Active Users
-            </Text>
-            <Text variant="h6">{data.users}</Text>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
-              Churn Rate
-            </Text>
-            <Text style={{ color: "var(--error)" }} variant="h6">
-              {data.churn}
-            </Text>
-          </div>
-        </div>
-      </Card>
-    ),
+    behaviors: [
+      Tooltip({
+        render: (data: any) => (
+          <Card style={{ padding: "12px", minWidth: "200px" }}>
+            <div
+              style={{
+                borderBottom: "1px solid var(--border-width)",
+                paddingBottom: "8px",
+                marginBottom: "8px",
+              }}
+            >
+              <Text
+                style={{
+                  color: "var(--text-secondary)",
+                  textTransform: "uppercase",
+                }}
+                variant="h6"
+              >
+                {data.month} 2024
+              </Text>
+            </div>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Revenue
+                </Text>
+                <Text style={{ fontWeight: 800 }} variant="h6">
+                  ${data.revenue.toLocaleString()}
+                </Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Active Users
+                </Text>
+                <Text variant="h6">{data.users}</Text>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                  Churn Rate
+                </Text>
+                <Text style={{ color: "var(--error)" }} variant="h6">
+                  {data.churn}
+                </Text>
+              </div>
+            </div>
+          </Card>
+        ),
+      }),
+      Cursor(),
+    ],
   },
 };
 
@@ -619,6 +740,8 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
+          style={{ height: 400 }}
+          type={chartType}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
         >
@@ -650,7 +773,17 @@ export const CompositionExample: Story = {
             </Chart.Header>
 
             <Flex gap={4} style={{ flex: 1 }}>
-              <Chart.Plot color={chartColor} type={chartType} />
+              <Chart.Plot>
+                <Chart.Cursor />
+                <Chart.Grid />
+                <Chart.Series
+                  color={chartColor}
+                  type={chartType}
+                  x="label"
+                  y="value"
+                />
+                <Chart.Axis />
+              </Chart.Plot>
 
               <Chart.Legend
                 items={(legendItems) =>
@@ -678,6 +811,189 @@ export const CompositionExample: Story = {
           </Stack>
         </Chart.Root>
       </div>
+    );
+  },
+};
+
+// =============================================================================
+// NEW API DEMONSTRATIONS
+// =============================================================================
+
+/**
+ * String Accessors provide a cleaner DX - just pass the property name.
+ * Instead of `x={(d) => d.month}`, simply use `x="month"`
+ */
+export const StringAccessors: Story = {
+  args: {
+    data: [
+      { month: "Jan", revenue: 15000 },
+      { month: "Feb", revenue: 28000 },
+      { month: "Mar", revenue: 22000 },
+      { month: "Apr", revenue: 35000 },
+      { month: "May", revenue: 42000 },
+      { month: "Jun", revenue: 38000 },
+    ],
+    // String accessors - simpler than function accessors!
+    x: "month" as any,
+    y: "revenue" as any,
+    type: "area",
+    title: "String Accessors Demo",
+    style: { width: "100%", maxWidth: 800, height: 400 },
+    d3Config: { grid: true, showDots: true },
+  },
+};
+
+/**
+ * Multi-series charts allow multiple data visualizations on a single chart.
+ * Each series can have its own y-accessor, color, and label.
+ */
+export const MultiSeries: Story = {
+  render: () => {
+    // Generate some intricate data
+    const data = [
+      { month: "Jan", revenue: 15000, users: 1200, expenses: 8000 },
+      { month: "Feb", revenue: 28000, users: 1800, expenses: 12000 },
+      { month: "Mar", revenue: 22000, users: 1500, expenses: 10000 },
+      { month: "Apr", revenue: 35000, users: 2200, expenses: 15000 },
+      { month: "May", revenue: 42000, users: 2800, expenses: 18000 },
+      { month: "Jun", revenue: 38000, users: 2500, expenses: 16000 },
+    ];
+
+    return (
+      <Chart.Root
+        d3Config={{ grid: true, showDots: true }}
+        data={data}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+        type="line"
+        x="month"
+        y="revenue"
+      >
+        <Chart.Header title="Multi-Series Line Chart">
+          <Chart.Legend layout="horizontal" />
+        </Chart.Header>
+
+        {/* With layout="custom", we must explicitly define the plot and its layers */}
+        <Chart.Plot>
+          <Chart.Grid />
+          <Chart.Cursor />
+          <Chart.Series
+            color="var(--primary)"
+            label="Revenue"
+            type="line"
+            x="month"
+            y="revenue"
+          />
+          <Chart.Series
+            color="var(--secondary)"
+            label="Expenses"
+            type="line"
+            x="month"
+            y="expenses"
+          />
+          <Chart.Axis />
+        </Chart.Plot>
+      </Chart.Root>
+    );
+  },
+};
+
+/**
+ * Scatter plots support an optional `size` accessor for bubble charts.
+ */
+export const ScatterPlot: Story = {
+  render: () => {
+    // Simple Linear Congruential Generator (LCG) for deterministic results
+    let seed = 123456789;
+    const seededRandom = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+
+    const data = Array.from({ length: 50 }, (_, i) => ({
+      income: Math.floor(15000 + seededRandom() * 85000),
+      happiness: Number((4 + seededRandom() * 5 + (i % 5) * 0.2).toFixed(1)),
+      population: Math.floor(2 + seededRandom() * 25),
+      group: i % 3 === 0 ? "A" : i % 3 === 1 ? "B" : "C",
+    })).sort((a, b) => a.income - b.income);
+
+    return (
+      <Chart.Root
+        behaviors={[
+          Tooltip({
+            render: (data: any) => (
+              <Card
+                className="p-3"
+                style={{
+                  minWidth: 220,
+                }}
+              >
+                <Stack gap={4}>
+                  {/* Header */}
+                  <Flex align="center" justify="space-between">
+                    <Text variant="body">City Analytics</Text>
+                    <Chip size="xs" variant="primary">
+                      <Text variant="small">Group {data.group}</Text>
+                    </Chip>
+                  </Flex>
+
+                  {/* Main Value */}
+                  <Text variant="h3">{data.happiness.toFixed(2)}</Text>
+
+                  {/* Divider */}
+                  <div
+                    style={{
+                      height: "1px",
+                      backgroundColor: "#1a1f26",
+                      width: "100%",
+                    }}
+                  />
+
+                  {/* Metadata */}
+                  <Stack gap={2}>
+                    <Flex align="center" justify="space-between">
+                      <Text color="muted" variant="small">
+                        Annual Income
+                      </Text>
+                      <Text variant="body">
+                        ${data.income.toLocaleString()}
+                      </Text>
+                    </Flex>
+                    <Flex align="center" justify="space-between">
+                      <Text color="muted" variant="small">
+                        Population Density
+                      </Text>
+                      <Text variant="body">{data.population}k</Text>
+                    </Flex>
+                  </Stack>
+                </Stack>
+              </Card>
+            ),
+          }),
+          Cursor(),
+          Dim({ selector: "circle" }),
+        ]}
+        d3Config={{
+          grid: true,
+          xAxisLabel: "Annual Income ($)",
+          yAxisLabel: "Happiness Index",
+          showDots: true,
+        }}
+        data={data}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+        subtitle="Bubble size represents population density"
+        title="Income vs Happiness (50 Cities)"
+        x="income"
+        y="happiness"
+      >
+        <Chart.Series
+          color="var(--primary)"
+          label="Cities"
+          size="population"
+          type="scatter"
+          x="income"
+          y="happiness"
+        />
+      </Chart.Root>
     );
   },
 };
