@@ -1,17 +1,18 @@
 import { render } from "@testing-library/react";
 import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useChartContext } from "../../context";
 import { useEventContext } from "../../state/EventContext";
 import { InteractionLayer } from "./InteractionLayer";
 
 // Mocks
-jest.mock("../../context");
-jest.mock("../../state/EventContext");
+vi.mock("../../context");
+vi.mock("../../state/EventContext");
 
 describe("InteractionLayer", () => {
-  const mockEmit = jest.fn();
-  const mockGetState = jest.fn();
+  const mockEmit = vi.fn();
+  const mockGetState = vi.fn();
   const mockState = {
     dimensions: {
       margin: { left: 40, top: 20, right: 20, bottom: 40 },
@@ -23,23 +24,23 @@ describe("InteractionLayer", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (useEventContext as jest.Mock).mockReturnValue({ emit: mockEmit });
-    (useChartContext as jest.Mock).mockReturnValue({
+    vi.clearAllMocks();
+    (useEventContext as any).mockReturnValue({ emit: mockEmit });
+    (useChartContext as any).mockReturnValue({
       chartStore: { getState: mockGetState },
     });
     mockGetState.mockReturnValue(mockState);
 
     // Mock RAF
-    jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
       cb(0);
       return 1;
     });
-    jest.spyOn(window, "cancelAnimationFrame");
+    vi.spyOn(window, "cancelAnimationFrame");
   });
 
   afterEach(() => {
-    (window.requestAnimationFrame as jest.Mock).mockRestore();
+    vi.restoreAllMocks();
   });
 
   // Since InteractionLayer relies on finding a parent [data-chart-container],

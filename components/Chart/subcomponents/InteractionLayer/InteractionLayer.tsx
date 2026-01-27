@@ -66,6 +66,7 @@ export const InteractionLayer: React.FC = () => {
       const { margin, innerWidth, innerHeight } = state.dimensions;
 
       const svgRect = svg.getBoundingClientRect();
+
       const containerRect = container.getBoundingClientRect();
       const containerStyle = window.getComputedStyle(container);
 

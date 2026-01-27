@@ -11,7 +11,8 @@ import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 
 const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
-  const { chartStore, config, isMobile } = useChartContext<T>();
+  const { chartStore, config, isMobile, resolveInteraction } =
+    useChartContext<T>();
 
   const stateData = chartStore.useStore((s) => s.data);
   const dimensions = chartStore.useStore((s) => s.dimensions);
@@ -90,6 +91,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         isMobile,
       },
       config,
+      resolveInteraction,
     });
   }, [
     render,
@@ -101,6 +103,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     isMobile,
     innerWidth,
     innerHeight,
+    resolveInteraction,
   ]);
 
   if (!render) {

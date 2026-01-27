@@ -10,6 +10,9 @@ export interface RenderFrame<T = unknown> {
   scales: { x?: XScale; y?: YScale };
   theme: { colors: string[]; isMobile: boolean };
   config: Config;
+  resolveInteraction?: (
+    event: React.MouseEvent | React.TouchEvent,
+  ) => { element: Element; data: T } | null;
 }
 
 /**
