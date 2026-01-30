@@ -15,7 +15,8 @@
   },
   "files": [
     "dist",
-    ".agent/skills"
+    ".agent/skills",
+    "README.md"
   ],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
