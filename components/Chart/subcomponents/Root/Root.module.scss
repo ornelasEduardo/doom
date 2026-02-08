@@ -8,6 +8,7 @@
   box-shadow: var(--shadow-hard);
   padding: var(--spacing-6);
   overflow: visible;
+  user-select: none;
 
   display: flex;
   flex-direction: column;

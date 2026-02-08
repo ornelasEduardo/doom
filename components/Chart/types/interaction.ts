@@ -17,6 +17,7 @@ export enum InteractionChannel {
   CROSSHAIR = "crosshair",
   TOOLTIP_CONFIG = "tooltip-config",
   CURSOR_CONFIG = "cursor-config",
+  DRAG = "drag",
 }
 
 export enum InteractionType {
@@ -63,4 +64,24 @@ export interface SelectionInteraction<T = any> {
   mode: "continuous" | "discrete"; // e.g. Brush vs Click
 }
 
-export type Interaction = HoverInteraction | SelectionInteraction;
+// =============================================================================
+// DRAG STATE
+// =============================================================================
+
+export interface DragInteraction<T = any> {
+  /** The data point being dragged */
+  target: InteractionTarget<T>;
+  /** Current pixel position during drag */
+  currentPosition: { x: number; y: number };
+  /** Starting pixel position when drag began */
+  startPosition: { x: number; y: number };
+  /** Current value in data domain (inverted from pixel) */
+  currentValue: { x: any; y: any };
+  /** Whether the drag is currently active */
+  isDragging: boolean;
+}
+
+export type Interaction =
+  | HoverInteraction
+  | SelectionInteraction
+  | DragInteraction;

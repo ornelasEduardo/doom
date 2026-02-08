@@ -218,7 +218,9 @@ const LineSeriesComponent = <T,>({
         data.map((d, i) => {
           const cx = (xScale as any)(xAccessor(d));
           const cy = yScale(yAccessor(d));
-          return <SeriesPoint key={i} color={strokeColor} x={cx} y={cy} />;
+          return (
+            <SeriesPoint key={i} color={strokeColor} datum={d} x={cx} y={cy} />
+          );
         })}
     </g>
   );

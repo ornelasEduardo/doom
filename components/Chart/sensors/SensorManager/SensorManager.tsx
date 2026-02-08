@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useChartContext } from "../../context";
 import { useEventContext } from "../../state/EventContext";
@@ -22,11 +22,22 @@ import { KeyboardSensor } from "../KeyboardSensor";
  */
 export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
   const { chartStore, config, colorPalette } = useChartContext();
-  const eventContext = useEventContext();
+
+  // Extract ONLY the stable callbacks from eventContext.
+  // IMPORTANT: Do NOT depend on the entire eventContext object, as it changes
+  // on every pointer move (due to pointerPosition state), which would cause
+  // sensors to be re-instantiated and lose their closure state.
+  const { on, off, emit } = useEventContext();
 
   // Subscribe to status and data for lifecycle protection
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
+
+  // Use a ref to access the latest colorPalette without triggering re-instantiation
+  const colorPaletteRef = useRef(colorPalette);
+  useEffect(() => {
+    colorPaletteRef.current = colorPalette;
+  }, [colorPalette]);
 
   const activeSensors = useMemo(() => {
     if (sensors && sensors.length > 0) {
@@ -72,21 +83,22 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       return;
     }
 
-    // Instantiate sensors
+    // Instantiate sensors with stable callback references
     const cleanups = activeSensors.map((sensor) => {
       return sensor({
-        on: eventContext.on,
-        off: eventContext.off,
-        emit: eventContext.emit,
-        pointerPosition: eventContext.pointerPosition,
-        isWithinPlot: eventContext.isWithinPlot,
+        on,
+        off,
+        emit,
+        // These are not used by sensors directly - they subscribe to events instead
+        pointerPosition: null,
+        isWithinPlot: false,
         getChartContext: () => {
           const state = chartStore.getState();
           return {
             ...state,
             xScale: state.scales.x,
             yScale: state.scales.y,
-            colorPalette: colorPalette || [],
+            colorPalette: colorPaletteRef.current || [],
             chartStore,
           } as unknown as ContextValue<any>;
         },
@@ -110,7 +122,10 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
         }
       });
     };
-  }, [activeSensors, eventContext, chartStore, status, data.length]);
+    // CRITICAL: Only depend on stable references (on, off, emit from useCallback)
+    // NOT the entire eventContext object which changes on every pointer move
+    // colorPalette is now accessed via ref to avoid re-instantiation
+  }, [activeSensors, on, off, emit, chartStore, status, data.length]);
 
   return null;
 };

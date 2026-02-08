@@ -149,11 +149,26 @@ export const updateChartState = <T>(
       { ...prev, type: type || prev.type } as State, // Use new type for calculation
     );
 
+    // Re-hydrate series with new data
+    // This is critical for real-time updates (e.g. drag interactions)
+    // We must use the stored configs to re-create the series strategies with the fresh data
+    const nextSeries = new Map();
+    const currentConfigs = prev.seriesConfigs || new Map();
+
+    currentConfigs.forEach((configs, id) => {
+      const hydrated = configs.map((c, i) =>
+        hydrateSeries(c, (prev.processedSeries.length || 0) + i, data),
+      );
+      nextSeries.set(id, hydrated);
+    });
+
     return {
       data,
       type: type || prev.type,
       dimensions: nextDimensions,
       scales: nextScales,
+      series: nextSeries, // Update series map
+      processedSeries: combineSeries(nextSeries), // Update flattened series
       status:
         nextDimensions.width > 0 && nextDimensions.height > 0
           ? "ready"
@@ -169,12 +184,19 @@ export const updateChartState = <T>(
 export const registerSeries = (store: Store, id: string, configs: any[]) => {
   store.setState((state) => {
     const nextSeries = new Map(state.series);
+    const nextConfigs = new Map(state.seriesConfigs); // Clone configs map
+
+    // Store raw configs for future re-hydration
+    nextConfigs.set(id, configs);
+
     const hydrated = configs.map((c, i) =>
       hydrateSeries(c, (state.processedSeries.length || 0) + i, state.data),
     );
     nextSeries.set(id, hydrated);
+
     return {
       series: nextSeries,
+      seriesConfigs: nextConfigs,
       processedSeries: combineSeries(nextSeries),
     };
   });
@@ -186,9 +208,14 @@ export const unregisterSeries = (store: Store, id: string) => {
       return state;
     }
     const nextSeries = new Map(state.series);
+    const nextConfigs = new Map(state.seriesConfigs);
+
     nextSeries.delete(id);
+    nextConfigs.delete(id);
+
     return {
       series: nextSeries,
+      seriesConfigs: nextConfigs,
       processedSeries: combineSeries(nextSeries),
     };
   });

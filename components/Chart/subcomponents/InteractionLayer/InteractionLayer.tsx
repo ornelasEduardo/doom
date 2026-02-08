@@ -115,6 +115,27 @@ export const InteractionLayer: React.FC = () => {
 
     // 3. Define the listener (Throttler)
     const onPointerEvent = (e: PointerEvent) => {
+      // CRITICAL FIX: Do NOT throttle state-change events (down, up, leave).
+      // If we throttle them, a subsequent move event in the same frame will
+      // overwrite them, causing lost clicks/drags.
+      if (
+        e.type === "pointerdown" ||
+        e.type === "pointerup" ||
+        e.type === "pointerleave"
+      ) {
+        // Cancel any pending frame to avoid processing stale events
+        if (frameRef.current) {
+          cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
+
+        // Force synchronous processing
+        lastEventRef.current = e;
+        processEvent();
+        return;
+      }
+
+      // Throttle moves
       lastEventRef.current = e;
       if (!frameRef.current) {
         frameRef.current = requestAnimationFrame(processEvent);

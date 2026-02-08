@@ -1,6 +1,6 @@
-import { ChartEvent, Sensor } from "../types/events";
-import { InteractionChannel } from "../types/interaction";
-import { findClosestTargets } from "./utils/search";
+import { ChartEvent, Sensor } from "../../types/events";
+import { InteractionChannel } from "../../types/interaction";
+import { findClosestTargets } from "../utils/search";
 
 /**
  * Professional-grade Keyboard Sensor for A11y.
