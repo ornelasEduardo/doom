@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { CHART_DATA_ATTRS } from "../../engine";
 import {
   registerSeries,
   unregisterSeries,
@@ -60,6 +61,7 @@ const BarSeriesComponent = <T,>({
     }
     registerSeries(chartStore, gradientId, [
       {
+        id: gradientId,
         label: label || "Bar Series",
         color: color || "var(--primary)",
         x: xAccessor,
@@ -142,6 +144,12 @@ const BarSeriesComponent = <T,>({
             style={{
               fill: fillColor,
               pointerEvents: "all",
+            }}
+            {...{
+              [CHART_DATA_ATTRS.TYPE]: "bar",
+              [CHART_DATA_ATTRS.SERIES_ID]: gradientId,
+              [CHART_DATA_ATTRS.INDEX]: i,
+              [CHART_DATA_ATTRS.DRAGGABLE]: false,
             }}
           />
         );

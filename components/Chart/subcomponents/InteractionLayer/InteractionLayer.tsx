@@ -32,17 +32,6 @@ export const InteractionLayer: React.FC = () => {
       return;
     }
 
-    // Set the container on the engine
-    const state = chartStore.getState();
-    const { margin, innerWidth, innerHeight } = state.dimensions;
-
-    engine.setContainer(container, {
-      x: margin.left,
-      y: margin.top,
-      width: innerWidth,
-      height: innerHeight,
-    });
-
     // 2. Define the throttled processor
     const processEvent = () => {
       const event = lastEventRef.current;

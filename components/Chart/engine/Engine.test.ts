@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Engine } from "./Engine";
 import { Scheduler } from "./Scheduler";
-import { IndexedPoint, SpatialIndex } from "./SpatialIndex";
+import { IndexedPoint, SpatialMap } from "./SpatialMap";
 import {
   EngineEvent,
   InputAction,
@@ -177,24 +177,24 @@ describe("Scheduler", () => {
 });
 
 // =============================================================================
-// SPATIAL INDEX TESTS
+// SPATIAL MAP TESTS
 // =============================================================================
 
-describe("SpatialIndex", () => {
-  let spatialIndex: SpatialIndex;
+describe("SpatialMap", () => {
+  let spatialMap: SpatialMap;
 
   beforeEach(() => {
     // Disable DOM hit testing for unit tests
-    spatialIndex = new SpatialIndex({ useDomHitTesting: false });
+    spatialMap = new SpatialMap({ useDomHitTesting: false });
   });
 
   describe("Quadtree Queries", () => {
     it("should find points within magnetic radius", () => {
       const points = createMockPoints(5);
-      spatialIndex.updateIndex(points);
+      spatialMap.updateIndex(points);
 
       // Query near point at (50, 50)
-      const candidates = spatialIndex.find(55, 55);
+      const candidates = spatialMap.find(55, 55);
 
       expect(candidates.length).toBeGreaterThan(0);
       expect(candidates[0].dataIndex).toBe(1);
@@ -203,17 +203,17 @@ describe("SpatialIndex", () => {
 
     it("should return empty array when no points are within radius", () => {
       const points = createMockPoints(3);
-      spatialIndex.updateIndex(points);
+      spatialMap.updateIndex(points);
 
       // Query far from any point
-      const candidates = spatialIndex.find(500, 500);
+      const candidates = spatialMap.find(500, 500);
 
       expect(candidates).toEqual([]);
     });
 
     it("should sort candidates by distance", () => {
       // Use larger magnetic radius to catch multiple points
-      const index = new SpatialIndex({
+      const index = new SpatialMap({
         useDomHitTesting: false,
         magneticRadius: 50,
       });
@@ -233,7 +233,7 @@ describe("SpatialIndex", () => {
     });
 
     it("should respect custom magnetic radius", () => {
-      const index = new SpatialIndex({
+      const index = new SpatialMap({
         useDomHitTesting: false,
         magneticRadius: 10,
       });
@@ -250,16 +250,16 @@ describe("SpatialIndex", () => {
   describe("Index Management", () => {
     it("should clear the index", () => {
       const points = createMockPoints(5);
-      spatialIndex.updateIndex(points);
-      spatialIndex.clear();
+      spatialMap.updateIndex(points);
+      spatialMap.clear();
 
-      const candidates = spatialIndex.find(50, 50);
+      const candidates = spatialMap.find(50, 50);
       expect(candidates).toEqual([]);
     });
 
     it("should update the index with new points", () => {
       const points1 = createMockPoints(3);
-      spatialIndex.updateIndex(points1);
+      spatialMap.updateIndex(points1);
 
       const points2: IndexedPoint[] = [
         {
@@ -270,14 +270,14 @@ describe("SpatialIndex", () => {
           dataIndex: 0,
         },
       ];
-      spatialIndex.updateIndex(points2);
+      spatialMap.updateIndex(points2);
 
       // Old points should not be found
-      const oldCandidates = spatialIndex.find(50, 50);
+      const oldCandidates = spatialMap.find(50, 50);
       expect(oldCandidates).toEqual([]);
 
       // New point should be found
-      const newCandidates = spatialIndex.find(205, 205);
+      const newCandidates = spatialMap.find(205, 205);
       expect(newCandidates.length).toBe(1);
       expect(newCandidates[0].seriesId).toBe("series-b");
     });
@@ -296,7 +296,7 @@ describe("Engine", () => {
     handler = vi.fn();
     engine = new Engine({
       useDomHitTesting: false,
-      onEvent: handler,
+      onEvent: handler as any,
     });
   });
 
@@ -319,7 +319,7 @@ describe("Engine", () => {
       );
     });
 
-    it("should find candidates from spatial index", () => {
+    it("should find candidates from spatial map", () => {
       const points = createMockPoints(3);
       engine.updateData(points);
 
@@ -348,7 +348,12 @@ describe("Engine", () => {
 
   describe("Coordinate Calculation", () => {
     it("should calculate chart coordinates relative to plot bounds", () => {
-      engine.setContainer(null, { x: 50, y: 50, width: 200, height: 200 });
+      engine.setContainer(null, null, {
+        x: 50,
+        y: 50,
+        width: 200,
+        height: 200,
+      });
 
       const signal = createMockSignal({
         x: 100,
@@ -364,7 +369,12 @@ describe("Engine", () => {
     });
 
     it("should detect when pointer is outside plot bounds", () => {
-      engine.setContainer(null, { x: 50, y: 50, width: 100, height: 100 });
+      engine.setContainer(null, null, {
+        x: 50,
+        y: 50,
+        width: 100,
+        height: 100,
+      });
 
       const signal = createMockSignal({
         x: 200,
@@ -434,7 +444,7 @@ describe("Engine", () => {
   describe("updateBounds", () => {
     it("should update plot bounds for coordinate calculations", () => {
       // Set initial bounds
-      engine.setContainer(null, { x: 0, y: 0, width: 100, height: 100 });
+      engine.setContainer(null, null, { x: 0, y: 0, width: 100, height: 100 });
 
       // Update to new bounds
       const newRect = new DOMRect(0, 0, 400, 300);
@@ -465,7 +475,12 @@ describe("Engine", () => {
     });
 
     it("should handle negative coordinates", () => {
-      engine.setContainer(null, { x: 50, y: 50, width: 200, height: 200 });
+      engine.setContainer(null, null, {
+        x: 50,
+        y: 50,
+        width: 200,
+        height: 200,
+      });
 
       const signal = createMockSignal({
         x: -10,
@@ -661,37 +676,37 @@ describe("Engine.createKeySignal", () => {
 });
 
 // =============================================================================
-// SPATIAL INDEX EDGE CASES
+// SPATIAL MAP EDGE CASES
 // =============================================================================
 
-describe("SpatialIndex Edge Cases", () => {
+describe("SpatialMap Edge Cases", () => {
   it("should handle single point at origin", () => {
-    const index = new SpatialIndex({ useDomHitTesting: false });
-    index.updateIndex([
+    const map = new SpatialMap({ useDomHitTesting: false });
+    map.updateIndex([
       { x: 0, y: 0, data: { value: 0 }, seriesId: "a", dataIndex: 0 },
     ]);
 
-    const candidates = index.find(5, 5);
+    const candidates = map.find(5, 5);
 
     expect(candidates.length).toBe(1);
     expect(candidates[0].dataIndex).toBe(0);
   });
 
   it("should handle duplicate points at same location", () => {
-    const index = new SpatialIndex({ useDomHitTesting: false });
-    index.updateIndex([
+    const map = new SpatialMap({ useDomHitTesting: false });
+    map.updateIndex([
       { x: 50, y: 50, data: { value: 1 }, seriesId: "a", dataIndex: 0 },
       { x: 50, y: 50, data: { value: 2 }, seriesId: "a", dataIndex: 1 },
     ]);
 
-    const candidates = index.find(50, 50);
+    const candidates = map.find(50, 50);
 
     expect(candidates.length).toBe(2);
   });
 
   it("should preserve data properties in candidates", () => {
-    const index = new SpatialIndex({ useDomHitTesting: false });
-    index.updateIndex([
+    const map = new SpatialMap({ useDomHitTesting: false });
+    map.updateIndex([
       {
         x: 100,
         y: 100,
@@ -703,7 +718,7 @@ describe("SpatialIndex Edge Cases", () => {
       },
     ]);
 
-    const candidates = index.find(100, 100);
+    const candidates = map.find(100, 100);
 
     expect(candidates[0].data).toEqual({ label: "Test", value: 42 });
     expect(candidates[0].seriesId).toBe("series-x");

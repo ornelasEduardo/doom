@@ -5,12 +5,9 @@
  * Receives InputSignals, queries the SpatialIndex, and dispatches to the Scheduler.
  */
 
+import { CoordinateSystem } from "./CoordinateSystem";
 import { Scheduler, TaskHandler } from "./Scheduler";
-import {
-  IndexedPoint,
-  SpatialIndex,
-  SpatialIndexOptions,
-} from "./SpatialIndex";
+import { IndexedPoint, SpatialMap, SpatialMapOptions } from "./SpatialMap";
 import {
   EngineEvent,
   InputAction,
@@ -23,7 +20,7 @@ import {
 // ENGINE OPTIONS
 // =============================================================================
 
-export interface EngineOptions extends SpatialIndexOptions {
+export interface EngineOptions extends SpatialMapOptions {
   /**
    * Called when an engine event is ready for dispatch.
    * In the full system, this connects to the EventBus.
@@ -41,25 +38,20 @@ export interface EngineOptions extends SpatialIndexOptions {
  * Responsibilities:
  * 1. Receive InputSignals from the InteractionLayer (or remote sources)
  * 2. Normalize coordinates (client -> container)
- * 3. Query the SpatialIndex to find candidates
+ * 3. Query the SpatialMap to find candidates
  * 4. Schedule events based on priority
  * 5. Dispatch to sensors via the configured handler
  */
 export class Engine<T = unknown> {
-  private spatialIndex: SpatialIndex<T>;
+  private spatialMap: SpatialMap<T>;
   private scheduler: Scheduler<T>;
-  private containerRect: DOMRect | null = null;
-  private plotBounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null = null;
+  private coords: CoordinateSystem;
   private disposed = false;
 
   constructor(options: EngineOptions = {}) {
-    this.spatialIndex = new SpatialIndex<T>(options);
+    this.spatialMap = new SpatialMap<T>(options);
     this.scheduler = new Scheduler<T>();
+    this.coords = new CoordinateSystem();
 
     if (options.onEvent) {
       this.scheduler.setHandler(options.onEvent);
@@ -76,19 +68,15 @@ export class Engine<T = unknown> {
    */
   setContainer(
     element: Element | null,
+    plotElement: Element | null = null,
     plotBounds?: { x: number; y: number; width: number; height: number },
   ): void {
     if (element) {
-      this.containerRect = element.getBoundingClientRect();
-      this.spatialIndex.setContainer(element);
+      this.spatialMap.setContainer(element);
     } else {
-      this.containerRect = null;
-      this.spatialIndex.setContainer(null);
+      this.spatialMap.setContainer(null);
     }
-
-    if (plotBounds) {
-      this.plotBounds = plotBounds;
-    }
+    this.coords.setContainer(element, plotElement, plotBounds);
   }
 
   /**
@@ -99,17 +87,14 @@ export class Engine<T = unknown> {
     rect: DOMRect,
     plotBounds?: { x: number; y: number; width: number; height: number },
   ): void {
-    this.containerRect = rect;
-    if (plotBounds) {
-      this.plotBounds = plotBounds;
-    }
+    this.coords.updateBounds(rect, plotBounds);
   }
 
   /**
    * Update the spatial index with new data points.
    */
   updateData(points: IndexedPoint<T>[]): void {
-    this.spatialIndex.updateIndex(points);
+    this.spatialMap.updateIndex(points);
   }
 
   /**
@@ -129,9 +114,7 @@ export class Engine<T = unknown> {
     this.disposed = true;
 
     this.scheduler.dispose();
-    this.spatialIndex.clear();
-    this.containerRect = null;
-    this.plotBounds = null;
+    this.spatialMap.clear();
   }
 
   // ===========================================================================
@@ -149,14 +132,19 @@ export class Engine<T = unknown> {
       return;
     }
 
-    // Query the spatial index
-    const candidates = this.spatialIndex.find(signal.x, signal.y);
+    const plotOffset = this.coords.getPlotOffset();
+    const searchX = signal.x - plotOffset.x;
+    const searchY = signal.y - plotOffset.y;
 
-    // Calculate chart-relative coordinates (within plot area)
-    const { chartX, chartY, isWithinPlot } = this.calculateChartCoordinates(
-      signal.x,
-      signal.y,
-    );
+    // Query spatial index
+    const candidates = this.spatialMap.find(searchX, searchY, {
+      x: signal.x,
+      y: signal.y,
+    });
+
+    // Calculate chart-relative coordinates
+    const { chartX, chartY, isWithinPlot } =
+      this.coords.resolveChartCoordinates(searchX, searchY);
 
     // Build the engine event
     const event: EngineEvent<T> = {
@@ -182,10 +170,6 @@ export class Engine<T = unknown> {
     action: InputAction,
     userId = "local",
   ): InputSignal | null {
-    if (!this.containerRect) {
-      return null;
-    }
-
     let clientX: number;
     let clientY: number;
 
@@ -199,9 +183,10 @@ export class Engine<T = unknown> {
       return null;
     }
 
-    // Convert to container-relative coordinates
-    const x = clientX - this.containerRect.left;
-    const y = clientY - this.containerRect.top;
+    const resolved = this.coords.resolvePointerCoordinates(clientX, clientY);
+    if (!resolved) {
+      return null;
+    }
 
     // Determine source
     let source: InputSource = InputSource.MOUSE;
@@ -216,8 +201,8 @@ export class Engine<T = unknown> {
       id: "pointerId" in event ? event.pointerId : 0,
       action,
       source,
-      x,
-      y,
+      x: resolved.x,
+      y: resolved.y,
       timestamp: performance.now(),
       userId,
       modifiers: {
@@ -256,33 +241,6 @@ export class Engine<T = unknown> {
   // ===========================================================================
 
   /**
-   * Calculate coordinates relative to the plot area.
-   */
-  private calculateChartCoordinates(
-    containerX: number,
-    containerY: number,
-  ): {
-    chartX: number;
-    chartY: number;
-    isWithinPlot: boolean;
-  } {
-    if (!this.plotBounds) {
-      return { chartX: containerX, chartY: containerY, isWithinPlot: true };
-    }
-
-    const chartX = containerX - this.plotBounds.x;
-    const chartY = containerY - this.plotBounds.y;
-
-    const isWithinPlot =
-      chartX >= 0 &&
-      chartX <= this.plotBounds.width &&
-      chartY >= 0 &&
-      chartY <= this.plotBounds.height;
-
-    return { chartX, chartY, isWithinPlot };
-  }
-
-  /**
    * Determine the scheduling priority for an action.
    */
   private determinePriority(action: InputAction): TaskPriority {
@@ -311,7 +269,7 @@ export class Engine<T = unknown> {
    * Get the current container bounds.
    */
   getContainerRect(): DOMRect | null {
-    return this.containerRect;
+    return this.coords.getContainerRect();
   }
 
   /**
@@ -323,7 +281,7 @@ export class Engine<T = unknown> {
     width: number;
     height: number;
   } | null {
-    return this.plotBounds;
+    return this.coords.getPlotBounds();
   }
 
   /**

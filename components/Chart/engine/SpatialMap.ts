@@ -1,5 +1,5 @@
 /**
- * SpatialIndex
+ * SpatialMap
  *
  * The "Hybrid Radar" that finds interaction candidates.
  * Combines DOM-based hit testing with Quadtree spatial queries.
@@ -15,7 +15,7 @@ import { CandidateType, InteractionCandidate } from "./types";
 
 /**
  * Standard data attributes used to tag interactive DOM elements.
- * These are read by the SpatialIndex during DOM-based hit testing.
+ * These are read by the SpatialMap during DOM-based hit testing.
  */
 export const CHART_DATA_ATTRS = {
   TYPE: "data-chart-type",
@@ -44,10 +44,10 @@ export interface IndexedPoint<T = unknown> {
 }
 
 // =============================================================================
-// SPATIAL INDEX CLASS
+// SPATIAL MAP CLASS
 // =============================================================================
 
-export interface SpatialIndexOptions {
+export interface SpatialMapOptions {
   /**
    * The radius (in pixels) for "magnetic" snapping to data points.
    * Points within this radius will be returned as candidates.
@@ -64,7 +64,7 @@ export interface SpatialIndexOptions {
 }
 
 /**
- * SpatialIndex provides the "Hybrid Radar" for finding interaction targets.
+ * SpatialMap provides the "Hybrid Radar" for finding interaction targets.
  *
  * It combines two strategies:
  * 1. **DOM Hit Testing (Broad Phase):** Uses `elementsFromPoint` to find
@@ -72,15 +72,15 @@ export interface SpatialIndexOptions {
  * 2. **Quadtree (Fine Phase):** Uses a spatial tree to find nearby data
  *    points with "magnetic" snapping (great for scatter/line charts).
  */
-export class SpatialIndex<T = unknown> {
+export class SpatialMap<T = unknown> {
   private tree: Quadtree<IndexedPoint<T>> | null = null;
   private points: IndexedPoint<T>[] = [];
   private containerElement: Element | null = null;
-  private options: Required<SpatialIndexOptions>;
+  private options: Required<SpatialMapOptions>;
 
-  constructor(options: SpatialIndexOptions = {}) {
+  constructor(options: SpatialMapOptions = {}) {
     this.options = {
-      magneticRadius: options.magneticRadius ?? 20,
+      magneticRadius: options.magneticRadius ?? 40,
       useDomHitTesting: options.useDomHitTesting ?? true,
     };
   }
@@ -125,16 +125,25 @@ export class SpatialIndex<T = unknown> {
   /**
    * Find all interaction candidates near a point.
    *
-   * @param x - X coordinate (relative to container)
-   * @param y - Y coordinate (relative to container)
+   * @param x - X coordinate (relative to plot area for Quadtree)
+   * @param y - Y coordinate (relative to plot area for Quadtree)
+   * @param containerPoint - Optional container-relative coordinates for DOM hit testing
    * @returns Sorted array of candidates (closest first)
    */
-  find(x: number, y: number): InteractionCandidate<T>[] {
+  find(
+    x: number,
+    y: number,
+    containerPoint?: { x: number; y: number },
+  ): InteractionCandidate<T>[] {
     const candidates: InteractionCandidate<T>[] = [];
 
     // Phase 1: DOM Hit Testing (Broad Phase)
     if (this.options.useDomHitTesting) {
-      const domCandidates = this.findFromDOM(x, y);
+      // Use container coordinates if available, otherwise assume x/y are container-relative
+      // (This fallback retains backward compatibility but might be wrong if x/y are plot-relative)
+      const domX = containerPoint ? containerPoint.x : x;
+      const domY = containerPoint ? containerPoint.y : y;
+      const domCandidates = this.findFromDOM(domX, domY);
       candidates.push(...domCandidates);
     }
 
@@ -240,6 +249,13 @@ export class SpatialIndex<T = unknown> {
       }
     }
 
+    // Determine z-index before returning, as we might need it for sorting even if data is missing (though we return null now)
+    const zIndex = parseZIndex(element);
+
+    if (!data) {
+      return null;
+    }
+
     return {
       type: type as CandidateType,
       data,
@@ -249,7 +265,7 @@ export class SpatialIndex<T = unknown> {
       distance,
       element,
       draggable,
-      zIndex: parseZIndex(element),
+      zIndex,
     };
   }
 
@@ -313,7 +329,7 @@ export class SpatialIndex<T = unknown> {
   /**
    * Get the current options.
    */
-  getOptions(): Required<SpatialIndexOptions> {
+  getOptions(): Required<SpatialMapOptions> {
     return { ...this.options };
   }
 }

@@ -23,8 +23,6 @@ export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
   return (event, { upsertInteraction, removeInteraction }) => {
     const { signal, primaryCandidate, chartX, chartY, isWithinPlot } = event;
 
-    console.log(primaryCandidate, event.candidates);
-
     // 1. Filter: Only handle MOVE and LEAVE/CANCEL
     if (
       signal.action !== InputAction.MOVE &&

@@ -4,6 +4,7 @@ import clsx from "clsx";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -165,11 +166,39 @@ export function Root<T>({
     createChartStore({ ...d3Config, type }, x, y),
   );
   const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
 
   // Initialize Engine
   const { engine } = useEngine<T>();
+
+  // Sync container layout to Engine whenever DOM layout might change
+  useLayoutEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const state = chartStore.getState();
+    const { dimensions } = state;
+
+    engine.setContainer(containerRef.current, wrapperRef.current, {
+      x: dimensions.margin.left,
+      y: dimensions.margin.top,
+      width: dimensions.innerWidth,
+      height: dimensions.innerHeight,
+    });
+  }, [
+    engine,
+    chartStore,
+    title,
+    subtitle,
+    withLegend,
+    withFrame,
+    flat,
+    variant,
+    isMobile,
+  ]);
 
   // Sync Engine with Data & Scales
   useEffect(() => {
@@ -183,8 +212,8 @@ export function Root<T>({
       const { x: xScale, y: yScale } = scales;
 
       // Update plot bounds
-      if (wrapperRef.current) {
-        engine.setContainer(wrapperRef.current, {
+      if (containerRef.current) {
+        engine.setContainer(containerRef.current, wrapperRef.current, {
           x: dimensions.margin.left,
           y: dimensions.margin.top,
           width: dimensions.innerWidth,
@@ -469,6 +498,7 @@ export function Root<T>({
       <EventsProvider>
         <BehaviorManager behaviors={behaviors as any} value={value as any} />
         <div
+          ref={containerRef}
           data-chart-container
           aria-describedby={subtitle ? "chart-subtitle" : undefined}
           aria-label={title ? `Chart: ${title}` : "Interactive Chart"}

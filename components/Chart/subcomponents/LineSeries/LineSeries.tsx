@@ -4,6 +4,7 @@ import { CurveFactory } from "d3-shape";
 import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { CHART_DATA_ATTRS } from "../../engine";
 import {
   registerSeries,
   unregisterSeries,
@@ -79,6 +80,7 @@ const LineSeriesComponent = <T,>({
     }
     registerSeries(chartStore, gradientId, [
       {
+        id: gradientId,
         label: label || (config.yAxisLabel ?? "Series"),
         color: strokeColor,
         x: xAccessor,
@@ -208,6 +210,11 @@ const LineSeriesComponent = <T,>({
         d={paths.line || ""}
         role="graphics-object"
         style={{ stroke: strokeColor }}
+        {...{
+          [CHART_DATA_ATTRS.TYPE]: "line",
+          [CHART_DATA_ATTRS.SERIES_ID]: gradientId,
+          [CHART_DATA_ATTRS.DRAGGABLE]: false,
+        }}
       />
 
       {(showDots || config.showDots) &&

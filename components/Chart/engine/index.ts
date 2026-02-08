@@ -8,8 +8,8 @@ export type { EngineOptions } from "./Engine";
 export { Engine } from "./Engine";
 export type { TaskHandler } from "./Scheduler";
 export { Scheduler } from "./Scheduler";
-export type { IndexedPoint, SpatialIndexOptions } from "./SpatialIndex";
-export { CHART_DATA_ATTRS, SpatialIndex } from "./SpatialIndex";
+export type { IndexedPoint, SpatialMapOptions } from "./SpatialMap";
+export { CHART_DATA_ATTRS, SpatialMap } from "./SpatialMap";
 export type {
   CandidateType,
   EngineEvent,

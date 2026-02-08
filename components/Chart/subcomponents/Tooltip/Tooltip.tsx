@@ -52,27 +52,14 @@ export function Tooltip<T>({
       return;
     }
 
-    const offsetParent = tooltipRef.current.offsetParent as HTMLElement;
-    if (!offsetParent) {
-      return;
-    }
-
-    const style = window.getComputedStyle(offsetParent);
-    const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-    const borderTop = parseFloat(style.borderTopWidth) || 0;
-
     const { x, y } = new Reposition(tooltipRef.current)
       .anchor({
-        x:
-          ((position as { containerX?: number }).containerX ?? position.x) -
-          borderLeft,
-        y:
-          ((position as { containerY?: number }).containerY ?? position.y) -
-          borderTop,
+        x: (position as { containerX?: number }).containerX ?? position.x,
+        y: (position as { containerY?: number }).containerY ?? position.y,
       })
       .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
       .align({ vertical: "center" })
-      .edgeDetect({ container: { current: offsetParent } })
+      .edgeDetect({ container: containerRef })
       .resolve();
 
     setLayout({ x, y, visible: true });
