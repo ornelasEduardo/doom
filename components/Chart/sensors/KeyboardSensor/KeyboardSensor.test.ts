@@ -1,13 +1,11 @@
 /**
- * KeyboardSensor Tests (TDD)
- *
- * Tests for the KeyboardSensor that handles keyboard navigation
- * through chart data points.
+ * KeyboardSensor Tests (Engine Architecture)
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { ChartEvent, SensorContext } from "../../types/events";
+import { EngineEvent, InputAction } from "../../engine";
+import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { KeyboardSensor } from "./KeyboardSensor";
 
@@ -15,71 +13,31 @@ import { KeyboardSensor } from "./KeyboardSensor";
 // MOCK SETUP
 // =============================================================================
 
-const createMockContext = (): SensorContext & {
-  listeners: Map<string, Set<(event: ChartEvent) => void>>;
-  interactions: Map<string, unknown>;
-} => {
-  const listeners = new Map<string, Set<(event: ChartEvent) => void>>();
+const createMockContext = (): SensorContext => {
   const interactions = new Map<string, unknown>();
-
-  // Mock series with a find strategy
   const mockData = [
-    { x: 0, y: 100 },
-    { x: 1, y: 200 },
-    { x: 2, y: 150 },
+    { x: 0, y: 10, id: "p0" },
+    { x: 1, y: 20, id: "p1" },
+    { x: 2, y: 30, id: "p2" },
   ];
 
-  const mockSeries = {
-    id: "test-series",
-    data: mockData,
-    strategy: {
-      find: (chartX: number, _chartY: number) => {
-        const idx = Math.round(chartX / 100);
-        if (idx >= 0 && idx < mockData.length) {
-          return {
-            data: mockData[idx],
-            coordinate: { x: chartX, y: mockData[idx].y },
-            seriesId: "test-series",
-          };
-        }
-        return null;
-      },
-    },
-  };
-
   return {
-    listeners,
-    interactions,
-    on: vi.fn((type: string, listener: (event: ChartEvent) => void) => {
-      if (!listeners.has(type)) {
-        listeners.set(type, new Set());
-      }
-      listeners.get(type)!.add(listener);
-    }),
-    off: vi.fn((type: string, listener: (event: ChartEvent) => void) => {
-      listeners.get(type)?.delete(listener);
-    }),
     getChartContext: vi.fn(() => ({
       chartStore: {
         getState: () => ({
           data: mockData,
-          processedSeries: [mockSeries],
           scales: {
-            x: (v: number) => v * 100,
-            y: (v: number) => 300 - v,
+            x: (v: number) => v * 10,
+            y: (v: number) => 100 - v,
           },
-          config: {
-            x: (d: { x: number }) => d.x,
-            y: (d: { y: number }) => d.y,
-          },
+          config: { x: "x", y: "y" },
           dimensions: {
-            innerWidth: 300,
-            innerHeight: 200,
-            margin: { left: 50, top: 30, right: 20, bottom: 40 },
+            margin: { left: 0, top: 0 },
           },
+          interactions,
         }),
       },
-    })),
+    })) as any,
     getInteraction: vi.fn((name: string) => interactions.get(name) || null),
     upsertInteraction: vi.fn((name: string, interaction: unknown) => {
       interactions.set(name, interaction);
@@ -87,257 +45,108 @@ const createMockContext = (): SensorContext & {
     removeInteraction: vi.fn((name: string) => {
       interactions.delete(name);
     }),
-    emit: vi.fn(),
-    pointerPosition: null,
-    isWithinPlot: false,
-  };
+  } as unknown as SensorContext;
 };
 
-// Helper to create keyboard events
-const createKeyEvent = (key: string): ChartEvent => ({
-  type: "CHART_KEY_DOWN",
-  coordinates: {
-    containerX: 0,
-    containerY: 0,
-    chartX: 0,
-    chartY: 0,
-    isWithinPlot: true,
-  },
-  nativeEvent: new KeyboardEvent("keydown", { key }),
+const createMockEvent = (action: InputAction, key?: string): EngineEvent => ({
+  signal: { action, type: "keyboard", key, source: "keyboard" },
+  primaryCandidate: null,
+  candidates: [],
+  chartX: 0,
+  chartY: 0,
+  isTouch: false,
 });
 
 // =============================================================================
-// LIFECYCLE TESTS
+// TESTS
 // =============================================================================
 
-describe("KeyboardSensor - Lifecycle", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("should be a factory function that returns a sensor", () => {
-    const sensor = KeyboardSensor();
-    expect(typeof sensor).toBe("function");
-  });
-
-  it("should register CHART_KEY_DOWN listener on initialization", () => {
+describe("KeyboardSensor (Engine)", () => {
+  it("should not react to non-KEY actions", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
 
-    sensor(ctx);
+    const event = createMockEvent(InputAction.START);
+    sensor(event, ctx);
 
-    expect(ctx.on).toHaveBeenCalledWith("CHART_KEY_DOWN", expect.any(Function));
+    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
   });
 
-  it("should return a cleanup function", () => {
+  it("should focus first point on ArrowRight if no focus", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
 
-    const cleanup = sensor(ctx);
+    // 1. ArrowRight
+    const event = createMockEvent(InputAction.KEY, "ArrowRight");
+    sensor(event, ctx);
 
-    expect(typeof cleanup).toBe("function");
-  });
-
-  it("should unregister listener on cleanup", () => {
-    const ctx = createMockContext();
-    const sensor = KeyboardSensor();
-
-    const cleanup = sensor(ctx);
-    cleanup?.();
-
-    expect(ctx.off).toHaveBeenCalledWith(
-      "CHART_KEY_DOWN",
-      expect.any(Function),
+    // Initial focus starts at -1, enters at 0
+    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        target: expect.objectContaining({ dataIndex: 0 }),
+      }),
     );
   });
-});
 
-// =============================================================================
-// NAVIGATION TESTS
-// =============================================================================
-
-describe("KeyboardSensor - Navigation", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("should navigate right on ArrowRight", () => {
+  it("should move focus with ArrowRight/ArrowLeft", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
 
-    sensor(ctx);
+    // 1. Focus first point
+    sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
 
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
+    // 2. Focus next (index 1)
+    sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenCalled();
+    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        target: expect.objectContaining({ dataIndex: 1 }),
+      }),
+    );
+
+    // 3. Focus prev (index 0)
+    sensor(createMockEvent(InputAction.KEY, "ArrowLeft"), ctx);
+
+    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        target: expect.objectContaining({ dataIndex: 0 }),
+      }),
+    );
   });
 
-  it("should navigate left on ArrowLeft after navigating right", () => {
+  it("should clear interaction on Escape", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
 
-    sensor(ctx);
+    // 1. Focus something
+    sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
 
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Navigate right first (to index 0)
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    // Navigate right again (to index 1)
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    // Now navigate left (back to index 0)
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowLeft")));
-
-    // Should have called upsertInteraction 3 times
-    expect(ctx.upsertInteraction).toHaveBeenCalledTimes(3);
-  });
-
-  it("should remove interaction on Escape", () => {
-    const ctx = createMockContext();
-    const sensor = KeyboardSensor();
-
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Navigate to a point first
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    // Press Escape
-    keyListeners?.forEach((listener) => listener(createKeyEvent("Escape")));
+    // 2. Escape
+    sensor(createMockEvent(InputAction.KEY, "Escape"), ctx);
 
     expect(ctx.removeInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
     );
   });
 
-  it("should not navigate past the end of data", () => {
+  it("should clamp focus to data bounds", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
 
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Navigate right past the end (will keep calling, but stay at last index)
-    for (let i = 0; i < 10; i++) {
-      keyListeners?.forEach((listener) =>
-        listener(createKeyEvent("ArrowRight")),
-      );
+    // Data length is 3 (indices 0, 1, 2)
+    // Click ArrowRight 5 times
+    for (let i = 0; i < 5; i++) {
+      sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
     }
 
-    // Sensor keeps calling as it clamps to max index
-    expect(ctx.upsertInteraction).toHaveBeenCalled();
-  });
-
-  it("should not navigate before index 0", () => {
-    const ctx = createMockContext();
-    const sensor = KeyboardSensor();
-
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Navigate right first
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    // Try to navigate left past the beginning
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowLeft")));
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowLeft")));
-
-    // Should have called upsertInteraction 3 times (right, left, left - all valid)
-    // Actually the left past 0 should still call, just with same index
-    expect(ctx.upsertInteraction).toHaveBeenCalled();
-  });
-});
-
-// =============================================================================
-// EDGE CASES
-// =============================================================================
-
-describe("KeyboardSensor - Edge Cases", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("should ignore non-arrow keys", () => {
-    const ctx = createMockContext();
-    const sensor = KeyboardSensor();
-
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-    keyListeners?.forEach((listener) => listener(createKeyEvent("a")));
-    keyListeners?.forEach((listener) => listener(createKeyEvent("Enter")));
-    keyListeners?.forEach((listener) => listener(createKeyEvent("Tab")));
-
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
-  });
-
-  it("should handle missing chart context gracefully", () => {
-    const ctx = createMockContext();
-    ctx.getChartContext = vi.fn(
-      () => null as unknown as ReturnType<typeof ctx.getChartContext>,
+    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        target: expect.objectContaining({ dataIndex: 2 }),
+      }),
     );
-
-    const sensor = KeyboardSensor();
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Should not throw
-    expect(() => {
-      keyListeners?.forEach((listener) =>
-        listener(createKeyEvent("ArrowRight")),
-      );
-    }).not.toThrow();
-
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
-  });
-
-  it("should handle empty data array", () => {
-    const ctx = createMockContext();
-    ctx.getChartContext = vi.fn(() => ({
-      chartStore: {
-        getState: () => ({
-          data: [],
-          processedSeries: [],
-          scales: { x: (v: number) => v, y: (v: number) => v },
-          config: {},
-          dimensions: {
-            innerWidth: 300,
-            innerHeight: 200,
-            margin: { left: 0, top: 0, right: 0, bottom: 0 },
-          },
-        }),
-      },
-    }));
-
-    const sensor = KeyboardSensor();
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
-  });
-
-  it("should use custom interaction channel name when provided", () => {
-    const ctx = createMockContext();
-    const sensor = KeyboardSensor({ name: "custom-keyboard" });
-
-    sensor(ctx);
-
-    const keyListeners = ctx.listeners.get("CHART_KEY_DOWN");
-
-    // Navigate to set up an interaction
-    keyListeners?.forEach((listener) => listener(createKeyEvent("ArrowRight")));
-
-    // Press Escape to remove
-    keyListeners?.forEach((listener) => listener(createKeyEvent("Escape")));
-
-    expect(ctx.removeInteraction).toHaveBeenCalledWith("custom-keyboard");
   });
 });

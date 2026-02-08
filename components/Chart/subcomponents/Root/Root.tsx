@@ -11,6 +11,7 @@ import React, {
 
 import { ChartContext } from "../../context";
 import { useChartBehaviors } from "../../hooks/useChartBehaviors";
+import { useEngine } from "../../hooks/useEngine";
 import { SensorManager } from "../../sensors/SensorManager/SensorManager";
 import { EventsProvider } from "../../state/EventContext";
 import {
@@ -25,6 +26,8 @@ import {
   ContextValue,
   InteractionChannel,
   Props,
+  resolveAccessor,
+  Series as SeriesType,
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
@@ -164,6 +167,93 @@ export function Root<T>({
   const [isMobile, setIsMobile] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
+
+  // Initialize Engine
+  const { engine } = useEngine<T>();
+
+  // Sync Engine with Data & Scales
+  useEffect(() => {
+    return chartStore.subscribe(() => {
+      const state = chartStore.getState();
+      if (!state) {
+        return;
+      }
+
+      const { data, scales, dimensions, processedSeries } = state;
+      const { x: xScale, y: yScale } = scales;
+
+      // Update plot bounds
+      if (wrapperRef.current) {
+        engine.setContainer(wrapperRef.current, {
+          x: dimensions.margin.left,
+          y: dimensions.margin.top,
+          width: dimensions.innerWidth,
+          height: dimensions.innerHeight,
+        });
+      }
+
+      // Update data if scales are ready
+      if (xScale && yScale) {
+        const allPoints: any[] = [];
+        const hasSeries = processedSeries && processedSeries.length > 0;
+
+        if (hasSeries) {
+          processedSeries.forEach((series: SeriesType) => {
+            const seriesData = series.data || data;
+            if (!seriesData) {
+              return;
+            }
+
+            const getX = series.xAccessor
+              ? resolveAccessor(series.xAccessor)
+              : x
+                ? resolveAccessor(x)
+                : null;
+            const getY = series.yAccessor
+              ? resolveAccessor(series.yAccessor)
+              : y
+                ? resolveAccessor(y)
+                : null;
+
+            const points = seriesData.map((d: any, i: number) => ({
+              x:
+                (xScale((getX ? getX(d) : i) as any) ?? 0) +
+                dimensions.margin.left,
+              y:
+                (yScale((getY ? getY(d) : d) as any) ?? 0) +
+                dimensions.margin.top,
+              data: d,
+              seriesId: series.id,
+              seriesColor: series.color,
+              dataIndex: i,
+            }));
+            allPoints.push(...points);
+          });
+        } else if (data.length > 0) {
+          const getX = x ? resolveAccessor(x) : null;
+          const getY = y ? resolveAccessor(y) : null;
+
+          const points = data.map((d: any, i: number) => ({
+            x:
+              (xScale((getX ? getX(d) : i) as any) ?? 0) +
+              dimensions.margin.left,
+            y:
+              (yScale((getY ? getY(d) : d) as any) ?? 0) +
+              dimensions.margin.top,
+            data: d,
+            seriesId: "default",
+            seriesColor: null,
+            dataIndex: i,
+          }));
+          allPoints.push(...points);
+        }
+
+        if (allPoints.length > 0) {
+          engine.updateData(allPoints);
+        }
+      }
+    });
+  }, [chartStore, engine, x, y]);
 
   // Sync data to store
   useEffect(() => {
@@ -334,6 +424,7 @@ export function Root<T>({
   const value: ContextValue<T> = useMemo(
     () => ({
       chartStore,
+      engine,
       data,
       config: config as any,
       width: chartStore.getState().dimensions.width,
@@ -361,6 +452,7 @@ export function Root<T>({
       x,
       y,
       variant,
+      engine,
     ],
   );
 

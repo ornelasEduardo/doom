@@ -38,6 +38,7 @@ export interface IndexedPoint<T = unknown> {
   data: T;
   seriesId: string;
   dataIndex: number;
+  seriesColor?: string;
   draggable?: boolean;
   suppressMarker?: boolean;
 }
@@ -293,6 +294,7 @@ export class SpatialIndex<T = unknown> {
                 dataIndex: point.dataIndex,
                 coordinate: { x: point.x, y: point.y },
                 distance,
+                seriesColor: point.seriesColor,
                 draggable: point.draggable,
                 suppressMarker: point.suppressMarker,
               });

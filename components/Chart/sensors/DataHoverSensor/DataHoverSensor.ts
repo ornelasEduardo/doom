@@ -1,13 +1,8 @@
-import { ChartEvent, Sensor } from "../../types/events";
-import { HoverMode, InteractionChannel } from "../../types/interaction";
-import { findClosestTargets } from "../utils/search";
+import { InputAction } from "../../engine";
+import { Sensor } from "../../types/events";
+import { InteractionChannel } from "../../types/interaction";
 
 export interface HoverSensorOptions {
-  /**
-   * How to find the target.
-   */
-  mode: HoverMode;
-
   /**
    * Name for the interaction channel.
    * Defaults to 'primary-hover'.
@@ -17,72 +12,55 @@ export interface HoverSensorOptions {
 
 /**
  * The DataHoverSensor detects pointer movements over the chart plot
- * and identifies the closest data targets based on the specified mode.
+ * and identifies the closest data targets.
  *
- * It coordinates with the interaction store to trigger hover-based
- * behaviors like tooltips and markers.
- *
- * @example
- * ```tsx
- * Root({ sensors: [DataHoverSensor()] })
- * ```
- *
- * @example
- * ```tsx
- * DataHoverSensor({ mode: 'exact' })
- * ```
+ * HYPER-ENGINE UPDATE:
+ * Now purely an interpreter of EngineEvents.
  */
-export const DataHoverSensor = (
-  options: HoverSensorOptions = { mode: "nearest-x" },
-): Sensor => {
-  const { mode, name = InteractionChannel.PRIMARY_HOVER } = options;
+export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
+  const { name = InteractionChannel.PRIMARY_HOVER } = options;
 
-  return ({
-    on,
-    off,
-    getChartContext,
-    upsertInteraction,
-    removeInteraction,
-  }) => {
-    const handleMove = (event: ChartEvent) => {
-      const ctx = getChartContext();
-      if (!ctx || !ctx.chartStore) {
-        return;
-      }
+  return (event, { upsertInteraction, removeInteraction }) => {
+    const { signal, primaryCandidate, chartX, chartY, isWithinPlot } = event;
 
-      const state = ctx.chartStore.getState();
-      const targets = findClosestTargets(event, mode, state);
+    console.log(primaryCandidate, event.candidates);
 
-      if (targets.length > 0) {
-        const isTouch =
-          "touches" in event.nativeEvent ||
-          "changedTouches" in event.nativeEvent;
+    // 1. Filter: Only handle MOVE and LEAVE/CANCEL
+    if (
+      signal.action !== InputAction.MOVE &&
+      signal.action !== InputAction.CANCEL
+    ) {
+      return;
+    }
 
-        upsertInteraction(name, {
-          pointer: {
-            x: event.coordinates.chartX,
-            y: event.coordinates.chartY,
-            containerX: event.coordinates.containerX,
-            containerY: event.coordinates.containerY,
-            isTouch,
-          },
-          targets,
-        });
-      } else {
-        removeInteraction(name);
-      }
-    };
-
-    const handleLeave = () => {
+    // 2. Handle LEAVE/CANCEL or strict plot bounds
+    if (
+      signal.action === InputAction.CANCEL ||
+      (!isWithinPlot && signal.source !== "touch") // allow touch to drag off-plot slightly?
+    ) {
       removeInteraction(name);
-    };
+      return;
+    }
 
-    on("CHART_POINTER_MOVE", handleMove);
-    on("CHART_POINTER_LEAVE", handleLeave);
+    // 3. Handle MOVE
+    if (primaryCandidate) {
+      const isTouch = signal.source === "touch";
 
-    return () => {
-      off("CHART_POINTER_MOVE", handleMove);
-      off("CHART_POINTER_LEAVE", handleLeave);
-    };
+      upsertInteraction(name, {
+        pointer: {
+          x: chartX,
+          y: chartY,
+          containerX: signal.x,
+          containerY: signal.y,
+          isTouch,
+        },
+        targets: [primaryCandidate as any], // Engine provides "hydrated" candidate
+      });
+    } else {
+      // No candidate found, but still hovering plot?
+      // Optionally keep interaction but clear targets, or remove.
+      // Legacy behavior was to remove if no targets found.
+      removeInteraction(name);
+    }
   };
 };

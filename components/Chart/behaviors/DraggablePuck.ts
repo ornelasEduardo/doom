@@ -106,26 +106,29 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
       } = interaction;
       const puckColor = color || target.seriesColor || "var(--primary)";
 
+      // Retrieve dimensions for margin correction
+      const { margin } = ctx.chartStore.getState().dimensions;
+
       // Update puck position
       puck
-        .attr("cx", currentPosition.x)
-        .attr("cy", currentPosition.y)
+        .attr("cx", currentPosition.x - margin.left)
+        .attr("cy", currentPosition.y - margin.top)
         .attr("fill", puckColor)
         .style("opacity", 1);
 
       if (showGhost) {
         // Show ghost at original target position
         ghost
-          .attr("cx", target.coordinate.x)
-          .attr("cy", target.coordinate.y)
+          .attr("cx", target.coordinate.x - margin.left)
+          .attr("cy", target.coordinate.y - margin.top)
           .style("opacity", 0.5);
 
         // Draw connecting line
         line
-          .attr("x1", target.coordinate.x)
-          .attr("y1", target.coordinate.y)
-          .attr("x2", currentPosition.x)
-          .attr("y2", currentPosition.y)
+          .attr("x1", target.coordinate.x - margin.left)
+          .attr("y1", target.coordinate.y - margin.top)
+          .attr("x2", currentPosition.x - margin.left)
+          .attr("y2", currentPosition.y - margin.top)
           .style("opacity", 0.5);
       }
     };

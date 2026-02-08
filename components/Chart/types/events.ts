@@ -1,5 +1,6 @@
 import { Selection } from "d3-selection";
 
+import { EngineEvent } from "../engine";
 import { ContextValue } from "./context";
 import { Interaction } from "./interaction";
 
@@ -60,24 +61,27 @@ export interface BehaviorContext<T = any> {
 export type Behavior<T = any> = (context: BehaviorContext<T>) => Cleanup | void;
 
 /**
- * SensorContext provides the event backbone for sensors.
+ * SensorContext provides the environment for sensors to interact with the chart state.
+ * Refactored for Hyper-Engine: Reduced API surface.
  */
 export interface SensorContext<T = unknown> {
-  on: (type: EventType, listener: EventListener) => void;
-  off: (type: EventType, listener: EventListener) => void;
   getChartContext: () => ContextValue<T>;
   getInteraction: (name: string) => Interaction | null;
   upsertInteraction: (name: string, interaction: Interaction) => void;
   removeInteraction: (name: string) => void;
-  emit: (event: ChartEvent) => void;
-  pointerPosition: Coordinates | null;
-  isWithinPlot: boolean;
 }
 
 /**
  * A Sensor is a function that detects user intent and updates the interaction store.
+ *
+ * HYPER-ENGINE UPDATE:
+ * Sensors are now "Interaction Interpreters" that receive processed EngineEvents.
+ * They no longer subscribe to events themselves.
  */
-export type Sensor<T = unknown> = (context: SensorContext<T>) => Cleanup | void;
+export type Sensor<T = unknown> = (
+  event: EngineEvent<T>,
+  context: SensorContext<T>,
+) => void;
 
 export interface EventContextValue {
   on: (type: EventType, listener: EventListener) => void;

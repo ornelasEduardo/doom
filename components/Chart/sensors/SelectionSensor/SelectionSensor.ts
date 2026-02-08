@@ -1,50 +1,53 @@
-import { ChartEvent, Sensor } from "../../types/events";
+import { InputAction } from "../../engine";
+import { Sensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
-import { findClosestTargets } from "../utils/search";
 
 /**
  * Professional-grade Selection Sensor.
- * Coordinates with search logic to choose data points on click.
+ * Coordinates with Engine to choose data points on click/start.
+ *
+ * HYPER-ENGINE UPDATE:
+ * - Uses EngineEvent primaryCandidate.
  */
 export const SelectionSensor = (options: { name?: string } = {}): Sensor => {
   const { name = InteractionChannel.SELECTION } = options;
 
-  return ({ on, off, getChartContext, upsertInteraction }) => {
-    const handleDown = (event: ChartEvent) => {
-      const ctx = getChartContext();
-      if (!ctx || !ctx.chartStore) {
-        return;
-      }
+  return (
+    { signal, primaryCandidate },
+    { getChartContext, upsertInteraction },
+  ) => {
+    // Only handle START action (roughly equivalent to mouse down)
+    if (signal.action !== InputAction.START) {
+      return;
+    }
 
-      const state = ctx.chartStore.getState();
+    if (!primaryCandidate) {
+      return;
+    }
 
-      /**
-       * For selection, we usually want 'closest' or 'exact' mode to ensure
-       * the user clicked precisely what they intended.
-       */
-      const targets = findClosestTargets(event, "closest", state);
+    const ctx = getChartContext();
+    const { chartStore } = ctx;
+    const state = chartStore.getState();
 
-      if (targets.length > 0) {
-        const selectedDatum = targets[0].data;
-        const currentSelection = state.interactions.get(name)?.selection || [];
+    const selectedDatum = primaryCandidate.data;
+    const currentInteraction = state.interactions.get(name);
+    const currentSelection = (currentInteraction as any)?.selection || [];
 
-        // Simple toggle logic
-        const isAlreadySelected = currentSelection.includes(selectedDatum);
-        const nextSelection = isAlreadySelected
-          ? currentSelection.filter((d: any) => d !== selectedDatum)
-          : [...currentSelection, selectedDatum];
+    // Simple toggle logic
+    // TODO: support multi-select with shift key?
+    // signal.originalEvent is the native event if we need modifiers.
+    const isAlreadySelected = currentSelection.includes(selectedDatum);
 
-        upsertInteraction(name, {
-          selection: nextSelection,
-          mode: "discrete",
-        });
-      }
-    };
+    let nextSelection;
+    if (isAlreadySelected) {
+      nextSelection = currentSelection.filter((d: any) => d !== selectedDatum);
+    } else {
+      nextSelection = [...currentSelection, selectedDatum];
+    }
 
-    on("CHART_POINTER_DOWN", handleDown);
-
-    return () => {
-      off("CHART_POINTER_DOWN", handleDown);
-    };
+    upsertInteraction(name, {
+      selection: nextSelection,
+      mode: "discrete", // or "continuous"
+    });
   };
 };

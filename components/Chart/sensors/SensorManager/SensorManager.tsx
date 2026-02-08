@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { useChartContext } from "../../context";
-import { useEventContext } from "../../state/EventContext";
 import {
   removeInteraction,
   upsertInteraction,
@@ -21,13 +20,7 @@ import { KeyboardSensor } from "../KeyboardSensor";
  * to the interaction store.
  */
 export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
-  const { chartStore, config, colorPalette } = useChartContext();
-
-  // Extract ONLY the stable callbacks from eventContext.
-  // IMPORTANT: Do NOT depend on the entire eventContext object, as it changes
-  // on every pointer move (due to pointerPosition state), which would cause
-  // sensors to be re-instantiated and lose their closure state.
-  const { on, off, emit } = useEventContext();
+  const { chartStore, config, colorPalette, engine } = useChartContext();
 
   // Subscribe to status and data for lifecycle protection
   const status = chartStore.useStore((s) => s.status);
@@ -49,13 +42,8 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
     const type = config.type || "line";
 
     if (["line", "area", "bar", "scatter", "bubble"].includes(type as string)) {
-      const mode =
-        type === "scatter" || (type as string) === "bubble"
-          ? "closest"
-          : "nearest-x";
       defaults.push(
         DataHoverSensor({
-          mode,
           name: InteractionChannel.PRIMARY_HOVER,
         }),
       );
@@ -69,8 +57,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
     } else {
       defaults.push(
         DataHoverSensor({
-          mode: "exact",
-          name: InteractionChannel.PRIMARY_HOVER,
+          name: InteractionChannel.PRIMARY_HOVER, // exact mode handled by Engine/DataHover logic
         }),
       );
     }
@@ -78,54 +65,50 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
   }, [sensors, config.type]);
 
   useEffect(() => {
-    // PROTECT: Only instantiate sensors when the chart is READY.
-    if (status !== "ready" || !data.length) {
+    // PROTECT: Only active when chart is READY.
+    if (status !== "ready" || !data.length || !engine) {
       return;
     }
 
-    // Instantiate sensors with stable callback references
-    const cleanups = activeSensors.map((sensor) => {
-      return sensor({
-        on,
-        off,
-        emit,
-        // These are not used by sensors directly - they subscribe to events instead
-        pointerPosition: null,
-        isWithinPlot: false,
-        getChartContext: () => {
-          const state = chartStore.getState();
-          return {
-            ...state,
-            xScale: state.scales.x,
-            yScale: state.scales.y,
-            colorPalette: colorPaletteRef.current || [],
-            chartStore,
-          } as unknown as ContextValue<any>;
-        },
+    // Define the sensor context
+    // Note: Sensors are now stateless structure-wise, deriving state from Store/Context
+    const sensorContext = {
+      getChartContext: () => {
+        const state = chartStore.getState();
+        return {
+          ...state,
+          xScale: state.scales.x,
+          yScale: state.scales.y,
+          colorPalette: colorPaletteRef.current || [],
+          chartStore,
+        } as unknown as ContextValue<any>;
+      },
+      getInteraction: (name: string) => {
+        return chartStore.getState().interactions.get(name) || null;
+      },
+      upsertInteraction: (name: string, value: any) => {
+        upsertInteraction(chartStore, name, value);
+      },
+      removeInteraction: (name: string) => {
+        removeInteraction(chartStore, name);
+      },
+    };
 
-        getInteraction: (name: string) => {
-          return chartStore.getState().interactions.get(name) || null;
-        },
-        upsertInteraction: (name: string, value: any) => {
-          upsertInteraction(chartStore, name, value);
-        },
-        removeInteraction: (name: string) => {
-          removeInteraction(chartStore, name);
-        },
+    // Register handler with Engine
+    engine.setHandler((event) => {
+      activeSensors.forEach((sensor) => {
+        try {
+          sensor(event, sensorContext);
+        } catch (err) {
+          console.error("Sensor Error:", err);
+        }
       });
     });
 
     return () => {
-      cleanups.forEach((cleanup) => {
-        if (typeof cleanup === "function") {
-          cleanup();
-        }
-      });
+      engine.setHandler(() => {});
     };
-    // CRITICAL: Only depend on stable references (on, off, emit from useCallback)
-    // NOT the entire eventContext object which changes on every pointer move
-    // colorPalette is now accessed via ref to avoid re-instantiation
-  }, [activeSensors, on, off, emit, chartStore, status, data.length]);
+  }, [activeSensors, engine, chartStore, status, data.length]);
 
   return null;
 };

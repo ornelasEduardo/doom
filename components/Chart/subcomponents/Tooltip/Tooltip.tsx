@@ -13,7 +13,6 @@ import {
   Reposition,
   TOOLTIP_GAP_X,
   TOOLTIP_GAP_Y,
-  TOUCH_OFFSET_Y,
 } from "../../utils/Reposition";
 import styles from "./Tooltip.module.scss";
 import { TooltipProps } from "./types";
@@ -53,15 +52,27 @@ export function Tooltip<T>({
       return;
     }
 
+    const offsetParent = tooltipRef.current.offsetParent as HTMLElement;
+    if (!offsetParent) {
+      return;
+    }
+
+    const style = window.getComputedStyle(offsetParent);
+    const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+    const borderTop = parseFloat(style.borderTopWidth) || 0;
+
     const { x, y } = new Reposition(tooltipRef.current)
       .anchor({
-        x: (position as { containerX?: number }).containerX ?? position.x,
-        y: (position as { containerY?: number }).containerY ?? position.y,
+        x:
+          ((position as { containerX?: number }).containerX ?? position.x) -
+          borderLeft,
+        y:
+          ((position as { containerY?: number }).containerY ?? position.y) -
+          borderTop,
       })
       .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
       .align({ vertical: "center" })
-      .touchOffset(TOUCH_OFFSET_Y, position.isTouch ?? false)
-      .edgeDetect({ container: containerRef })
+      .edgeDetect({ container: { current: offsetParent } })
       .resolve();
 
     setLayout({ x, y, visible: true });

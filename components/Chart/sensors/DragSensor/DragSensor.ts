@@ -1,10 +1,10 @@
-import { ChartEvent, Sensor } from "../../types/events";
+import { InputAction } from "../../engine";
+import { Sensor } from "../../types/events";
 import {
   DragInteraction,
   InteractionChannel,
   InteractionTarget,
 } from "../../types/interaction";
-import { findClosestTargets } from "../utils/search";
 
 export interface DragSensorOptions<T = any> {
   /**
@@ -36,31 +36,14 @@ export interface DragSensorOptions<T = any> {
    * @default 20
    */
   hitRadius?: number;
-
-  /**
-   * Hit detection mode.
-   * - "exact": Uses DOM hit detection (requires __data__ on elements)
-   * - "closest": Uses strategy-based search (requires invertable scales)
-   * @default "exact"
-   */
-  hitMode?: "exact" | "closest";
 }
 
 /**
  * DragSensor enables dragging data points ("pucks") on a chart.
  *
- * It uses the existing search strategies to detect which point the user
- * clicked, then tracks the drag and inverts pixel coordinates back to
- * data domain values.
- *
- * @example
- * ```tsx
- * DragSensor({
- *   onDragEnd: (data, newValue) => {
- *     console.log(`Dragged ${data.label} to ${newValue.y}`);
- *   }
- * })
- * ```
+ * HYPER-ENGINE UPDATE:
+ * - Uses EngineEvent candidates for hit detection.
+ * - Manages drag state via closure.
  */
 export const DragSensor = <T = any>(
   options: DragSensorOptions<T> = {},
@@ -70,95 +53,56 @@ export const DragSensor = <T = any>(
     onDragEnd,
     onDrag,
     hitRadius = 20,
-    hitMode = "exact",
   } = options;
 
-  return ({
-    on,
-    off,
-    getChartContext,
-    upsertInteraction,
-    removeInteraction,
-  }) => {
-    let dragTarget: InteractionTarget<T> | null = null;
-    let startPosition: { x: number; y: number } | null = null;
+  let isDragging = false;
+  let dragTarget: InteractionTarget<T> | null = null;
+  let startPosition: { x: number; y: number } | null = null;
 
-    const handlePointerDown = (event: ChartEvent) => {
-      const ctx = getChartContext();
-      if (!ctx || !ctx.chartStore) {
-        return;
-      }
+  return (event, { getChartContext, upsertInteraction, removeInteraction }) => {
+    const { signal, primaryCandidate, chartX, chartY } = event;
 
-      const state = ctx.chartStore.getState();
+    // 1. START DRAG
+    if (signal.action === InputAction.START) {
+      if (primaryCandidate && primaryCandidate.distance <= hitRadius) {
+        // Start dragging exact target
+        const target = primaryCandidate;
+        const initialData = target.data as T;
 
-      // Find targets at click position
-      const targets = findClosestTargets(event, hitMode, state, hitRadius);
-
-      if (targets.length > 0) {
-        // If multiple targets, prioritize by distance or z-index (implicit in order)
-        // For drag, we take the first valid target
-        // IMPORTANT: We must store the DATA associated with the target, not just the element
-        const target = targets[0];
-
-        let initialData = target.data;
-        if (!initialData && target.element) {
-          // Fallback: try to get data from element property if strict typing allows
-          initialData = (target.element as any).__data__;
-        }
-
-        // Only start drag if we have data to update
         if (initialData) {
-          // Construct a full InteractionTarget
-          const interactionTarget: InteractionTarget = {
+          isDragging = true;
+          startPosition = { x: chartX, y: chartY };
+
+          const interactionTarget: InteractionTarget<T> = {
             data: initialData,
-            coordinate: target.coordinate || {
-              x: event.coordinates.chartX,
-              y: event.coordinates.chartY,
-            },
+            coordinate: target.coordinate,
             seriesId: target.seriesId,
-            seriesColor: target.seriesColor,
           };
 
-          dragTarget = {
-            element: target.element,
-            data: initialData,
-            // Store the full interaction target for later use
-            interactionTarget,
-          };
-
-          startPosition = {
-            x: event.coordinates.chartX,
-            y: event.coordinates.chartY,
-          };
+          dragTarget = interactionTarget;
 
           // Register interaction
-          const interaction: DragInteraction = {
+          const interaction: DragInteraction<T> = {
             target: interactionTarget,
             startPosition,
             currentPosition: startPosition,
-            currentValue: { x: null, y: null }, // Initial value will be populated on move
+            currentValue: { x: null, y: null },
             isDragging: true,
           };
 
           upsertInteraction(name, interaction);
         }
       }
-    };
+      return;
+    }
 
-    const handlePointerMove = (event: ChartEvent) => {
-      if (!dragTarget || !startPosition) {
+    // 2. MOVE DRAG
+    if (signal.action === InputAction.MOVE) {
+      if (!isDragging || !dragTarget || !startPosition) {
         return;
       }
 
-      // 1. Calculate delta
-      // 2. Update interaction state with new position
-      // 3. Fire onDrag callback
-
-      const currentPosition = {
-        x: event.coordinates.chartX,
-        y: event.coordinates.chartY,
-      };
-
+      const currentPosition = { x: chartX, y: chartY };
       const ctx = getChartContext();
       if (!ctx || !ctx.chartStore) {
         return;
@@ -167,7 +111,7 @@ export const DragSensor = <T = any>(
       const state = ctx.chartStore.getState();
       const { x: xScale, y: yScale } = state.scales;
 
-      // Invert to get value
+      // Invert
       let xValue: any = null;
       let yValue: any = null;
 
@@ -180,9 +124,9 @@ export const DragSensor = <T = any>(
 
       const currentValue = { x: xValue, y: yValue };
 
-      // Update interaction state
-      const interaction: DragInteraction = {
-        target: dragTarget.interactionTarget,
+      // Update interaction
+      const interaction: DragInteraction<T> = {
+        target: dragTarget,
         startPosition,
         currentPosition,
         currentValue,
@@ -194,30 +138,23 @@ export const DragSensor = <T = any>(
       if (onDrag) {
         onDrag(dragTarget.data, currentValue, currentPosition);
       }
-    };
+      return;
+    }
 
-    const handlePointerUp = (event: ChartEvent) => {
-      if (!dragTarget || !startPosition) {
+    // 3. END / CANCEL DRAG
+    if (
+      signal.action === InputAction.END ||
+      signal.action === InputAction.CANCEL
+    ) {
+      if (!isDragging || !dragTarget) {
         return;
       }
 
+      const finalPosition = { x: chartX, y: chartY };
       const ctx = getChartContext();
-      if (!ctx || !ctx.chartStore) {
-        dragTarget = null;
-        startPosition = null;
-        removeInteraction(name);
-        return;
-      }
-
       const state = ctx.chartStore.getState();
       const { x: xScale, y: yScale } = state.scales;
 
-      const finalPosition = {
-        x: event.coordinates.chartX,
-        y: event.coordinates.chartY,
-      };
-
-      // Invert final position to data domain
       let xValue: any = null;
       let yValue: any = null;
 
@@ -228,35 +165,15 @@ export const DragSensor = <T = any>(
         yValue = yScale.invert(finalPosition.y);
       }
 
-      if (onDragEnd) {
+      if (signal.action === InputAction.END && onDragEnd) {
         onDragEnd(dragTarget.data, { x: xValue, y: yValue }, finalPosition);
       }
 
-      // Clean up
+      // Cleanup
+      isDragging = false;
       dragTarget = null;
       startPosition = null;
       removeInteraction(name);
-    };
-
-    const handlePointerLeave = () => {
-      if (dragTarget) {
-        // Cancel drag on leave
-        dragTarget = null;
-        startPosition = null;
-        removeInteraction(name);
-      }
-    };
-
-    on("CHART_POINTER_DOWN", handlePointerDown);
-    on("CHART_POINTER_MOVE", handlePointerMove);
-    on("CHART_POINTER_UP", handlePointerUp);
-    on("CHART_POINTER_LEAVE", handlePointerLeave);
-
-    return () => {
-      off("CHART_POINTER_DOWN", handlePointerDown);
-      off("CHART_POINTER_MOVE", handlePointerMove);
-      off("CHART_POINTER_UP", handlePointerUp);
-      off("CHART_POINTER_LEAVE", handlePointerLeave);
-    };
+    }
   };
 };

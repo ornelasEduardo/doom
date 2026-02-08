@@ -103,6 +103,9 @@ export interface InteractionCandidate<T = unknown> {
   /** The index within the series (for data points) */
   dataIndex?: number;
 
+  /** The color of the series (for styling behaviors) */
+  seriesColor?: string;
+
   /** The pixel coordinates of this candidate (for snapping) */
   coordinate: { x: number; y: number };
 

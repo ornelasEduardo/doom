@@ -1,8 +1,8 @@
 /**
- * InteractionLayer Tests (TDD - Expanded)
+ * InteractionLayer Tests (Engine Integration)
  *
  * Tests for the InteractionLayer that captures DOM events
- * and forwards them to the EventContext.
+ * and forwards them to the Engine as InputSignals.
  */
 
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -10,7 +10,7 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useChartContext } from "../../context";
-import { useEventContext } from "../../state/EventContext";
+import { useEngine } from "../../hooks/useEngine";
 import { InteractionLayer } from "./InteractionLayer";
 
 // =============================================================================
@@ -18,15 +18,19 @@ import { InteractionLayer } from "./InteractionLayer";
 // =============================================================================
 
 vi.mock("../../context");
-vi.mock("../../state/EventContext");
+vi.mock("../../hooks/useEngine");
 
 // =============================================================================
 // TEST SETUP
 // =============================================================================
 
 describe("InteractionLayer", () => {
-  const mockEmit = vi.fn();
+  const mockEngineInput = vi.fn();
+  const mockCreateSignal = vi.fn();
+  const mockCreateKeySignal = vi.fn();
+  const mockSetContainer = vi.fn();
   const mockGetState = vi.fn();
+
   const mockState = {
     dimensions: {
       margin: { left: 40, top: 20, right: 20, bottom: 40 },
@@ -57,11 +61,41 @@ describe("InteractionLayer", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useEventContext as ReturnType<typeof vi.fn>).mockReturnValue({
-      emit: mockEmit,
+
+    const mockEngine = {
+      input: mockEngineInput,
+      createSignal: mockCreateSignal.mockReturnValue({
+        id: 0,
+        action: "START",
+        source: "mouse",
+        x: 100,
+        y: 100,
+        timestamp: 0,
+        userId: "local",
+      }),
+      createKeySignal: mockCreateKeySignal.mockReturnValue({
+        id: 0,
+        action: "KEY",
+        source: "keyboard",
+        x: 0,
+        y: 0,
+        timestamp: 0,
+        userId: "local",
+        key: "ArrowRight",
+      }),
+      setContainer: mockSetContainer,
+    };
+
+    // Mock useEngine hook
+    (useEngine as ReturnType<typeof vi.fn>).mockReturnValue({
+      engine: mockEngine,
+      containerRef: { current: null },
     });
+
+    // Mock useChartContext
     (useChartContext as ReturnType<typeof vi.fn>).mockReturnValue({
       chartStore: { getState: mockGetState },
+      engine: mockEngine,
     });
     mockGetState.mockReturnValue(mockState);
 
@@ -99,11 +133,11 @@ describe("InteractionLayer", () => {
   });
 
   // ===========================================================================
-  // EVENT FORWARDING TESTS
+  // ENGINE SIGNAL TESTS
   // ===========================================================================
 
-  describe("Event Forwarding", () => {
-    it("should emit CHART_POINTER_DOWN on pointerdown", () => {
+  describe("Engine Signals", () => {
+    it("should call engine.input() on pointerdown", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -113,14 +147,14 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.pointerDown(container, { clientX: 100, clientY: 100 });
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "CHART_POINTER_DOWN",
-        }),
+      expect(mockCreateSignal).toHaveBeenCalledWith(
+        expect.any(Object),
+        "START",
       );
+      expect(mockEngineInput).toHaveBeenCalled();
     });
 
-    it("should emit CHART_POINTER_UP on pointerup", () => {
+    it("should call engine.input() on pointerup", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -130,14 +164,11 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.pointerUp(container, { clientX: 100, clientY: 100 });
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "CHART_POINTER_UP",
-        }),
-      );
+      expect(mockCreateSignal).toHaveBeenCalledWith(expect.any(Object), "END");
+      expect(mockEngineInput).toHaveBeenCalled();
     });
 
-    it("should emit CHART_POINTER_LEAVE on pointerleave", () => {
+    it("should call engine.input() on pointerleave", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -147,14 +178,14 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.pointerLeave(container, { clientX: 100, clientY: 100 });
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "CHART_POINTER_LEAVE",
-        }),
+      expect(mockCreateSignal).toHaveBeenCalledWith(
+        expect.any(Object),
+        "CANCEL",
       );
+      expect(mockEngineInput).toHaveBeenCalled();
     });
 
-    it("should emit CHART_POINTER_MOVE on pointermove", () => {
+    it("should call engine.input() on pointermove", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -164,14 +195,11 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.pointerMove(container, { clientX: 100, clientY: 100 });
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "CHART_POINTER_MOVE",
-        }),
-      );
+      expect(mockCreateSignal).toHaveBeenCalledWith(expect.any(Object), "MOVE");
+      expect(mockEngineInput).toHaveBeenCalled();
     });
 
-    it("should emit CHART_KEY_DOWN on keyboard events", () => {
+    it("should call engine.input() with KEY signal on keyboard events", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -181,11 +209,8 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.keyDown(container, { key: "ArrowRight" });
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: "CHART_KEY_DOWN",
-        }),
-      );
+      expect(mockCreateKeySignal).toHaveBeenCalledWith(expect.any(Object));
+      expect(mockEngineInput).toHaveBeenCalled();
     });
 
     it("should ignore non-navigation keyboard events", () => {
@@ -198,52 +223,30 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.keyDown(container, { key: "a" });
 
-      // Should not emit for regular keys
-      expect(mockEmit).not.toHaveBeenCalled();
+      // Should not call createKeySignal for regular keys
+      expect(mockCreateKeySignal).not.toHaveBeenCalled();
     });
   });
 
   // ===========================================================================
-  // COORDINATE TESTS
+  // CONTAINER SETUP TESTS
   // ===========================================================================
 
-  describe("Coordinates", () => {
-    it("should include coordinates in emitted events", () => {
+  describe("Container Setup", () => {
+    it("should call engine.setContainer with plot bounds", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
         </ContainerWrapper>,
       );
 
-      const container = document.querySelector("[data-chart-container]")!;
-      fireEvent.pointerDown(container, { clientX: 150, clientY: 120 });
-
-      expect(mockEmit).toHaveBeenCalledWith(
+      expect(mockSetContainer).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
         expect.objectContaining({
-          coordinates: expect.objectContaining({
-            containerX: expect.any(Number),
-            containerY: expect.any(Number),
-            chartX: expect.any(Number),
-            chartY: expect.any(Number),
-            isWithinPlot: expect.any(Boolean),
-          }),
-        }),
-      );
-    });
-
-    it("should include the native event in emitted events", () => {
-      render(
-        <ContainerWrapper>
-          <InteractionLayer />
-        </ContainerWrapper>,
-      );
-
-      const container = document.querySelector("[data-chart-container]")!;
-      fireEvent.pointerDown(container, { clientX: 100, clientY: 100 });
-
-      expect(mockEmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          nativeEvent: expect.any(Object),
+          x: 40, // margin.left
+          y: 20, // margin.top
+          width: 500, // innerWidth
+          height: 300, // innerHeight
         }),
       );
     });
@@ -263,11 +266,23 @@ describe("InteractionLayer", () => {
         return 1;
       });
 
-      (useEventContext as ReturnType<typeof vi.fn>).mockReturnValue({
-        emit: mockEmit,
+      (useEngine as ReturnType<typeof vi.fn>).mockReturnValue({
+        engine: {
+          input: mockEngineInput,
+          createSignal: mockCreateSignal.mockReturnValue({ id: 0 }),
+          createKeySignal: mockCreateKeySignal,
+          setContainer: mockSetContainer,
+        },
+        containerRef: { current: null },
       });
       (useChartContext as ReturnType<typeof vi.fn>).mockReturnValue({
         chartStore: { getState: mockGetState },
+        engine: {
+          input: mockEngineInput,
+          createSignal: mockCreateSignal.mockReturnValue({ id: 0 }),
+          createKeySignal: mockCreateKeySignal,
+          setContainer: mockSetContainer,
+        },
       });
       mockGetState.mockReturnValue(mockState);
 
@@ -281,15 +296,15 @@ describe("InteractionLayer", () => {
 
       // pointerdown should be processed immediately
       fireEvent.pointerDown(container, { clientX: 100, clientY: 100 });
-      expect(mockEmit).toHaveBeenCalledTimes(1);
+      expect(mockEngineInput).toHaveBeenCalledTimes(1);
 
       // pointerup should be processed immediately
       fireEvent.pointerUp(container, { clientX: 100, clientY: 100 });
-      expect(mockEmit).toHaveBeenCalledTimes(2);
+      expect(mockEngineInput).toHaveBeenCalledTimes(2);
 
       // pointerleave should be processed immediately
       fireEvent.pointerLeave(container, { clientX: 100, clientY: 100 });
-      expect(mockEmit).toHaveBeenCalledTimes(3);
+      expect(mockEngineInput).toHaveBeenCalledTimes(3);
     });
   });
 
