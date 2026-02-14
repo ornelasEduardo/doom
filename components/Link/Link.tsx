@@ -62,9 +62,17 @@ export function Link({
     }
   }, [shouldPrefetch, props.href]);
 
-  const externalProps = isExternal
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const externalProps = isExternal ? { target: "_blank" } : {};
+
+  // Security: Prevent reverse tabnabbing attacks when opening in a new tab.
+  // Ensure we set rel="noopener noreferrer" if target is _blank.
+  const isNewTab =
+    props.target === "_blank" || externalProps.target === "_blank";
+  const securityRel = isNewTab ? "noopener noreferrer" : "";
+
+  // Merge security rel with any user-provided rel
+  const userRel = props.rel || "";
+  const combinedRel = clsx(userRel, securityRel) || undefined;
 
   return (
     <a
@@ -75,10 +83,11 @@ export function Link({
         disabled && styles.disabled,
         className,
       )}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
       {...externalProps}
       {...props}
+      rel={combinedRel}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
     >
       {children}
       {isExternal && <ExternalLink className="ml-1" size={14} />}
