@@ -42,6 +42,15 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
     const isInteractive = !!onClick || !!onDismiss;
     const isClickable = !!onClick;
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      if (onClick && !disabled && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        e.currentTarget.click();
+      }
+
+      props.onKeyDown?.(e);
+    };
+
     return (
       <div
         ref={ref}
@@ -57,6 +66,7 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
         role={onClick ? "button" : undefined}
         tabIndex={onClick && !disabled ? 0 : undefined}
         onClick={disabled ? undefined : onClick}
+        onKeyDown={handleKeyDown}
         {...props}
       >
         <span className={styles.content}>{children}</span>
