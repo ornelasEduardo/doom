@@ -46,9 +46,7 @@ describe("Toast Component", () => {
 
     // Find close button (it has an X icon)
     // We can find by role button inside the toast
-    const closeButtons = screen.getAllByRole("button");
-    // The first 2 are from TestComponent, the 3rd should be the close button
-    const closeButton = closeButtons[2];
+    const closeButton = screen.getByLabelText("Close notification");
 
     fireEvent.click(closeButton);
 
