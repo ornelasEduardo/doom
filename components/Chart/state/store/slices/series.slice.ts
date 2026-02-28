@@ -5,7 +5,7 @@ import { Series } from "../../../types";
 
 export interface SeriesSlice {
   series: Map<string, Series[]>;
-  seriesConfigs: Map<string, any>; // Store raw configs for re-hydration
+  seriesConfigs: Map<string, any[]>;
   processedSeries: Series[];
 }
 

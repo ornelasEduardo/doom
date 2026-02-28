@@ -172,7 +172,7 @@ export function useEngine<T = unknown>(
       return;
     }
 
-    engine.setContainer(containerElement, plotBounds);
+    engine.setContainer(containerElement, null, plotBounds);
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
