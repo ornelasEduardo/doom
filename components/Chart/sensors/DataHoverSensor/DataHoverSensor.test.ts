@@ -43,6 +43,7 @@ const createMockEvent = (
   signal: { action, type: "pointer", x: 0, y: 0, source: "mouse" },
   primaryCandidate: candidate || null,
   candidates: candidate ? [candidate] : [],
+  sliceCandidates: [],
   chartX: 0,
   chartY: 0,
   isTouch: false,
@@ -72,6 +73,45 @@ describe("DataHoverSensor (Engine)", () => {
         targets: [expect.objectContaining({ data: { id: "p0" } })],
       }),
     );
+  });
+
+  it("exactHit: true — fires when candidate has a backing DOM element", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor({ exactHit: true });
+    const candidate = {
+      data: { id: "p0" },
+      distance: 5,
+      coordinate: { x: 10, y: 10 },
+      element: document.createElement("rect"),
+    };
+
+    sensor(createMockEvent(InputAction.MOVE, candidate), ctx);
+
+    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ data: { id: "p0" } })],
+      }),
+    );
+    expect(ctx.removeInteraction).not.toHaveBeenCalled();
+  });
+
+  it("exactHit: true — suppresses quadtree-only candidate with no element", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor({ exactHit: true });
+    const candidate = {
+      data: { id: "p0" },
+      distance: 5,
+      coordinate: { x: 10, y: 10 },
+      // no element field
+    };
+
+    sensor(createMockEvent(InputAction.MOVE, candidate), ctx);
+
+    expect(ctx.removeInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+    );
+    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
   });
 
   it("should clear interaction on LEAVE", () => {

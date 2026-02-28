@@ -166,9 +166,11 @@ const LineSeriesComponent = <T,>({
               config,
               colors: [color || "var(--primary)"],
               styles: {},
-              gradientId: "",
+              gradientId,
               isMobile,
               chartStore,
+              seriesId: gradientId,
+              chartDataAttrs: CHART_DATA_ATTRS,
             } as any);
           }
         }}

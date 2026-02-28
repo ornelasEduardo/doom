@@ -14,6 +14,13 @@ export interface RenderFrame<T = unknown> {
   resolveInteraction?: (
     event: React.MouseEvent | React.TouchEvent,
   ) => { element: Element; data: T } | null;
+  seriesId: string;
+  chartDataAttrs: {
+    TYPE: string;
+    SERIES_ID: string;
+    INDEX: string;
+    DRAGGABLE: string;
+  };
 }
 
 /**

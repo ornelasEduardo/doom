@@ -22,7 +22,6 @@ import { KeyboardSensor } from "../KeyboardSensor";
 export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
   const { chartStore, config, colorPalette, engine } = useChartContext();
 
-  // Subscribe to status and data for lifecycle protection
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
 
@@ -37,14 +36,17 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       return sensors;
     }
 
-    // Default injection
     const defaults: Sensor[] = [];
     const type = config.type || "line";
 
     if (["line", "area", "bar", "scatter", "bubble"].includes(type as string)) {
+      const isVerticalSliceType = ["line", "area", "bar"].includes(
+        type as string,
+      );
       defaults.push(
         DataHoverSensor({
           name: InteractionChannel.PRIMARY_HOVER,
+          verticalSlice: isVerticalSliceType,
         }),
       );
 
@@ -57,7 +59,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
     } else {
       defaults.push(
         DataHoverSensor({
-          name: InteractionChannel.PRIMARY_HOVER, // exact mode handled by Engine/DataHover logic
+          name: InteractionChannel.PRIMARY_HOVER,
         }),
       );
     }
@@ -65,13 +67,10 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
   }, [sensors, config.type]);
 
   useEffect(() => {
-    // PROTECT: Only active when chart is READY.
     if (status !== "ready" || !data.length || !engine) {
       return;
     }
 
-    // Define the sensor context
-    // Note: Sensors are now stateless structure-wise, deriving state from Store/Context
     const sensorContext = {
       getChartContext: () => {
         const state = chartStore.getState();
@@ -94,7 +93,6 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       },
     };
 
-    // Register handler with Engine
     engine.setHandler((event) => {
       activeSensors.forEach((sensor) => {
         try {

@@ -54,12 +54,9 @@ export const SelectionUpdate = <T = unknown>(
       // Otherwise map targets (from HoverSensor) to data.
       let activeData = interaction?.data; // Direct data payload from some sensors
       if (!activeData && targets.length > 0) {
-        activeData = targets[0]; // Wrapper { element, data }
+        const candidate = targets[0] as any;
+        activeData = candidate?.data !== undefined ? candidate.data : candidate;
       }
-
-      // For the custom function, we might want the raw interaction or the processed data
-      // Let's pass the interaction payload or the 'primary' target data.
-      // The Story uses `fn: (selection, activeData) => ...` where activeData seems to be the target object.
 
       const selectionSet = g.selectAll(selector);
 

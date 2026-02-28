@@ -6,10 +6,6 @@ import { InteractionChannel } from "../../types/interaction";
 /**
  * Professional-grade Keyboard Sensor for A11y.
  * Allows navigating data points using ArrowKeys.
- *
- * HYPER-ENGINE UPDATE:
- * - Uses closure state for focusedIndex (stable sensor instance).
- * - Queries Engine.spatialIndex for multi-series targets.
  */
 export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
   const { name = InteractionChannel.PRIMARY_HOVER } = options;

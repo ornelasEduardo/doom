@@ -143,6 +143,14 @@ export interface EngineEvent<T = unknown> {
   /** The primary (closest/most relevant) candidate, if any */
   primaryCandidate?: InteractionCandidate<T>;
 
+  /**
+   * All indexed points sharing the primary candidate's X position, regardless
+   * of Y distance. Pre-computed via an O(k) bucket lookup (k = number of series
+   * at that X). Always an array; empty when there is no primary candidate.
+   * Intended for multi-series vertical-slice hover.
+   */
+  sliceCandidates: InteractionCandidate<T>[];
+
   /** X coordinate relative to the plot area (after margins) */
   chartX: number;
 

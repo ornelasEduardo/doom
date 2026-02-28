@@ -47,6 +47,7 @@ const createMockEvent = (
   signal: { action, type: "pointer", x: 0, y: 0, source: "mouse" },
   primaryCandidate: candidate || null,
   candidates: candidate ? [candidate] : [],
+  sliceCandidates: [],
   chartX: 0,
   chartY: 0,
   isTouch: false,

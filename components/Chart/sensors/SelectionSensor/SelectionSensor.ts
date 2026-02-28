@@ -5,9 +5,6 @@ import { InteractionChannel } from "../../types/interaction";
 /**
  * Professional-grade Selection Sensor.
  * Coordinates with Engine to choose data points on click/start.
- *
- * HYPER-ENGINE UPDATE:
- * - Uses EngineEvent primaryCandidate.
  */
 export const SelectionSensor = (options: { name?: string } = {}): Sensor => {
   const { name = InteractionChannel.SELECTION } = options;

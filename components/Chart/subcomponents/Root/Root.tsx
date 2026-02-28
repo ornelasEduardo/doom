@@ -170,10 +170,8 @@ export function Root<T>({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
 
-  // Initialize Engine
   const { engine } = useEngine<T>();
 
-  // Sync container layout to Engine whenever DOM layout might change
   useLayoutEffect(() => {
     if (!containerRef.current) {
       return;
@@ -182,7 +180,13 @@ export function Root<T>({
     const state = chartStore.getState();
     const { dimensions } = state;
 
-    engine.setContainer(containerRef.current, wrapperRef.current, {
+    // In composition mode wrapperRef is never mounted; fall back to the SVG
+    // element that Plot.tsx registers via chartStore.elements.svg.
+    const plotEl =
+      wrapperRef.current ??
+      ((chartStore.getState() as any).elements?.svg as Element | null) ??
+      null;
+    engine.setContainer(containerRef.current, plotEl, {
       x: dimensions.margin.left,
       y: dimensions.margin.top,
       width: dimensions.innerWidth,
@@ -200,7 +204,6 @@ export function Root<T>({
     isMobile,
   ]);
 
-  // Sync Engine with Data & Scales
   useEffect(() => {
     return chartStore.subscribe(() => {
       const state = chartStore.getState();
@@ -211,9 +214,13 @@ export function Root<T>({
       const { data, scales, dimensions, processedSeries } = state;
       const { x: xScale, y: yScale } = scales;
 
-      // Update plot bounds
       if (containerRef.current) {
-        engine.setContainer(containerRef.current, wrapperRef.current, {
+        // In composition mode wrapperRef is null; use the SVG registered by Plot.tsx.
+        const plotEl =
+          wrapperRef.current ??
+          ((state as any).elements?.svg as Element | null) ??
+          null;
+        engine.setContainer(containerRef.current, plotEl, {
           x: dimensions.margin.left,
           y: dimensions.margin.top,
           width: dimensions.innerWidth,
@@ -221,7 +228,6 @@ export function Root<T>({
         });
       }
 
-      // Update data if scales are ready
       if (xScale && yScale) {
         const allPoints: any[] = [];
         const hasSeries = processedSeries && processedSeries.length > 0;
@@ -284,7 +290,6 @@ export function Root<T>({
     });
   }, [chartStore, engine, x, y]);
 
-  // Sync data to store
   useEffect(() => {
     updateChartState(chartStore, {
       data,
@@ -293,7 +298,6 @@ export function Root<T>({
     });
   }, [chartStore, data, type]);
 
-  // Handle onValueChange proxy from Interaction Store
   useEffect(() => {
     return chartStore.subscribe(() => {
       const state = chartStore.getState();
@@ -365,7 +369,6 @@ export function Root<T>({
             margin: next,
           },
         }));
-        // Trigger re-calculation
         updateChartDimensions(
           chartStore,
           state.dimensions.width,
@@ -464,7 +467,6 @@ export function Root<T>({
       isMobile,
       requestLayoutAdjustment,
       colorPalette: LEGEND_PALETTE,
-      // Internal bridges - maintained for system stability during architectural shift
       seriesStore: chartStore as any,
       interactionStore: chartStore as any,
       x: x ? (x as any) : undefined,

@@ -106,17 +106,16 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
       } = interaction;
       const puckColor = color || target.seriesColor || "var(--primary)";
 
-      // Retrieve dimensions for margin correction
-      const { margin } = ctx.chartStore.getState().dimensions;
-
-      // Update puck position
+      // Update puck position (currentPosition is already plot-relative)
       puck
-        .attr("cx", currentPosition.x - margin.left)
-        .attr("cy", currentPosition.y - margin.top)
+        .attr("cx", currentPosition.x)
+        .attr("cy", currentPosition.y)
         .attr("fill", puckColor)
         .style("opacity", 1);
 
       if (showGhost) {
+        const { margin } = ctx.chartStore.getState().dimensions;
+
         // Show ghost at original target position
         ghost
           .attr("cx", target.coordinate.x - margin.left)
@@ -127,8 +126,8 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
         line
           .attr("x1", target.coordinate.x - margin.left)
           .attr("y1", target.coordinate.y - margin.top)
-          .attr("x2", currentPosition.x - margin.left)
-          .attr("y2", currentPosition.y - margin.top)
+          .attr("x2", currentPosition.x)
+          .attr("y2", currentPosition.y)
           .style("opacity", 0.5);
       }
     };

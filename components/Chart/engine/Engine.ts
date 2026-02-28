@@ -136,27 +136,29 @@ export class Engine<T = unknown> {
     const searchX = signal.x - plotOffset.x;
     const searchY = signal.y - plotOffset.y;
 
-    // Query spatial index
     const candidates = this.spatialMap.find(searchX, searchY, {
       x: signal.x,
       y: signal.y,
     });
 
-    // Calculate chart-relative coordinates
     const { chartX, chartY, isWithinPlot } =
       this.coords.resolveChartCoordinates(searchX, searchY);
 
-    // Build the engine event
+    const primaryCandidate = candidates[0];
+    const sliceCandidates = primaryCandidate
+      ? this.spatialMap.findAllAtX(primaryCandidate.coordinate.x)
+      : [];
+
     const event: EngineEvent<T> = {
       signal,
       candidates,
-      primaryCandidate: candidates[0],
+      primaryCandidate,
+      sliceCandidates,
       chartX,
       chartY,
       isWithinPlot,
     };
 
-    // Determine priority and schedule
     const priority = this.determinePriority(signal.action);
     this.scheduler.schedule(priority, event);
   }
@@ -188,7 +190,6 @@ export class Engine<T = unknown> {
       return null;
     }
 
-    // Determine source
     let source: InputSource = InputSource.MOUSE;
     if ("pointerType" in event) {
       source =

@@ -8,22 +8,46 @@ export interface HoverSensorOptions {
    * Defaults to 'primary-hover'.
    */
   name?: InteractionChannel | string;
+
+  /**
+   * When true, only fire when the pointer is directly over a tagged DOM element
+   * (DOM hit-test match). Proximal quadtree candidates that have no backing
+   * element are ignored. Useful for area-fill charts like treemaps where
+   * magnetic snapping across empty gaps is undesirable.
+   * @default false
+   */
+  exactHit?: boolean;
+
+  /**
+   * When true, all series at the primary candidate's X position are included
+   * as targets (vertical-slice behaviour). Useful for multi-series line/bar/area
+   * charts where series share the same X domain values.
+   * @default false
+   */
+  verticalSlice?: boolean;
 }
 
 /**
  * The DataHoverSensor detects pointer movements over the chart plot
  * and identifies the closest data targets.
- *
- * HYPER-ENGINE UPDATE:
- * Now purely an interpreter of EngineEvents.
  */
 export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
-  const { name = InteractionChannel.PRIMARY_HOVER } = options;
+  const {
+    name = InteractionChannel.PRIMARY_HOVER,
+    exactHit = false,
+    verticalSlice = false,
+  } = options;
 
   return (event, { upsertInteraction, removeInteraction }) => {
-    const { signal, primaryCandidate, chartX, chartY, isWithinPlot } = event;
+    const {
+      signal,
+      primaryCandidate,
+      sliceCandidates,
+      chartX,
+      chartY,
+      isWithinPlot,
+    } = event;
 
-    // 1. Filter: Only handle MOVE and LEAVE/CANCEL
     if (
       signal.action !== InputAction.MOVE &&
       signal.action !== InputAction.CANCEL
@@ -31,18 +55,28 @@ export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
       return;
     }
 
-    // 2. Handle LEAVE/CANCEL or strict plot bounds
     if (
       signal.action === InputAction.CANCEL ||
-      (!isWithinPlot && signal.source !== "touch") // allow touch to drag off-plot slightly?
+      (!isWithinPlot && signal.source !== "touch")
     ) {
       removeInteraction(name);
       return;
     }
 
-    // 3. Handle MOVE
-    if (primaryCandidate) {
+    // When exactHit is true, discard proximal (quadtree-only) candidates that
+    // have no backing DOM element — the pointer is over empty space.
+    const candidate =
+      exactHit && primaryCandidate && !primaryCandidate.element
+        ? undefined
+        : primaryCandidate;
+
+    if (candidate) {
       const isTouch = signal.source === "touch";
+
+      const targets =
+        verticalSlice && sliceCandidates.length > 0
+          ? sliceCandidates
+          : [candidate as any];
 
       upsertInteraction(name, {
         pointer: {
@@ -52,12 +86,9 @@ export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
           containerY: signal.y,
           isTouch,
         },
-        targets: [primaryCandidate as any], // Engine provides "hydrated" candidate
+        targets,
       });
     } else {
-      // No candidate found, but still hovering plot?
-      // Optionally keep interaction but clear targets, or remove.
-      // Legacy behavior was to remove if no targets found.
       removeInteraction(name);
     }
   };

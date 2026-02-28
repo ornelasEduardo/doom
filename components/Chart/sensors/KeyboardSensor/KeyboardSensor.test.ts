@@ -52,6 +52,7 @@ const createMockEvent = (action: InputAction, key?: string): EngineEvent => ({
   signal: { action, type: "keyboard", key, source: "keyboard" },
   primaryCandidate: null,
   candidates: [],
+  sliceCandidates: [],
   chartX: 0,
   chartY: 0,
   isTouch: false,

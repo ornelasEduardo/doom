@@ -73,10 +73,7 @@ export interface SensorContext<T = unknown> {
 
 /**
  * A Sensor is a function that detects user intent and updates the interaction store.
- *
- * HYPER-ENGINE UPDATE:
- * Sensors are now "Interaction Interpreters" that receive processed EngineEvents.
- * They no longer subscribe to events themselves.
+ * Sensors receive processed EngineEvents and no longer subscribe to events themselves.
  */
 export type Sensor<T = unknown> = (
   event: EngineEvent<T>,

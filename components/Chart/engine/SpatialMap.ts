@@ -75,6 +75,7 @@ export interface SpatialMapOptions {
 export class SpatialMap<T = unknown> {
   private tree: Quadtree<IndexedPoint<T>> | null = null;
   private points: IndexedPoint<T>[] = [];
+  private xBuckets: Map<number, IndexedPoint<T>[]> = new Map();
   private containerElement: Element | null = null;
   private options: Required<SpatialMapOptions>;
 
@@ -104,14 +105,22 @@ export class SpatialMap<T = unknown> {
 
     if (points.length === 0) {
       this.tree = null;
+      this.xBuckets = new Map();
       return;
     }
 
-    // Build the Quadtree
     this.tree = quadtree<IndexedPoint<T>>()
       .x((d) => d.x)
       .y((d) => d.y)
       .addAll(points);
+
+    // Build the X-bucket index for O(k) vertical-slice lookups
+    this.xBuckets = new Map();
+    for (const p of points) {
+      const bucket = this.xBuckets.get(p.x) ?? [];
+      bucket.push(p);
+      this.xBuckets.set(p.x, bucket);
+    }
   }
 
   /**
@@ -120,6 +129,29 @@ export class SpatialMap<T = unknown> {
   clear(): void {
     this.points = [];
     this.tree = null;
+    this.xBuckets = new Map();
+  }
+
+  /**
+   * Find all indexed points sharing the given X coordinate (O(k) bucket lookup).
+   * Returns every point at that X regardless of Y distance — intended for
+   * multi-series vertical-slice hover.
+   *
+   * @param x - The exact X pixel coordinate (as stored in the index)
+   */
+  findAllAtX(x: number): InteractionCandidate<T>[] {
+    const bucket = this.xBuckets.get(x) ?? [];
+    return bucket.map((p) => ({
+      type: "data-point" as CandidateType,
+      data: p.data,
+      seriesId: p.seriesId,
+      dataIndex: p.dataIndex,
+      coordinate: { x: p.x, y: p.y },
+      distance: 0,
+      seriesColor: p.seriesColor,
+      draggable: p.draggable,
+      suppressMarker: p.suppressMarker,
+    }));
   }
 
   /**
@@ -151,15 +183,11 @@ export class SpatialMap<T = unknown> {
     const treeCandidates = this.findFromTree(x, y);
     candidates.push(...treeCandidates);
 
-    // Sort by distance (closest first), then by z-index
     candidates.sort((a, b) => {
-      // Z-index takes precedence (higher = more important)
       const zDiff = (b.zIndex ?? 0) - (a.zIndex ?? 0);
       if (zDiff !== 0) {
         return zDiff;
       }
-
-      // Then sort by distance
       return a.distance - b.distance;
     });
 
@@ -174,28 +202,23 @@ export class SpatialMap<T = unknown> {
       return [];
     }
 
-    // Convert container-relative to viewport coordinates
     const rect = this.containerElement.getBoundingClientRect();
     const viewportX = rect.left + x;
     const viewportY = rect.top + y;
 
-    // Get all elements at this point
     const elements = document.elementsFromPoint(viewportX, viewportY);
     const candidates: InteractionCandidate<T>[] = [];
 
     for (const element of elements) {
-      // Stop if we've left the container
       if (!this.containerElement.contains(element)) {
         continue;
       }
 
-      // Check for chart data attributes
       const chartType = element.getAttribute(CHART_DATA_ATTRS.TYPE);
       if (!chartType) {
         continue;
       }
 
-      // Hydrate the element into a candidate
       const candidate = this.hydrateElement(element, chartType, x, y);
       if (candidate) {
         candidates.push(candidate);
@@ -220,7 +243,6 @@ export class SpatialMap<T = unknown> {
     const draggable =
       element.getAttribute(CHART_DATA_ATTRS.DRAGGABLE) === "true";
 
-    // Get element center for distance calculation
     const rect = element.getBoundingClientRect();
     const containerRect = this.containerElement?.getBoundingClientRect();
     if (!containerRect) {
@@ -235,7 +257,6 @@ export class SpatialMap<T = unknown> {
       pointerY - elementCenterY,
     );
 
-    // Try to find the actual data from our indexed points
     let data: T | undefined;
     let dataIndex: number | undefined;
 
@@ -249,7 +270,14 @@ export class SpatialMap<T = unknown> {
       }
     }
 
-    // Determine z-index before returning, as we might need it for sorting even if data is missing (though we return null now)
+    // Fall back to D3's __data__ binding for custom renders that don't index their points
+    if (!data) {
+      const d3Data = (element as any).__data__;
+      if (d3Data && !Array.isArray(d3Data)) {
+        data = d3Data as T;
+      }
+    }
+
     const zIndex = parseZIndex(element);
 
     if (!data) {
@@ -280,9 +308,7 @@ export class SpatialMap<T = unknown> {
     const candidates: InteractionCandidate<T>[] = [];
     const radius = this.options.magneticRadius;
 
-    // Search within the magnetic radius
     this.tree.visit((node, x0, y0, x1, y1) => {
-      // Skip if this quadrant is completely outside the search radius
       if (
         x0 > x + radius ||
         x1 < x - radius ||
@@ -292,10 +318,8 @@ export class SpatialMap<T = unknown> {
         return true; // Skip this branch
       }
 
-      // Check leaf nodes (actual points)
       // Leaf nodes don't have the 'length' property defined
       if (!("length" in node)) {
-        // This is a leaf node - iterate through linked list
         type LeafNode = typeof node;
         let current: LeafNode | undefined = node;
         while (current) {

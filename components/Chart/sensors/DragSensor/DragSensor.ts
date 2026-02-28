@@ -40,10 +40,6 @@ export interface DragSensorOptions<T = any> {
 
 /**
  * DragSensor enables dragging data points ("pucks") on a chart.
- *
- * HYPER-ENGINE UPDATE:
- * - Uses EngineEvent candidates for hit detection.
- * - Manages drag state via closure.
  */
 export const DragSensor = <T = any>(
   options: DragSensorOptions<T> = {},

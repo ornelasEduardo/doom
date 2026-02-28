@@ -22,10 +22,11 @@ import {
   Tooltip,
 } from "./behaviors";
 import { Chart } from "./Chart";
+import { InputAction } from "./engine";
 import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
 import { DragSensor } from "./sensors/DragSensor/DragSensor";
 import { RenderFrame } from "./types";
-import { Sensor, SensorContext } from "./types/events";
+import { Sensor } from "./types/events";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -124,31 +125,37 @@ export const WithLegendAndSubtitle: Story = {
 };
 
 const ClickSensor = (callback: (data: any) => void): Sensor => {
-  return ({ on, off }: SensorContext) => {
-    const handleClick = (event: any) => {
-      const target = event.nativeEvent.target as any;
-      if (target && target.__data__) {
-        callback(target.__data__);
+  return (event, context) => {
+    if (event.signal.action === InputAction.START) {
+      if (event.primaryCandidate) {
+        callback(event.primaryCandidate);
       }
-    };
-
-    on("CHART_POINTER_DOWN", handleClick);
-    return () => off("CHART_POINTER_DOWN", handleClick);
+    }
   };
 };
 
 export const CustomRender1: Story = {
   args: {
     sensors: [
-      DataHoverSensor({
-        mode: "exact",
-      }),
-      ClickSensor((data) => {
-        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      DataHoverSensor(),
+      ClickSensor((candidate) => {
+        // Candidate wrapper has the data
+        if (
+          candidate.type === "data-point" ||
+          candidate.type === "bar" ||
+          candidate.type === "area" ||
+          candidate.type === "custom"
+        ) {
+          const d = candidate.data as any;
+          const name = d?.data?.name ?? d?.name ?? "Unknown";
+          const value = d?.data?.value ?? d?.value ?? "";
+          alert(`You clicked on ${name}: ${value}`);
+        }
       }),
     ],
     behaviors: [
       SelectionUpdate({
+        on: "primary-hover",
         selector: ".arc",
         fn: (selection, activeData: any) => {
           (selection as any).style("opacity", (d: any) => {
@@ -294,6 +301,8 @@ export const CustomRender1: Story = {
         .enter()
         .append("path")
         .attr("class", "arc")
+        .attr(frame.chartDataAttrs.TYPE, "custom")
+        .attr(frame.chartDataAttrs.SERIES_ID, frame.seriesId)
         .attr("d", arc)
         .style("fill", (d: any) => {
           // Color based on parent to show hierarchy
@@ -341,13 +350,10 @@ export const CustomRender1: Story = {
 
 export const CustomRender2: Story = {
   args: {
-    sensors: [
-      DataHoverSensor({
-        mode: "exact",
-      }),
-    ],
+    sensors: [DataHoverSensor({ exactHit: true })],
     behaviors: [
       SelectionUpdate({
+        on: "primary-hover",
         selector: ".treemap-node",
         fn: (selection, activeData) => {
           selection.attr("fill-opacity", (d: any) => {
@@ -439,6 +445,8 @@ export const CustomRender2: Story = {
         nodes
           .append("rect")
           .attr("class", "treemap-node")
+          .attr(frame.chartDataAttrs.TYPE, "custom")
+          .attr(frame.chartDataAttrs.SERIES_ID, frame.seriesId)
           .attr("width", (d: any) => d.x1 - d.x0)
           .attr("height", (d: any) => d.y1 - d.y0)
           .attr("fill", (_: any, i: number) => colors[i % colors.length])

@@ -74,6 +74,7 @@ describe("Scheduler", () => {
       const event: EngineEvent = {
         signal: createMockSignal({ action: InputAction.START }),
         candidates: [],
+        sliceCandidates: [],
         chartX: 100,
         chartY: 100,
         isWithinPlot: true,
@@ -95,6 +96,7 @@ describe("Scheduler", () => {
       const event1: EngineEvent = {
         signal: createMockSignal({ id: 1 }),
         candidates: [],
+        sliceCandidates: [],
         chartX: 100,
         chartY: 100,
         isWithinPlot: true,
@@ -103,6 +105,7 @@ describe("Scheduler", () => {
       const event2: EngineEvent = {
         signal: createMockSignal({ id: 1 }),
         candidates: [],
+        sliceCandidates: [],
         chartX: 150,
         chartY: 150,
         isWithinPlot: true,
@@ -129,6 +132,7 @@ describe("Scheduler", () => {
       const event1: EngineEvent = {
         signal: createMockSignal({ id: 1 }),
         candidates: [],
+        sliceCandidates: [],
         chartX: 100,
         chartY: 100,
         isWithinPlot: true,
@@ -137,6 +141,7 @@ describe("Scheduler", () => {
       const event2: EngineEvent = {
         signal: createMockSignal({ id: 2 }),
         candidates: [],
+        sliceCandidates: [],
         chartX: 150,
         chartY: 150,
         isWithinPlot: true,
@@ -160,6 +165,7 @@ describe("Scheduler", () => {
       const event: EngineEvent = {
         signal: createMockSignal(),
         candidates: [],
+        sliceCandidates: [],
         chartX: 100,
         chartY: 100,
         isWithinPlot: true,
@@ -535,6 +541,7 @@ describe("Scheduler IDLE Priority", () => {
     const event: EngineEvent = {
       signal: createMockSignal(),
       candidates: [],
+      sliceCandidates: [],
       chartX: 100,
       chartY: 100,
       isWithinPlot: true,
