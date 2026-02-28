@@ -3,7 +3,7 @@ import * as d3Hierarchy from "d3-hierarchy";
 import * as d3Scale from "d3-scale";
 import * as d3Shape from "d3-shape";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
@@ -14,11 +14,19 @@ import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
 import { Slat } from "../Slat/Slat";
 import { Text } from "../Text/Text";
-import { Cursor, Dim, SelectionUpdate, Tooltip } from "./behaviors";
+import {
+  Cursor,
+  Dim,
+  DraggablePuck,
+  SelectionUpdate,
+  Tooltip,
+} from "./behaviors";
 import { Chart } from "./Chart";
+import { InputAction } from "./engine";
 import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
+import { DragSensor } from "./sensors/DragSensor/DragSensor";
 import { RenderFrame } from "./types";
-import { Sensor, SensorContext } from "./types/events";
+import { Sensor } from "./types/events";
 
 const meta: Meta<typeof Chart> = {
   title: "Components/Chart",
@@ -117,31 +125,37 @@ export const WithLegendAndSubtitle: Story = {
 };
 
 const ClickSensor = (callback: (data: any) => void): Sensor => {
-  return ({ on, off }: SensorContext) => {
-    const handleClick = (event: any) => {
-      const target = event.nativeEvent.target as any;
-      if (target && target.__data__) {
-        callback(target.__data__);
+  return (event, context) => {
+    if (event.signal.action === InputAction.START) {
+      if (event.primaryCandidate) {
+        callback(event.primaryCandidate);
       }
-    };
-
-    on("CHART_POINTER_DOWN", handleClick);
-    return () => off("CHART_POINTER_DOWN", handleClick);
+    }
   };
 };
 
 export const CustomRender1: Story = {
   args: {
     sensors: [
-      DataHoverSensor({
-        mode: "exact",
-      }),
-      ClickSensor((data) => {
-        alert(`You clicked on ${data.data.name}: ${data.value}`);
+      DataHoverSensor(),
+      ClickSensor((candidate) => {
+        // Candidate wrapper has the data
+        if (
+          candidate.type === "data-point" ||
+          candidate.type === "bar" ||
+          candidate.type === "area" ||
+          candidate.type === "custom"
+        ) {
+          const d = candidate.data as any;
+          const name = d?.data?.name ?? d?.name ?? "Unknown";
+          const value = d?.data?.value ?? d?.value ?? "";
+          alert(`You clicked on ${name}: ${value}`);
+        }
       }),
     ],
     behaviors: [
       SelectionUpdate({
+        on: "primary-hover",
         selector: ".arc",
         fn: (selection, activeData: any) => {
           (selection as any).style("opacity", (d: any) => {
@@ -287,6 +301,8 @@ export const CustomRender1: Story = {
         .enter()
         .append("path")
         .attr("class", "arc")
+        .attr(frame.chartDataAttrs.TYPE, "custom")
+        .attr(frame.chartDataAttrs.SERIES_ID, frame.seriesId)
         .attr("d", arc)
         .style("fill", (d: any) => {
           // Color based on parent to show hierarchy
@@ -334,13 +350,10 @@ export const CustomRender1: Story = {
 
 export const CustomRender2: Story = {
   args: {
-    sensors: [
-      DataHoverSensor({
-        mode: "exact",
-      }),
-    ],
+    sensors: [DataHoverSensor({ exactHit: true })],
     behaviors: [
       SelectionUpdate({
+        on: "primary-hover",
         selector: ".treemap-node",
         fn: (selection, activeData) => {
           selection.attr("fill-opacity", (d: any) => {
@@ -432,6 +445,8 @@ export const CustomRender2: Story = {
         nodes
           .append("rect")
           .attr("class", "treemap-node")
+          .attr(frame.chartDataAttrs.TYPE, "custom")
+          .attr(frame.chartDataAttrs.SERIES_ID, frame.seriesId)
           .attr("width", (d: any) => d.x1 - d.x0)
           .attr("height", (d: any) => d.y1 - d.y0)
           .attr("fill", (_: any, i: number) => colors[i % colors.length])
@@ -994,6 +1009,131 @@ export const ScatterPlot: Story = {
           y="happiness"
         />
       </Chart.Root>
+    );
+  },
+};
+
+// =============================================================================
+// DRAGGABLE PUCKS - Interactive data point manipulation
+// =============================================================================
+
+interface DragPoint {
+  id: number;
+  x: number;
+  y: number;
+  label: string;
+}
+
+export const DraggablePucks: Story = {
+  name: "Draggable Pucks",
+  render: function DraggablePucksStory() {
+    const [points, setPoints] = useState<DragPoint[]>([
+      { id: 1, x: 0, y: 20, label: "Jan" },
+      { id: 2, x: 1, y: 45, label: "Feb" },
+      { id: 3, x: 2, y: 30, label: "Mar" },
+      { id: 4, x: 3, y: 70, label: "Apr" },
+      { id: 5, x: 4, y: 55, label: "May" },
+      { id: 6, x: 5, y: 40, label: "Jun" },
+    ]);
+
+    const [lastDrag, setLastDrag] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Real-time update during drag
+    const handleDrag = useCallback(
+      (originalData: DragPoint, currentValue: { x: number; y: number }) => {
+        const clampedY = Math.max(0, Math.min(100, Math.round(currentValue.y)));
+        setIsDragging(true);
+        setPoints((prev) =>
+          prev.map((p) =>
+            p.id === originalData.id ? { ...p, y: clampedY } : p,
+          ),
+        );
+      },
+      [],
+    );
+
+    // Final update on drag end
+    const handleDragEnd = useCallback(
+      (originalData: DragPoint, newValue: { x: number; y: number }) => {
+        const clampedY = Math.max(0, Math.min(100, Math.round(newValue.y)));
+        setIsDragging(false);
+        setLastDrag(
+          `Moved "${originalData.label}" from ${originalData.y} to ${clampedY}`,
+        );
+      },
+      [],
+    );
+
+    const sensors = useMemo(
+      () => [
+        DragSensor({
+          hitRadius: 20,
+          onDrag: handleDrag,
+          onDragEnd: handleDragEnd,
+        }) as any,
+      ],
+      [handleDrag, handleDragEnd],
+    );
+
+    return (
+      <Stack gap={4} style={{ width: "100%", maxWidth: 900 }}>
+        <Card style={{ padding: 16 }}>
+          <Stack gap={2}>
+            <Text variant="h5">Draggable Line Chart</Text>
+            <Text color="muted" variant="body">
+              Click and drag any point to reshape the line. The chart updates in
+              real-time as you drag.
+            </Text>
+            {isDragging && (
+              <Badge style={{ alignSelf: "flex-start" }} variant="warning">
+                Dragging...
+              </Badge>
+            )}
+            {!isDragging && lastDrag && (
+              <Badge style={{ alignSelf: "flex-start" }} variant="success">
+                {lastDrag}
+              </Badge>
+            )}
+          </Stack>
+        </Card>
+
+        <Chart.Root
+          behaviors={[DraggablePuck({ radius: 8, showGhost: true })]}
+          d3Config={{
+            grid: true,
+            showDots: true,
+            yAxisLabel: "Value",
+          }}
+          data={points}
+          sensors={sensors}
+          style={{ width: "100%", height: 400 }}
+          title="Interactive Line Chart"
+          x="label"
+          y="y"
+        >
+          <Chart.Series
+            color="var(--primary)"
+            label="Monthly Data"
+            type="line"
+            x="label"
+            y="y"
+          />
+        </Chart.Root>
+
+        <Card style={{ padding: 16 }}>
+          <Text style={{ marginBottom: 8 }} variant="h6">
+            Current Values
+          </Text>
+          <Flex gap={2} wrap="wrap">
+            {points.map((p) => (
+              <Chip key={p.id}>
+                {p.label}: {p.y}
+              </Chip>
+            ))}
+          </Flex>
+        </Card>
+      </Stack>
     );
   },
 };

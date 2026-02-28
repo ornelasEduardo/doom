@@ -80,7 +80,12 @@ describe("Cursor", () => {
           ],
         ]),
         scales: { x: (val: any) => val, y: (val: any) => val },
-        dimensions: { width: 100, height: 100, innerHeight: 80 },
+        dimensions: {
+          width: 100,
+          height: 100,
+          innerHeight: 80,
+          margin: { top: 10, left: 10, right: 10, bottom: 10 },
+        },
       }),
       setState: vi.fn(),
       subscribe: vi.fn(() => vi.fn()),
@@ -108,7 +113,12 @@ describe("Cursor", () => {
             ],
           ]),
           scales: { x: (val: any) => val, y: (val: any) => val },
-          dimensions: { width: 100, height: 100, innerHeight: 80 },
+          dimensions: {
+            width: 100,
+            height: 100,
+            innerHeight: 80,
+            margin: { top: 10, left: 10, right: 10, bottom: 10 },
+          },
         }),
     } as any,
   };
@@ -128,8 +138,8 @@ describe("Cursor", () => {
 
     const line = container.querySelector("line");
     expect(line).toBeInTheDocument();
-    expect(line).toHaveAttribute("x1", "50");
-    expect(line).toHaveAttribute("x2", "50");
+    expect(line).toHaveAttribute("x1", "40");
+    expect(line).toHaveAttribute("x2", "40");
   });
 
   it("renders nothing when hover target is null", () => {
@@ -144,7 +154,12 @@ describe("Cursor", () => {
             processedSeries: [], // No series
             interactions: new Map(), // Empty interactions
             scales: { x: (val: any) => val, y: (val: any) => val },
-            dimensions: { width: 100, height: 100, innerHeight: 100 },
+            dimensions: {
+              width: 100,
+              height: 100,
+              innerHeight: 100,
+              margin: { top: 0, left: 0, right: 0, bottom: 0 },
+            },
           }),
       },
     });
@@ -171,7 +186,12 @@ describe("Cursor", () => {
             processedSeries: [{ id: "series1", hideCursor: false }],
             interactions: new Map(), // irrelevant if dims zero, but for consistency
             scales: { x: (val: any) => val, y: (val: any) => val },
-            dimensions: { width: 0, height: 0, innerHeight: 0 },
+            dimensions: {
+              width: 0,
+              height: 0,
+              innerHeight: 0,
+              margin: { top: 0, left: 0, right: 0, bottom: 0 },
+            },
           }),
       },
     });
@@ -230,7 +250,12 @@ describe("Cursor", () => {
                 ],
               ]),
               scales: { x: (val: any) => val, y: (val: any) => val },
-              dimensions: { width: 100, height: 100, innerHeight: 80 },
+              dimensions: {
+                width: 100,
+                height: 100,
+                innerHeight: 80,
+                margin: { top: 10, left: 10, right: 10, bottom: 10 },
+              },
             }),
         },
       });
@@ -242,8 +267,8 @@ describe("Cursor", () => {
       );
 
       const line = container.querySelector("line");
-      expect(line).toHaveAttribute("x1", "70");
-      expect(line).toHaveAttribute("x2", "70");
+      expect(line).toHaveAttribute("x1", "60");
+      expect(line).toHaveAttribute("x2", "60");
     });
 
     it("does not render cursor line when series hides cursor", () => {

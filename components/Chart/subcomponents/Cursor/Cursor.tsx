@@ -36,7 +36,15 @@ export function CursorLine() {
   // Use primary target or first target in list
   const target = hover?.targets?.[0] ?? null;
   // Use pointer for fallback or if target is missing
-  const point = target ? target.coordinate : ((hover?.pointer as any) ?? null);
+  let point = target ? target.coordinate : ((hover?.pointer as any) ?? null);
+
+  // Normalize point to plot-relative coordinates consistently
+  if (target && point) {
+    point = {
+      x: point.x - dimensions.margin.left,
+      y: point.y - dimensions.margin.top,
+    };
+  }
 
   if (!point) {
     return null;

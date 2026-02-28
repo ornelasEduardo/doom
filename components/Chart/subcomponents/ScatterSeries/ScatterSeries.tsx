@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { CHART_DATA_ATTRS } from "../../engine";
 import {
   registerSeries,
   unregisterSeries,
@@ -79,6 +80,7 @@ const ScatterSeriesComponent = <T,>({
     }
     registerSeries(chartStore, seriesId, [
       {
+        id: seriesId,
         label: label || "Scatter Series",
         color: strokeColor,
         x: xAccessor,
@@ -127,12 +129,17 @@ const ScatterSeriesComponent = <T,>({
           <SeriesPoint
             key={i}
             color={strokeColor}
-            data-index={i}
             datum={d}
             hoverRadius={radius + 4}
             radius={radius}
             x={cx}
             y={cy}
+            {...{
+              [CHART_DATA_ATTRS.TYPE]: "scatter",
+              [CHART_DATA_ATTRS.SERIES_ID]: seriesId,
+              [CHART_DATA_ATTRS.INDEX]: i,
+              [CHART_DATA_ATTRS.DRAGGABLE]: false,
+            }}
           />
         );
       })}

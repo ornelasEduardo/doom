@@ -5,11 +5,13 @@ import { Series } from "../../../types";
 
 export interface SeriesSlice {
   series: Map<string, Series[]>;
+  seriesConfigs: Map<string, any[]>;
   processedSeries: Series[];
 }
 
 export const getSeriesInitialState = (): SeriesSlice => ({
   series: new Map(),
+  seriesConfigs: new Map(),
   processedSeries: [],
 });
 
@@ -20,6 +22,8 @@ export const hydrateSeries = (
   index: number,
   defaultData: any[],
 ): Series => {
+  const data = props.data || defaultData;
+
   const series: Series = {
     id: props.id || `series-${index}`,
     label: props.label || `Series ${index + 1}`,
@@ -29,10 +33,9 @@ export const hydrateSeries = (
     hideCursor: props.hideCursor,
     interactionMode: props.interactionMode,
     type: props.type,
+    data,
   };
 
-  // --- Strategy Selection Heuristic ---
-  const data = props.data || defaultData;
   if (!data || data.length === 0) {
     series.strategy = new LinearStrategy(series, []);
     return series;

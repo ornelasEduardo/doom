@@ -18,18 +18,47 @@ export const findClosestTargets = (
   event: ChartEvent,
   mode: HoverMode,
   state: State,
+  radius: number = INTERACTION_RADIUS,
 ): InteractionTarget[] => {
   const chartX = event.coordinates.chartX;
   const chartY = event.coordinates.chartY;
 
-  // Exact target finding (DOM fallback) - Does NOT require global scales
+  // Exact target finding (DOM hit-test) - Uses elementFromPoint since
+  // events are captured at container level, not individual elements
   if (mode === "exact") {
-    const domTarget = event.nativeEvent.target as any;
-    if (domTarget && domTarget.__data__) {
+    // First check if the event target itself has __data__ (direct click on element)
+    const directTarget = event.nativeEvent.target as
+      | HTMLElement
+      | SVGElement
+      | null;
+
+    if (directTarget && (directTarget as any).__data__) {
       return [
         {
-          data: domTarget.__data__,
+          data: (directTarget as any).__data__,
           coordinate: { x: chartX, y: chartY },
+          seriesColor:
+            (directTarget as Element).getAttribute?.("fill") || undefined,
+        },
+      ];
+    }
+
+    // Use elementFromPoint to find what's under the cursor
+    // IMPORTANT: Use the event target's ownerDocument for correct context (handles iframes)
+    const pointerEvent = event.nativeEvent as PointerEvent;
+    const { clientX, clientY } = pointerEvent;
+
+    // Get the correct document - if the event target is in an iframe,
+    // its ownerDocument will be the iframe's document
+    const targetDoc = directTarget?.ownerDocument || document;
+    const domTarget = targetDoc.elementFromPoint(clientX, clientY);
+
+    if (domTarget && (domTarget as any).__data__) {
+      return [
+        {
+          data: (domTarget as any).__data__,
+          coordinate: { x: chartX, y: chartY },
+          seriesColor: domTarget.getAttribute?.("fill") || undefined,
         },
       ];
     }
@@ -55,7 +84,7 @@ export const findClosestTargets = (
     const result = series.strategy.find(
       chartX,
       chartY,
-      INTERACTION_RADIUS,
+      radius,
       xScale as any,
       yScale as any,
     );

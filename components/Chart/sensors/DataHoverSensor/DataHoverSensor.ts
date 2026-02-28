@@ -1,88 +1,95 @@
-import { ChartEvent, Sensor } from "../../types/events";
-import { HoverMode, InteractionChannel } from "../../types/interaction";
-import { findClosestTargets } from "../utils/search";
+import { InputAction } from "../../engine";
+import { Sensor } from "../../types/events";
+import { InteractionChannel } from "../../types/interaction";
 
 export interface HoverSensorOptions {
-  /**
-   * How to find the target.
-   */
-  mode: HoverMode;
-
   /**
    * Name for the interaction channel.
    * Defaults to 'primary-hover'.
    */
   name?: InteractionChannel | string;
+
+  /**
+   * When true, only fire when the pointer is directly over a tagged DOM element
+   * (DOM hit-test match). Proximal quadtree candidates that have no backing
+   * element are ignored. Useful for area-fill charts like treemaps where
+   * magnetic snapping across empty gaps is undesirable.
+   * @default false
+   */
+  exactHit?: boolean;
+
+  /**
+   * When true, all series at the primary candidate's X position are included
+   * as targets (vertical-slice behaviour). Useful for multi-series line/bar/area
+   * charts where series share the same X domain values.
+   * @default false
+   */
+  verticalSlice?: boolean;
 }
 
 /**
  * The DataHoverSensor detects pointer movements over the chart plot
- * and identifies the closest data targets based on the specified mode.
- *
- * It coordinates with the interaction store to trigger hover-based
- * behaviors like tooltips and markers.
- *
- * @example
- * ```tsx
- * Root({ sensors: [DataHoverSensor()] })
- * ```
- *
- * @example
- * ```tsx
- * DataHoverSensor({ mode: 'exact' })
- * ```
+ * and identifies the closest data targets.
  */
-export const DataHoverSensor = (
-  options: HoverSensorOptions = { mode: "nearest-x" },
-): Sensor => {
-  const { mode, name = InteractionChannel.PRIMARY_HOVER } = options;
+export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
+  const {
+    name = InteractionChannel.PRIMARY_HOVER,
+    exactHit = false,
+    verticalSlice = false,
+  } = options;
 
-  return ({
-    on,
-    off,
-    getChartContext,
-    upsertInteraction,
-    removeInteraction,
-  }) => {
-    const handleMove = (event: ChartEvent) => {
-      const ctx = getChartContext();
-      if (!ctx || !ctx.chartStore) {
-        return;
-      }
+  return (event, { upsertInteraction, removeInteraction }) => {
+    const {
+      signal,
+      primaryCandidate,
+      sliceCandidates,
+      chartX,
+      chartY,
+      isWithinPlot,
+    } = event;
 
-      const state = ctx.chartStore.getState();
-      const targets = findClosestTargets(event, mode, state);
+    if (
+      signal.action !== InputAction.MOVE &&
+      signal.action !== InputAction.CANCEL
+    ) {
+      return;
+    }
 
-      if (targets.length > 0) {
-        const isTouch =
-          "touches" in event.nativeEvent ||
-          "changedTouches" in event.nativeEvent;
-
-        upsertInteraction(name, {
-          pointer: {
-            x: event.coordinates.chartX,
-            y: event.coordinates.chartY,
-            containerX: event.coordinates.containerX,
-            containerY: event.coordinates.containerY,
-            isTouch,
-          },
-          targets,
-        });
-      } else {
-        removeInteraction(name);
-      }
-    };
-
-    const handleLeave = () => {
+    if (
+      signal.action === InputAction.CANCEL ||
+      (!isWithinPlot && signal.source !== "touch")
+    ) {
       removeInteraction(name);
-    };
+      return;
+    }
 
-    on("CHART_POINTER_MOVE", handleMove);
-    on("CHART_POINTER_LEAVE", handleLeave);
+    // When exactHit is true, discard proximal (quadtree-only) candidates that
+    // have no backing DOM element — the pointer is over empty space.
+    const candidate =
+      exactHit && primaryCandidate && !primaryCandidate.element
+        ? undefined
+        : primaryCandidate;
 
-    return () => {
-      off("CHART_POINTER_MOVE", handleMove);
-      off("CHART_POINTER_LEAVE", handleLeave);
-    };
+    if (candidate) {
+      const isTouch = signal.source === "touch";
+
+      const targets =
+        verticalSlice && sliceCandidates.length > 0
+          ? sliceCandidates
+          : [candidate as any];
+
+      upsertInteraction(name, {
+        pointer: {
+          x: chartX,
+          y: chartY,
+          containerX: signal.x,
+          containerY: signal.y,
+          isTouch,
+        },
+        targets,
+      });
+    } else {
+      removeInteraction(name);
+    }
   };
 };

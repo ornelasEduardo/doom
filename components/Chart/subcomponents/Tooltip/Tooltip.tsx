@@ -13,7 +13,6 @@ import {
   Reposition,
   TOOLTIP_GAP_X,
   TOOLTIP_GAP_Y,
-  TOUCH_OFFSET_Y,
 } from "../../utils/Reposition";
 import styles from "./Tooltip.module.scss";
 import { TooltipProps } from "./types";
@@ -60,7 +59,6 @@ export function Tooltip<T>({
       })
       .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
       .align({ vertical: "center" })
-      .touchOffset(TOUCH_OFFSET_Y, position.isTouch ?? false)
       .edgeDetect({ container: containerRef })
       .resolve();
 

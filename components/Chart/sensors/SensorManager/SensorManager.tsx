@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useChartContext } from "../../context";
-import { useEventContext } from "../../state/EventContext";
 import {
   removeInteraction,
   upsertInteraction,
@@ -21,31 +20,33 @@ import { KeyboardSensor } from "../KeyboardSensor";
  * to the interaction store.
  */
 export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
-  const { chartStore, config, colorPalette } = useChartContext();
-  const eventContext = useEventContext();
+  const { chartStore, config, colorPalette, engine } = useChartContext();
 
-  // Subscribe to status and data for lifecycle protection
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
+
+  // Use a ref to access the latest colorPalette without triggering re-instantiation
+  const colorPaletteRef = useRef(colorPalette);
+  useEffect(() => {
+    colorPaletteRef.current = colorPalette;
+  }, [colorPalette]);
 
   const activeSensors = useMemo(() => {
     if (sensors && sensors.length > 0) {
       return sensors;
     }
 
-    // Default injection
     const defaults: Sensor[] = [];
     const type = config.type || "line";
 
     if (["line", "area", "bar", "scatter", "bubble"].includes(type as string)) {
-      const mode =
-        type === "scatter" || (type as string) === "bubble"
-          ? "closest"
-          : "nearest-x";
+      const isVerticalSliceType = ["line", "area", "bar"].includes(
+        type as string,
+      );
       defaults.push(
         DataHoverSensor({
-          mode,
           name: InteractionChannel.PRIMARY_HOVER,
+          verticalSlice: isVerticalSliceType,
         }),
       );
 
@@ -58,7 +59,6 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
     } else {
       defaults.push(
         DataHoverSensor({
-          mode: "exact",
           name: InteractionChannel.PRIMARY_HOVER,
         }),
       );
@@ -67,50 +67,46 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
   }, [sensors, config.type]);
 
   useEffect(() => {
-    // PROTECT: Only instantiate sensors when the chart is READY.
-    if (status !== "ready" || !data.length) {
+    if (status !== "ready" || !data.length || !engine) {
       return;
     }
 
-    // Instantiate sensors
-    const cleanups = activeSensors.map((sensor) => {
-      return sensor({
-        on: eventContext.on,
-        off: eventContext.off,
-        emit: eventContext.emit,
-        pointerPosition: eventContext.pointerPosition,
-        isWithinPlot: eventContext.isWithinPlot,
-        getChartContext: () => {
-          const state = chartStore.getState();
-          return {
-            ...state,
-            xScale: state.scales.x,
-            yScale: state.scales.y,
-            colorPalette: colorPalette || [],
-            chartStore,
-          } as unknown as ContextValue<any>;
-        },
+    const sensorContext = {
+      getChartContext: () => {
+        const state = chartStore.getState();
+        return {
+          ...state,
+          xScale: state.scales.x,
+          yScale: state.scales.y,
+          colorPalette: colorPaletteRef.current || [],
+          chartStore,
+        } as unknown as ContextValue<any>;
+      },
+      getInteraction: (name: string) => {
+        return chartStore.getState().interactions.get(name) || null;
+      },
+      upsertInteraction: (name: string, value: any) => {
+        upsertInteraction(chartStore, name, value);
+      },
+      removeInteraction: (name: string) => {
+        removeInteraction(chartStore, name);
+      },
+    };
 
-        getInteraction: (name: string) => {
-          return chartStore.getState().interactions.get(name) || null;
-        },
-        upsertInteraction: (name: string, value: any) => {
-          upsertInteraction(chartStore, name, value);
-        },
-        removeInteraction: (name: string) => {
-          removeInteraction(chartStore, name);
-        },
+    engine.setHandler((event) => {
+      activeSensors.forEach((sensor) => {
+        try {
+          sensor(event, sensorContext);
+        } catch (err) {
+          console.error("Sensor Error:", err);
+        }
       });
     });
 
     return () => {
-      cleanups.forEach((cleanup) => {
-        if (typeof cleanup === "function") {
-          cleanup();
-        }
-      });
+      engine.setHandler(() => {});
     };
-  }, [activeSensors, eventContext, chartStore, status, data.length]);
+  }, [activeSensors, engine, chartStore, status, data.length]);
 
   return null;
 };

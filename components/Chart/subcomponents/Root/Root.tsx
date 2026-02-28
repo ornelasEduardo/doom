@@ -4,6 +4,7 @@ import clsx from "clsx";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -11,6 +12,7 @@ import React, {
 
 import { ChartContext } from "../../context";
 import { useChartBehaviors } from "../../hooks/useChartBehaviors";
+import { useEngine } from "../../hooks/useEngine";
 import { SensorManager } from "../../sensors/SensorManager/SensorManager";
 import { EventsProvider } from "../../state/EventContext";
 import {
@@ -25,6 +27,8 @@ import {
   ContextValue,
   InteractionChannel,
   Props,
+  resolveAccessor,
+  Series as SeriesType,
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
@@ -162,10 +166,130 @@ export function Root<T>({
     createChartStore({ ...d3Config, type }, x, y),
   );
   const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
 
-  // Sync data to store
+  const { engine } = useEngine<T>();
+
+  useLayoutEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const state = chartStore.getState();
+    const { dimensions } = state;
+
+    // In composition mode wrapperRef is never mounted; fall back to the SVG
+    // element that Plot.tsx registers via chartStore.elements.svg.
+    const plotEl =
+      wrapperRef.current ??
+      ((chartStore.getState() as any).elements?.svg as Element | null) ??
+      null;
+    engine.setContainer(containerRef.current, plotEl, {
+      x: dimensions.margin.left,
+      y: dimensions.margin.top,
+      width: dimensions.innerWidth,
+      height: dimensions.innerHeight,
+    });
+  }, [
+    engine,
+    chartStore,
+    title,
+    subtitle,
+    withLegend,
+    withFrame,
+    flat,
+    variant,
+    isMobile,
+  ]);
+
+  useEffect(() => {
+    return chartStore.subscribe(() => {
+      const state = chartStore.getState();
+      if (!state) {
+        return;
+      }
+
+      const { data, scales, dimensions, processedSeries } = state;
+      const { x: xScale, y: yScale } = scales;
+
+      if (containerRef.current) {
+        // In composition mode wrapperRef is null; use the SVG registered by Plot.tsx.
+        const plotEl =
+          wrapperRef.current ??
+          ((state as any).elements?.svg as Element | null) ??
+          null;
+        engine.setContainer(containerRef.current, plotEl, {
+          x: dimensions.margin.left,
+          y: dimensions.margin.top,
+          width: dimensions.innerWidth,
+          height: dimensions.innerHeight,
+        });
+      }
+
+      if (xScale && yScale) {
+        const allPoints: any[] = [];
+        const hasSeries = processedSeries && processedSeries.length > 0;
+
+        if (hasSeries) {
+          processedSeries.forEach((series: SeriesType) => {
+            const seriesData = series.data || data;
+            if (!seriesData) {
+              return;
+            }
+
+            const getX = series.xAccessor
+              ? resolveAccessor(series.xAccessor)
+              : x
+                ? resolveAccessor(x)
+                : null;
+            const getY = series.yAccessor
+              ? resolveAccessor(series.yAccessor)
+              : y
+                ? resolveAccessor(y)
+                : null;
+
+            const points = seriesData.map((d: any, i: number) => ({
+              x:
+                (xScale((getX ? getX(d) : i) as any) ?? 0) +
+                dimensions.margin.left,
+              y:
+                (yScale((getY ? getY(d) : d) as any) ?? 0) +
+                dimensions.margin.top,
+              data: d,
+              seriesId: series.id,
+              seriesColor: series.color,
+              dataIndex: i,
+            }));
+            allPoints.push(...points);
+          });
+        } else if (data.length > 0) {
+          const getX = x ? resolveAccessor(x) : null;
+          const getY = y ? resolveAccessor(y) : null;
+
+          const points = data.map((d: any, i: number) => ({
+            x:
+              (xScale((getX ? getX(d) : i) as any) ?? 0) +
+              dimensions.margin.left,
+            y:
+              (yScale((getY ? getY(d) : d) as any) ?? 0) +
+              dimensions.margin.top,
+            data: d,
+            seriesId: "default",
+            seriesColor: null,
+            dataIndex: i,
+          }));
+          allPoints.push(...points);
+        }
+
+        if (allPoints.length > 0) {
+          engine.updateData(allPoints);
+        }
+      }
+    });
+  }, [chartStore, engine, x, y]);
+
   useEffect(() => {
     updateChartState(chartStore, {
       data,
@@ -174,7 +298,6 @@ export function Root<T>({
     });
   }, [chartStore, data, type]);
 
-  // Handle onValueChange proxy from Interaction Store
   useEffect(() => {
     return chartStore.subscribe(() => {
       const state = chartStore.getState();
@@ -246,7 +369,6 @@ export function Root<T>({
             margin: next,
           },
         }));
-        // Trigger re-calculation
         updateChartDimensions(
           chartStore,
           state.dimensions.width,
@@ -334,6 +456,7 @@ export function Root<T>({
   const value: ContextValue<T> = useMemo(
     () => ({
       chartStore,
+      engine,
       data,
       config: config as any,
       width: chartStore.getState().dimensions.width,
@@ -344,7 +467,6 @@ export function Root<T>({
       isMobile,
       requestLayoutAdjustment,
       colorPalette: LEGEND_PALETTE,
-      // Internal bridges - maintained for system stability during architectural shift
       seriesStore: chartStore as any,
       interactionStore: chartStore as any,
       x: x ? (x as any) : undefined,
@@ -361,6 +483,7 @@ export function Root<T>({
       x,
       y,
       variant,
+      engine,
     ],
   );
 
@@ -377,6 +500,7 @@ export function Root<T>({
       <EventsProvider>
         <BehaviorManager behaviors={behaviors as any} value={value as any} />
         <div
+          ref={containerRef}
           data-chart-container
           aria-describedby={subtitle ? "chart-subtitle" : undefined}
           aria-label={title ? `Chart: ${title}` : "Interactive Chart"}

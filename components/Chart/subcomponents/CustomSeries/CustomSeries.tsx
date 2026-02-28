@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef } from "react";
 
 import { useChartContext } from "../../context";
+import { CHART_DATA_ATTRS } from "../../engine";
 import {
   registerSeries,
   unregisterSeries,
@@ -43,6 +44,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         hideCursor: true,
         interactionMode: "x",
         data,
+        id: seriesId,
       } as any,
     ]);
 
@@ -92,6 +94,8 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
       },
       config,
       resolveInteraction,
+      seriesId,
+      chartDataAttrs: CHART_DATA_ATTRS,
     });
   }, [
     render,

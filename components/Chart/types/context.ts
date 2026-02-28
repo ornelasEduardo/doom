@@ -1,3 +1,4 @@
+import { Engine } from "../engine";
 import { Store } from "../state/store/chart.store";
 import { Accessor, Config, SeriesType } from "./index";
 import { XScale, YScale } from "./scales";
@@ -13,6 +14,13 @@ export interface RenderFrame<T = unknown> {
   resolveInteraction?: (
     event: React.MouseEvent | React.TouchEvent,
   ) => { element: Element; data: T } | null;
+  seriesId: string;
+  chartDataAttrs: {
+    TYPE: string;
+    SERIES_ID: string;
+    INDEX: string;
+    DRAGGABLE: string;
+  };
 }
 
 /**
@@ -21,6 +29,7 @@ export interface RenderFrame<T = unknown> {
  */
 export interface ContextValue<T = unknown> {
   chartStore: Store;
+  engine: Engine<T>; // Shared engine instance
   config: Config;
   isMobile: boolean;
   colorPalette: string[];

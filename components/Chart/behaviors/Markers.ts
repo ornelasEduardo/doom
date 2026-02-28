@@ -52,6 +52,9 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
       const interaction = getInteraction(on) as any;
       const targets = (interaction?.targets as InteractionTarget[]) || [];
 
+      // Retrieve dimensions for margin correction
+      const { margin } = ctx.chartStore.getState().dimensions;
+
       // Bind data to circles
       const circles = layer
         .selectAll("circle")
@@ -65,14 +68,14 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
         .attr("fill", (d) => d.seriesColor || options.color || "currentColor")
         .attr("stroke", "var(--card-border)")
         .attr("stroke-width", 2)
-        .attr("cx", (d) => d.coordinate.x)
-        .attr("cy", (d) => d.coordinate.y)
+        .attr("cx", (d) => d.coordinate.x - margin.left)
+        .attr("cy", (d) => d.coordinate.y - margin.top)
         .style("opacity", 1);
 
       // Update
       circles
-        .attr("cx", (d) => d.coordinate.x)
-        .attr("cy", (d) => d.coordinate.y)
+        .attr("cx", (d) => d.coordinate.x - margin.left)
+        .attr("cy", (d) => d.coordinate.y - margin.top)
         .attr("fill", (d) => d.seriesColor || options.color || "currentColor");
 
       // Exit

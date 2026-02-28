@@ -4,6 +4,7 @@ import { CurveFactory } from "d3-shape";
 import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
+import { CHART_DATA_ATTRS } from "../../engine";
 import {
   registerSeries,
   unregisterSeries,
@@ -79,6 +80,7 @@ const LineSeriesComponent = <T,>({
     }
     registerSeries(chartStore, gradientId, [
       {
+        id: gradientId,
         label: label || (config.yAxisLabel ?? "Series"),
         color: strokeColor,
         x: xAccessor,
@@ -164,9 +166,11 @@ const LineSeriesComponent = <T,>({
               config,
               colors: [color || "var(--primary)"],
               styles: {},
-              gradientId: "",
+              gradientId,
               isMobile,
               chartStore,
+              seriesId: gradientId,
+              chartDataAttrs: CHART_DATA_ATTRS,
             } as any);
           }
         }}
@@ -208,6 +212,11 @@ const LineSeriesComponent = <T,>({
         d={paths.line || ""}
         role="graphics-object"
         style={{ stroke: strokeColor }}
+        {...{
+          [CHART_DATA_ATTRS.TYPE]: "line",
+          [CHART_DATA_ATTRS.SERIES_ID]: gradientId,
+          [CHART_DATA_ATTRS.DRAGGABLE]: false,
+        }}
       />
 
       {(showDots || config.showDots) &&
@@ -218,7 +227,9 @@ const LineSeriesComponent = <T,>({
         data.map((d, i) => {
           const cx = (xScale as any)(xAccessor(d));
           const cy = yScale(yAccessor(d));
-          return <SeriesPoint key={i} color={strokeColor} x={cx} y={cy} />;
+          return (
+            <SeriesPoint key={i} color={strokeColor} datum={d} x={cx} y={cy} />
+          );
         })}
     </g>
   );
