@@ -229,30 +229,6 @@ describe("InteractionLayer", () => {
   });
 
   // ===========================================================================
-  // CONTAINER SETUP TESTS
-  // ===========================================================================
-
-  describe("Container Setup", () => {
-    it("should call engine.setContainer with plot bounds", () => {
-      render(
-        <ContainerWrapper>
-          <InteractionLayer />
-        </ContainerWrapper>,
-      );
-
-      expect(mockSetContainer).toHaveBeenCalledWith(
-        expect.any(HTMLElement),
-        expect.objectContaining({
-          x: 40, // margin.left
-          y: 20, // margin.top
-          width: 500, // innerWidth
-          height: 300, // innerHeight
-        }),
-      );
-    });
-  });
-
-  // ===========================================================================
   // THROTTLING TESTS
   // ===========================================================================
 

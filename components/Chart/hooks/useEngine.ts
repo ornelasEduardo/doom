@@ -119,7 +119,7 @@ export function useEngine<T = unknown>(
     if (currentRect) {
       engine.updateBounds(currentRect, plotBounds);
     } else {
-      engine.setContainer(null, plotBounds);
+      engine.setContainer(null, null, plotBounds);
     }
   }, [engine, plotBounds]);
 
