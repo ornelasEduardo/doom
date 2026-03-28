@@ -2,9 +2,9 @@
   "version": 1,
   "skills": {
     "doom-design-system": {
-      "source": "/Users/yeddie/Desktop/projects/doom/.worktrees/doom-plugin",
+      "source": "/Users/yeddie/Desktop/projects/doom",
       "sourceType": "local",
-      "computedHash": "8446415e4d0bf4670ad4d15e1e9fec23a749c869777f8470b88c46ffc28ddcf9"
+      "computedHash": "85759b6fb598053e620f3ce4a25240419fd2c5db8bdeda7288eba03ee30dfd12"
     }
   }
 }
