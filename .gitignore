@@ -33,6 +33,9 @@ debug-storybook.log
 # Storybook
 storybook-static/
 
+# Docs (internal specs, not for version control)
+/docs/
+
 # Editor directories and files
 .idea
 .vscode
