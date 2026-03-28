@@ -1,5 +1,18 @@
 # Doom Design System — Agent Context
 
+## Plugin
+
+**Via official marketplace** (once approved):
+```bash
+/plugin install doom-design-system@claude-plugins-official
+```
+
+**Self-hosted (available now)**:
+```bash
+/plugin marketplace add ornelasEduardo/doom
+/plugin install doom-design-system@doom
+```
+
 ## Skills
 
 Full skill documentation is at `.agents/skills/doom-design-system/`.

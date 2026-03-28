@@ -2,10 +2,17 @@
 
 ## Plugin
 
-Full AI skills, agents, hooks, and commands are available as a plugin:
+Full AI skills, agents, hooks, and commands are available as a plugin.
 
+**Via official marketplace** (once approved):
 ```bash
 /plugin install doom-design-system@claude-plugins-official
+```
+
+**Self-hosted (available now)**:
+```bash
+/plugin marketplace add ornelasEduardo/doom
+/plugin install doom-design-system@doom
 ```
 
 ## Without the plugin
