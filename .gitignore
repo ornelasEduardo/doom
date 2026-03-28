@@ -36,6 +36,9 @@ storybook-static/
 # Docs (internal specs, not for version control)
 /docs/
 
+# Git worktrees
+.worktrees/
+
 # Editor directories and files
 .idea
 .vscode
