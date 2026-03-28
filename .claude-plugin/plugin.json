@@ -1,7 +1,10 @@
 {
   "name": "doom-design-system",
   "description": "AI skills, agents, hooks, and commands for the Doom Design System — neubrutalist React component library. Gives AI agents deep knowledge of every component, A2UI protocol, design tokens, and coding standards.",
+  "version": "1.0.0",
   "author": {
     "name": "Eduardo Ornelas"
-  }
+  },
+  "repository": "https://github.com/ornelasEduardo/doom",
+  "license": "MIT"
 }

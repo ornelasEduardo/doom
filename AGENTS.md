@@ -37,6 +37,6 @@ Read the relevant component file before working on any component.
 
 | Command | Use For |
 |---------|---------|
-| `/new-component [Name]` | Scaffold a new component |
-| `/a2ui [description]` | Generate A2UI JSON |
-| `/doom-review [path?]` | Run accessibility audit on staged or specified components |
+| `/doom-design-system:new-component [Name]` | Scaffold a new component |
+| `/doom-design-system:a2ui [description]` | Generate A2UI JSON |
+| `/doom-design-system:doom-review [path?]` | Run accessibility audit on staged or specified components |

@@ -5,7 +5,7 @@
 Full AI skills, agents, hooks, and commands are available as a plugin:
 
 ```bash
-/plugin install github:ornelasEduardo/doom
+/plugin install doom-design-system@claude-plugins-official
 ```
 
 ## Without the plugin
@@ -36,6 +36,6 @@ Component docs: `.agents/skills/doom-design-system/components/<name>.md`
 
 | Command | Use For |
 |---------|---------|
-| `/new-component [Name]` | Scaffold a new component |
-| `/a2ui [description]` | Generate A2UI JSON |
-| `/doom-review [path?]` | Run accessibility audit on staged or specified components |
+| `/doom-design-system:new-component [Name]` | Scaffold a new component |
+| `/doom-design-system:a2ui [description]` | Generate A2UI JSON |
+| `/doom-design-system:doom-review [path?]` | Run accessibility audit on staged or specified components |
