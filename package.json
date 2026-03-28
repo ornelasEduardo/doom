@@ -14,9 +14,16 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    ".agent/skills"
+    "dist"
   ],
+  "claude": {
+    "name": "doom-design-system",
+    "description": "AI skills, agents, and hooks for the Doom Design System",
+    "skills": [".agents/skills/*"],
+    "agents": ["agents/*"],
+    "hooks": ["hooks/*"],
+    "commands": ["commands/*"]
+  },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
     "verify": "npm run validate:build && npm run lint:package && npm run test:integration",

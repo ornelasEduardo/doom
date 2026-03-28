@@ -1,0 +1,20 @@
+# Plugin files — not for npm consumers
+.agents/
+agents/
+hooks/
+commands/
+.claude/
+skills-lock.json
+CLAUDE.md
+AGENTS.md
+docs/
+
+# Dev tooling
+.storybook/
+storybook-static/
+coverage/
+.agent/
+tests/
+vitest.config.ts
+vitest.integration.config.ts
+vitest.setup.ts
