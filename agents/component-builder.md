@@ -64,19 +64,19 @@ Extend props and markup to match the component description. Add all props the co
 ### 2. `components/[Name]/[Name].module.scss`
 
 ```scss
-@use "../../styles/mixins" as m;
+@use "../../styles/mixins" as *;
 
 .root {
-  @include m.base-interactive;
+  @include base-interactive;
 
   border: var(--border-width) solid var(--card-border);
   box-shadow: var(--shadow-hard);
 
   &:hover {
-    @include m.brutalist-hover;
+    @include brutalist-hover;
   }
 
-  @include m.focus;
+  @include focus;
 
   &:active {
     transition: none;
@@ -139,7 +139,7 @@ describe("[Name]", () => {
 
 ### 6. Add to root `index.ts`
 
-Append to `/index.ts`:
+Insert into `/index.ts` in alphabetical order with the other component exports:
 
 ```ts
 export * from "./components/[Name]";
@@ -147,11 +147,11 @@ export * from "./components/[Name]";
 
 ### 7. Register in A2UI `components/A2UI/mapping.tsx`
 
-Import and register the component. Follow the pattern already established in the file.
+Import and register the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `.agents/skills/doom-design-system/a2ui.md` for the exact schema.
 
 ### 8. Register in A2UI `components/A2UI/catalog.ts`
 
-Add the A2UI schema entry for the component. Follow the pattern already established in the file.
+Add the A2UI schema entry for the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `.agents/skills/doom-design-system/a2ui.md` for the exact `ComponentDescriptor` schema.
 
 ### 9. Create skill doc: `.agents/skills/doom-design-system/components/[name].md`
 
@@ -184,6 +184,8 @@ import { [Name] } from "doom-design-system";
 - [Any non-obvious behavior, required dependencies, or gotchas]
 ```
 
+Replace the Notes bullet with real content specific to this component (non-obvious behaviors, peer dependencies, gotchas). If there is nothing noteworthy, omit the Notes section entirely.
+
 ### 10. Run Tests
 
 ```bash
@@ -204,4 +206,4 @@ After completing all 10 steps, list every file created or modified and confirm t
 - Always add `'use client'` directive at the top of the `.tsx` file
 - Never skip the A2UI registration step (steps 7–8)
 - Never skip the skill doc step (step 9)
-- Available mixins: `base-interactive`, `brutalist-hover`, `focus`, `error`, `disabled-state`, `invert-theme`, `solid-variant`, `brutalist-shadow`, `mq` — there is no `active-press` mixin
+- Available mixins: `base-interactive`, `brutalist-hover`, `focus`, `error`, `disabled-state`, `invert-theme`, `solid-variant`, `brutalist-shadow`, `mq` — there is no `active-press` mixin. Use `@use "../../styles/mixins" as *` (unqualified) — this is the dominant convention in the codebase (37/47 components)
