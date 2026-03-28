@@ -8,7 +8,8 @@ FILE=$(echo "$INPUT" | python3 -c "
 import json, sys
 try:
     d = json.load(sys.stdin)
-    print(d.get('file_path') or d.get('path') or '')
+    ti = d.get('tool_input', {})
+    print(ti.get('file_path') or ti.get('path') or '')
 except Exception:
     print('')
 " 2>/dev/null || echo "")
