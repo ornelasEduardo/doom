@@ -1,7 +1,7 @@
-import examples from "../../.agent/skills/doom/a2ui/a2ui-examples.md?raw";
-import principles from "../../.agent/skills/doom/a2ui/a2ui-principles.md?raw";
-import cssVariables from "../../.agent/skills/doom/styles/css-variables.md?raw";
-import utilities from "../../.agent/skills/doom/styles/utilities.md?raw";
+import examples from "../../.agents/skills/doom-design-system/a2ui-examples.md?raw";
+import principles from "../../.agents/skills/doom-design-system/a2ui-principles.md?raw";
+import cssVariables from "../../.agents/skills/doom-design-system/css-variables.md?raw";
+import utilities from "../../.agents/skills/doom-design-system/utilities.md?raw";
 import {
   type ComponentDescriptor,
   getComponentsByCategory,
