@@ -133,7 +133,12 @@ The doom aesthetic: bold 2px borders, hard offset shadows (no blur), high contra
   }
 
   @include m.focus;             // accessible focus ring
-  @include m.active-press;      // press-down effect
+
+  &:active {
+    transition: none;
+    transform: translate(var(--spacing-half), var(--spacing-half));
+    box-shadow: none;
+  }
 }
 ```
 

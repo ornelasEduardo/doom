@@ -53,7 +53,12 @@ export const [ComponentName] = React.forwardRef<
   }
 
   @include m.focus;
-  @include m.active-press;
+
+  &:active {
+    transition: none;
+    transform: translate(var(--spacing-half), var(--spacing-half));
+    box-shadow: none;
+  }
 }
 ```
 

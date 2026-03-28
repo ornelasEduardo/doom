@@ -387,13 +387,13 @@ Hover effect with lift and shadow grow.
 }
 ```
 
-#### `active-press`
-
-Active/pressed state styling.
+#### Active/press state (raw CSS, no mixin)
 
 ```scss
-.myButton {
-  @include m.active-press;
+&:active {
+  transition: none;
+  transform: translate(var(--spacing-half), var(--spacing-half));
+  box-shadow: none;
 }
 ```
 
