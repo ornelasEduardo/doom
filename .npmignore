@@ -3,7 +3,9 @@
 agents/
 hooks/
 commands/
+skills/
 .claude/
+.claude-plugin/
 skills-lock.json
 CLAUDE.md
 AGENTS.md
