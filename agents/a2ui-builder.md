@@ -99,6 +99,8 @@ A2UI uses a flat adjacency list. Every component has a unique ID. Children are r
 }
 ```
 
+Note: `"children": "card-body"` uses the **single-child** format (bare ID string). Use `{ "explicitList": [...] }` when a component has two or more children.
+
 ## Value Types
 
 | Type | Format | Use When |
@@ -136,3 +138,4 @@ Spacing: `gap: 4` = 16px, `gap: 6` = 24px section separation.
 - IDs must be unique within the surfaceId — use descriptive kebab-case names
 - Always check required props in component skill docs before omitting them
 - Never nest component objects — the structure is always flat
+- `surfaceId` should use the surface's logical name in kebab-case (e.g., `"settings-page"`, `"dashboard"`), or `"main"` if none is specified
