@@ -503,46 +503,19 @@ export const ExpandableRows: Story = {
   args: {
     columns: columns,
     data: heroData,
-    renderExpandedRow: (row) => (
-      <div style={{ padding: "var(--spacing-4)" }}>
-        <Text variant="h5">{row.original.alias} — Details</Text>
-        <Text variant="body" color="muted">
-          {row.original.name} · {row.original.affiliation} · Last mission:{" "}
-          {row.original.lastMission}
-        </Text>
-      </div>
-    ),
-  },
-};
-
-export const MixedExpandable: Story = {
-  args: {
-    columns: columns,
-    data: heroData,
     renderExpandedRow: (row) => {
-      if (row.index % 2 !== 0) return null;
+      // Only the first 3 rows are expandable
+      if (row.index >= 3) return null;
       return (
         <div style={{ padding: "var(--spacing-4)" }}>
-          <Text variant="body">Expanded content for row {row.index}</Text>
+          <Text variant="h5">{row.original.alias} — Details</Text>
+          <Text variant="body" color="muted">
+            {row.original.name} · {row.original.affiliation} · Last mission:{" "}
+            {row.original.lastMission}
+          </Text>
         </div>
       );
     },
   },
 };
 
-export const ClickAndExpand: Story = {
-  args: {
-    columns: columns,
-    data: heroData,
-    onRowClick: (row) => {
-      console.log("Row clicked:", row.original);
-    },
-    renderExpandedRow: (row) => (
-      <div style={{ padding: "var(--spacing-4)" }}>
-        <Text variant="body">
-          Details for {row.original.alias}
-        </Text>
-      </div>
-    ),
-  },
-};
