@@ -349,7 +349,7 @@ export function Table<T>({
         if (!content) return null;
         return (
           <button
-            aria-label="Expand row"
+            aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
             className={styles.expandToggle}
             onClick={(e) => {
               e.stopPropagation();

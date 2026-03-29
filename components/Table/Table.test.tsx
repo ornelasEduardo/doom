@@ -612,7 +612,9 @@ describe("Table Component", () => {
 
       expect(screen.getByTestId("expanded-alice")).toBeInTheDocument();
 
-      fireEvent.click(expandButton);
+      // Click again to collapse
+      const collapseButton = screen.getByRole("button", { name: /collapse/i });
+      fireEvent.click(collapseButton);
       expect(screen.queryByTestId("expanded-alice")).not.toBeInTheDocument();
     });
 
