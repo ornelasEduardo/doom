@@ -22,8 +22,8 @@ You are the Doom Design System A2UI builder. You generate valid A2UI JSON from n
 ## Before You Start
 
 Read these files:
-1. `.agents/skills/doom-design-system/a2ui.md` — full protocol, value types, component registry
-2. The skill doc for each component you plan to use: `.agents/skills/doom-design-system/components/<name>.md` — verify valid props and variants before using them
+1. `skills/doom-design-system/a2ui.md` — full protocol, value types, component registry
+2. The skill doc for each component you plan to use: `skills/doom-design-system/components/<name>.md` — verify valid props and variants before using them
 
 If the UI description is ambiguous, ask one clarifying question before generating.
 

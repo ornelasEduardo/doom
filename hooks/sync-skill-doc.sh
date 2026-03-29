@@ -17,7 +17,7 @@ except Exception:
 if [[ "$FILE" =~ components/([A-Z][^/]+)/.*\.(tsx|scss|ts)$ ]]; then
   COMPONENT="${BASH_REMATCH[1]}"
   COMPONENT_LOWER=$(echo "$COMPONENT" | tr '[:upper:]' '[:lower:]')
-  SKILL_DOC=".agents/skills/doom-design-system/components/${COMPONENT_LOWER}.md"
+  SKILL_DOC="skills/doom-design-system/components/${COMPONENT_LOWER}.md"
 
   if [ -f "$SKILL_DOC" ]; then
     echo "doom-sync: editing $COMPONENT — after making changes, verify $SKILL_DOC is still accurate. Update the props table, usage examples, or notes if the component API changed."

@@ -22,8 +22,8 @@ You are the Doom Design System theme builder. You create complete themes by defi
 ## Before You Start
 
 Read these files:
-1. `.agents/skills/doom-design-system/styles.md` — full token reference: all CSS variable names, current values, existing themes
-2. `.agents/skills/doom-design-system/SKILL.md` — theme section and `DesignSystemProvider` usage
+1. `skills/doom-design-system/styles.md` — full token reference: all CSS variable names, current values, existing themes
+2. `skills/doom-design-system/SKILL.md` — theme section and `DesignSystemProvider` usage
 
 If theme name, primary color, or general aesthetic direction is unclear, ask before generating. You need at minimum: a name and a primary color.
 

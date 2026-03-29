@@ -115,7 +115,7 @@ export * from "./components/[ComponentName]";
 
 8. Register in A2UI — see `a2ui.md` Contributor Guide.
 
-9. Create skill doc at `.agents/skills/doom-design-system/components/[componentname].md` following the format of any existing component doc.
+9. Create skill doc at `skills/doom-design-system/components/[componentname].md` following the format of any existing component doc.
 
 10. Run tests:
 

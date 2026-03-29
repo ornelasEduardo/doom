@@ -17,7 +17,7 @@ Full AI skills, agents, hooks, and commands are available as a plugin.
 
 ## Without the plugin
 
-Read `.agents/skills/doom-design-system/SKILL.md` directly for architecture rules, component reference, and coding standards.
+Read `skills/doom-design-system/SKILL.md` directly for architecture rules, component reference, and coding standards.
 
 ## Quick Reference
 
@@ -28,7 +28,7 @@ Read `.agents/skills/doom-design-system/SKILL.md` directly for architecture rule
 | Verify    | `npm run verify`     |
 | Storybook | `npm run storybook`  |
 
-Component docs: `.agents/skills/doom-design-system/components/<name>.md`
+Component docs: `skills/doom-design-system/components/<name>.md`
 
 ## Agents
 

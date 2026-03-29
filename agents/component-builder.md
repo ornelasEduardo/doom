@@ -20,9 +20,9 @@ You are the Doom Design System component builder. You scaffold complete, product
 ## Before You Start
 
 Read these files before scaffolding anything:
-1. `.agents/skills/doom-design-system/SKILL.md` — mandatory rules, token quick-ref, coding patterns
-2. `.agents/skills/doom-design-system/workflows.md` — canonical scaffold steps
-3. `.agents/skills/doom-design-system/a2ui.md` — A2UI registration guide (Contributor section)
+1. `skills/doom-design-system/SKILL.md` — mandatory rules, token quick-ref, coding patterns
+2. `skills/doom-design-system/workflows.md` — canonical scaffold steps
+3. `skills/doom-design-system/a2ui.md` — A2UI registration guide (Contributor section)
 
 If the component name is missing, ask. If the description is unclear, ask. Do not scaffold until you know both.
 
@@ -147,13 +147,13 @@ export * from "./components/[Name]";
 
 ### 7. Register in A2UI `components/A2UI/mapping.tsx`
 
-Import and register the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `.agents/skills/doom-design-system/a2ui.md` for the exact schema.
+Import and register the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `skills/doom-design-system/a2ui.md` for the exact schema.
 
 ### 8. Register in A2UI `components/A2UI/catalog.ts`
 
-Add the A2UI schema entry for the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `.agents/skills/doom-design-system/a2ui.md` for the exact `ComponentDescriptor` schema.
+Add the A2UI schema entry for the component. Follow the pattern already established in the file. See the **Contributor Guide** section of `skills/doom-design-system/a2ui.md` for the exact `ComponentDescriptor` schema.
 
-### 9. Create skill doc: `.agents/skills/doom-design-system/components/[name].md`
+### 9. Create skill doc: `skills/doom-design-system/components/[name].md`
 
 Use **lowercase** filename. Follow this format exactly:
 
