@@ -18,14 +18,15 @@ import { Drawer } from "doom-design-system";
 | `footer` | `ReactNode` | — | Footer content (shorthand API) |
 | `variant` | `"default" \| "solid"` | `"default"` | Visual style |
 | `children` | `ReactNode` | required | Drawer content |
+| `className` | `string` | — | CSS class name |
 
-### Sub-component Props
+### Subcomponents
 
 | Component | Props | Description |
 |-----------|-------|-------------|
-| `Drawer.Header` | `children: ReactNode` | Header area with built-in close button |
-| `Drawer.Body` | `children: ReactNode` | Scrollable content area |
-| `Drawer.Footer` | `children: ReactNode` | Action buttons area |
+| `Drawer.Header` | `children`, `className?` | Header with built-in close button (hardcoded danger variant) |
+| `Drawer.Body` | `children`, `className?` | Scrollable content area |
+| `Drawer.Footer` | `children`, `className?` | Action buttons area |
 
 ## Usage
 
@@ -57,6 +58,8 @@ import { Drawer } from "doom-design-system";
 
 ## Notes
 - Closes on Escape key and overlay click automatically
+- Renders via portal to `document.body`; locks body scroll when open
+- Animation: slides in from the specified side; directional shadow matches `side`
+- Border radius only on the non-screen-edge side
 - Use `side="left"` for navigation drawers, `side="right"` for detail/action panels
-- Use composition API when you need custom header content (icons, badges, etc.)
 - `variant="solid"` for high-emphasis content

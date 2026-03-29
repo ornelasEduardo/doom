@@ -17,14 +17,16 @@ import { Modal } from "doom-design-system";
 | `footer` | `ReactNode` | — | Footer content (shorthand API) |
 | `variant` | `"default" \| "solid"` | `"default"` | Visual style |
 | `children` | `ReactNode` | required | Modal body content |
+| `className` | `string` | — | CSS class name |
+| `style` | `CSSProperties` | — | Inline styles |
 
-### Sub-component Props
+### Subcomponents
 
 | Component | Props | Description |
 |-----------|-------|-------------|
-| `Modal.Header` | `children: ReactNode` | Header area with built-in close button |
-| `Modal.Body` | `children: ReactNode` | Scrollable content area |
-| `Modal.Footer` | `children: ReactNode` | Action buttons area |
+| `Modal.Header` | `children`, `className?` | Header with built-in close button (hardcoded danger variant) |
+| `Modal.Body` | `children`, `className?` | Scrollable content area |
+| `Modal.Footer` | `children`, `className?` | Action buttons area |
 
 ## Usage
 
@@ -62,6 +64,8 @@ import { Modal } from "doom-design-system";
 
 ## Notes
 - Closes on Escape key and overlay click automatically
-- Always provide meaningful `title` or `aria-label` for screen reader accessibility
+- Renders via portal to `document.body`; locks body scroll when open
+- Title auto-generates `aria-labelledby` linking; use `aria-label` when no title provided
+- Animation: content slides up with fade-in; overlay has backdrop blur
 - Use `variant="solid"` for critical alerts or high-impact announcements
 - Use composition API when you need custom header content (icons, status badges, etc.)

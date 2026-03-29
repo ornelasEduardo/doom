@@ -17,14 +17,15 @@ import { Sheet } from "doom-design-system";
 | `footer` | `ReactNode` | — | Footer content (shorthand API) |
 | `variant` | `"default" \| "solid"` | `"default"` | Visual style |
 | `children` | `ReactNode` | required | Sheet content |
+| `className` | `string` | — | CSS class name |
 
-### Sub-component Props
+### Subcomponents
 
 | Component | Props | Description |
 |-----------|-------|-------------|
-| `Sheet.Header` | `children: ReactNode` | Header area with drag handle |
-| `Sheet.Body` | `children: ReactNode` | Scrollable content area |
-| `Sheet.Footer` | `children: ReactNode` | Action buttons area |
+| `Sheet.Header` | `children`, `className?` | Header with visible drag handle bar and close button |
+| `Sheet.Body` | `children`, `className?` | Scrollable content area |
+| `Sheet.Footer` | `children`, `className?` | Action buttons area |
 
 ## Usage
 
@@ -58,8 +59,10 @@ import { Sheet } from "doom-design-system";
 ```
 
 ## Notes
-- Supports drag-to-dismiss gesture — drag down 150px+ to close
+- Slides up from bottom; fixed height of 85vh
+- **Drag-to-dismiss**: drag the header down 150px+ to close; transitions disabled during drag, snap-back on incomplete gesture
+- Header renders a visible drag handle bar (12px wide, pill-shaped); opacity adjusts in solid variant
 - Closes on Escape key and overlay click automatically
+- Renders via portal to `document.body`; locks body scroll when open
 - Use for bottom sheets on mobile or compact overlays
 - `variant="solid"` for high-emphasis content
-- Use composition API when you need custom header content
