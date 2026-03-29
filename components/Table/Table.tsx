@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   SortingState,
   Table as ReactTableInstance,
   useReactTable,
@@ -87,6 +88,7 @@ export interface TableProps<T> {
     operators?: FilterOperatorKey[];
   }[];
   striped?: boolean;
+  onRowClick?: (row: Row<T>, e: React.MouseEvent) => void;
 }
 
 interface BodyProps<T> {
@@ -94,6 +96,7 @@ interface BodyProps<T> {
   columns: ColumnDef<T>[];
   striped: boolean;
   density: "compact" | "standard" | "relaxed";
+  onRowClick?: (row: Row<T>, e: React.MouseEvent) => void;
 }
 
 interface VirtualBodyProps<T> extends BodyProps<T> {
@@ -106,6 +109,7 @@ function VirtualTableBody<T>({
   striped,
   density,
   scrollElement,
+  onRowClick,
 }: VirtualBodyProps<T>) {
   const { rows } = table.getRowModel();
 
@@ -135,8 +139,10 @@ function VirtualTableBody<T>({
             ref={rowVirtualizer.measureElement}
             className={clsx(styles.tr, {
               [styles.striped]: striped && virtualRow.index % 2 !== 0,
+              [styles.clickable]: !!onRowClick,
             })}
             data-index={virtualRow.index}
+            onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
           >
             {row.getVisibleCells().map((cell) => (
               <td
@@ -167,13 +173,14 @@ function VirtualTableBody<T>({
   );
 }
 
-function StandardTableBody<T>({ table, striped, density }: BodyProps<T>) {
+function StandardTableBody<T>({ table, striped, density, onRowClick }: BodyProps<T>) {
   return (
     <tbody>
       {table.getRowModel().rows.map((row) => (
         <tr
           key={row.id}
-          className={clsx(styles.tr, striped && styles.striped, "group")}
+          className={clsx(styles.tr, striped && styles.striped, onRowClick && styles.clickable, "group")}
+          onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
         >
           {row.getVisibleCells().map((cell) => (
             <td key={cell.id} className={clsx(styles.td, styles[density])}>
@@ -206,6 +213,7 @@ export function Table<T>({
   filters,
   striped = false,
   maxHeight,
+  onRowClick,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -483,6 +491,7 @@ export function Table<T>({
             <VirtualTableBody<T>
               columns={normalizedColumns}
               density={density}
+              onRowClick={onRowClick}
               scrollElement={scrollElement}
               striped={striped}
               table={table}
@@ -491,6 +500,7 @@ export function Table<T>({
             <StandardTableBody<T>
               columns={normalizedColumns}
               density={density}
+              onRowClick={onRowClick}
               striped={striped}
               table={table}
             />

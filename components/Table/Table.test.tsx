@@ -540,6 +540,40 @@ describe("Table Component", () => {
     );
   });
 
+  describe("onRowClick", () => {
+    it("should call onRowClick with row data when a row is clicked", () => {
+      const handleRowClick = vi.fn();
+      render(
+        <Table columns={columns} data={data} onRowClick={handleRowClick} />,
+      );
+
+      const firstDataRow = screen.getAllByRole("row")[1];
+      fireEvent.click(firstDataRow);
+
+      expect(handleRowClick).toHaveBeenCalledTimes(1);
+      expect(handleRowClick.mock.calls[0][0].original).toEqual({
+        id: 1,
+        name: "Alice",
+        age: 25,
+      });
+    });
+
+    it("should not error when onRowClick is not provided", () => {
+      render(<Table columns={columns} data={data} />);
+      const firstDataRow = screen.getAllByRole("row")[1];
+      fireEvent.click(firstDataRow);
+    });
+
+    it("should apply clickable cursor class when onRowClick is provided", () => {
+      render(
+        <Table columns={columns} data={data} onRowClick={() => {}} />,
+      );
+
+      const firstDataRow = screen.getAllByRole("row")[1];
+      expect(firstDataRow.className).toContain("clickable");
+    });
+  });
+
   it("should support startsWith and endsWith operators", async () => {
     const { evaluateFilter } = await import("./utils/filterAst");
 

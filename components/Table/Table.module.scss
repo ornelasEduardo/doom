@@ -202,6 +202,10 @@
   }
 }
 
+.clickable {
+  cursor: pointer;
+}
+
 .paginationContainer {
   padding: var(--spacing-4);
   border-top: var(--border-width) solid var(--card-border);
