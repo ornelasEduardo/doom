@@ -47,5 +47,5 @@ Extends all standard `<a>` HTML attributes.
 | `subtle` | Low-emphasis link in dense UI or footers |
 
 ## Notes
-- `isExternal` handles all security attributes automatically — do not manually set `rel`
-- `disabled` prevents navigation but does not remove the element from tab order; consider `aria-disabled` for full accessibility
+- `isExternal` handles all security attributes automatically and auto-renders an `ExternalLink` icon (from Lucide) — do not manually set `rel` or add an icon
+- `disabled` prevents navigation and sets `aria-disabled`, but does not remove the element from tab order

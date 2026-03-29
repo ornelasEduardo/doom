@@ -12,7 +12,7 @@ import { Chip } from "doom-design-system";
 | `variant` | `"default" \| "primary" \| "success" \| "warning" \| "error"` | `"default"` | Visual style |
 | `size` | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"` | Chip size |
 | `onDismiss` | `() => void` | — | Shows X button; called on dismiss |
-| `onClick` | `() => void` | — | Makes chip clickable |
+| `onClick` | `(e: React.MouseEvent) => void` | — | Makes chip clickable (adds `tabIndex={0}` and keyboard support) |
 | `disabled` | `boolean` | `false` | Disabled state |
 | `children` | `ReactNode` | required | Chip content |
 

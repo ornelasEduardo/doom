@@ -14,7 +14,7 @@ import { Slat } from "doom-design-system";
 | `prependContent` | `ReactNode` | — | Left slot (icon, thumbnail) |
 | `appendContent` | `ReactNode` | — | Right slot (actions, badges) |
 | `variant` | `"default" \| "danger" \| "success"` | `"default"` | Visual style |
-| `onClick` | `() => void` | — | Makes slat clickable |
+| `onClick` | `(e: React.MouseEvent) => void` | — | Makes slat clickable |
 
 ## Usage
 

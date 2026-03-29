@@ -9,6 +9,7 @@ import { CopyButton } from "doom-design-system";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
+| `children` | `ReactNode` | required | Button label text |
 | `value` | `string` | required | Text to copy to clipboard |
 | `variant` | `"primary" \| "secondary" \| "ghost" \| "outline" \| "success" \| "danger"` | `"secondary"` | Visual style (same as Button) |
 | `size` | `"sm" \| "md" \| "lg"` | `"md"` | Button size (same as Button) |

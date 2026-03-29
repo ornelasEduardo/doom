@@ -35,7 +35,7 @@ import { Select } from "doom-design-system";
 ```
 
 ## Notes
-- `onChange` provides a synthetic event (not a raw value) — use `e.target.value` to read the selection
+- `onChange` provides a manually constructed synthetic event (not a native DOM event) — use `e.target.value` to read the selection
 - For searchable or multi-select, use `Combobox` instead
 - Includes a hidden native `<input>` for form submission compatibility
 - Full keyboard navigation: Arrow keys to navigate, Enter to select, Escape to close

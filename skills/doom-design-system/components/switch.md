@@ -13,6 +13,7 @@ import { Switch } from "doom-design-system";
 | `onChange` | `(checked: boolean) => void` | — | Change handler — receives boolean directly |
 | `disabled` | `boolean` | — | Disabled state |
 | `label` | `string` | — | Label text |
+| `id` | `string` | — | Input element ID (auto-generated if omitted) |
 | `readOnly` | `boolean` | — | Read-only state |
 
 ## Usage

@@ -41,6 +41,7 @@ Extends all standard `<input>` HTML attributes.
 
 ## Notes
 - Use `label` prop instead of a separate `<Label>` component — it handles the `htmlFor`/`id` binding automatically
-- Character count auto-shows when `maxLength` is set; `showCount` is redundant in that case
+- Character count auto-shows when `maxLength` is set; `showCount={true}` forces the counter even without `maxLength`
 - `format` only applies when the input is blurred — useful for currency or phone number display formatting
-- `validate` runs on blur and overrides `error` if it returns a string
+- `validate` runs on blur — if it returns a string, that error **overrides** the `error` prop (internal error takes priority: `errorProp || internalError`)
+- For controlled components, `charCount` state syncs with external `value` prop changes

@@ -27,6 +27,14 @@ import { Tabs, TabsList, TabsTrigger, TabsBody, TabsContent } from "doom-design-
 |------|------|---------|-------------|
 | `value` | `string` | required | Tab identifier — must match a `TabsContent` value |
 
+### TabsBody
+
+Container for `TabsContent` panels. Required wrapper.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `children` | `ReactNode` | `TabsContent` elements |
+
 ### TabsContent
 
 | Prop | Type | Default | Description |

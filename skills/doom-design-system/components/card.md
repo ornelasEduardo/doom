@@ -10,6 +10,7 @@ import { Card } from "doom-design-system";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `as` | `ElementType` | `"div"` | HTML element to render |
+| `disabled` | `boolean` | `false` | Disabled visual state |
 | `children` | `ReactNode` | required | Card content |
 | `className` | `string` | — | Additional CSS classes |
 
@@ -31,6 +32,6 @@ Extends all standard `<div>` HTML attributes.
 ```
 
 ## Notes
-- Card has no built-in padding — add your own with Layout components or CSS
+- Default `<Card>` includes padding — use `Card.Root` for an unpadded container
 - Provides background (`--card-bg`), border (`--card-border`), and hard shadow (`--shadow-hard`)
 - Use `as="article"` or `as="section"` for semantic HTML

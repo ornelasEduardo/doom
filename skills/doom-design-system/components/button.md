@@ -42,4 +42,4 @@ Extends all standard `<button>` HTML attributes.
 
 ## Notes
 - Use `loading` prop instead of manually disabling the button and adding a spinner — it handles both automatically
-- `loading` sets `disabled` internally; do not pass both
+- `loading` sets `disabled` internally — they combine with OR logic (`disabled={disabled || loading}`), so passing both is safe but redundant

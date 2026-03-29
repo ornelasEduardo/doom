@@ -14,6 +14,7 @@ import { Text } from "doom-design-system";
 | `color` | `"primary" \| "secondary" \| "muted" \| "error" \| "success" \| "warning"` | — | Text color token |
 | `align` | `"left" \| "center" \| "right"` | — | Text alignment |
 | `as` | `ElementType` | auto | Override rendered HTML element |
+| `htmlFor` | `string` | — | For use with `as="label"` |
 
 ## Usage
 
@@ -35,3 +36,4 @@ import { Text } from "doom-design-system";
 - `h1`–`h6` variants auto-render as the corresponding heading element — use `as` to override
 - `body`, `small`, `caption` use the body font; heading variants use the heading font
 - `as` prop is useful when you need heading styles on a non-heading element (e.g. `as="span"`)
+- Non-caption variants without an explicit `color` get `--foreground` applied by default

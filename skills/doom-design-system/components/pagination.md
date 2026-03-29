@@ -27,5 +27,5 @@ import { Pagination } from "doom-design-system";
 ## Notes
 - Pages are 1-indexed — first page is `1`, not `0`
 - Prev/Next buttons are automatically disabled at boundaries (page 1 and last page)
-- Automatically truncates with ellipsis for large page counts
+- Automatically truncates with ellipsis for large page counts (max 7 visible pages); ellipsis elements are non-interactive
 - Used internally by `Table` when `enablePagination` is true — avoid double-rendering

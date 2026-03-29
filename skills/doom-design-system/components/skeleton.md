@@ -27,6 +27,7 @@ import { Skeleton } from "doom-design-system";
 ```
 
 ## Notes
+- `variant="text"` adds `margin-bottom: var(--spacing-2)` automatically for stacking text lines
 - Use `variant="text"` for text lines, `variant="circular"` for avatars/icons
 - Match skeleton dimensions to the expected content to prevent layout shift
 - Used internally by the `Image` component during load — do not add manually in that case
