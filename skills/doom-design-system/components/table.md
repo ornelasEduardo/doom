@@ -28,6 +28,8 @@ Peer dependency: `npm install @tanstack/react-table`
 | `striped` | `boolean` | `false` | Alternating row colors |
 | `filters` | `FilterConfig[]` | — | Filter field definitions for advanced filtering |
 | `onAdvancedFilterChange` | `(value: FilterGroupItem) => void` | — | Callback when advanced filter changes |
+| `onRowClick` | `(row: Row<T>, e: React.MouseEvent) => void` | — | Click handler for rows (adds pointer cursor) |
+| `renderExpandedRow` | `(row: Row<T>) => ReactNode \| null` | — | Expanded content per row; return `null` for non-expandable rows |
 | `toolbarContent` | `ReactNode` | — | Custom toolbar content |
 | `className` | `string` | — | CSS class name |
 | `style` | `CSSProperties` | — | Inline styles |
@@ -93,6 +95,31 @@ The FilterBuilder provides a nested filter UI with:
 />
 ```
 
+## Row Click
+
+```tsx
+<Table
+  data={users}
+  columns={columns}
+  onRowClick={(row) => navigate(`/users/${row.original.id}`)}
+/>
+```
+
+## Expandable Rows
+
+```tsx
+<Table
+  data={orders}
+  columns={columns}
+  renderExpandedRow={(row) => {
+    if (!row.original.details) return null; // non-expandable
+    return <OrderDetails data={row.original.details} />;
+  }}
+/>
+```
+
+A chevron column is auto-prepended. Rows returning `null` show no chevron.
+
 ## Usage
 
 ```tsx
@@ -114,3 +141,5 @@ The FilterBuilder provides a nested filter UI with:
 - Sort indicators: arrow-up for ascending, arrow-down for descending
 - Empty state shows "No results found." (not customizable)
 - Column header filter dropdowns support multiple selections per column, with selected values sorted first
+- `onRowClick` does not fire when clicking the expand chevron
+- Both features work with virtualization
