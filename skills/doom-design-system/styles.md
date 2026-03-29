@@ -12,10 +12,10 @@
 Every interactive element has a 2px solid border.
 
 ```scss
-// ✅ Correct
+// Correct
 border: var(--border-width) solid var(--card-border);
 
-// ❌ Wrong
+// Wrong
 border: 1px solid #ccc;
 border: none;
 ```
@@ -25,10 +25,10 @@ border: none;
 Hard offset shadows only. No blur.
 
 ```scss
-// ✅ Correct
+// Correct
 box-shadow: var(--shadow-hard);
 
-// ❌ Wrong
+// Wrong
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 ```
 
@@ -37,13 +37,13 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 Elements lift on hover. Shadow compensates.
 
 ```scss
-// ✅ Correct
+// Correct
 &:hover {
   transform: translate(-2px, -2px);
   box-shadow: var(--shadow-hover);
 }
 
-// ❌ Wrong
+// Wrong
 &:hover {
   opacity: 0.8;
 }
@@ -54,10 +54,10 @@ Elements lift on hover. Shadow compensates.
 Use CSS variables. Never hardcode hex values.
 
 ```tsx
-// ✅ Correct
+// Correct
 style={{ background: "var(--card-bg)" }}
 
-// ❌ Wrong
+// Wrong
 style={{ background: "#ffffff" }}
 ```
 
@@ -79,27 +79,25 @@ text-transform: var(--heading-transform); // uppercase
 | Success         | `--success` |
 | Errors          | `--error`   |
 | Warnings        | `--warning` |
-| Muted text      | `--muted`   |
+| Muted text      | `--muted-foreground` |
 
-- Use color sparingly. Most UI should be black/white/gray with one accent.
+Use color sparingly. Most UI should be black/white/gray with one accent.
 
 ### Spacing
 
+Use the numeric spacing scale (base unit = 4px):
+
 ```tsx
-// ✅ Correct
+// Correct — use token variables
+padding: var(--spacing-4);  // 16px
+gap: var(--spacing-6);      // 24px
+
+// Correct — component gap prop
 <Stack gap={4}>...</Stack>
 
-// ❌ Wrong
+// Wrong
 <div style={{ marginBottom: "16px" }}>...</div>
 ```
-
-| Token          | Size    |
-| -------------- | ------- |
-| `--spacing-xs` | 0.25rem |
-| `--spacing-sm` | 0.5rem  |
-| `--spacing-md` | 1rem    |
-| `--spacing-lg` | 1.5rem  |
-| `--spacing-xl` | 2rem    |
 
 ### Animation
 
@@ -121,57 +119,69 @@ transition: all var(--duration-fast) var(--ease-in-out);
 ### Component Template
 
 ```scss
-@use "styles/mixins" as m;
+@use "../../styles/mixins" as *;
 
 .component {
-  @include m.base-interactive; // border, shadow, transition
+  @include base-interactive; // border, shadow, transition
   background: var(--card-bg);
 
-  @include m.brutalist-hover; // lift + shadow grow
-  @include m.focus; // focus-visible ring
+  @include brutalist-hover; // lift + shadow grow
+  @include focus; // focus-visible ring
 }
 ```
 
 ## Design Tokens
 
-### Palette
+Source: `styles/_tokens.scss`
 
-Colors available in `palette` object. Shades follow Tailwind-style naming: `50`, `100`, `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, `950`.
+### Base Unit
 
-Access via `palette.{color}[{shade}]` (e.g., `palette.purple[500]`, `palette.slate[800]`).
+All spatial tokens derive from `$base-unit: 0.25rem` (4px).
 
-| Color  | Shades Available | Notes                     |
-| ------ | ---------------- | ------------------------- |
-| black  | 50-950           | Opacity scales (rgba)     |
-| white  | 50-950           | Opacity scales (rgba)     |
-| slate  | 50-950           | Full range                |
-| purple | 50-900           | Primary for default theme |
-| navy   | 50-900           | —                         |
-| blue   | 50-900           | Primary for captain theme |
-| indigo | 50-900           | —                         |
-| yellow | 50-900           | Primary for vigilante     |
-| green  | 50-900           | Primary for doom theme    |
-| red    | 50-900           | Error states              |
-| gray   | 50-990           | Extended range            |
+### Spacing Scale
 
-### Base Variables
-
-#### Typography
+Numeric scale where N = N * 4px.
 
 ```
---text-xs: 0.75rem
---text-sm: 0.875rem
---text-base: 1rem
---text-lg: 1.125rem
---text-xl: 1.25rem
---text-2xl: 1.5rem
---text-3xl: 1.875rem
---text-4xl: 2.25rem
---text-5xl: 3rem
---text-6xl: 3.75rem
+--spacing-half: 2px     (design exception)
+--spacing-1:   4px
+--spacing-2:   8px
+--spacing-3:   12px
+--spacing-4:   16px
+--spacing-5:   20px
+--spacing-6:   24px
+--spacing-8:   32px
+--spacing-10:  40px
+--spacing-12:  48px
+--spacing-16:  64px
+--spacing-20:  80px
+--spacing-24:  96px
+--spacing-32:  128px
+--spacing-36:  144px
+--spacing-40:  160px
+--spacing-56:  224px
+--spacing-64:  256px
+--spacing-72:  288px
+--spacing-100: 400px
 ```
 
-#### Font Weights
+### Typography Scale
+
+```
+--text-2xs: 0.625rem  (10px)
+--text-xs:  0.75rem   (12px)
+--text-sm:  0.875rem  (14px)
+--text-base: 1rem     (16px)
+--text-lg:  1.125rem  (18px)
+--text-xl:  1.25rem   (20px)
+--text-2xl: 1.5rem    (24px)
+--text-3xl: 1.875rem  (30px)
+--text-4xl: 2.25rem   (36px)
+--text-5xl: 3rem      (48px)
+--text-6xl: 3.75rem   (60px)
+```
+
+### Font Weights
 
 ```
 --font-thin: 100
@@ -185,82 +195,164 @@ Access via `palette.{color}[{shade}]` (e.g., `palette.purple[500]`, `palette.sla
 --font-black: 900
 ```
 
-#### Spacing
+### Structural
 
 ```
---spacing-xs: 0.25rem
---spacing-sm: 0.5rem
---spacing-md: 1rem
---spacing-lg: 1.5rem
---spacing-xl: 2rem
---spacing-2xl: 3rem
-```
-
-#### Z-Index
-
-```
---z-base: 0
---z-elevated: 10
---z-header: 40
---z-dropdown: 50
---z-modal: 100
---z-overlay: 150
---z-drawer: 200
---z-tooltip: 500
-```
-
-#### Motion
-
-```
---duration-fast: 150ms
---duration-normal: 250ms
---duration-slow: 350ms
---ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)
---ease-out: cubic-bezier(0.0, 0, 0.2, 1)
---ease-in: cubic-bezier(0.4, 0, 1, 1)
-```
-
-#### Border Radius
-
-```
---radius: 4px
---radius-pill: 9999px
---radius-full: 50%
-```
-
-#### Structural
-
-```
---border-width: 2px
---shadow-hard: 4px 4px 0px 0px var(--shadow-base)
---shadow-hover: 6px 6px 0px 0px var(--shadow-base)
---shadow-sm: 2px 2px 0px 0px var(--card-border)
---shadow-lg: 8px 8px 0px 0px var(--card-border)
-```
-
-#### Outline (Focus States)
-
-```
---outline-width: 2px
+--border-width:   2px   (never change — neubrutalism requires it)
+--radius:         4px
+--radius-lg:      8px
+--radius-xl:      16px
+--radius-pill:    9999px
+--radius-full:    50%
+--outline-width:  2px
 --outline-offset: 2px
 ```
 
-#### Sizes
+### Shadows
 
 ```
---size-icon-sm: 20px
---size-icon-md: 24px
---size-icon-lg: 32px
+--shadow-hard:             4px 4px 0 0 var(--shadow-base)       (buttons, cards)
+--shadow-hover:            8px 8px 0 0 var(--shadow-base)       (hover state)
+--shadow-sm:               4px 4px 0 0 var(--card-border)       (small elements)
+--shadow-sm-hover:         8px 8px 0 0 var(--card-border)
+--shadow-sm-checked:       4px 4px 0 0 var(--card-border)
+--shadow-sm-checked-hover: 8px 8px 0 0 var(--card-border)
+--shadow-lg:               8px 8px 0 0 var(--card-border)       (large elements)
+```
+
+### Control Heights
+
+```
+--control-height-sm: 32px
+--control-height-md: 40px
+--control-height-lg: 48px
+```
+
+### Sizing & Widths
+
+```
+--width-full:    100%
+--width-screen:  100vw
+--height-screen: 100vh
+--width-min:     min-content
+--width-max:     max-content
+--width-fit:     fit-content
+```
+
+#### Prose (reading widths)
+```
+--width-prose-narrow: 45ch   (captions, side notes)
+--width-prose:        65ch   (standard reading)
+--width-prose-wide:   80ch   (docs, technical writing)
+```
+
+#### Layout
+```
+--width-sidebar:           280px
+--width-sidebar-collapsed: 64px
+--width-panel:             400px   (drawers, panels)
+--width-panel-wide:        600px
+--header-height:           56px
+--header-height-sm:        48px
+--page-max-width:          1920px
+--drawer-width:            var(--width-panel)
+```
+
+#### Modals
+```
+--width-modal-sm: 400px
+--width-modal-md: 600px
+--width-modal-lg: 800px
+--width-modal-xl: 1024px
+```
+
+#### Controls
+```
+--width-control-sm: 120px
+--width-control-md: 240px
+--width-control-lg: 320px
+--width-control-xl: 400px
+```
+
+#### Form
+```
+--form-col-min:      128px
+--form-select-width: 144px
+```
+
+### Icon Sizes
+
+```
+--size-icon-sm:     20px
+--size-icon-md:     24px
+--size-icon-lg:     32px
 --size-touch-target: 44px
 ```
 
-#### Overlay
+### Z-Index
 
 ```
+--z-base:     0
+--z-elevated: 10
+--z-header:   40
+--z-dropdown: 50
+--z-modal:    100
+--z-overlay:  150
+--z-drawer:   200
+--z-tooltip:  500
+```
+
+### Motion
+
+```
+--duration-fast:   150ms
+--duration-normal: 250ms
+--duration-slow:   350ms
+--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)
+--ease-out:    cubic-bezier(0, 0, 0.2, 1)
+--ease-in:     cubic-bezier(0.4, 0, 1, 1)
+```
+
+### Effects
+
+```
+--blur-standard:   4px
 --overlay-opacity: 0.5
 ```
 
-## CSS Custom Properties
+### Typography Standards
+
+```
+--font-heading:       var(--font-montserrat)
+--heading-transform:  uppercase
+--heading-weight:     800
+```
+
+## Palette
+
+Source: `styles/palettes.ts`
+
+Colors available via `palette.{color}[{shade}]` (e.g., `palette.purple[500]`).
+
+| Color  | Shades    | Notes                     |
+| ------ | --------- | ------------------------- |
+| black  | 50-950    | Opacity scales (rgba)     |
+| white  | 50-950    | Opacity scales (rgba)     |
+| slate  | 50-950    | Full range                |
+| purple | 50-900    | Primary for default theme |
+| navy   | 50-900    | —                         |
+| blue   | 50-900    | Primary for captain theme |
+| indigo | 50-900    | —                         |
+| yellow | 50-900    | Primary for vigilante     |
+| green  | 50-900    | Primary for doom theme    |
+| red    | 50-900    | Error states              |
+| gray   | 50-990    | Extended range (975, 990) |
+
+## CSS Custom Properties (Theme-Dependent)
+
+Source: `styles/themes/definitions.ts`
+
+These variables change per theme. Set via `DesignSystemProvider`.
 
 ### Color Variables
 
@@ -296,98 +388,88 @@ Access via `palette.{color}[{shade}]` (e.g., `palette.purple[500]`, `palette.sla
 | `--on-surface`               | Text on any surface     |
 | `--on-surface-muted`         | Muted text on surface   |
 
-### Shadow Variables
+### Shadow Variables (Theme-Dependent)
 
 | Variable           | Description                 |
 | ------------------ | --------------------------- |
 | `--shadow-base`    | Base shadow color           |
 | `--shadow-primary` | Shadow for primary elements |
 | `--shadow-error`   | Shadow for error states     |
-| `--shadow-hard`    | Standard hard shadow        |
-| `--shadow-hover`   | Hover state shadow          |
-| `--shadow-sm`      | Small shadow                |
-| `--shadow-lg`      | Large shadow                |
 
 ### Solid Variant Tokens
 
-Used by `variant="solid"` on Modal, Sheet, Drawer, etc.
+Source: `styles/themes/solid-tokens.ts`
 
-| Variable     | Description              |
-| ------------ | ------------------------ |
-| `--solid-bg` | Solid variant background |
-| `--solid-fg` | Solid variant text       |
+Used by `variant="solid"` on Modal, Sheet, Drawer, etc. Generated via `createSolidTokens(bg, fg, semantics)`.
+
+| Variable           | Description                |
+| ------------------ | -------------------------- |
+| `--solid-bg`       | Solid variant background   |
+| `--solid-fg`       | Solid variant text         |
+| `--solid-success`  | Success on solid bg        |
+| `--solid-error`    | Error on solid bg          |
+| `--solid-warning`  | Warning on solid bg        |
 
 ### Theme Values
 
-| Theme       | `--primary` | `--background` | Mode  |
-| ----------- | ----------- | -------------- | ----- |
-| `default`   | Purple 500  | Indigo 100     | Light |
-| `doom`      | Green 600   | Slate 950      | Dark  |
-| `captain`   | Blue 500    | Slate 50       | Light |
-| `vigilante` | Yellow 600  | Gray 950       | Dark  |
+| Theme       | `--primary`   | `--background`  | `--shadow-base` | Mode  |
+| ----------- | ------------- | --------------- | --------------- | ----- |
+| `default`   | Purple 500    | Indigo 100      | Black 950       | Light |
+| `doom`      | Green 600     | Slate 950       | Black 950       | Dark  |
+| `captain`   | Blue 500      | Slate 50        | Black 950       | Light |
+| `vigilante` | Yellow 600    | Gray 950        | Black 950       | Dark  |
 
-### Usage in SCSS
-
-```scss
-.myComponent {
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  color: var(--foreground);
-  box-shadow: var(--shadow-hard);
-}
-```
-
-- Never hardcode hex values — always use CSS variables for theme compatibility.
+Each theme defines all color variables, surface variables, shadow variables, and solid tokens. See `styles/themes/definitions.ts` for exact values.
 
 ## SCSS Mixins
 
-Import with `@use "../../styles/mixins" as m;`.
+Source: `styles/_mixins.scss`
 
-### Interactive Element Mixins
+Import with `@use "../../styles/mixins" as *;` (unqualified — dominant codebase convention).
 
-#### `base-interactive`
+### `base-interactive`
 
-Base styles for clickable elements (border, shadow, transition).
+Base styles for clickable elements: border, border-radius, shadow, transition.
 
 ```scss
 .myButton {
-  @include m.base-interactive;
+  @include base-interactive;
 }
 ```
 
-#### `focus`
+### `focus`
 
-Focus states with keyboard navigation support (`focus-visible`).
+Focus-visible ring with lift and primary shadow. Also handles `aria-expanded`.
 
 ```scss
 .myInput {
-  @include m.focus;
+  @include focus;
 }
 ```
 
-#### `error`
+### `error`
 
-Error state styling (red border + error shadow).
+Error state: red border + error shadow.
 
 ```scss
 .myInput {
   &.hasError {
-    @include m.error;
+    @include error;
   }
 }
 ```
 
-#### `brutalist-hover($lift, $shadow-color)`
+### `brutalist-hover($lift: 2px, $shadow-color: var(--shadow-base))`
 
-Hover effect with lift and shadow grow.
+Hover lift effect. Shadow grows to compensate for lift.
 
 ```scss
 .myCard {
-  @include m.brutalist-hover(2px, var(--shadow-base));
+  @include brutalist-hover(2px, var(--shadow-base));
 }
 ```
 
-#### Active/press state (raw CSS, no mixin)
+### Active/press state (raw CSS, no mixin)
 
 ```scss
 &:active {
@@ -397,135 +479,46 @@ Hover effect with lift and shadow grow.
 }
 ```
 
-#### `disabled-state`
+### `disabled-state`
 
-Disabled styling with hatched pattern overlay.
+Disabled styling with hatched pattern overlay. Kills hover effects.
 
 ```scss
 .myButton:disabled {
-  @include m.disabled-state;
+  @include disabled-state;
 }
 ```
 
-### Theme Mixins
+### `invert-theme`
 
-#### `invert-theme`
+Inverts theme for content on primary-colored backgrounds. Swaps `--primary` and `--primary-foreground`.
 
-Inverts theme for content on primary-colored backgrounds.
+### `solid-variant`
 
-#### `solid-variant`
+Applies full solid variant styling. Overrides all color, surface, button, input, and popover tokens for a solid-background context. Used by Modal, Sheet, Drawer with `variant="solid"`.
 
-Applies solid variant styling (used by Modal, Sheet, Drawer with `variant="solid"`).
-
-### Shadow Mixins
-
-#### `brutalist-shadow($direction, $size, $color)`
+### `brutalist-shadow($direction: "standard", $size: 8px, $color: var(--shadow-base))`
 
 Directional hard shadows.
 
 ```scss
 .myElement {
-  @include m.brutalist-shadow("left", 8px, var(--shadow-base));
+  @include brutalist-shadow("left", 8px, var(--shadow-base));
 }
 ```
 
 Directions: `standard`, `top`, `bottom`, `left`, `right`
 
-### Responsive
-
-#### `mq($breakpoint, $type)`
+### `mq($breakpoint, $type: "min")`
 
 Media query helper.
 
 ```scss
 .myElement {
-  @include m.mq("md") {
+  @include mq("md") {
     flex-direction: row;
   }
 }
 ```
 
 Breakpoints: `xxs` (360px), `xs` (480px), `sm` (640px), `md` (768px), `lg` (1024px), `xl` (1280px)
-
-## Utility Classes
-
-### Display
-
-| Class          | Property               |
-| -------------- | ---------------------- |
-| `.flex`        | `display: flex`        |
-| `.grid`        | `display: grid`        |
-| `.hidden`      | `display: none`        |
-| `.block`       | `display: block`       |
-| `.inline-flex` | `display: inline-flex` |
-
-### Flexbox
-
-| Class              | Property                         |
-| ------------------ | -------------------------------- |
-| `.flex-row`        | `flex-direction: row`            |
-| `.flex-col`        | `flex-direction: column`         |
-| `.flex-wrap`       | `flex-wrap: wrap`                |
-| `.items-center`    | `align-items: center`            |
-| `.items-start`     | `align-items: flex-start`        |
-| `.items-end`       | `align-items: flex-end`          |
-| `.justify-center`  | `justify-content: center`        |
-| `.justify-between` | `justify-content: space-between` |
-| `.justify-end`     | `justify-content: flex-end`      |
-
-### Grid
-
-| Class               | Property                                |
-| ------------------- | --------------------------------------- |
-| `.grid-cols-{1-12}` | `grid-template-columns: repeat(n, 1fr)` |
-
-### Spacing
-
-All spacing uses 4px increments (0-10).
-
-| Class         | Property           |
-| ------------- | ------------------ |
-| `.gap-{0-10}` | Gap                |
-| `.m-{0-10}`   | Margin all         |
-| `.mt-{0-10}`  | Margin top         |
-| `.mb-{0-10}`  | Margin bottom      |
-| `.mx-{0-10}`  | Margin horizontal  |
-| `.my-{0-10}`  | Margin vertical    |
-| `.p-{0-10}`   | Padding all        |
-| `.px-{0-10}`  | Padding horizontal |
-| `.py-{0-10}`  | Padding vertical   |
-
-### Typography
-
-| Class                   | Property                            |
-| ----------------------- | ----------------------------------- |
-| `.text-{xs-6xl}`        | Font size                           |
-| `.font-{regular-black}` | Font weight                         |
-| `.text-{color}`         | Color (primary, muted, error, etc.) |
-| `.uppercase`            | Text transform                      |
-| `.text-center`          | Text align                          |
-
-### Sizing
-
-| Class       | Property        |
-| ----------- | --------------- |
-| `.w-full`   | `width: 100%`   |
-| `.h-full`   | `height: 100%`  |
-| `.h-screen` | `height: 100vh` |
-
-### Responsive Prefixes
-
-Use breakpoint prefixes: `sm:`, `md:`, `lg:`, `xl:`
-
-```html
-<div class="flex-col md:flex-row">
-  <!-- Column on mobile, row on md+ -->
-</div>
-```
-
-### Shadows
-
-| Class                                  | Property                  |
-| -------------------------------------- | ------------------------- |
-| `.shadow-hard`                         | Standard brutalist shadow |
-| `.shadow-{top/bottom/left/right}-hard` | Directional shadows       |

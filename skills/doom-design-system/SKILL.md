@@ -87,15 +87,16 @@ See `a2ui.md` for full protocol.
 | Category | Token                | Value               |
 |----------|----------------------|---------------------|
 | Colors   | `--primary`          | Purple (default)    |
-|          | `--bg`               | Page background     |
+|          | `--background`       | Page background     |
 |          | `--card-bg`          | Card background     |
 |          | `--card-border`      | Border color        |
 |          | `--muted-foreground` | Muted text          |
-| Spacing  | `--spacing-xs`       | 0.25rem (4px)       |
-|          | `--spacing-sm`       | 0.5rem (8px)        |
-|          | `--spacing-md`       | 0.75rem (12px)      |
-|          | `--spacing-lg`       | 1rem (16px)         |
-|          | `--spacing-xl`       | 1.5rem (24px)       |
+| Spacing  | `--spacing-1`        | 4px                 |
+|          | `--spacing-2`        | 8px                 |
+|          | `--spacing-3`        | 12px                |
+|          | `--spacing-4`        | 16px                |
+|          | `--spacing-6`        | 24px                |
+|          | `--spacing-8`        | 32px                |
 | Borders  | `--border-width`     | 2px                 |
 |          | `--radius`           | 4px                 |
 | Shadow   | `--shadow-hard`      | Hard offset, no blur|
