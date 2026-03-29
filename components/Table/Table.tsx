@@ -1,9 +1,11 @@
 import {
   ColumnDef,
   ColumnFiltersState,
+  ExpandedState,
   FilterFn,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -15,7 +17,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
-import { Filter, ListFilter, Search } from "lucide-react";
+import { ChevronRight, Filter, ListFilter, Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 import { Button } from "../Button/Button";
@@ -39,6 +41,7 @@ const coreRowModel = getCoreRowModel();
 const sortedRowModel = getSortedRowModel();
 const paginationRowModel = getPaginationRowModel();
 const filteredRowModel = getFilteredRowModel();
+const expandedRowModel = getExpandedRowModel();
 
 const convertToFilterNode = (item: FilterItem): FilterNode => {
   if (item.type === "group") {
@@ -89,6 +92,7 @@ export interface TableProps<T> {
   }[];
   striped?: boolean;
   onRowClick?: (row: Row<T>, e: React.MouseEvent) => void;
+  renderExpandedRow?: (row: Row<T>) => React.ReactNode | null;
 }
 
 interface BodyProps<T> {
@@ -97,6 +101,8 @@ interface BodyProps<T> {
   striped: boolean;
   density: "compact" | "standard" | "relaxed";
   onRowClick?: (row: Row<T>, e: React.MouseEvent) => void;
+  renderExpandedRow?: (row: Row<T>) => React.ReactNode | null;
+  totalColumns: number;
 }
 
 interface VirtualBodyProps<T> extends BodyProps<T> {
@@ -110,6 +116,8 @@ function VirtualTableBody<T>({
   density,
   scrollElement,
   onRowClick,
+  renderExpandedRow,
+  totalColumns,
 }: VirtualBodyProps<T>) {
   const { rows } = table.getRowModel();
 
@@ -133,26 +141,40 @@ function VirtualTableBody<T>({
       )}
       {rowVirtualizer.getVirtualItems().map((virtualRow) => {
         const row = rows[virtualRow.index];
+        const expandedContent =
+          row.getIsExpanded() && renderExpandedRow
+            ? renderExpandedRow(row)
+            : null;
         return (
-          <tr
-            key={row.id}
-            ref={rowVirtualizer.measureElement}
-            className={clsx(styles.tr, {
-              [styles.striped]: striped && virtualRow.index % 2 !== 0,
-              [styles.clickable]: !!onRowClick,
-            })}
-            data-index={virtualRow.index}
-            onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
-          >
-            {row.getVisibleCells().map((cell) => (
-              <td
-                key={cell.id}
-                className={clsx(styles.td, styles[`density-${density}`])}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
+          <React.Fragment key={row.id}>
+            <tr
+              ref={rowVirtualizer.measureElement}
+              className={clsx(styles.tr, {
+                [styles.striped]: striped && virtualRow.index % 2 !== 0,
+                [styles.clickable]: !!onRowClick,
+              })}
+              data-index={virtualRow.index}
+              onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  className={clsx(
+                    styles.td,
+                    styles[`density-${density}`],
+                    cell.column.id === "__expand" && styles.expandCol,
+                  )}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+            {expandedContent && (
+              <tr className={styles.expandedRow}>
+                <td colSpan={totalColumns}>{expandedContent}</td>
+              </tr>
+            )}
+          </React.Fragment>
         );
       })}
       {rowVirtualizer.getVirtualItems().length > 0 && (
@@ -173,22 +195,48 @@ function VirtualTableBody<T>({
   );
 }
 
-function StandardTableBody<T>({ table, striped, density, onRowClick }: BodyProps<T>) {
+function StandardTableBody<T>({
+  table,
+  striped,
+  density,
+  onRowClick,
+  renderExpandedRow,
+  totalColumns,
+}: BodyProps<T>) {
   return (
     <tbody>
-      {table.getRowModel().rows.map((row) => (
-        <tr
-          key={row.id}
-          className={clsx(styles.tr, striped && styles.striped, onRowClick && styles.clickable, "group")}
-          onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
-        >
-          {row.getVisibleCells().map((cell) => (
-            <td key={cell.id} className={clsx(styles.td, styles[density])}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </td>
-          ))}
-        </tr>
-      ))}
+      {table.getRowModel().rows.map((row) => {
+        const expandedContent =
+          row.getIsExpanded() && renderExpandedRow
+            ? renderExpandedRow(row)
+            : null;
+        return (
+          <React.Fragment key={row.id}>
+            <tr
+              className={clsx(styles.tr, striped && styles.striped, onRowClick && styles.clickable, "group")}
+              onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  className={clsx(
+                    styles.td,
+                    styles[density],
+                    cell.column.id === "__expand" && styles.expandCol,
+                  )}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+            {expandedContent && (
+              <tr className={styles.expandedRow}>
+                <td colSpan={totalColumns}>{expandedContent}</td>
+              </tr>
+            )}
+          </React.Fragment>
+        );
+      })}
     </tbody>
   );
 }
@@ -214,8 +262,10 @@ export function Table<T>({
   striped = false,
   maxHeight,
   onRowClick,
+  renderExpandedRow,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
@@ -285,25 +335,64 @@ export function Table<T>({
     });
   }, [columns]);
 
+  const finalColumns = useMemo(() => {
+    if (!renderExpandedRow) return normalizedColumns;
+
+    const expandColumn: ColumnDef<T, unknown> = {
+      id: "__expand",
+      header: "",
+      size: 40,
+      enableSorting: false,
+      enableColumnFilter: false,
+      cell: ({ row }) => {
+        const content = renderExpandedRow(row);
+        if (!content) return null;
+        return (
+          <button
+            aria-label="Expand row"
+            className={styles.expandToggle}
+            onClick={(e) => {
+              e.stopPropagation();
+              row.toggleExpanded();
+            }}
+          >
+            <ChevronRight
+              className={clsx(
+                styles.expandToggleIcon,
+                row.getIsExpanded() && styles.expanded,
+              )}
+              size={16}
+            />
+          </button>
+        );
+      },
+    };
+
+    return [expandColumn, ...normalizedColumns];
+  }, [normalizedColumns, renderExpandedRow]);
+
   const table = useReactTable<T>({
     data: filteredData,
-    columns: normalizedColumns,
+    columns: finalColumns,
     state: {
       sorting,
       globalFilter,
       columnFilters,
       pagination,
+      expanded,
     },
     enableSorting,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
+    onExpandedChange: setExpanded,
     getCoreRowModel: coreRowModel,
     getSortedRowModel: sortedRowModel,
     getPaginationRowModel: enablePagination ? paginationRowModel : undefined,
     getFilteredRowModel:
       enableFiltering || enableColumnFilters ? filteredRowModel : undefined,
+    getExpandedRowModel: renderExpandedRow ? expandedRowModel : undefined,
     defaultColumn: {
       filterFn: smartColumnFilterFn,
     },
@@ -489,20 +578,24 @@ export function Table<T>({
 
           {isVirtual ? (
             <VirtualTableBody<T>
-              columns={normalizedColumns}
+              columns={finalColumns}
               density={density}
               onRowClick={onRowClick}
+              renderExpandedRow={renderExpandedRow}
               scrollElement={scrollElement}
               striped={striped}
               table={table}
+              totalColumns={finalColumns.length}
             />
           ) : (
             <StandardTableBody<T>
-              columns={normalizedColumns}
+              columns={finalColumns}
               density={density}
               onRowClick={onRowClick}
+              renderExpandedRow={renderExpandedRow}
               striped={striped}
               table={table}
+              totalColumns={finalColumns.length}
             />
           )}
         </table>

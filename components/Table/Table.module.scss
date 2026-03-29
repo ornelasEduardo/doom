@@ -226,3 +226,44 @@
   align-items: center;
   gap: var(--spacing-2);
 }
+
+.expandToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacing-6);
+  height: var(--spacing-6);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--on-surface-muted);
+  border-radius: var(--radius);
+  transition: all var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    color: var(--on-surface);
+    background: color-mix(in srgb, var(--muted-foreground) 15%, transparent);
+  }
+}
+
+.expandToggleIcon {
+  transition: transform var(--duration-fast) var(--ease-in-out);
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.expandedRow {
+  td {
+    padding: var(--spacing-4);
+    background: color-mix(in srgb, var(--muted-foreground) 5%, transparent);
+    border-bottom: 1px solid var(--card-border);
+  }
+}
+
+.expandCol {
+  width: var(--spacing-10);
+  padding: var(--spacing-2) !important;
+}

@@ -574,6 +574,90 @@ describe("Table Component", () => {
     });
   });
 
+  describe("renderExpandedRow", () => {
+    it("should show expand chevron for rows that return content", () => {
+      render(
+        <Table
+          columns={columns}
+          data={data}
+          renderExpandedRow={(row) =>
+            row.original.name === "Alice" ? (
+              <div>Alice Details</div>
+            ) : null
+          }
+        />,
+      );
+
+      const expandButtons = screen.getAllByRole("button", { name: /expand/i });
+      expect(expandButtons).toHaveLength(1);
+    });
+
+    it("should toggle expanded content when chevron is clicked", () => {
+      render(
+        <Table
+          columns={columns}
+          data={data}
+          renderExpandedRow={(row) =>
+            row.original.name === "Alice" ? (
+              <div data-testid="expanded-alice">Alice Details</div>
+            ) : null
+          }
+        />,
+      );
+
+      expect(screen.queryByTestId("expanded-alice")).not.toBeInTheDocument();
+
+      const expandButton = screen.getByRole("button", { name: /expand/i });
+      fireEvent.click(expandButton);
+
+      expect(screen.getByTestId("expanded-alice")).toBeInTheDocument();
+
+      fireEvent.click(expandButton);
+      expect(screen.queryByTestId("expanded-alice")).not.toBeInTheDocument();
+    });
+
+    it("should not fire onRowClick when clicking the expand chevron", () => {
+      const handleRowClick = vi.fn();
+      render(
+        <Table
+          columns={columns}
+          data={data}
+          onRowClick={handleRowClick}
+          renderExpandedRow={(row) =>
+            row.original.name === "Alice" ? (
+              <div>Alice Details</div>
+            ) : null
+          }
+        />,
+      );
+
+      const expandButton = screen.getByRole("button", { name: /expand/i });
+      fireEvent.click(expandButton);
+
+      expect(handleRowClick).not.toHaveBeenCalled();
+    });
+
+    it("should render expanded content spanning all columns", () => {
+      render(
+        <Table
+          columns={columns}
+          data={data}
+          renderExpandedRow={(row) =>
+            row.original.name === "Alice" ? (
+              <div data-testid="expanded-alice">Alice Details</div>
+            ) : null
+          }
+        />,
+      );
+
+      const expandButton = screen.getByRole("button", { name: /expand/i });
+      fireEvent.click(expandButton);
+
+      const expandedTd = screen.getByTestId("expanded-alice").closest("td");
+      expect(expandedTd).toHaveAttribute("colspan", String(columns.length + 1));
+    });
+  });
+
   it("should support startsWith and endsWith operators", async () => {
     const { evaluateFilter } = await import("./utils/filterAst");
 
