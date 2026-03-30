@@ -1,0 +1,3 @@
+// CSS Layer order — MUST be emitted first in the stylesheet.
+// Consumer (unlayered) CSS always beats any doom layer.
+@layer doom.reset, doom.utilities, doom.components;
