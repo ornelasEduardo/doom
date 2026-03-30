@@ -27,7 +27,7 @@
       box-shadow 0.2s ease;
 
     &:not(:disabled):not(.active) {
-      @include hover(2px, var(--card-border));
+      @include hover;
 
       &:hover {
         background-color: var(--primary);

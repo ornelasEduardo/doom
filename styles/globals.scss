@@ -1,7 +1,7 @@
-// Layer order declaration — consumer (unlayered) CSS always wins
-@layer doom.reset, doom.utilities, doom.components;
-
 @use "primitives";
 @use "semantic";
 @use "reset";
 @use "utilities";
+
+// Layer order declaration — consumer (unlayered) CSS always wins
+@layer doom.reset, doom.utilities, doom.components;
