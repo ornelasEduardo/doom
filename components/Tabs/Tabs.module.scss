@@ -1,95 +1,97 @@
-@use "../../styles/mixins";
+@use "../../styles/mixins" as *;
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.tabsList {
-  display: flex;
-  margin-bottom: 0;
-  padding-left: var(--spacing-4);
-  position: relative;
-  gap: var(--spacing-2);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
-
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  &.align-left {
-    justify-content: flex-start;
-  }
-
-  &.align-right {
-    justify-content: flex-end;
-    padding-right: var(--spacing-4);
-    padding-left: 0;
-  }
-
-  @include mixins.mq("sm", "max") {
-    padding-left: 0;
-    padding-right: 0;
-    gap: var(--spacing-1);
-  }
-}
-
-.tabsTrigger {
-  flex-shrink: 0;
-  padding: var(--spacing-3) var(--spacing-6);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background-color: var(--card-bg);
-  color: var(--foreground);
-  border: var(--border-width) solid var(--card-border);
-  border-bottom: none;
-  border-radius: var(--radius) var(--radius) 0 0;
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-
-  @include mixins.mq("sm", "max") {
-    padding: var(--spacing-3) var(--spacing-4);
-  }
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--primary), transparent 90%);
-  }
-
-  &.active {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-
-    &:hover {
-      filter: brightness(1.05);
+@layer doom.components {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
-}
 
-.tabsBody {
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-hard);
-  position: relative;
-  margin-top: -3px;
+  .tabsList {
+    display: flex;
+    margin-bottom: 0;
+    padding-left: var(--space-4);
+    position: relative;
+    gap: var(--space-2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
 
-  @include mixins.mq("sm", "max") {
-    padding: var(--spacing-4);
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &.align-left {
+      justify-content: flex-start;
+    }
+
+    &.align-right {
+      justify-content: flex-end;
+      padding-right: var(--space-4);
+      padding-left: 0;
+    }
+
+    @include mq("sm", "max") {
+      padding-left: 0;
+      padding-right: 0;
+      gap: var(--space-1);
+    }
   }
-}
 
-.tabsContent {
-  animation: fadeIn 0.3s ease-out forwards;
+  .tabsTrigger {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-6);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: var(--card-bg);
+    color: var(--foreground);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-bottom: none;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+
+    @include mq("sm", "max") {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--primary), transparent 90%);
+    }
+
+    &.active {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+
+      &:hover {
+        filter: brightness(1.05);
+      }
+    }
+  }
+
+  .tabsBody {
+    background: var(--card-bg);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    margin-top: -3px;
+
+    @include mq("sm", "max") {
+      padding: var(--space-4);
+    }
+  }
+
+  .tabsContent {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
 }

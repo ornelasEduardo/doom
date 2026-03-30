@@ -1,6 +1,8 @@
 @use "../../../../styles/mixins" as *;
 
-.footer {
-  width: 100%;
-  margin-top: var(--spacing-4);
+@layer doom.components {
+  .footer {
+    width: 100%;
+    margin-top: var(--space-4);
+  }
 }

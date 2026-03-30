@@ -1,69 +1,71 @@
-@use "../../../styles/mixins" as m;
+@use "../../../styles/mixins" as *;
 
-.conditionList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-4);
-}
-
-.emptyState {
-  padding: var(--spacing-6);
-  text-align: center;
-  font-size: var(--text-sm);
-  color: var(--on-surface-muted);
-  background: var(--surface-accent);
-  border-radius: var(--radius);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.logicToggle {
-  align-self: center;
-  padding: var(--spacing-1) var(--spacing-2);
-  font-family: var(--font-family);
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--primary);
-  background: transparent;
-  border: var(--border-width) solid var(--primary);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-in-out);
-
-  &:hover {
-    background: var(--primary);
-    color: var(--primary-foreground);
+@layer doom.components {
+  .conditionList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
   }
 
-  @include m.focus;
-}
+  .emptyState {
+    padding: var(--space-6);
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--on-surface-muted);
+    background: var(--surface-accent);
+    border-radius: var(--radius-md);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
 
-.addButton {
-  width: 100%;
-}
-
-.siblingLogic {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-2) 0;
-
-  span {
-    padding: var(--spacing-1) var(--spacing-2);
+  .logicToggle {
+    align-self: center;
+    padding: var(--space-1) var(--space-2);
+    font-family: var(--font-family);
     font-size: var(--text-xs);
     font-weight: var(--font-bold);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--secondary-foreground);
-    background: var(--secondary);
-    border: var(--border-width) solid var(--secondary);
-    border-radius: var(--radius);
-  }
-}
+    color: var(--primary);
+    background: transparent;
+    border: var(--surface-border-width) solid var(--primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-in-out);
 
-.addSiblingButton {
-  margin-top: var(--spacing-2);
+    &:hover {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    @include focus;
+  }
+
+  .addButton {
+    width: 100%;
+  }
+
+  .siblingLogic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) 0;
+
+    span {
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs);
+      font-weight: var(--font-bold);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--secondary-foreground);
+      background: var(--secondary);
+      border: var(--surface-border-width) solid var(--secondary);
+      border-radius: var(--radius-md);
+    }
+  }
+
+  .addSiblingButton {
+    margin-top: var(--space-2);
+  }
 }

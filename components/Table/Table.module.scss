@@ -1,269 +1,268 @@
 @use "../../styles/mixins" as *;
 
-.container {
-  width: 100%;
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  background: var(--surface-accent);
-  box-shadow: var(--shadow-hard);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  &.flat {
-    box-shadow: none;
-  }
-}
-
-.toolbar {
-  padding: var(--spacing-4);
-  border-bottom: var(--border-width) solid var(--card-border);
-  background: transparent;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-.headerGroup {
-  display: flex;
-  flex-direction: column;
-  border-bottom: var(--border-width) solid var(--card-border);
-  background: transparent;
-  width: 100%;
-}
-
-.searchBar {
-  padding: var(--spacing-4);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-4);
-  width: 100%;
-
-  @include mq("md", "max") {
+@layer doom.components {
+  .container {
+    width: 100%;
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+    background: var(--surface-accent);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-3);
+
+    &.flat {
+      box-shadow: none;
+    }
   }
-}
 
-.searchWrapper {
-  width: var(--spacing-72);
-
-  @include mq("md", "max") {
-    width: 100%;
-  }
-}
-
-.actionsWrapper {
-  display: flex;
-  gap: var(--spacing-2);
-  align-items: center;
-
-  @include mq("md", "max") {
-    width: 100%;
+  .toolbar {
+    padding: var(--space-4);
+    border-bottom: var(--surface-border-width) solid var(--card-border);
+    background: transparent;
+    display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
   }
-}
 
-.controls {
-  display: flex;
-  gap: var(--spacing-2);
-}
-
-.filterBar {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  flex-wrap: wrap;
-  width: 100%;
-  background: var(--background);
-  border-top: var(--border-width) solid var(--card-border);
-  border-bottom: var(--border-width) solid var(--card-border);
-  box-shadow: inset 0 var(--border-width) var(--spacing-1) rgba(0, 0, 0, 0.06);
-  padding: var(--spacing-4);
-  gap: var(--spacing-2);
-
-  @include mq("md", "max") {
+  .headerGroup {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-.filterItem {
-  /* "Module" look */
-  min-width: var(--spacing-36);
-  width: var(--spacing-56);
-  position: relative;
-
-  @include mq("md", "max") {
+    border-bottom: var(--surface-border-width) solid var(--card-border);
+    background: transparent;
     width: 100%;
-    min-width: 0;
   }
 
-  // Optional: Add a "label" styling above if we want to get fancy later.
-  // For now, it's just the wrapper for the Select.
-}
+  .searchBar {
+    padding: var(--space-4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
 
-.tableWrapper {
-  width: 100%;
-  overflow: hidden;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-base);
-  background: var(--card-bg);
-}
-
-.th {
-  text-align: left;
-  padding: var(--spacing-4);
-  background: var(--secondary);
-  border-bottom: var(--border-width) solid var(--card-border);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  user-select: none;
-  white-space: nowrap;
-  color: var(--secondary-foreground);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-elevated);
-
-  &.compact {
-    padding: var(--spacing-2) var(--spacing-4);
-  }
-  &.relaxed {
-    padding: var(--spacing-6) var(--spacing-4);
-  }
-
-  &.sortable {
-    cursor: pointer;
-    &:hover {
-      filter: brightness(0.95);
-      color: var(--secondary-foreground);
-    }
-  }
-}
-
-.td {
-  padding: var(--spacing-4);
-  border-bottom: 1px solid var(--card-border);
-  color: var(--on-surface);
-
-  &.compact {
-    padding: var(--spacing-2) var(--spacing-4);
-  }
-  &.relaxed {
-    padding: var(--spacing-6) var(--spacing-4);
-  }
-}
-
-.tr {
-  &:last-child td {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background-color: color-mix(
-      in srgb,
-      var(--muted-foreground) 10%,
-      transparent
-    );
-  }
-
-  &.striped {
-    &:nth-of-type(even) {
-      background-color: color-mix(
-        in srgb,
-        var(--muted-foreground) 5%,
-        transparent
-      );
-    }
-    &:hover {
-      background-color: color-mix(
-        in srgb,
-        var(--muted-foreground) 15%,
-        transparent
-      );
+    @include mq("md", "max") {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-3);
     }
   }
 
-  .row-actions {
-    opacity: 0;
-    transition: opacity var(--duration-fast) var(--ease-in-out);
+  .searchWrapper {
+    width: 288px;
+
+    @include mq("md", "max") {
+      width: 100%;
+    }
   }
 
-  &:hover .row-actions {
-    opacity: 1;
+  .actionsWrapper {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+
+    @include mq("md", "max") {
+      width: 100%;
+      justify-content: space-between;
+    }
   }
-}
 
-.clickable {
-  cursor: pointer;
-}
-
-.paginationContainer {
-  padding: var(--spacing-4);
-  border-top: var(--border-width) solid var(--card-border);
-  background: transparent;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.noResults {
-  padding: var(--spacing-8);
-  text-align: center;
-  color: var(--on-surface-muted);
-}
-
-.headerContent {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.expandToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--spacing-6);
-  height: var(--spacing-6);
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: var(--on-surface-muted);
-  border-radius: var(--radius);
-  transition: all var(--duration-fast) var(--ease-in-out);
-
-  &:hover {
-    color: var(--on-surface);
-    background: color-mix(in srgb, var(--muted-foreground) 15%, transparent);
+  .controls {
+    display: flex;
+    gap: var(--space-2);
   }
-}
 
-.expandToggleIcon {
-  transition: transform var(--duration-fast) var(--ease-in-out);
+  .filterBar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    background: var(--background);
+    border-top: var(--surface-border-width) solid var(--card-border);
+    border-bottom: var(--surface-border-width) solid var(--card-border);
+    box-shadow: inset 0 var(--surface-border-width) var(--space-1) rgba(0, 0, 0, 0.06);
+    padding: var(--space-4);
+    gap: var(--space-2);
 
-  &.expanded {
-    transform: rotate(90deg);
+    @include mq("md", "max") {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
-}
 
-.expandedRow {
-  td {
-    padding: var(--spacing-4);
-    background: color-mix(in srgb, var(--muted-foreground) 5%, transparent);
+  .filterItem {
+    /* "Module" look */
+    min-width: 144px;
+    width: 224px;
+    position: relative;
+
+    @include mq("md", "max") {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  .tableWrapper {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-base);
+    background: var(--card-bg);
+  }
+
+  .th {
+    text-align: left;
+    padding: var(--space-4);
+    background: var(--secondary);
+    border-bottom: var(--surface-border-width) solid var(--card-border);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
+    white-space: nowrap;
+    color: var(--secondary-foreground);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-elevated);
+
+    &.compact {
+      padding: var(--space-2) var(--space-4);
+    }
+    &.relaxed {
+      padding: var(--space-6) var(--space-4);
+    }
+
+    &.sortable {
+      cursor: pointer;
+      &:hover {
+        filter: brightness(0.95);
+        color: var(--secondary-foreground);
+      }
+    }
+  }
+
+  .td {
+    padding: var(--space-4);
     border-bottom: 1px solid var(--card-border);
-  }
-}
+    color: var(--on-surface);
 
-.expandCol {
-  width: var(--spacing-10);
-  padding: var(--spacing-2) !important;
+    &.compact {
+      padding: var(--space-2) var(--space-4);
+    }
+    &.relaxed {
+      padding: var(--space-6) var(--space-4);
+    }
+  }
+
+  .tr {
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: color-mix(
+        in srgb,
+        var(--muted-foreground) 10%,
+        transparent
+      );
+    }
+
+    &.striped {
+      &:nth-of-type(even) {
+        background-color: color-mix(
+          in srgb,
+          var(--muted-foreground) 5%,
+          transparent
+        );
+      }
+      &:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--muted-foreground) 15%,
+          transparent
+        );
+      }
+    }
+
+    .row-actions {
+      opacity: 0;
+      transition: opacity var(--duration-fast) var(--ease-in-out);
+    }
+
+    &:hover .row-actions {
+      opacity: 1;
+    }
+  }
+
+  .clickable {
+    cursor: pointer;
+  }
+
+  .paginationContainer {
+    padding: var(--space-4);
+    border-top: var(--surface-border-width) solid var(--card-border);
+    background: transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .noResults {
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--on-surface-muted);
+  }
+
+  .headerContent {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .expandToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-6);
+    height: var(--space-6);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--on-surface-muted);
+    border-radius: var(--radius-md);
+    transition: all var(--duration-fast) var(--ease-in-out);
+
+    &:hover {
+      color: var(--on-surface);
+      background: color-mix(in srgb, var(--muted-foreground) 15%, transparent);
+    }
+  }
+
+  .expandToggleIcon {
+    transition: transform var(--duration-fast) var(--ease-in-out);
+
+    &.expanded {
+      transform: rotate(90deg);
+    }
+  }
+
+  .expandedRow {
+    td {
+      padding: var(--space-4);
+      background: color-mix(in srgb, var(--muted-foreground) 5%, transparent);
+      border-bottom: 1px solid var(--card-border);
+    }
+  }
+
+  .expandCol {
+    width: 40px;
+    padding: var(--space-2) !important;
+  }
 }

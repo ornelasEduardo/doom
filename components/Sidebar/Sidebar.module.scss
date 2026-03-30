@@ -1,90 +1,92 @@
 @use "../../styles/mixins" as *;
 
-/**
- * Root
- * Inner content wrapper for sidebar content structure
- */
-.root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-/**
- * Shell
- * Outer container that reserves layout space in document flow.
- * Controls responsive widths for normal, collapsed, and rail modes.
- */
-.shell {
-  display: none;
-  position: relative;
-
-  @include mq("md") {
-    display: block;
+@layer doom.components {
+  /**
+   * Root
+   * Inner content wrapper for sidebar content structure
+   */
+  .root {
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    width: var(--width-sidebar);
+    overflow: hidden;
+  }
 
-    &.withRail {
-      width: calc(var(--width-sidebar-collapsed) + var(--width-sidebar));
+  /**
+   * Shell
+   * Outer container that reserves layout space in document flow.
+   * Controls responsive widths for normal, collapsed, and rail modes.
+   */
+  .shell {
+    display: none;
+    position: relative;
 
-      &.collapsed {
+    @include mq("md") {
+      display: block;
+      height: 100%;
+      width: var(--width-sidebar);
+
+      &.withRail {
+        width: calc(var(--width-sidebar-collapsed) + var(--width-sidebar));
+
+        &.collapsed {
+          width: var(--width-sidebar-collapsed);
+        }
+      }
+
+      &.collapsed:not(.withRail) {
         width: var(--width-sidebar-collapsed);
       }
     }
-
-    &.collapsed:not(.withRail) {
-      width: var(--width-sidebar-collapsed);
-    }
   }
-}
 
-/**
- * Frame
- * Visual layer with background, border, and shadow.
- * Absolutely positioned within shell to enable peek expansion.
- */
-.frame {
-  @include mq("md") {
-    display: flex;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: var(--card-bg);
-    border: var(--border-width) solid var(--card-border);
-    @include brutalist-shadow("right", var(--spacing-2));
-    border-top-right-radius: var(--radius);
-    border-bottom-right-radius: var(--radius);
-    overflow: hidden;
-    z-index: var(--z-sidebar);
+  /**
+   * Frame
+   * Visual layer with background, border, and shadow.
+   * Absolutely positioned within shell to enable peek expansion.
+   */
+  .frame {
+    @include mq("md") {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background-color: var(--card-bg);
+      border: var(--surface-border-width) solid var(--card-border);
+      @include shadow-directional("right", var(--space-2));
+      border-top-right-radius: var(--radius-md);
+      border-bottom-right-radius: var(--radius-md);
+      overflow: hidden;
+      z-index: var(--z-sidebar);
 
-    &.peeking {
-      width: calc(var(--width-sidebar-collapsed) + var(--width-sidebar));
-      overflow: visible;
+      &.peeking {
+        width: calc(var(--width-sidebar-collapsed) + var(--width-sidebar));
+        overflow: visible;
 
-      &:not(.withRail) {
-        width: var(--width-sidebar);
+        &:not(.withRail) {
+          width: var(--width-sidebar);
+        }
       }
     }
   }
-}
 
-/**
- * Panel
- * Scrollable content area containing Header, Nav, and Footer.
- * Hidden when collapsed with rail unless peeking.
- */
-.panel {
-  flex: 1;
-  overflow-y: auto;
-  background-color: var(--card-bg);
-  border-top-right-radius: inherit;
-  border-bottom-right-radius: inherit;
-  overflow: hidden;
+  /**
+   * Panel
+   * Scrollable content area containing Header, Nav, and Footer.
+   * Hidden when collapsed with rail unless peeking.
+   */
+  .panel {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--card-bg);
+    border-top-right-radius: inherit;
+    border-bottom-right-radius: inherit;
+    overflow: hidden;
 
-  &.withRail.collapsed:not(.peeking) {
-    display: none;
+    &.withRail.collapsed:not(.peeking) {
+      display: none;
+    }
   }
 }

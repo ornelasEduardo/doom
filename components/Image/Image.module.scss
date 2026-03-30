@@ -1,69 +1,66 @@
-.image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+@layer doom.components {
+  .image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
 
-  // Clean default bg to prevent double coloring
-  background-color: transparent;
+    // Clean default bg to prevent double coloring
+    background-color: transparent;
 
-  &.visible {
+    &.visible {
+      opacity: 1;
+    }
+
+    &.hidden {
+      opacity: 0;
+    }
+
+    // Object Fit Variants
+    &.fit-cover {
+      object-fit: cover;
+    }
+    &.fit-contain {
+      object-fit: contain;
+    }
+    &.fit-fill {
+      object-fit: fill;
+    }
+    &.fit-none {
+      object-fit: none;
+    }
+    &.fit-scale-down {
+      object-fit: scale-down;
+    }
+  }
+
+  .wrapper {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background-color: var(--surface-accent);
+
+    // Ensures layers stack correctly
+    isolation: isolate;
+  }
+
+  .skeletonLayer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
     opacity: 1;
+
+    &.fadeOut {
+      opacity: 0;
+    }
   }
 
-  &.hidden {
-    opacity: 0;
+  .rounded {
+    border-radius: var(--radius-md);
   }
-
-  // Object Fit Variants
-  &.fit-cover {
-    object-fit: cover;
-  }
-  &.fit-contain {
-    object-fit: contain;
-  }
-  &.fit-fill {
-    object-fit: fill;
-  }
-  &.fit-none {
-    object-fit: none;
-  }
-  &.fit-scale-down {
-    object-fit: scale-down;
-  }
-}
-
-.wrapper {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  background-color: var(--surface-accent);
-
-  // Ensures layers stack correctly
-  isolation: isolate;
-}
-
-.skeletonLayer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1; // Skeleton sits below emerging image visually if needed, or above?
-  // Actually, we want skeleton visible until image is ready.
-  // Let's keep skeleton on top? No, image opaque over skeleton is smoother.
-  // Wait, if image fades in 0->1, it blends with skeleton.
-  // If skeleton is z-1, it stays visible through the semi-transparent image.
-  // Perfect.
-  pointer-events: none;
-  transition: opacity 0.5s ease-in-out;
-  opacity: 1;
-
-  &.fadeOut {
-    opacity: 0;
-  }
-}
-
-.rounded {
-  border-radius: var(--radius);
 }

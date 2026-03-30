@@ -1,39 +1,41 @@
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--foreground), transparent 90%) 25%,
-    color-mix(in srgb, var(--foreground), transparent 80%) 37%,
-    color-mix(in srgb, var(--foreground), transparent 90%) 63%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-
-  width: var(--width, 100%);
-  height: var(--height, auto);
-
-  &.text {
-    height: var(--height, 1em);
-    border-radius: var(--radius);
-    margin-bottom: var(--spacing-2);
+@layer doom.components {
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 
-  &.circular {
-    border-radius: 50%;
-    height: var(--height, var(--width, var(--spacing-12)));
-    width: var(--width, var(--height, var(--spacing-12)));
-  }
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--foreground), transparent 90%) 25%,
+      color-mix(in srgb, var(--foreground), transparent 80%) 37%,
+      color-mix(in srgb, var(--foreground), transparent 90%) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
-  &.rectangular {
-    height: var(--height, var(--spacing-40));
-    border-radius: var(--radius);
+    width: var(--width, 100%);
+    height: var(--height, auto);
+
+    &.text {
+      height: var(--height, 1em);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-2);
+    }
+
+    &.circular {
+      border-radius: 50%;
+      height: var(--height, var(--width, var(--space-12)));
+      width: var(--width, var(--height, var(--space-12)));
+    }
+
+    &.rectangular {
+      height: var(--height, 160px);
+      border-radius: var(--radius-md);
+    }
   }
 }

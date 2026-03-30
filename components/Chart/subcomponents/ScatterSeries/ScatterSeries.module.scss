@@ -1,11 +1,10 @@
-.dot {
-  fill: var(--background);
-  stroke: var(--primary);
-  stroke-width: calc(var(--border-width) * 1.5);
-  transition:
-    r 0.2s ease,
-    fill 0.2s;
-
-  // Highlight?
-  // Could scale up on hover
+@layer doom.components {
+  .dot {
+    fill: var(--background);
+    stroke: var(--primary);
+    stroke-width: calc(var(--surface-border-width) * 1.5);
+    transition:
+      r 0.2s ease,
+      fill 0.2s;
+  }
 }

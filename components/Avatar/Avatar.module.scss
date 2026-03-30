@@ -1,72 +1,74 @@
-.avatar {
-  position: relative;
-  border: var(--border-width) solid var(--card-border);
-  overflow: hidden;
-  background-color: var(--card-bg); /* Fallback bg */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+@layer doom.components {
+  .avatar {
+    position: relative;
+    border: var(--surface-border-width) solid var(--card-border);
+    overflow: hidden;
+    background-color: var(--card-bg); /* Fallback bg */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 
-  &.circle {
-    border-radius: 50%;
+    &.circle {
+      border-radius: 50%;
+    }
+
+    &.square {
+      border-radius: var(--radius-md);
+    }
+
+    /* Sizes */
+    &.sm {
+      width: var(--space-8);
+      height: var(--space-8);
+    }
+
+    &.md {
+      width: var(--space-12);
+      height: var(--space-12);
+    }
+
+    &.lg {
+      width: var(--space-16);
+      height: var(--space-16);
+    }
+
+    &.xl {
+      width: 96px;
+      height: 96px;
+    }
   }
 
-  &.square {
-    border-radius: var(--radius);
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  /* Sizes */
-  &.sm {
-    width: var(--spacing-8);
-    height: var(--spacing-8);
-  }
+  .fallback {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--primary-foreground);
+    background-color: var(--primary);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
 
-  &.md {
-    width: var(--spacing-12);
-    height: var(--spacing-12);
-  }
-
-  &.lg {
-    width: var(--spacing-16);
-    height: var(--spacing-16);
-  }
-
-  &.xl {
-    width: var(--spacing-24);
-    height: var(--spacing-24);
-  }
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.fallback {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  color: var(--primary-foreground);
-  background-color: var(--primary);
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-
-  /* Font sizes mapped to parent sizes */
-  &.sm {
-    font-size: var(--text-xs);
-  }
-  &.md {
-    font-size: var(--text-base);
-  }
-  &.lg {
-    font-size: var(--text-lg);
-  }
-  &.xl {
-    font-size: var(--text-2xl);
+    /* Font sizes mapped to parent sizes */
+    &.sm {
+      font-size: var(--text-xs);
+    }
+    &.md {
+      font-size: var(--text-base);
+    }
+    &.lg {
+      font-size: var(--text-lg);
+    }
+    &.xl {
+      font-size: var(--text-2xl);
+    }
   }
 }

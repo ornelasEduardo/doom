@@ -1,17 +1,19 @@
-.label {
-  font-family: var(--font-heading);
-  font-weight: var(--font-bold);
-  font-size: var(--text-sm);
-  color: var(--foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
+@layer doom.components {
+  .label {
+    font-family: var(--font-heading);
+    font-weight: var(--font-bold);
+    font-size: var(--text-sm);
+    color: var(--foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
 
-  &.required::after {
-    content: "*";
-    color: var(--error);
-    margin-left: var(--spacing-1);
+    &.required::after {
+      content: "*";
+      color: var(--error);
+      margin-left: var(--space-1);
+    }
   }
 }

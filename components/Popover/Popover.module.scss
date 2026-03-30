@@ -1,20 +1,22 @@
-.popover {
-  position: fixed;
-  z-index: var(--z-tooltip);
-  animation: popoverScale 0.1s ease-out;
-}
-
-@keyframes popoverScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
+@layer doom.components {
+  .popover {
+    position: fixed;
+    z-index: var(--z-tooltip);
+    animation: popoverScale 0.1s ease-out;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 
-.triggerWrapper {
-  display: inline-block;
+  @keyframes popoverScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .triggerWrapper {
+    display: inline-block;
+  }
 }

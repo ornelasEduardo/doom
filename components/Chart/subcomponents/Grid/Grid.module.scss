@@ -1,14 +1,15 @@
-.grid {
-  pointer-events: none;
+@layer doom.components {
+  .grid {
+    pointer-events: none;
 
-  :global(.tick) line,
-  line {
-    stroke: var(--muted);
-    stroke-opacity: 0.5;
-    /* stroke-dasharray: 4 4; */ /* User's snippet didn't have dash on grid? Wait, snippet said .grid :global(.tick) line { ... }. D3 grids often use ticks. My Grid component manually renders lines though. Keeping solid as per snippet, but adding opacity. */
-  }
+    :global(.tick) line,
+    line {
+      stroke: var(--muted);
+      stroke-opacity: 0.5;
+    }
 
-  path {
-    display: none;
+    path {
+      display: none;
+    }
   }
 }

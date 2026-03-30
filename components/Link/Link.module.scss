@@ -1,78 +1,80 @@
 @use "../../styles/mixins" as *;
 
-.link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+@layer doom.components {
+  .link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  outline: none;
-
-  &:focus-visible {
-    outline: revert;
-  }
-
-  &.disabled {
-    pointer-events: none;
-    opacity: 0.5;
     text-decoration: none;
-    cursor: not-allowed;
-  }
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    outline: none;
 
-  &.default {
-    color: var(--primary);
-    text-decoration: underline;
-    text-decoration-thickness: var(--spacing-half);
-    text-underline-offset: var(--spacing-half);
-
-    &:hover {
-      filter: brightness(1.2);
+    &:focus-visible {
+      outline: revert;
     }
 
-    &:visited {
-      color: var(--primary-dark, var(--primary));
-      filter: brightness(0.8);
+    &.disabled {
+      pointer-events: none;
+      opacity: 0.5;
+      text-decoration: none;
+      cursor: not-allowed;
     }
 
-    &:active {
-      filter: brightness(0.9);
-    }
-  }
-
-  &.subtle {
-    color: var(--muted-foreground);
-    font-size: var(--text-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-
-    &:hover {
-      color: var(--foreground);
+    &.default {
+      color: var(--primary);
       text-decoration: underline;
-    }
-  }
+      text-decoration-thickness: var(--space-0\.5);
+      text-underline-offset: var(--space-0\.5);
 
-  &.button {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    border: var(--border-width) solid var(--card-border);
-    border-radius: var(--radius);
-    padding: var(--spacing-3) var(--spacing-6);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    box-shadow: var(--shadow-hard);
-    font-size: var(--text-xs);
+      &:hover {
+        filter: brightness(1.2);
+      }
 
-    @include brutalist-hover;
+      &:visited {
+        color: var(--primary-dark, var(--primary));
+        filter: brightness(0.8);
+      }
 
-    &:hover {
-      filter: brightness(1.1);
+      &:active {
+        filter: brightness(0.9);
+      }
     }
 
-    &:active {
-      transform: translate(0, 0);
-      box-shadow: none;
+    &.subtle {
+      color: var(--muted-foreground);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+
+      &:hover {
+        color: var(--foreground);
+        text-decoration: underline;
+      }
+    }
+
+    &.button {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      border: var(--surface-border-width) solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: var(--shadow-md);
+      font-size: var(--text-xs);
+
+      @include hover;
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      &:active {
+        transform: translate(0, 0);
+        box-shadow: none;
+      }
     }
   }
 }

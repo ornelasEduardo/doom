@@ -1,65 +1,67 @@
 @use "../../styles/mixins" as *;
 
-.nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-2);
-}
+@layer doom.components {
+  .nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-2);
+  }
 
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--spacing-10);
-  height: var(--spacing-10);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  background-color: var(--card-bg);
-  color: var(--foreground);
-  font-family: var(--font-heading);
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+    background-color: var(--card-bg);
+    color: var(--foreground);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
 
-  &:not(:disabled):not(.active) {
-    @include brutalist-hover(2px, var(--card-border));
+    &:not(:disabled):not(.active) {
+      @include hover(2px, var(--card-border));
 
-    &:hover {
+      &:hover {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translate(0, 0);
+      box-shadow: none;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: var(--muted);
+      box-shadow: none;
+    }
+
+    &.active {
       background-color: var(--primary);
       color: var(--primary-foreground);
+      box-shadow: var(--shadow-sm);
+      cursor: default;
+      transition: none;
     }
   }
 
-  &:active:not(:disabled) {
-    transform: translate(0, 0);
-    box-shadow: none;
+  .ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--muted-foreground);
   }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: var(--muted);
-    box-shadow: none;
-  }
-
-  &.active {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-    box-shadow: var(--shadow-sm);
-    cursor: default;
-    transition: none;
-  }
-}
-
-.ellipsis {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--spacing-10);
-  height: var(--spacing-10);
-  color: var(--muted-foreground);
 }

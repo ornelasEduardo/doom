@@ -1,46 +1,48 @@
 @use "../../styles/mixins" as *;
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-  align-items: stretch;
-}
-
-.message {
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-top: -0.25rem;
-}
-
-.error {
-  color: var(--error);
-  font-weight: 700;
-  text-transform: uppercase;
-  animation: shake 0.3s ease-in-out;
-}
-
-.description {
-  color: var(--muted-foreground);
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
+@layer doom.components {
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
   }
-  25% {
-    transform: translateX(calc(var(--spacing-1) * -1));
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: stretch;
   }
-  75% {
-    transform: translateX(var(--spacing-1));
+
+  .message {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: -0.25rem;
+  }
+
+  .error {
+    color: var(--error);
+    font-weight: 700;
+    text-transform: uppercase;
+    animation: shake 0.3s ease-in-out;
+  }
+
+  .description {
+    color: var(--muted-foreground);
+  }
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(calc(var(--space-1) * -1));
+    }
+    75% {
+      transform: translateX(var(--space-1));
+    }
   }
 }

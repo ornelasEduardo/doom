@@ -1,52 +1,54 @@
 @use "../../../../styles/mixins" as *;
 
-.chartContainer {
-  position: relative;
-  background-color: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hard);
-  padding: var(--spacing-6);
-  overflow: visible;
-  user-select: none;
+@layer doom.components {
+  .chartContainer {
+    position: relative;
+    background-color: var(--card-bg);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-6);
+    overflow: visible;
+    user-select: none;
 
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 
-  &.flat {
-    box-shadow: none;
-  }
-
-  &.frameless {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-  }
-
-  &.solid {
-    @include solid-variant;
-    border-color: var(--border-strong);
-
-    :global(.tick) text {
-      fill: var(--solid-fg);
+    &.flat {
+      box-shadow: none;
     }
 
-    :global(.domain),
-    :global(.tick) line {
-      stroke: var(--solid-fg);
+    &.frameless {
+      background-color: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    &.solid {
+      @include solid-variant;
+      border-color: var(--border-strong);
+
+      :global(.tick) text {
+        fill: var(--solid-fg);
+      }
+
+      :global(.domain),
+      :global(.tick) line {
+        stroke: var(--solid-fg);
+      }
+    }
+    &.mobile {
+      padding: var(--space-2);
     }
   }
-  &.mobile {
-    padding: var(--spacing-2);
-  }
-}
 
-.responsiveWrapper {
-  width: 100%;
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  position: relative;
-  overflow: visible;
+  .responsiveWrapper {
+    width: 100%;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+    overflow: visible;
+  }
 }

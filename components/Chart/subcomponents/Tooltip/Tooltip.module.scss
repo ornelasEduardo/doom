@@ -1,30 +1,32 @@
 @use "../../../../styles/mixins" as *;
 
-.tooltipWrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: var(--z-tooltip);
-  will-change: transform;
-}
+@layer doom.components {
+  .tooltipWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: var(--z-tooltip);
+    will-change: transform;
+  }
 
-.solid {
-  @include solid-variant;
-}
+  .solid {
+    @include solid-variant;
+  }
 
-.tooltipCard {
-  padding: var(--spacing-3) var(--spacing-4);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hard);
-}
+  .tooltipCard {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+  }
 
-.tooltipLabel {
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  font-size: var(--text-2xs);
-  letter-spacing: 0.05em;
-  margin-bottom: var(--spacing-1);
+  .tooltipLabel {
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    font-size: var(--text-2xs);
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-1);
+  }
 }

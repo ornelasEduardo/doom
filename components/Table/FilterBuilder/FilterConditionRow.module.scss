@@ -1,25 +1,27 @@
-.row {
-  display: grid;
-  grid-template-columns: minmax(var(--form-col-min), 1fr) var(
-      --form-select-width
-    ) minmax(var(--form-col-min), 1fr) auto;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2);
-  background: var(--surface-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-}
+@layer doom.components {
+  .row {
+    display: grid;
+    grid-template-columns: minmax(var(--form-col-min), 1fr) var(
+        --form-select-width
+      ) minmax(var(--form-col-min), 1fr) auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--surface-bg);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+  }
 
-.fieldSelect {
-  width: 100%;
-}
+  .fieldSelect {
+    width: 100%;
+  }
 
-.operatorSelect {
-  width: 100%;
-}
+  .operatorSelect {
+    width: 100%;
+  }
 
-.valueSelect,
-.valueInput {
-  width: 100%;
+  .valueSelect,
+  .valueInput {
+    width: 100%;
+  }
 }

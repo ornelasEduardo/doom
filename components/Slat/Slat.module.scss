@@ -1,104 +1,106 @@
 @use "../../styles/mixins" as *;
 
-.slat {
-  background-color: var(--card-bg);
-  border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: var(--spacing-2) var(--spacing-4);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-  width: 100%;
+@layer doom.components {
+  .slat {
+    background-color: var(--card-bg);
+    border: var(--surface-border-width) solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    width: 100%;
 
-  @include mq("sm", "max") {
-    padding: var(--spacing-2);
-  }
-
-  @include mq("xxs", "max") {
-    padding: var(--spacing-2) var(--spacing-4);
-  }
-
-  &.danger {
-    background-color: var(--error);
-    color: var(--error-foreground);
-    border-color: var(--border-strong);
-
-    & > * {
-      @include invert-theme;
-    }
-  }
-
-  &.success {
-    background-color: var(--success);
-    color: var(--success-foreground);
-    border-color: var(--border-strong);
-
-    & > * {
-      @include invert-theme;
-    }
-  }
-
-  &.hoverable {
-    cursor: pointer;
-    &:hover {
-      background-color: var(--surface-accent);
-      color: var(--foreground);
-      transform: translate(
-        calc(-1 * var(--spacing-half)),
-        calc(-1 * var(--spacing-half))
-      );
-      box-shadow: var(--spacing-1) var(--spacing-1) 0px 0px var(--border-strong);
+    @include mq("sm", "max") {
+      padding: var(--space-2);
     }
 
-    &:active {
-      transform: translate(0, 0);
-      box-shadow: none;
+    @include mq("xxs", "max") {
+      padding: var(--space-2) var(--space-4);
     }
 
-    &.danger:hover {
+    &.danger {
       background-color: var(--error);
-      filter: brightness(1.1);
+      color: var(--error-foreground);
+      border-color: var(--border-strong);
+
+      & > * {
+        @include invert-theme;
+      }
     }
 
-    &.success:hover {
+    &.success {
       background-color: var(--success);
-      filter: brightness(1.1);
+      color: var(--success-foreground);
+      border-color: var(--border-strong);
+
+      & > * {
+        @include invert-theme;
+      }
+    }
+
+    &.hoverable {
+      cursor: pointer;
+      &:hover {
+        background-color: var(--surface-accent);
+        color: var(--foreground);
+        transform: translate(
+          calc(-1 * var(--space-0\.5)),
+          calc(-1 * var(--space-0\.5))
+        );
+        box-shadow: var(--space-1) var(--space-1) 0px 0px var(--border-strong);
+      }
+
+      &:active {
+        transform: translate(0, 0);
+        box-shadow: none;
+      }
+
+      &.danger:hover {
+        background-color: var(--error);
+        filter: brightness(1.1);
+      }
+
+      &.success:hover {
+        background-color: var(--success);
+        filter: brightness(1.1);
+      }
     }
   }
-}
 
-.label {
-  font-weight: 500;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: inherit;
+  .label {
+    font-weight: 500;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: inherit;
 
-  @include mq("sm", "max") {
-    white-space: normal;
-    word-break: break-all;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
+    @include mq("sm", "max") {
+      white-space: normal;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
+
+    @include mq("xxs", "max") {
+      -webkit-line-clamp: 2;
+    }
   }
 
-  @include mq("xxs", "max") {
-    -webkit-line-clamp: 2;
+  .secondaryLabel {
+    color: inherit;
+    opacity: 0.8;
+    font-size: var(--text-2xs);
+    font-family: var(--font-mono);
   }
-}
 
-.secondaryLabel {
-  color: inherit;
-  opacity: 0.8;
-  font-size: var(--text-2xs);
-  font-family: var(--font-mono);
-}
-
-.prepend,
-.append {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  .prepend,
+  .append {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
 }

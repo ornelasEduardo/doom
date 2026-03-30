@@ -1,7 +1,9 @@
 @use "../../../../styles/mixins" as *;
 
-.mobileTrigger {
-  @include mq("md") {
-    display: none;
+@layer doom.components {
+  .mobileTrigger {
+    @include mq("md") {
+      display: none;
+    }
   }
 }

@@ -1,100 +1,102 @@
 @use "../../styles/mixins" as *;
 
-.grid {
-  display: grid;
-}
-
-.flex {
-  display: flex;
-}
-
-// --- Directions ---
-.direction-row {
-  flex-direction: row;
-}
-
-.direction-column {
-  flex-direction: column;
-}
-
-.direction-row-reverse {
-  flex-direction: row-reverse;
-}
-
-.direction-column-reverse {
-  flex-direction: column-reverse;
-}
-
-// --- Justify Content ---
-$justify-values:
-  "flex-start", "flex-end", "center", "space-between", "space-around",
-  "space-evenly";
-@each $val in $justify-values {
-  .justify-#{$val} {
-    justify-content: #{$val};
+@layer doom.components {
+  .grid {
+    display: grid;
   }
-}
 
-// --- Align Items ---
-$align-values: "flex-start", "flex-end", "center", "stretch", "baseline";
-@each $val in $align-values {
-  .align-#{$val} {
-    align-items: #{$val};
+  .flex {
+    display: flex;
   }
-}
 
-.container {
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--spacing-4);
-  padding-right: var(--spacing-4);
+  // --- Directions ---
+  .direction-row {
+    flex-direction: row;
+  }
 
-  &.sm {
-    max-width: 640px;
+  .direction-column {
+    flex-direction: column;
   }
-  &.md {
-    max-width: 768px;
-  }
-  &.lg {
-    max-width: 1024px;
-  }
-  &.xl {
-    max-width: 1280px;
-  }
-  &.fluid {
-    max-width: 100%;
-  }
-}
 
-.switcher {
-  display: flex;
+  .direction-row-reverse {
+    flex-direction: row-reverse;
+  }
 
-  &.switch-xxs {
-    @include mq("xxs", "max") {
-      flex-direction: column;
-      align-items: flex-start;
+  .direction-column-reverse {
+    flex-direction: column-reverse;
+  }
+
+  // --- Justify Content ---
+  $justify-values:
+    "flex-start", "flex-end", "center", "space-between", "space-around",
+    "space-evenly";
+  @each $val in $justify-values {
+    .justify-#{$val} {
+      justify-content: #{$val};
     }
   }
 
-  &.switch-xs {
-    @include mq("xs", "max") {
-      flex-direction: column;
-      align-items: flex-start;
+  // --- Align Items ---
+  $align-values: "flex-start", "flex-end", "center", "stretch", "baseline";
+  @each $val in $align-values {
+    .align-#{$val} {
+      align-items: #{$val};
     }
   }
 
-  &.switch-sm {
-    @include mq("sm", "max") {
-      flex-direction: column;
-      align-items: flex-start;
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+
+    &.sm {
+      max-width: 640px;
+    }
+    &.md {
+      max-width: 768px;
+    }
+    &.lg {
+      max-width: 1024px;
+    }
+    &.xl {
+      max-width: 1280px;
+    }
+    &.fluid {
+      max-width: 100%;
     }
   }
 
-  &.switch-md {
-    @include mq("md", "max") {
-      flex-direction: column;
-      align-items: flex-start;
+  .switcher {
+    display: flex;
+
+    &.switch-xxs {
+      @include mq("xxs", "max") {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    &.switch-xs {
+      @include mq("xs", "max") {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    &.switch-sm {
+      @include mq("sm", "max") {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    &.switch-md {
+      @include mq("md", "max") {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   }
 }

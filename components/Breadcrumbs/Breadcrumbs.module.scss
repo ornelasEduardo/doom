@@ -1,35 +1,37 @@
-.nav {
-  display: flex;
-  align-items: center;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-}
-
-.list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  gap: var(--spacing-2);
-}
-
-.li {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-
-  &:not(:last-child)::after {
-    content: "/";
-    margin-left: var(--spacing-1);
+@layer doom.components {
+  .nav {
+    display: flex;
+    align-items: center;
+    font-size: var(--text-sm);
     color: var(--muted-foreground);
-    opacity: 0.5;
-    font-weight: 700;
   }
-}
 
-.currentPage {
-  font-weight: 700;
-  color: var(--foreground);
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    gap: var(--space-2);
+  }
+
+  .li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    &:not(:last-child)::after {
+      content: "/";
+      margin-left: var(--space-1);
+      color: var(--muted-foreground);
+      opacity: 0.5;
+      font-weight: 700;
+    }
+  }
+
+  .currentPage {
+    font-weight: 700;
+    color: var(--foreground);
+  }
 }

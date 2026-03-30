@@ -1,13 +1,15 @@
-.point {
-  fill: var(--primary);
-  stroke: var(--card-border);
-  stroke-width: 2;
-  transition:
-    r 0.15s ease,
-    stroke-width 0.15s ease,
-    opacity 0.2s;
-  z-index: var(--z-overlay);
+@layer doom.components {
+  .point {
+    fill: var(--primary);
+    stroke: var(--card-border);
+    stroke-width: 2;
+    transition:
+      r 0.15s ease,
+      stroke-width 0.15s ease,
+      opacity 0.2s;
+    z-index: var(--z-overlay);
 
-  /* Ensure it sits above lines */
-  position: relative;
+    /* Ensure it sits above lines */
+    position: relative;
+  }
 }
