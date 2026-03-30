@@ -5,7 +5,7 @@
   }
 
   .tooltipBody {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-2) var(--space-3);
     background-color: var(--foreground);
     color: var(--background);
     font-size: var(--text-sm);

@@ -41,7 +41,7 @@
 
     &.isOpen {
       margin: var(--space-2) 0;
-      transform: translate(-2px, -2px);
+      transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
       border-radius: var(--radius-md);
       z-index: 10;
       box-shadow: var(--shadow-md);

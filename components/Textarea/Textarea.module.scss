@@ -85,10 +85,10 @@
         transform: translateX(0);
       }
       25% {
-        transform: translateX(-4px);
+        transform: translateX(calc(-1 * var(--space-1)));
       }
       75% {
-        transform: translateX(4px);
+        transform: translateX(var(--space-1));
       }
     }
   }

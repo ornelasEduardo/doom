@@ -4,22 +4,22 @@
   .form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-6);
     width: 100%;
   }
 
   .field {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-2);
     width: 100%;
     align-items: stretch;
   }
 
   .message {
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 500;
-    margin-top: -0.25rem;
+    margin-top: calc(-1 * var(--space-1));
   }
 
   .error {
