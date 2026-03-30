@@ -165,7 +165,7 @@ export function ConditionRow({
           {...listeners}
           {...attributes}
         >
-          <GripVertical size={16} />
+          <GripVertical size={20} />
         </div>
 
         {showLogic && logic && onLogicChange ? (
@@ -195,7 +195,7 @@ export function ConditionRow({
           variant="ghost"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+          {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
         </Button>
 
         <Button
@@ -428,7 +428,7 @@ export function FilterGroup({
           {...listeners}
           {...attributes}
         >
-          <GripVertical size={16} />
+          <GripVertical size={20} />
         </div>
 
         {depth > 0 &&
@@ -463,7 +463,7 @@ export function FilterGroup({
           variant="ghost"
           onClick={toggleCollapse}
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+          {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
         </Button>
         {isCollapsed && (
           <Text

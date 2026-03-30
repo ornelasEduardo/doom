@@ -214,7 +214,7 @@ export function Select({
             </span>
             <ChevronDown
               aria-hidden="true"
-              size={16}
+              size={20}
               strokeWidth={2.5}
               style={{ marginLeft: "var(--space-2)" }}
             />

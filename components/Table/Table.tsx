@@ -361,7 +361,7 @@ export function Table<T>({
                 styles.expandToggleIcon,
                 row.getIsExpanded() && styles.expanded,
               )}
-              size={16}
+              size={20}
             />
           </button>
         );
@@ -444,12 +444,12 @@ export function Table<T>({
                           variant="ghost"
                           onClick={() => setIsFilterBuilderOpen(true)}
                         >
-                          <Filter size={16} strokeWidth={2.5} />
+                          <Filter size={20} strokeWidth={2.5} />
                         </Button>
                       ) : undefined
                     }
                     placeholder="Search..."
-                    startAdornment={<Search size={16} />}
+                    startAdornment={<Search size={20} />}
                     value={globalFilter ?? ""}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setGlobalFilter(e.target.value)
@@ -464,7 +464,7 @@ export function Table<T>({
                     variant="outline"
                     onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                   >
-                    <ListFilter size={16} />
+                    <ListFilter size={20} />
                     FILTERS
                   </Button>
                 )}

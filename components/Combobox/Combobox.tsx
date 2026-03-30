@@ -241,7 +241,7 @@ export function Combobox({
     >
       {searchable && (
         <div className={styles.searchWrapper}>
-          <Search className={styles.searchIcon} size={16} />
+          <Search className={styles.searchIcon} size={20} />
           <input
             ref={inputRef}
             className={styles.searchInput}
@@ -372,7 +372,7 @@ export function Combobox({
                 <X size={12} />
               </span>
             )}
-            <ChevronDown className={styles.chevron} size={16} />
+            <ChevronDown className={styles.chevron} size={20} />
           </span>
         </button>
       }

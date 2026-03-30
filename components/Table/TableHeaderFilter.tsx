@@ -148,7 +148,7 @@ export function TableHeaderFilter<T>({
             setIsOpen(!isOpen);
           }}
         >
-          <Filter size={16} strokeWidth={2.5} />
+          <Filter size={20} strokeWidth={2.5} />
           {selectedValues.length > 0 && (
             <span className={styles.filterCount}>
               ({selectedValues.length})

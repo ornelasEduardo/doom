@@ -101,7 +101,7 @@ export function FilterConditionRow({
         variant="ghost"
         onClick={onRemove}
       >
-        <Trash2 size={16} />
+        <Trash2 size={20} />
       </Button>
     </div>
   );

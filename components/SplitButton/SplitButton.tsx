@@ -67,7 +67,7 @@ export function SplitButton({
             className={styles.dropdownTrigger}
             onClick={() => setIsOpen(!isOpen)}
           >
-            <ChevronDown aria-hidden="true" size={16} strokeWidth={3} />
+            <ChevronDown aria-hidden="true" size={20} strokeWidth={3} />
           </button>
         </div>
       }
