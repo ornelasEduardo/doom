@@ -1,51 +1,104 @@
 @use "sass:map";
 
-@mixin base-interactive {
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hard);
-  transition: all 0.1s ease;
+// =============================================================================
+// DOOM DESIGN SYSTEM — MIXINS
+// RULE: Mixins reference ONLY semantic tokens. Never primitives.
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// CONTROL MIXINS — For interactive elements (Button, Input, Select, etc.)
+// ---------------------------------------------------------------------------
+
+/// Base styles for every interactive control.
+@mixin control {
+  height: var(--control-height);
+  padding: var(--control-padding-y) var(--control-padding-x);
+  font-size: var(--control-font-size);
+  border: var(--surface-border-width) solid var(--card-border);
+  border-radius: var(--control-radius);
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-fast) var(--ease-in-out);
   outline: none;
 }
 
+/// Hover lift with shadow grow.
+@mixin hover {
+  &:hover {
+    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/// Keyboard focus ring.
 @mixin focus {
-  // Only show visual focus ring for keyboard navigation, not mouse clicks
   &:focus-visible,
   &[aria-expanded="true"] {
     outline: none;
-    transform: translate(-2px, -2px);
-    // Shadow compensates for 2px lift: 4px base + 2px = 6px offset
-    box-shadow: 6px 6px 0px 0px var(--shadow-primary);
+    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+    box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
     border-color: var(--primary);
   }
-
-  // Still remove default outline for all focus to prevent double rings
   &:focus {
     outline: none;
   }
 }
 
+/// Active press state.
+@mixin press {
+  &:active {
+    transition: none;
+    transform: translate(var(--space-0\.5), var(--space-0\.5));
+    box-shadow: none;
+  }
+}
+
+/// Error state border and shadow.
 @mixin error {
   border-color: var(--error);
-  box-shadow: 5px 5px 0px 0px var(--shadow-error);
+  box-shadow: var(--shadow-offset-lg) var(--shadow-error);
 
   &:focus,
   &:focus-visible {
     border-color: var(--error);
-    box-shadow: 6px 6px 0px 0px var(--shadow-error);
+    box-shadow: var(--shadow-offset-xl) var(--shadow-error);
   }
 }
 
-@mixin brutalist-hover($lift: 2px, $shadow-color: var(--shadow-base)) {
+/// Disabled state with hatched overlay.
+@mixin disabled-state {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.05) 10px,
+    rgba(0, 0, 0, 0.05) 20px
+  ) !important;
+
   &:hover {
-    transform: translate(-$lift, -$lift);
-    // Shadow grows by 2px to compensate for the 2px lift, maintaining 4px visual gap
-    box-shadow: ($lift + 4px) ($lift + 4px) 0px 0px $shadow-color;
+    transform: none !important;
+    filter: none !important;
   }
 }
 
-// Inverts the theme context.
-// Useful when placing content on top of a 'primary' background color.
+// ---------------------------------------------------------------------------
+// SURFACE MIXIN — For containers (Card, Modal, Drawer, Sheet, Page)
+// ---------------------------------------------------------------------------
+
+@mixin surface {
+  padding: var(--surface-padding);
+  border: var(--surface-border-width) solid var(--card-border);
+  border-radius: var(--surface-radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-md);
+}
+
+// ---------------------------------------------------------------------------
+// THEME MIXINS
+// ---------------------------------------------------------------------------
+
+/// Inverts theme for content on primary-colored backgrounds.
 @mixin invert-theme {
   --primary: var(--primary-foreground);
   --primary-foreground: var(--primary);
@@ -55,83 +108,62 @@
 
 /// Applies solid variant styling using subtheme tokens.
 @mixin solid-variant {
-  /* ROOT CONTEXT (The Field) */
   background-color: var(--solid-bg);
   color: var(--solid-fg);
-
-  /* Root Variables */
   --background: var(--solid-bg);
   --foreground: var(--solid-fg);
   --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
-
-  /*
-  * Standardized Brand Surface Logic
-  * Decouples Modals (Surface) from Buttons (Action)
-  */
   --surface-brand: var(--solid-bg);
   --surface-brand-foreground: var(--solid-fg);
-
-  /* SEMANTICS (True Semantic Colors) */
   --success: var(--solid-success);
   --success-foreground: var(--solid-fg);
   --error: var(--solid-error);
   --error-foreground: var(--solid-fg);
   --warning: var(--solid-warning);
   --warning-foreground: var(--solid-fg);
-
-  /* SURFACE COLORS */
   --on-surface: var(--solid-bg);
   --on-surface-muted: var(--solid-bg);
-
-  /* COMPONENT TOKENS */
   --card-bg: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
   --card-border: var(--solid-fg);
   --card-foreground: var(--solid-fg);
-
-  /* POPOVER TOKENS */
   --popover: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
   --popover-foreground: var(--solid-bg);
-
-  /* INPUT TOKENS */
   --input: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
   --border-strong: var(--solid-fg);
-
-  /* BUTTON TOKENS */
   --primary: var(--solid-fg);
   --primary-foreground: var(--solid-bg);
-
-  /* SECONDARY TOKENS */
   --secondary: color-mix(in srgb, var(--solid-bg) 90%, transparent);
   --secondary-foreground: var(--solid-fg);
-
-  /* MUTED TOKENS */
   --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
 }
 
-// Brutalist Directional Shadows
-@mixin brutalist-shadow(
+// ---------------------------------------------------------------------------
+// SHADOW MIXIN
+// ---------------------------------------------------------------------------
+
+/// Directional hard shadow using shadow scale tokens.
+@mixin shadow-directional(
   $direction: "standard",
-  $size: 8px,
+  $size: var(--space-2),
   $color: var(--shadow-base)
 ) {
   @if $direction == "standard" {
     box-shadow: #{$size} #{$size} 0 0 $color;
   } @else if $direction == "top" {
-    /* Top-Right heavy shadow */
     box-shadow: #{$size} calc(-1 * #{$size}) 0 0 $color;
   } @else if $direction == "bottom" {
-    /* Standard Bottom-Right shadow */
     box-shadow: #{$size} #{$size} 0 0 $color;
   } @else if $direction == "left" {
-    /* Bottom-Left shadow for right-anchored elements */
     box-shadow: calc(-1 * #{$size}) #{$size} 0 0 $color;
   } @else if $direction == "right" {
-    /* Bottom-Right shadow for left-anchored elements */
     box-shadow: #{$size} #{$size} 0 0 $color;
   }
 }
 
-// Breakpoints
+// ---------------------------------------------------------------------------
+// RESPONSIVE
+// ---------------------------------------------------------------------------
+
 $breakpoints: (
   "xxs": 360px,
   "xs": 480px,
@@ -151,20 +183,27 @@ $breakpoints: (
     @content;
   }
 }
-@mixin disabled-state {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    rgba(0, 0, 0, 0.05) 10px,
-    rgba(0, 0, 0, 0.05) 20px
-  ) !important;
 
-  // Kill any hover effects (like lifts/shadows) from other mixins
-  &:hover {
-    transform: none !important;
-    filter: none !important;
-  }
+// ---------------------------------------------------------------------------
+// CONTROL SIZE OVERRIDES — Apply as class to override semantic control vars
+// ---------------------------------------------------------------------------
+
+@mixin control-sm {
+  --control-height: var(--size-7);
+  --control-padding-x: var(--space-2);
+  --control-padding-y: var(--space-1);
+  --control-font-size: var(--text-xs);
+  --control-icon-size: var(--size-4);
+  --control-gap: var(--space-1);
+  --control-radius: var(--radius-sm);
+}
+
+@mixin control-lg {
+  --control-height: var(--size-10);
+  --control-padding-x: var(--space-4);
+  --control-padding-y: var(--space-2);
+  --control-font-size: var(--text-base);
+  --control-icon-size: var(--size-5);
+  --control-gap: var(--space-2);
+  --control-radius: var(--radius-md);
 }
