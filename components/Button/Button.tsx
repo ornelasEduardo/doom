@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import React from "react";
 
+import type { ControlSize } from "../../styles/types";
 import { Spinner } from "../Spinner";
 import styles from "./Button.module.scss";
 
@@ -13,11 +14,10 @@ type ButtonVariant =
   | "outline"
   | "success"
   | "danger";
-type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
-  size?: ButtonSize;
+  size?: ControlSize;
   loading?: boolean;
 }
 
@@ -33,7 +33,7 @@ export function Button({
   const buttonClass = clsx(
     styles.button,
     styles[variant],
-    styles[size],
+    size !== "md" && styles[size],
     loading && styles.loading,
     className,
   );

@@ -3,13 +3,15 @@
 import clsx from "clsx";
 import React, { useId, useState } from "react";
 
+import type { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import styles from "./Input.module.scss";
 
 interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  "title"
+  "title" | "size"
 > {
+  size?: ControlSize;
   label?: string;
   error?: string;
   helperText?: string;
@@ -23,6 +25,7 @@ interface InputProps extends Omit<
 }
 
 export function Input({
+  size = "md",
   label,
   error: errorProp,
   helperText,
@@ -103,7 +106,7 @@ export function Input({
         </Label>
       )}
 
-      <div className={styles.wrapper}>
+      <div className={clsx(styles.wrapper, size !== "md" && styles[size])}>
         {startAdornment && (
           <span className={clsx(styles.adornment, styles.start)}>
             {startAdornment}
