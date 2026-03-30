@@ -1,46 +1,48 @@
-@use "../../styles/mixins";
+@use "../../styles/mixins" as *;
 
-.root {
-  background-color: var(--card-bg);
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hard);
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+@layer doom.components {
+  .root {
+    background-color: var(--card-bg);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--surface-radius);
+    box-shadow: var(--shadow-md);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 
-  > *:first-child {
-    border-top-left-radius: calc(var(--radius) - var(--border-width));
-    border-top-right-radius: calc(var(--radius) - var(--border-width));
+    > *:first-child {
+      border-top-left-radius: calc(var(--surface-radius) - var(--surface-border-width));
+      border-top-right-radius: calc(var(--surface-radius) - var(--surface-border-width));
+    }
+
+    > *:last-child {
+      border-bottom-left-radius: calc(var(--surface-radius) - var(--surface-border-width));
+      border-bottom-right-radius: calc(var(--surface-radius) - var(--surface-border-width));
+    }
   }
 
-  > *:last-child {
-    border-bottom-left-radius: calc(var(--radius) - var(--border-width));
-    border-bottom-right-radius: calc(var(--radius) - var(--border-width));
+  .padded {
+    padding: var(--surface-padding);
   }
-}
 
-.padded {
-  padding: var(--spacing-6);
-}
+  .header {
+    padding: var(--surface-padding);
+    border-bottom: var(--surface-border-width) solid var(--card-border);
+    background-color: var(--card-bg);
+    border-radius: calc(var(--surface-radius) - var(--surface-border-width))
+      calc(var(--surface-radius) - var(--surface-border-width)) 0 0;
+  }
 
-.header {
-  padding: var(--spacing-6);
-  border-bottom: var(--border-width) solid var(--card-border);
-  background-color: var(--card-bg);
-  border-radius: calc(var(--radius) - var(--border-width))
-    calc(var(--radius) - var(--border-width)) 0 0;
-}
+  .body {
+    padding: var(--surface-padding);
+    flex: 1;
+  }
 
-.body {
-  padding: var(--spacing-6);
-  flex: 1;
-}
-
-.footer {
-  padding: var(--spacing-6);
-  border-top: var(--border-width) solid var(--card-border);
-  background-color: var(--card-bg);
-  border-radius: 0 0 calc(var(--radius) - var(--border-width))
-    calc(var(--radius) - var(--border-width));
+  .footer {
+    padding: var(--surface-padding);
+    border-top: var(--surface-border-width) solid var(--card-border);
+    background-color: var(--card-bg);
+    border-radius: 0 0 calc(var(--surface-radius) - var(--surface-border-width))
+      calc(var(--surface-radius) - var(--surface-border-width));
+  }
 }

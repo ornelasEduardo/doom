@@ -1,127 +1,129 @@
 @use "../../styles/mixins" as *;
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, var(--overlay-opacity));
-  backdrop-filter: blur(var(--blur-standard));
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.2s ease-in-out,
-    visibility 0.2s ease-in-out;
-  pointer-events: none;
-  z-index: var(--z-overlay);
+@layer doom.components {
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, var(--overlay-opacity));
+    backdrop-filter: blur(var(--blur-standard));
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.2s ease-in-out,
+      visibility 0.2s ease-in-out;
+    pointer-events: none;
+    z-index: var(--z-overlay);
 
-  &.isOpen {
+    &.isOpen {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  }
+
+  .panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 85vh;
+    background-color: var(--card-bg);
+    border-top: var(--surface-border-width) solid var(--card-border);
+    border-left: var(--surface-border-width) solid var(--card-border);
+    border-right: var(--surface-border-width) solid var(--card-border);
+    border-top-left-radius: var(--surface-radius);
+    border-top-right-radius: var(--surface-radius);
+
+    /* Directional shadow - Top anchored */
+    @include shadow-directional("top", var(--space-2));
+
+    display: flex;
+    flex-direction: column;
+    z-index: var(--z-drawer);
+    transform: translateY(100%);
+    transition: transform var(--duration-slow) var(--ease-out);
+    visibility: hidden;
+
+    &.isOpen {
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    &.solid {
+      @include solid-variant;
+
+      .handleBar {
+        background-color: var(--solid-fg);
+        opacity: 0.8;
+      }
+
+      .content,
+      .footer {
+        background-color: transparent !important;
+      }
+    }
+  }
+
+  .header {
+    background-color: var(--surface-brand);
+    color: var(--surface-brand-foreground);
+    border-bottom: var(--surface-border-width) solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  .handleBar {
+    width: var(--space-12);
+    height: 6px;
+    background-color: var(--card-border);
+    border-radius: var(--radius-pill);
+    margin: var(--space-3) auto var(--space-1) auto;
     opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-  }
-}
-
-.panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 85vh;
-  background-color: var(--card-bg);
-  border-top: var(--border-width) solid var(--card-border);
-  border-left: var(--border-width) solid var(--card-border);
-  border-right: var(--border-width) solid var(--card-border);
-  border-top-left-radius: var(--radius);
-  border-top-right-radius: var(--radius);
-
-  /* Brutalist Hard Shadow - Top anchored */
-  @include brutalist-shadow("top", var(--spacing-2));
-
-  display: flex;
-  flex-direction: column;
-  z-index: var(--z-drawer);
-  transform: translateY(100%);
-  transition: transform var(--duration-slow) var(--ease-out);
-  visibility: hidden;
-
-  &.isOpen {
-    visibility: visible;
-    transform: translateY(0);
+    border: var(--surface-border-width) solid var(--border-strong);
+    flex-shrink: 0;
   }
 
-  &.solid {
-    @include solid-variant;
+  .headerBody {
+    padding: 0 var(--surface-padding) var(--surface-padding) var(--surface-padding);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-    .handleBar {
-      background-color: var(--solid-fg);
-      opacity: 0.8;
+  .title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .content {
+    flex: 1;
+    padding: var(--surface-padding);
+    overflow-y: auto;
+    background-color: var(--card-bg);
+  }
+
+  .footer {
+    padding: var(--surface-padding);
+    border-top: var(--surface-border-width) solid var(--border-strong);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    background-color: var(--card-bg);
+    flex-shrink: 0;
+
+    @include mq("sm", "max") {
+      padding: var(--space-2) var(--surface-padding) var(--space-2) var(--surface-padding);
     }
-
-    .content,
-    .footer {
-      background-color: transparent !important;
-    }
-  }
-}
-
-.header {
-  background-color: var(--surface-brand);
-  color: var(--surface-brand-foreground);
-  border-bottom: var(--border-width) solid var(--border-strong);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  touch-action: none;
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-}
-
-.handleBar {
-  width: var(--spacing-12);
-  height: 6px;
-  background-color: var(--card-border);
-  border-radius: var(--radius-pill);
-  margin: var(--spacing-3) auto var(--spacing-1) auto;
-  opacity: 1;
-  border: var(--border-width) solid var(--border-strong);
-  flex-shrink: 0;
-}
-
-.headerBody {
-  padding: 0 var(--spacing-6) var(--spacing-6) var(--spacing-6);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.title {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: var(--text-xl);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.content {
-  flex: 1;
-  padding: var(--spacing-6);
-  overflow-y: auto;
-  background-color: var(--card-bg);
-}
-
-.footer {
-  padding: var(--spacing-6);
-  border-top: var(--border-width) solid var(--border-strong);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-4);
-  background-color: var(--card-bg);
-  flex-shrink: 0;
-
-  @include mq("sm", "max") {
-    padding: var(--spacing-2) var(--spacing-6) var(--spacing-2) var(--spacing-6);
   }
 }

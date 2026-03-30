@@ -1,25 +1,27 @@
 @use "../../styles/mixins" as *;
 
-.container {
-  flex: 1;
-  width: 100%;
-}
-
-.default {
-  width: 90%;
-  max-width: var(--page-max-width);
-  backdrop-filter: blur(var(--blur-standard));
-  margin: 0 auto;
-  padding: var(--spacing-8) var(--spacing-4);
-
-  @include mq("lg", "max") {
-    width: 95%;
-    padding: var(--spacing-4);
+@layer doom.components {
+  .container {
+    flex: 1;
+    width: 100%;
   }
-}
 
-.fullWidth {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+  .default {
+    width: 90%;
+    max-width: var(--page-max-width);
+    backdrop-filter: blur(var(--blur-standard));
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4);
+
+    @include mq("lg", "max") {
+      width: 95%;
+      padding: var(--space-4);
+    }
+  }
+
+  .fullWidth {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
 }
