@@ -1,60 +1,62 @@
 @use "../../styles/mixins" as *;
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius);
-  font-weight: 700;
-  text-transform: uppercase;
-  border: var(--border-width) solid var(--card-border);
-  box-shadow: var(--border-width) var(--border-width) 0px 0px var(--card-border);
-  line-height: 1;
+@layer doom.components {
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    text-transform: uppercase;
+    border: var(--surface-border-width) solid var(--card-border);
+    box-shadow: var(--surface-border-width) var(--surface-border-width) 0px 0px var(--card-border);
+    line-height: 1;
 
-  &.sm {
-    padding: var(--spacing-half) var(--spacing-2);
-    font-size: var(--text-2xs);
-  }
+    &.sm {
+      padding: var(--space-0\.5) var(--space-2);
+      font-size: var(--text-2xs);
+    }
 
-  &.md {
-    padding: var(--spacing-1) var(--spacing-3);
-    font-size: var(--text-xs);
-  }
+    &.md {
+      padding: var(--space-1) var(--space-3);
+      font-size: var(--text-xs);
+    }
 
-  &.lg {
-    padding: var(--spacing-1) var(--spacing-4);
-    font-size: var(--text-sm);
-  }
+    &.lg {
+      padding: var(--space-1) var(--space-4);
+      font-size: var(--text-sm);
+    }
 
-  &.primary {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-  }
+    &.primary {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+    }
 
-  &.success {
-    background-color: var(--success);
-    color: var(--success-foreground);
-  }
+    &.success {
+      background-color: var(--success);
+      color: var(--success-foreground);
+    }
 
-  &.warning {
-    background-color: var(--warning);
-    color: var(--warning-foreground);
-  }
+    &.warning {
+      background-color: var(--warning);
+      color: var(--warning-foreground);
+    }
 
-  &.error {
-    background-color: var(--error);
-    color: var(--error-foreground);
-  }
+    &.error {
+      background-color: var(--error);
+      color: var(--error-foreground);
+    }
 
-  &.secondary {
-    background-color: var(--secondary);
-    color: var(--secondary-foreground);
-  }
+    &.secondary {
+      background-color: var(--secondary);
+      color: var(--secondary-foreground);
+    }
 
-  &.outline {
-    background-color: transparent;
-    color: var(--muted-foreground);
-    border-color: var(--border-strong);
-    box-shadow: none;
+    &.outline {
+      background-color: transparent;
+      color: var(--muted-foreground);
+      border-color: var(--border-strong);
+      box-shadow: none;
+    }
   }
 }
