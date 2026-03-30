@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 
+import { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import { Popover } from "../Popover/Popover";
 import styles from "./Select.module.scss";
@@ -26,7 +27,7 @@ interface SelectProps extends Omit<
   defaultValue?: string | number;
   name?: string;
   required?: boolean;
-  size?: "sm" | "md";
+  size?: ControlSize;
 }
 
 export function Select({
@@ -197,7 +198,7 @@ export function Select({
             aria-labelledby={label ? labelId : undefined}
             aria-required={required}
             autoFocus={autoFocus}
-            className={clsx(styles.trigger, size === "sm" && styles.sm)}
+            className={clsx(styles.trigger, size !== "md" && styles[size])}
             disabled={disabled}
             id={selectId}
             role="combobox"
@@ -215,7 +216,7 @@ export function Select({
               aria-hidden="true"
               size={16}
               strokeWidth={2.5}
-              style={{ marginLeft: "var(--spacing-2)" }}
+              style={{ marginLeft: "var(--space-2)" }}
             />
           </button>
         }

@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { ChevronDown, Search, X } from "lucide-react";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import { ControlSize } from "../../styles/types";
 import { Card } from "../Card/Card";
 import { Checkbox } from "../Checkbox/Checkbox";
 import { Popover } from "../Popover/Popover";
@@ -22,7 +23,7 @@ interface ComboboxProps {
   placeholder?: string;
   multiple?: boolean;
   searchable?: boolean;
-  size?: "sm" | "md";
+  size?: ControlSize;
   disabled?: boolean;
   className?: string;
   inline?: boolean;
