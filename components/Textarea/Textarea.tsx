@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import React, { useId, useState } from "react";
 
+import type { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import styles from "./Textarea.module.scss";
 
@@ -11,6 +12,7 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
   error?: string;
   helperText?: string;
   showCount?: boolean;
+  size?: ControlSize;
 }
 
 export function Textarea({
@@ -18,6 +20,7 @@ export function Textarea({
   error,
   helperText,
   showCount,
+  size = "md",
   className,
   style,
   id,
@@ -55,7 +58,7 @@ export function Textarea({
     clsx(helperText && helperId, error && errorId) || undefined;
 
   return (
-    <div className={clsx(styles.container, className)} style={style}>
+    <div className={clsx(styles.container, size !== "md" && styles[size], className)} style={style}>
       {label && (
         <Label htmlFor={textareaId} required={required}>
           {label}

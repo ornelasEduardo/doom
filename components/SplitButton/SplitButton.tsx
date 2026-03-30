@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 
+import type { ControlSize } from "../../styles/types";
 import { Popover } from "../Popover/Popover";
 import styles from "./SplitButton.module.scss";
 
@@ -17,7 +18,8 @@ interface SplitButtonProps {
   onPrimaryClick: () => void;
   items: SplitButtonItem[];
   variant?: "primary" | "secondary";
-  className?: string; // Add className prop
+  size?: ControlSize;
+  className?: string;
 }
 
 export function SplitButton({
@@ -25,6 +27,7 @@ export function SplitButton({
   onPrimaryClick,
   items,
   variant = "primary",
+  size = "md",
   className,
 }: SplitButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,7 +54,7 @@ export function SplitButton({
       placement="bottom-end"
       trigger={
         <div
-          className={clsx(styles.container, styles[variant], className)}
+          className={clsx(styles.container, styles[variant], size !== "md" && styles[size], className)}
           data-state={isOpen ? "open" : "closed"}
         >
           <button className={styles.mainButton} onClick={onPrimaryClick}>

@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import React, { useState } from "react";
 
+import type { ControlSize } from "../../styles/types";
 import { Button } from "../Button/Button";
 import { Popover } from "../Popover/Popover";
 import styles from "./Dropdown.module.scss";
@@ -16,13 +17,15 @@ interface DropdownProps {
   triggerLabel: string;
   items: DropdownItemType[];
   variant?: "primary" | "secondary";
-  className?: string; // Add className prop
+  size?: ControlSize;
+  className?: string;
 }
 
 export function Dropdown({
   triggerLabel,
   items,
   variant = "primary",
+  size = "md",
   className,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +33,7 @@ export function Dropdown({
   return (
     <Popover
       content={
-        <div className={styles.menu}>
+        <div className={clsx(styles.menu, size !== "md" && styles[size])}>
           {items.map((item, index) => (
             <button
               key={index}
@@ -52,6 +55,7 @@ export function Dropdown({
           aria-expanded={isOpen}
           className={clsx(styles.trigger, className)}
           variant={variant}
+          size={size}
           onClick={() => setIsOpen(!isOpen)}
         >
           {triggerLabel}{" "}

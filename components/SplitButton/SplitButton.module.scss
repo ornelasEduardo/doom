@@ -1,97 +1,108 @@
 @use "../../styles/mixins" as *;
 
-.container {
-  display: inline-flex;
-  border: var(--border-width) solid var(--card-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hard);
-  transition: all 0.1s ease;
+@layer doom.components {
+  .container {
+    display: inline-flex;
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--control-radius);
+    box-shadow: var(--shadow-md);
+    transition: all var(--duration-fast) var(--ease-in-out);
 
-  &.primary {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+    &.primary {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    &.secondary {
+      background-color: var(--secondary);
+      color: var(--secondary-foreground);
+    }
+
+    @include hover;
+
+    &[data-state="open"] {
+      transform: translate(
+        calc(-1 * var(--space-0\.5)),
+        calc(-1 * var(--space-0\.5))
+      );
+      box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+      border: var(--surface-border-width) solid var(--shadow-primary);
+    }
   }
 
-  &.secondary {
-    background-color: var(--secondary);
-    color: var(--secondary-foreground);
+  .mainButton {
+    border: none;
+    background: transparent;
+    color: inherit;
+    padding: var(--control-padding-y) var(--control-padding-x);
+    padding-right: var(--control-padding-y);
+    font-weight: 700;
+    font-size: var(--control-font-size);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border-right: var(--surface-border-width) solid rgba(0, 0, 0, 0.2);
+    min-height: var(--control-height);
+    box-sizing: border-box;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.25);
+    }
   }
 
-  @include brutalist-hover;
+  .dropdownTrigger {
+    border: none;
+    background: transparent;
+    color: inherit;
+    padding: var(--control-padding-y);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    min-height: var(--control-height);
+    box-sizing: border-box;
 
-  &[data-state="open"] {
-    transform: translate(
-      calc(-1 * var(--spacing-half)),
-      calc(-1 * var(--spacing-half))
-    );
-    box-shadow: var(--spacing-2) var(--spacing-2) 0px 0px var(--shadow-primary);
-    border: var(--border-width) solid var(--shadow-primary);
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.25);
+    }
   }
-}
 
-.mainButton {
-  border: none;
-  background: transparent;
-  color: inherit;
-  padding: var(--spacing-3) var(--spacing-4);
-  padding-right: var(--spacing-3);
-  font-weight: 700;
-  font-size: var(--text-base);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  border-right: var(--border-width) solid rgba(0, 0, 0, 0.2);
-  min-height: var(--control-height-md);
-  box-sizing: border-box;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.25);
+  .menu {
+    background: var(--card-bg);
+    border: var(--surface-border-width) solid var(--primary);
+    border-radius: var(--control-radius);
+    box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+    min-width: var(--space-56);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-1);
   }
-}
 
-.dropdownTrigger {
-  border: none;
-  background: transparent;
-  color: inherit;
-  padding: var(--spacing-3);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  min-height: var(--control-height-md);
-  box-sizing: border-box;
+  .item {
+    text-align: left;
+    padding: var(--control-padding-y) var(--control-padding-x);
+    background: transparent;
+    border: none;
+    color: var(--foreground);
+    cursor: pointer;
+    border-radius: calc(var(--control-radius) - var(--surface-border-width));
+    font-size: var(--control-font-size);
+    font-weight: 600;
+    transition: background-color var(--duration-fast) var(--ease-in-out);
 
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.25);
+    &:hover {
+      background-color: color-mix(in srgb, var(--primary), transparent 85%);
+      color: var(--primary);
+    }
   }
-}
 
-.menu {
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--primary);
-  border-radius: var(--radius);
-  box-shadow: var(--spacing-2) var(--spacing-2) 0px 0px var(--shadow-primary);
-  min-width: var(--spacing-56);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
-}
+  /* Sizes */
+  .sm {
+    @include control-sm;
+  }
 
-.item {
-  text-align: left;
-  padding: var(--spacing-3) var(--spacing-4);
-  background: transparent;
-  border: none;
-  color: var(--foreground);
-  cursor: pointer;
-  border-radius: calc(var(--radius) - var(--border-width));
-  font-size: var(--text-base);
-  font-weight: 600;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--primary), transparent 85%);
-    color: var(--primary);
+  .lg {
+    @include control-lg;
   }
 }

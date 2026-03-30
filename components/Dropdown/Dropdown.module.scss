@@ -1,36 +1,49 @@
-.menu {
-  background: var(--card-bg);
-  border: var(--border-width) solid var(--primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-hover);
-  min-width: var(--spacing-56);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  padding: var(--spacing-1);
-}
+@use "../../styles/mixins" as *;
 
-.item {
-  text-align: left;
-  padding: var(--spacing-3) var(--spacing-4);
-  background: transparent;
-  border: none;
-  color: var(--foreground);
-  cursor: pointer;
-  border-radius: calc(var(--radius) - 2px);
-  font-size: var(--text-base);
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--primary), transparent 85%);
-    color: var(--primary);
+@layer doom.components {
+  .menu {
+    background: var(--card-bg);
+    border: var(--surface-border-width) solid var(--primary);
+    border-radius: var(--control-radius);
+    box-shadow: var(--shadow-lg);
+    min-width: var(--space-56);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-1);
   }
-}
 
-.trigger {
-  &[aria-expanded="true"] {
-    transform: translate(-2px, -2px);
-    box-shadow: var(--shadow-hover);
+  .item {
+    text-align: left;
+    padding: var(--control-padding-y) var(--control-padding-x);
+    background: transparent;
+    border: none;
+    color: var(--foreground);
+    cursor: pointer;
+    border-radius: calc(var(--control-radius) - var(--surface-border-width));
+    font-size: var(--control-font-size);
+    transition: background-color var(--duration-fast) var(--ease-in-out);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--primary), transparent 85%);
+      color: var(--primary);
+    }
+  }
+
+  .trigger {
+    &[aria-expanded="true"] {
+      transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+      box-shadow: var(--shadow-lg);
+    }
+  }
+
+  /* Sizes */
+  .sm {
+    @include control-sm;
+  }
+
+  .lg {
+    @include control-lg;
   }
 }
