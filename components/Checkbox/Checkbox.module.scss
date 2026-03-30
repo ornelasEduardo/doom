@@ -1,62 +1,64 @@
-@use "../../styles/mixins" as m;
+@use "../../styles/mixins" as *;
 
-.checkboxWrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  cursor: pointer;
-  user-select: none;
+@layer doom.components {
+  .checkboxWrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    user-select: none;
 
-  &.disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
   }
-}
 
-.checkboxInput {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  margin: 0;
+  .checkboxInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
 
-  &:focus-visible + .checkboxDisplay {
-    @include m.focus;
-    outline: var(--border-width) solid var(--primary);
+    &:focus-visible + .checkboxDisplay {
+      @include focus;
+      outline: var(--surface-border-width) solid var(--primary);
+    }
   }
-}
 
-.checkboxDisplay {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  .checkboxDisplay {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  width: var(--spacing-6);
-  height: var(--spacing-6);
+    width: var(--toggle-size);
+    height: var(--toggle-size);
 
-  background-color: var(--card-bg);
-  color: transparent;
+    background-color: var(--card-bg);
+    color: transparent;
 
-  border: var(--border-width) solid var(--muted-foreground);
-  border-radius: var(--radius);
+    border: var(--surface-border-width) solid var(--muted-foreground);
+    border-radius: var(--radius-md);
 
-  transition: all var(--duration-fast) var(--ease-in-out);
+    transition: all var(--duration-fast) var(--ease-in-out);
 
-  .checkboxInput:checked + & {
-    background-color: var(--primary);
-    border-color: var(--card-border);
+    .checkboxInput:checked + & {
+      background-color: var(--primary);
+      border-color: var(--card-border);
 
-    color: var(--primary-foreground);
+      color: var(--primary-foreground);
+    }
   }
-}
 
-.icon {
-  width: 80%;
-  height: 80%;
-  stroke-width: 3.5px;
-}
+  .icon {
+    width: 80%;
+    height: 80%;
+    stroke-width: 3.5px;
+  }
 
-.labelOverride {
-  cursor: pointer;
-  margin-left: var(--spacing-1);
+  .labelOverride {
+    cursor: pointer;
+    margin-left: var(--space-1);
+  }
 }
