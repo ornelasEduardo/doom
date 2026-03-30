@@ -1,11 +1,10 @@
-import { baseVariables, palette } from "../palettes";
+import { palette } from "../palettes";
 import { createSolidTokens } from "./solid-tokens";
 
 export const themes = {
   default: {
     name: "Default",
     variables: {
-      ...baseVariables,
       "--accent": palette.red[500],
       "--background": palette.indigo[100],
       "--border-strong": palette.black[950],
@@ -43,7 +42,6 @@ export const themes = {
   doom: {
     name: "DOOMSDAY",
     variables: {
-      ...baseVariables,
       "--accent": palette.red[500],
       "--background": palette.slate[950],
       "--border-strong": palette.slate[700],
@@ -81,7 +79,6 @@ export const themes = {
   captain: {
     name: "THE CAPTAIN",
     variables: {
-      ...baseVariables,
       "--accent": palette.red[600],
       "--background": palette.slate[50],
       "--border-strong": palette.slate[900],
@@ -119,7 +116,6 @@ export const themes = {
   vigilante: {
     name: "DARK KNIGHT",
     variables: {
-      ...baseVariables,
       "--accent": palette.blue[500],
       "--background": palette.gray[950],
       "--border-strong": palette.gray[900],

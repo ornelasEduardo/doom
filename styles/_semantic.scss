@@ -1,0 +1,84 @@
+// =============================================================================
+// DOOM DESIGN SYSTEM — SEMANTIC TOKENS
+// Purpose-named tokens that point to primitives.
+// RULE: Components and mixins reference ONLY these tokens.
+// =============================================================================
+
+@use "primitives";
+
+:root {
+  // ---------------------------------------------------------------------------
+  // CONTROL TOKENS — Form controls: Input, Select, Button, Combobox, etc.
+  // Default tier is "md". Size variants override these locally via CSS classes.
+  // ---------------------------------------------------------------------------
+  --control-height: var(--size-8);
+  --control-padding-x: var(--space-3);
+  --control-padding-y: var(--space-1\.5);
+  --control-font-size: var(--text-sm);
+  --control-icon-size: var(--size-4);
+  --control-gap: var(--space-1\.5);
+  --control-radius: var(--radius-md);
+
+  // ---------------------------------------------------------------------------
+  // SURFACE TOKENS — Card, Modal, Drawer, Sheet, Page
+  // ---------------------------------------------------------------------------
+  --surface-padding: var(--space-4);
+  --surface-padding-dense: var(--space-3);
+  --surface-radius: var(--radius-md);
+  --surface-gap: var(--space-4);
+  --surface-border-width: 2px;
+
+  // ---------------------------------------------------------------------------
+  // SHADOW TOKENS — Semantic names for shadow usage
+  // ---------------------------------------------------------------------------
+  --shadow-sm: var(--shadow-offset-sm) var(--shadow-base);
+  --shadow-md: var(--shadow-offset-md) var(--shadow-base);
+  --shadow-lg: var(--shadow-offset-lg) var(--shadow-base);
+  --shadow-xl: var(--shadow-offset-xl) var(--shadow-base);
+  --shadow-sm-border: var(--shadow-offset-sm) var(--card-border);
+  --shadow-md-border: var(--shadow-offset-md) var(--card-border);
+
+  // ---------------------------------------------------------------------------
+  // FEEDBACK TOKENS — Checkbox, Radio, Switch, Slider
+  // ---------------------------------------------------------------------------
+  --toggle-size: var(--size-5);
+  --toggle-size-sm: var(--size-4);
+  --switch-width: var(--space-8);
+  --switch-height: var(--size-5);
+
+  // ---------------------------------------------------------------------------
+  // DISPLAY TOKENS — Chip, Badge (decorative, not controls)
+  // ---------------------------------------------------------------------------
+  --badge-padding-x: var(--space-1\.5);
+  --badge-padding-y: var(--space-0\.5);
+  --badge-font-size: var(--text-2xs);
+  --chip-padding-x: var(--space-2);
+  --chip-padding-y: var(--space-1);
+  --chip-font-size: var(--text-xs);
+
+  // ---------------------------------------------------------------------------
+  // LAYOUT TOKENS — Widths, heights for structural elements
+  // ---------------------------------------------------------------------------
+  --width-sidebar: 280px;
+  --width-sidebar-collapsed: 64px;
+  --width-panel: 400px;
+  --width-panel-wide: 600px;
+  --width-modal-sm: 400px;
+  --width-modal-md: 600px;
+  --width-modal-lg: 800px;
+  --width-modal-xl: 1024px;
+  --width-prose: 65ch;
+  --width-prose-narrow: 45ch;
+  --width-prose-wide: 80ch;
+  --header-height: 56px;
+  --header-height-sm: 48px;
+  --page-max-width: 1920px;
+  --drawer-width: var(--width-panel);
+
+  // ---------------------------------------------------------------------------
+  // TYPOGRAPHY STANDARDS
+  // ---------------------------------------------------------------------------
+  --font-heading: var(--font-montserrat);
+  --heading-transform: uppercase;
+  --heading-weight: 800;
+}

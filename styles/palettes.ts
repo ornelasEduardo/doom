@@ -138,12 +138,3 @@ export const palette = {
     990: "#2D3748",
   },
 } as const;
-
-// All tokens have been moved to styles/_tokens.scss
-// This file now only exports color palettes
-export const baseVariables = {
-  // Common Colors (still needed for JS theme injection)
-  "--common-black": palette.black[950],
-  "--common-white": palette.white[950],
-  "--border-strong": palette.black[950],
-};
