@@ -28,6 +28,10 @@
   }
 
   .toggle {
+    // Inset: gap between track border and thumb edge
+    --_switch-inset: var(--space-0\.5);
+    --_thumb-size: calc(var(--switch-height) - 2 * var(--_switch-inset) - 2 * var(--surface-border-width));
+
     position: relative;
     width: var(--switch-width);
     height: var(--switch-height);
@@ -46,9 +50,9 @@
       display: block;
       position: absolute;
       top: 50%;
-      left: var(--space-0\.5);
-      width: calc(var(--switch-height) - var(--space-1\.5));
-      height: calc(var(--switch-height) - var(--space-1\.5));
+      left: var(--_switch-inset);
+      width: var(--_thumb-size);
+      height: var(--_thumb-size);
       background-color: var(--muted);
       border: var(--surface-border-width) solid var(--card-border);
       border-radius: 50%;
@@ -65,7 +69,7 @@
       &::after {
         background-color: var(--primary-foreground);
         transform: translateY(-50%)
-          translateX(calc(var(--switch-width) - var(--switch-height)));
+          translateX(calc(var(--switch-width) - var(--_thumb-size) - 2 * var(--_switch-inset) - 2 * var(--surface-border-width)));
       }
     }
   }
