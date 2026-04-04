@@ -17,6 +17,7 @@
     @include control;
     @include hover;
     @include focus;
+    @include active-ring;
     @include press;
 
     &.hasValue {

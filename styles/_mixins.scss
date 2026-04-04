@@ -31,8 +31,7 @@
 
 /// Keyboard focus ring.
 @mixin focus {
-  &:focus-visible,
-  &[aria-expanded="true"] {
+  &:focus-visible {
     outline: none;
     transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
     box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
@@ -40,6 +39,17 @@
   }
   &:focus {
     outline: none;
+  }
+}
+
+/// Active ring for open/expanded controls (same visual as focus).
+/// Compose with @include focus for controls that need both.
+@mixin active-ring {
+  &[aria-expanded="true"] {
+    outline: none;
+    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+    box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+    border-color: var(--primary);
   }
 }
 
