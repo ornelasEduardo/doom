@@ -94,8 +94,8 @@
 
   .filterItem {
     /* "Module" look */
-    min-width: 144px;
-    width: 224px;
+    min-width: 14ch;
+    width: 22ch;
     position: relative;
 
     @include mq("md", "max") {

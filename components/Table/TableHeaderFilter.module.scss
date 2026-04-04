@@ -2,8 +2,8 @@
 
 @layer doom.components {
   .filterContent {
-    min-width: 200px;
-    max-width: 280px;
+    min-width: 20ch;
+    max-width: 30ch;
     border: var(--surface-border-width) solid var(--card-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
