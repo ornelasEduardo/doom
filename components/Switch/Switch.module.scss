@@ -4,7 +4,7 @@
   .switchContainer {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-3);
     cursor: pointer;
     opacity: 1;
     user-select: none;
@@ -46,9 +46,9 @@
       display: block;
       position: absolute;
       top: 50%;
-      left: var(--space-1);
-      width: calc(var(--switch-height) - var(--space-2));
-      height: calc(var(--switch-height) - var(--space-2));
+      left: var(--space-0\.5);
+      width: calc(var(--switch-height) - var(--space-1\.5));
+      height: calc(var(--switch-height) - var(--space-1\.5));
       background-color: var(--muted);
       border: var(--surface-border-width) solid var(--card-border);
       border-radius: 50%;
