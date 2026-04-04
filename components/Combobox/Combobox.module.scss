@@ -41,6 +41,7 @@
 
   .triggerText {
     flex: 1;
+    min-width: 12ch;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
