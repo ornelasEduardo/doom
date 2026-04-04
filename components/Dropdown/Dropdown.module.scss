@@ -34,7 +34,8 @@
   .trigger {
     &[aria-expanded="true"] {
       transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+      border-color: var(--primary);
     }
   }
 
