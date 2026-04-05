@@ -54,7 +54,12 @@ export function SplitButton({
       placement="bottom-end"
       trigger={
         <div
-          className={clsx(styles.container, styles[variant], size !== "md" && styles[size], className)}
+          className={clsx(
+            styles.container,
+            styles[variant],
+            size !== "md" && styles[size],
+            className,
+          )}
           data-state={isOpen ? "open" : "closed"}
         >
           <button className={styles.mainButton} onClick={onPrimaryClick}>

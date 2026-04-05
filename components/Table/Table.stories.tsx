@@ -505,11 +505,13 @@ export const ExpandableRows: Story = {
     data: heroData,
     renderExpandedRow: (row) => {
       // Only the first 3 rows are expandable
-      if (row.index >= 3) return null;
+      if (row.index >= 3) {
+        return null;
+      }
       return (
         <div style={{ padding: "var(--spacing-4)" }}>
           <Text variant="h5">{row.original.alias} — Details</Text>
-          <Text variant="body" color="muted">
+          <Text color="muted" variant="body">
             {row.original.name} · {row.original.affiliation} · Last mission:{" "}
             {row.original.lastMission}
           </Text>
@@ -518,4 +520,3 @@ export const ExpandableRows: Story = {
     },
   },
 };
-

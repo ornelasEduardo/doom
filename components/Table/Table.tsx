@@ -213,7 +213,12 @@ function StandardTableBody<T>({
         return (
           <React.Fragment key={row.id}>
             <tr
-              className={clsx(styles.tr, striped && styles.striped, onRowClick && styles.clickable, "group")}
+              className={clsx(
+                styles.tr,
+                striped && styles.striped,
+                onRowClick && styles.clickable,
+                "group",
+              )}
               onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
             >
               {row.getVisibleCells().map((cell) => (
@@ -336,7 +341,9 @@ export function Table<T>({
   }, [columns]);
 
   const finalColumns = useMemo(() => {
-    if (!renderExpandedRow) return normalizedColumns;
+    if (!renderExpandedRow) {
+      return normalizedColumns;
+    }
 
     const expandColumn: ColumnDef<T, unknown> = {
       id: "__expand",
@@ -346,7 +353,9 @@ export function Table<T>({
       enableColumnFilter: false,
       cell: ({ row }) => {
         const content = renderExpandedRow(row);
-        if (!content) return null;
+        if (!content) {
+          return null;
+        }
         return (
           <button
             aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
@@ -580,22 +589,22 @@ export function Table<T>({
             <VirtualTableBody<T>
               columns={finalColumns}
               density={density}
-              onRowClick={onRowClick}
               renderExpandedRow={renderExpandedRow}
               scrollElement={scrollElement}
               striped={striped}
               table={table}
               totalColumns={finalColumns.length}
+              onRowClick={onRowClick}
             />
           ) : (
             <StandardTableBody<T>
               columns={finalColumns}
               density={density}
-              onRowClick={onRowClick}
               renderExpandedRow={renderExpandedRow}
               striped={striped}
               table={table}
               totalColumns={finalColumns.length}
+              onRowClick={onRowClick}
             />
           )}
         </table>

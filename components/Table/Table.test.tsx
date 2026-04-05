@@ -565,9 +565,7 @@ describe("Table Component", () => {
     });
 
     it("should apply clickable cursor class when onRowClick is provided", () => {
-      render(
-        <Table columns={columns} data={data} onRowClick={() => {}} />,
-      );
+      render(<Table columns={columns} data={data} onRowClick={() => {}} />);
 
       const firstDataRow = screen.getAllByRole("row")[1];
       expect(firstDataRow.className).toContain("clickable");
@@ -581,9 +579,7 @@ describe("Table Component", () => {
           columns={columns}
           data={data}
           renderExpandedRow={(row) =>
-            row.original.name === "Alice" ? (
-              <div>Alice Details</div>
-            ) : null
+            row.original.name === "Alice" ? <div>Alice Details</div> : null
           }
         />,
       );
@@ -624,12 +620,10 @@ describe("Table Component", () => {
         <Table
           columns={columns}
           data={data}
-          onRowClick={handleRowClick}
           renderExpandedRow={(row) =>
-            row.original.name === "Alice" ? (
-              <div>Alice Details</div>
-            ) : null
+            row.original.name === "Alice" ? <div>Alice Details</div> : null
           }
+          onRowClick={handleRowClick}
         />,
       );
 

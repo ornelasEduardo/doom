@@ -58,7 +58,14 @@ export function Textarea({
     clsx(helperText && helperId, error && errorId) || undefined;
 
   return (
-    <div className={clsx(styles.container, size !== "md" && styles[size], className)} style={style}>
+    <div
+      className={clsx(
+        styles.container,
+        size !== "md" && styles[size],
+        className,
+      )}
+      style={style}
+    >
       {label && (
         <Label htmlFor={textareaId} required={required}>
           {label}

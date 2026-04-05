@@ -54,8 +54,8 @@ export function Dropdown({
         <Button
           aria-expanded={isOpen}
           className={clsx(styles.trigger, className)}
-          variant={variant}
           size={size}
+          variant={variant}
           onClick={() => setIsOpen(!isOpen)}
         >
           {triggerLabel}{" "}
