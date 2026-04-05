@@ -176,6 +176,27 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     [showPreview],
   );
 
+  const isFileAccepted = (file: File): boolean => {
+    if (!accept) return true;
+    const acceptedTypes = accept.split(",").map((t) => t.trim().toLowerCase());
+    const fileName = file.name.toLowerCase();
+    const mimeType = file.type.toLowerCase();
+
+    return acceptedTypes.some((type) => {
+      // Extension match: ".pdf", ".doc"
+      if (type.startsWith(".")) {
+        return fileName.endsWith(type);
+      }
+      // Wildcard MIME: "image/*", "video/*"
+      if (type.endsWith("/*")) {
+        const category = type.slice(0, -2);
+        return mimeType.startsWith(category + "/");
+      }
+      // Exact MIME: "application/pdf"
+      return mimeType === type;
+    });
+  };
+
   const validateFiles = (fileList: FileList | null): File[] => {
     if (!fileList) {
       return [];
@@ -184,6 +205,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setUploadError("");
 
     Array.from(fileList).forEach((file) => {
+      if (!isFileAccepted(file)) {
+        setUploadError(
+          `File "${file.name}" is not an accepted file type`,
+        );
+        return;
+      }
       if (maxSize && file.size > maxSize) {
         setUploadError(
           `File "${file.name}" exceeds maximum size of ${formatFileSize(

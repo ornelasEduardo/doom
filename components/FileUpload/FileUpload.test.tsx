@@ -173,6 +173,95 @@ describe("FileUpload", () => {
     expect(clickSpy).toHaveBeenCalled();
   });
 
+  describe("accept validation", () => {
+    it("rejects files that don't match accept (extension)", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept=".pdf,.doc" onChange={handleChange} />);
+
+      const input = screen.getByLabelText("File upload input");
+      const file = new File(["content"], "image.png", { type: "image/png" });
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      expect(handleChange).not.toHaveBeenCalled();
+      expect(screen.getByText(/not an accepted file type/)).toBeInTheDocument();
+    });
+
+    it("accepts files that match accept (extension)", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept=".pdf" onChange={handleChange} />);
+
+      const input = screen.getByLabelText("File upload input");
+      const file = new File(["content"], "doc.pdf", {
+        type: "application/pdf",
+      });
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      expect(handleChange).toHaveBeenCalled();
+    });
+
+    it("rejects files that don't match accept (MIME wildcard)", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept="image/*" onChange={handleChange} />);
+
+      const input = screen.getByLabelText("File upload input");
+      const file = new File(["content"], "doc.pdf", {
+        type: "application/pdf",
+      });
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      expect(handleChange).not.toHaveBeenCalled();
+      expect(screen.getByText(/not an accepted file type/)).toBeInTheDocument();
+    });
+
+    it("accepts files that match accept (MIME wildcard)", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept="image/*" onChange={handleChange} />);
+
+      const input = screen.getByLabelText("File upload input");
+      const file = new File(["content"], "photo.jpg", { type: "image/jpeg" });
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      expect(handleChange).toHaveBeenCalled();
+    });
+
+    it("rejects dropped files that don't match accept", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept="image/*" onChange={handleChange} />);
+
+      const dropzone = screen.getByText(/Drag and drop files/).closest("div");
+      const file = new File(["content"], "data.csv", { type: "text/csv" });
+
+      fireEvent.drop(dropzone!, {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+        dataTransfer: { files: [file] },
+      } as any);
+
+      expect(handleChange).not.toHaveBeenCalled();
+      expect(screen.getByText(/not an accepted file type/)).toBeInTheDocument();
+    });
+
+    it("accepts dropped files that match accept", () => {
+      const handleChange = vi.fn();
+      render(<FileUpload accept="image/*" onChange={handleChange} />);
+
+      const dropzone = screen.getByText(/Drag and drop files/).closest("div");
+      const file = new File(["content"], "photo.png", { type: "image/png" });
+
+      fireEvent.drop(dropzone!, {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+        dataTransfer: { files: [file] },
+      } as any);
+
+      expect(handleChange).toHaveBeenCalled();
+    });
+  });
+
   it("shows image preview when showPreview is true", async () => {
     // Mock URL.createObjectURL
     const createObjectURLSpy = vi
