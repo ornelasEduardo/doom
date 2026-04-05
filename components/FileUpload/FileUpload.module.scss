@@ -58,39 +58,47 @@
         z-index: 1;
         overflow: hidden;
 
+        // Star layers — 4 pseudo-elements (body::before/after + starField::before/after)
+        // Each layer uses box-shadow for crisp, round dots at any size.
+        // Positions are in px relative to the 200% oversized container.
         &::before,
         &::after {
           content: "";
           position: absolute;
-          inset: -50%;
-          width: 200%;
-          height: 200%;
-          background-image:
-            radial-gradient(1px 1px at 20% 30%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 40% 70%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 60% 40%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 80% 80%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 10% 10%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 30% 50%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 50% 20%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 70% 90%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 90% 30%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 15% 75%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 85% 15%, #fff 100%, transparent),
-            radial-gradient(1px 1px at 55% 65%, #fff 100%, transparent);
-          background-size: 50% 50%;
-          opacity: 0.5;
+          top: 50%;
+          left: 50%;
+          width: 2px;
+          height: 2px;
+          background: transparent;
+          border-radius: 50%;
+          box-shadow:
+            -80px -120px #fff, 40px -60px #fff, -150px 80px #fff,
+            120px 40px #fff, -30px -180px #fff, 90px 130px #fff,
+            -170px -20px #fff, 60px -140px #fff, 180px -80px #fff,
+            -100px 160px #fff, 140px 100px #fff, -50px -40px #fff,
+            30px 170px #fff, -140px -150px #fff, 170px 60px #fff,
+            -60px 100px #fff, 100px -170px #fff, -180px 140px #fff,
+            50px 50px #fff, -120px -90px #fff, 160px -30px #fff,
+            -20px 130px #fff, 80px -100px #fff, -160px 40px #fff;
+          opacity: 0.6;
           z-index: 0;
           animation: consume-stars 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           pointer-events: none;
         }
 
         &::after {
+          box-shadow:
+            -70px -90px #fff, 50px -130px #fff, -130px 60px #fff,
+            110px 70px #fff, -20px -160px #fff, 80px 150px #fff,
+            -160px -50px #fff, 70px -110px #fff, 160px -60px #fff,
+            -90px 140px #fff, 130px 120px #fff, -40px -30px #fff,
+            20px 160px #fff, -150px -130px #fff, 150px 40px #fff,
+            -50px 80px #fff, 90px -150px #fff, -170px 120px #fff;
           animation-name: consume-stars-alt;
           animation-delay: -3s;
-          background-position: 33% 33%;
-          opacity: 0.3;
+          opacity: 0.35;
         }
+
         .starField {
           position: absolute;
           inset: 0;
@@ -102,32 +110,34 @@
           &::after {
             content: "";
             position: absolute;
-            inset: -50%;
-            width: 200%;
-            height: 200%;
-            background-image:
-              radial-gradient(1px 1px at 25% 35%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 45% 75%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 65% 45%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 85% 85%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 35% 55%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 55% 25%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 75% 95%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 95% 35%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 20% 80%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 90% 20%, #fff 100%, transparent),
-              radial-gradient(1px 1px at 60% 70%, #fff 100%, transparent);
-            background-size: 50% 50%;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 2px;
+            background: transparent;
+            border-radius: 50%;
+            box-shadow:
+              -95px -105px #fff, 55px -75px #fff, -140px 95px #fff,
+              105px 55px #fff, -45px -170px #fff, 75px 145px #fff,
+              -155px -35px #fff, 45px -125px #fff, 165px -70px #fff,
+              -85px 155px #fff, 125px 85px #fff, -35px -55px #fff,
+              15px 175px #fff, -125px -140px #fff, 155px 50px #fff,
+              -75px 90px #fff, 85px -160px #fff, -165px 130px #fff,
+              35px 65px #fff, -110px -80px #fff, 145px -15px #fff,
+              -15px 115px #fff, 65px -85px #fff, -145px 55px #fff;
             opacity: 0.5;
             animation: consume-stars 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
             animation-delay: -1.5s;
           }
 
           &::after {
+            box-shadow:
+              -65px -80px #fff, 45px -140px #fff, -120px 70px #fff,
+              100px 80px #fff, -35px -150px #fff, 70px 160px #fff,
+              -150px -40px #fff, 55px -100px #fff, 150px -50px #fff,
+              -80px 130px #fff, 120px 110px #fff, -55px -45px #fff;
             animation-name: consume-stars-alt;
             animation-delay: -4.5s;
-            background-position: 40% 40%;
             opacity: 0.3;
           }
         }
