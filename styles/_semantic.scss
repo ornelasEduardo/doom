@@ -8,6 +8,12 @@
 
 :root {
   // ---------------------------------------------------------------------------
+  // COMMON COLORS — Absolute black/white, theme-independent
+  // ---------------------------------------------------------------------------
+  --common-black: #000;
+  --common-white: #fff;
+
+  // ---------------------------------------------------------------------------
   // CONTROL TOKENS — Form controls: Input, Select, Button, Combobox, etc.
   // Default tier is "md". Size variants override these locally via CSS classes.
   // ---------------------------------------------------------------------------
