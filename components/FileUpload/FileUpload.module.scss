@@ -40,18 +40,18 @@
       cursor: wait;
 
       .header {
-        background-color: var(--common-black);
+        background-color: #000;
         color: var(--background);
         border-bottom: none;
 
         & > * {
-          --primary: var(--common-white);
-          --primary-foreground: var(--common-black);
+          --primary: #fff;
+          --primary-foreground: #000;
         }
       }
 
       .body {
-        background-color: var(--common-black);
+        background-color: #000;
         cursor: wait;
         margin-top: -1px;
         position: relative;
