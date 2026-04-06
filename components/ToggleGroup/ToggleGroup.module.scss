@@ -6,9 +6,8 @@
     align-items: stretch;
     border: var(--surface-border-width) solid var(--card-border);
     border-radius: var(--control-radius);
-    box-shadow: var(--shadow-offset-sm);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-    position: relative;
 
     &.primary {
       border-color: var(--border-strong);
@@ -26,17 +25,12 @@
     cursor: pointer;
     background: var(--card-bg);
     color: var(--foreground);
-    position: relative;
     transition: background-color var(--duration-fast) var(--ease-in-out),
       color var(--duration-fast) var(--ease-in-out);
 
-    // Default size (md)
     height: var(--control-height);
     padding: var(--control-padding-y) var(--control-padding-x);
     font-size: var(--control-font-size);
-
-    // No border on items — group owns the outer border.
-    // Dividers between items via border-left on non-first items.
     border: none;
     border-radius: 0;
     border-left: var(--surface-border-width) solid var(--card-border);
@@ -45,13 +39,10 @@
       border-left: none;
     }
 
-    // Subtle hover on unpressed items
     &:not(.pressed):not(.disabled):hover {
       background: var(--muted);
     }
 
-    // Focus: border-color swap won't work inside overflow:hidden with no item border,
-    // so use a box-shadow inset ring instead.
     &:focus-visible {
       box-shadow: inset 0 0 0 var(--surface-border-width) var(--primary);
       z-index: 1;
@@ -61,23 +52,16 @@
       outline: none;
     }
 
-    // --- Outline variant (default) ---
-    &.outline {
-      &.pressed {
-        background: var(--muted);
-        color: var(--muted-foreground);
-      }
+    &.outline.pressed {
+      background: var(--muted);
+      color: var(--muted-foreground);
     }
 
-    // --- Primary variant ---
-    &.primary {
-      &.pressed {
-        background: var(--primary);
-        color: var(--primary-foreground);
-      }
+    &.primary.pressed {
+      background: var(--primary);
+      color: var(--primary-foreground);
     }
 
-    // --- Sizes ---
     &.sm {
       @include control-sm;
     }
@@ -86,7 +70,6 @@
       @include control-lg;
     }
 
-    // --- Disabled ---
     &.disabled {
       @include disabled-state;
       cursor: not-allowed;
