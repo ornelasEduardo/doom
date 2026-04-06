@@ -10,9 +10,6 @@
     background: var(--card-bg);
     position: relative;
 
-    @include hover;
-    @include press;
-
     &.primary {
       border-color: var(--border-strong);
     }
@@ -60,6 +57,11 @@
 
     &:first-child:last-child {
       border-radius: var(--control-radius);
+    }
+
+    // Subtle hover on unpressed items (no lift — this is inline, not a button)
+    &:not(.pressed):not(.disabled):hover {
+      background: var(--muted);
     }
 
     &:focus-visible {
