@@ -293,10 +293,10 @@ Shadows & Motion:
 
 ### Doom-isms
 
-- Offset shadow on the entire group container (not per-item) — `--shadow-offset-sm` with `--card-border`
-- Shared borders — adjacent items collapse to single `--surface-border-width` via negative margin
-- `@include hover` on unpressed items — whole group lifts, shadow grows
-- `@include press` on click — group compresses toward shadow
+- Offset shadow on the entire group container (static, not responsive to hover) — `--shadow-offset-sm` with `--card-border`
+- Shared borders — adjacent items share `--surface-border-width` borders
+- **No group-level hover/press** — ToggleGroup is a segmented control, not a button. The group does NOT lift.
+- Individual unpressed items get subtle `--muted` background on hover (no lift)
 - `@include focus` on individual items via `:focus-visible`
 - `@include disabled-state` — hatched overlay + 0.6 opacity
 - Pressed items feel "pushed in" with inset shadow `0 2px 0 0 var(--card-border)`
