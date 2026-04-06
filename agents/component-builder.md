@@ -146,7 +146,9 @@ Extend props and markup to match the component description. Add all props the co
 }
 ```
 
-All styles MUST be wrapped in `@layer doom.components`. Add variant classes and state styles as needed. The template above is for interactive controls — adapt mixins based on the Mixin Enforcement table and spec (if provided).
+All styles MUST be wrapped in `@layer doom.components`. **Class naming:** Use the component name in lowercase as the root class (e.g., `.chip`, `.rating`, `.stepper`), not `.root`. This matches the existing codebase convention.
+
+All styles MUST be wrapped in `@layer doom.components`. The template above is for interactive controls — adapt mixins based on the Mixin Enforcement table and spec (if provided). Not every component is a control — inline elements like chips/badges may skip `@include control` and manage their own sizing.
 
 ### 3. `components/[Name]/index.ts`
 
