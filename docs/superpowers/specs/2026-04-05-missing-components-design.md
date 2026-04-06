@@ -59,7 +59,66 @@ Every component **must** ship with all of the following:
 | A2UI catalog | `components/A2UI/catalog.ts` | Add to catalog with props/category |
 | Root export | `index.ts` | Add `export * from "./components/<Name>"` |
 
-Components with internal hooks or types files list those explicitly in their section below.
+Components with internal hooks, context, or types files list those explicitly in their section below. Complex components use subdirectories to organize internals (see TreeView, Stepper).
+
+### Engineering Standards
+
+All new components must follow these principles:
+
+**Clean code:**
+- Single responsibility — each file does one thing. Context in its own file, hooks in their own files, types in their own file.
+- No God components — if a component file exceeds ~200 lines, split internal concerns into subcomponents or hooks.
+- Named exports only — no default exports (matches existing Doom convention).
+- Props interfaces exported and documented — consumers can extend or reference them.
+- No `any` types — strict TypeScript throughout. Use generics where the type varies by mode (e.g., DatePicker single vs. range value types).
+
+**Composition over complexity:**
+- Prefer composing existing components (`Button`, `Input`, `Popover`, `Checkbox`) over reimplementing their behavior.
+- Internal subcomponents (e.g., `TreeNodeRow`, `StepIndicator`) are private — not exported from the barrel `index.ts`.
+- Hooks extract stateful logic out of render functions. A component file should primarily be JSX + prop destructuring.
+
+**Testing rigor:**
+- Test behavior, not implementation — query by role/label, not by CSS class or test ID.
+- Every interactive state must be tested: default, hover-preview (where applicable), active/pressed, disabled, keyboard navigation.
+- Controlled and uncontrolled modes both tested.
+- Compound components tested for context error (using outside parent throws).
+- Accessibility tested: roles, aria attributes, keyboard navigation sequences.
+
+### Doom Style Guarantee
+
+The neubrutalist aesthetic isn't just visual — it's mechanical. Here's how we guarantee it:
+
+**1. Mixin enforcement (mechanical guarantee):**
+Every interactive surface must use the appropriate mixins. These encode the doom philosophy and are non-negotiable:
+
+| Surface Type | Required Mixins |
+|-------------|----------------|
+| Clickable control (button, toggle, nav arrow) | `@include control`, `@include hover`, `@include focus`, `@include press` |
+| Container/surface (panel, card, tree container) | Offset shadow via `--shadow-offset-sm/md`, `--card-bg`, `--card-border` |
+| Disableable element | `@include disabled-state` (hatched overlay + opacity) |
+| Focusable element | `@include focus` on `:focus-visible` |
+| Error state | `@include error` |
+
+If a component has an interactive element that doesn't use these mixins, it's a bug.
+
+**2. Token-only styling (mechanical guarantee):**
+Zero hardcoded color, spacing, radius, shadow, or timing values in SCSS. Every value must reference a semantic token. This is grep-verifiable — any raw `px`, `#hex`, `rgb()`, or `ms` value in a component's SCSS (outside of the mixins themselves) is a violation.
+
+**3. Doom-isms checklist (design judgment, verified in review):**
+Each component's Doom-isms section documents the specific design decisions. During implementation, each item becomes a visual verification point. After building, the implementer must confirm in Storybook:
+
+- [ ] Offset shadows render correctly and match existing component shadow weight
+- [ ] Hover lift animation matches Button/Card lift (same mixin = same feel)
+- [ ] Press animation compresses toward shadow (not just opacity change)
+- [ ] Focus ring uses `--primary` and matches existing focus treatment
+- [ ] Disabled state shows hatched overlay pattern (not just opacity)
+- [ ] Border weights match — `--surface-border-width` is consistent with Card, Input, etc.
+- [ ] Typography uses semantic scale tokens (`--text-2xs`, `--control-font-size`, etc.)
+- [ ] Spacing uses semantic tokens (`--control-gap`, `--surface-padding`, `--space-*`)
+- [ ] Component feels "heavy" and "punchy" — no thin lines, no subtle transitions, no gradual fades
+
+**4. Cross-reference test (verified in Storybook):**
+Open the new component's story alongside an existing component story (e.g., Button, Card, Tabs). They should look like they belong to the same family. If the new component feels lighter, thinner, or smoother than the existing ones, the doom-isms aren't fully applied.
 
 ---
 
@@ -461,11 +520,23 @@ Motion:
 
 ```
 components/Stepper/
-  Stepper.tsx              context + Stepper + StepperStep
+  Stepper.tsx               root component, renders indicator row + active content panel
   Stepper.module.scss
   Stepper.test.tsx
   Stepper.stories.tsx
-  index.ts
+  index.ts                  re-exports Stepper, StepperStep, and all public types
+
+  context/
+    StepperContext.ts        context type + createContext + useStepperContext hook
+  
+  components/
+    StepperStep.tsx          step registration + content panel rendering
+    StepIndicator.tsx        single step circle + label + description (internal, not exported)
+    StepConnector.tsx        connector line between indicators (internal, not exported)
+    StepperNavigation.tsx    Back/Next/Complete button row using <Button> + <Flex> (internal)
+
+  types/
+    stepper.ts               StepperProps, StepperStepProps, StepMeta, public types
 
 skills/doom-design-system/components/stepper.md
 ```
@@ -641,16 +712,33 @@ Motion:
 
 ```
 components/TreeView/
-  TreeView.tsx              root component + context
-  TreeNode.tsx              declarative TreeNode component
+  TreeView.tsx               root component, sets up providers (DndContext, Virtualizer)
   TreeView.module.scss
   TreeView.test.tsx
   TreeView.stories.tsx
-  useTreeState.ts           selection, expansion, checkbox cascade logic
-  useTreeDnd.ts             dnd-kit DndContext + SortableContext wiring
-  useTreeVirtualizer.ts     TanStack Virtual useVirtualizer wiring
-  types.ts                  TreeNodeData, TreeDropEvent, internal types
-  index.ts
+  index.ts                   re-exports TreeView, TreeNode, and all public types
+
+  context/
+    TreeViewContext.ts        context type + createContext + useTreeViewContext hook
+
+  components/
+    TreeNode.tsx              declarative TreeNode component (public, exported)
+    TreeNodeRow.tsx           single row renderer: indent + chevron + checkbox + icon + label (internal)
+    DragOverlay.tsx           floating card shown during drag (internal)
+    DropIndicator.tsx         thick primary line between drop targets (internal)
+
+  hooks/
+    useTreeState.ts           selection, expansion, and checkbox cascade logic
+    useTreeDnd.ts             dnd-kit DndContext + SortableContext + useSortable wiring
+    useTreeVirtualizer.ts     TanStack Virtual useVirtualizer setup
+    useTreeKeyboard.ts        keyboard navigation (arrow keys, Home/End, *, expand/collapse)
+
+  types/
+    tree.ts                   TreeNodeData, TreeDropEvent, TreeViewProps, public types
+
+  utils/
+    flattenTree.ts            recursive tree -> flat visible-node list (respects expansion)
+    checkboxCascade.ts        parent/child check propagation + indeterminate resolution
 ```
 
 Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
@@ -843,17 +931,31 @@ Motion:
 
 ```
 components/Calendar/
-  Calendar.tsx              month grid + navigation + month/year picker views
+  Calendar.tsx               root component, renders header + day grid
   Calendar.module.scss
   Calendar.test.tsx
   Calendar.stories.tsx
-  useDateRange.ts           range selection logic + hover preview state
-  types.ts                  DateRange, CalendarMode
-  index.ts
+  index.ts                   re-exports Calendar and all public types
+
+  components/
+    CalendarHeader.tsx        month/year label + prev/next <Button> nav (internal)
+    CalendarGrid.tsx          7-column day cell grid (internal)
+    DayCell.tsx               single day button/cell with selection + range styling (internal)
+    MonthYearPicker.tsx       overlay grid for quick month/year jumping (internal)
+
+  hooks/
+    useCalendarState.ts       viewed month tracking, month navigation
+    useDateRange.ts           range selection logic + hover preview state
+
+  types/
+    calendar.ts               DateRange, CalendarMode, CalendarProps, public types
+
+  utils/
+    dateGrid.ts               builds the 6x7 day grid for a given month using date-fns
 
 components/DatePicker/
-  DatePicker.tsx            Input + Popover + Calendar, mode switches single/range
-  DatePicker.module.scss    range container styling, composes Input/Popover styles
+  DatePicker.tsx              Input + Popover + Calendar, mode switches single/range
+  DatePicker.module.scss      range container styling, composes Input/Popover styles
   DatePicker.test.tsx
   DatePicker.stories.tsx
   index.ts
@@ -876,8 +978,8 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 
 ### Total New Files
 
-- 6 component directories
-- ~30 source files (tsx, scss, test, stories, hooks, types, index)
+- 6 component directories with organized subdirectories (context/, components/, hooks/, types/, utils/)
+- ~45 source files (tsx, scss, test, stories, hooks, context, types, utils, index)
 - 6 skill docs: togglegroup.md, rating.md, stepper.md, treeview.md, calendar.md, datepicker.md
 - 4 updated existing files: Checkbox (tsx, test, stories, skill doc) for indeterminate support
 - Updates to: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts
