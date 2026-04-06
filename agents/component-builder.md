@@ -45,18 +45,13 @@ export interface [Name]Props {
   children?: React.ReactNode;
 }
 
-export const [Name] = React.forwardRef<
-  HTMLDivElement,
-  [Name]Props
->(({ className, children }, ref) => {
+export function [Name]({ className, children }: [Name]Props) {
   return (
-    <div ref={ref} className={clsx(styles.root, className)}>
+    <div className={clsx(styles.root, className)}>
       {children}
     </div>
   );
-});
-
-[Name].displayName = "[Name]";
+}
 ```
 
 Extend props and markup to match the component description. Add all props the component needs.
@@ -67,21 +62,16 @@ Extend props and markup to match the component description. Add all props the co
 @use "../../styles/mixins" as *;
 
 .root {
-  @include base-interactive;
-
-  border: var(--border-width) solid var(--card-border);
-  box-shadow: var(--shadow-hard);
-
-  &:hover {
-    @include brutalist-hover;
-  }
-
+  @include control;
+  @include hover;
   @include focus;
+  @include press;
 
-  &:active {
-    transition: none;
-    transform: translate(var(--spacing-half), var(--spacing-half));
-    box-shadow: none;
+  background: var(--card-bg);
+  color: var(--foreground);
+
+  &:disabled {
+    @include disabled-state;
   }
 }
 ```
@@ -102,14 +92,12 @@ For components with multiple composable parts (e.g., Tabs, Accordion, Calendar),
 
 ```
 components/[Name]/
-  [Name].tsx                root component
+  [Name].tsx                root + subcomponents + inline context
   [Name].module.scss
   [Name].test.tsx
   [Name].stories.tsx
   index.ts
-  context/                  if compound (shared state between parts)
-    [Name]Context.ts
-  components/               if has internal subcomponents
+  components/               if has internal subcomponents too large for main file
     [SubPart].tsx
   hooks/                    if has 2+ hooks
     use[Feature].ts
@@ -119,81 +107,75 @@ components/[Name]/
     [util].ts
 ```
 
-### Context File (`context/[Name]Context.ts`)
+### Root Component Pattern (controlled/uncontrolled with inline context)
 
-```tsx
-'use client';
-
-import { createContext, useContext } from "react";
-
-export interface [Name]ContextValue {
-  // shared state and callbacks
-  activeValue: string | null;
-  onValueChange: (value: string) => void;
-}
-
-export const [Name]Context = createContext<[Name]ContextValue | null>(null);
-
-export function use[Name]Context() {
-  const context = useContext([Name]Context);
-  if (!context) {
-    throw new Error("use[Name]Context must be used within a <[Name]> provider");
-  }
-  return context;
-}
-```
-
-### Root Component Pattern (controlled/uncontrolled)
+Context is defined inline in the main component file (not in a separate `context/` directory). This matches how Tabs, Accordion, and RadioGroup all work.
 
 ```tsx
 'use client';
 
 import clsx from "clsx";
-import React, { useId, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useId, useState } from "react";
 
 import styles from "./[Name].module.scss";
-import { [Name]Context, type [Name]ContextValue } from "./context/[Name]Context";
+
+// --- Context (inline) ---
+
+interface [Name]ContextType {
+  activeValue: string;
+  setActiveValue: (value: string) => void;
+  baseId: string;  // critical: scopes ARIA IDs for compound components
+}
+
+const [Name]Context = createContext<[Name]ContextType | null>(null);
+
+// --- Root ---
 
 export interface [Name]Props {
   className?: string;
   children?: React.ReactNode;
-  value?: string | null;         // controlled
-  defaultValue?: string | null;  // uncontrolled
+  value?: string;            // controlled
+  defaultValue?: string;     // uncontrolled
   onValueChange?: (value: string) => void;
 }
 
-export const [Name] = React.forwardRef<
-  HTMLDivElement,
-  [Name]Props
->(({ className, children, value, defaultValue = null, onValueChange }, ref) => {
-  const id = useId();
+export function [Name]({
+  className,
+  children,
+  value,
+  defaultValue = "",
+  onValueChange,
+}: [Name]Props) {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const baseId = useId();
+
   const isControlled = value !== undefined;
-  const [internal, setInternal] = useState(defaultValue);
-  const active = isControlled ? value : internal;
+  const activeValue = isControlled ? value : internalValue;
 
-  const handleChange = useCallback(
-    (next: string) => {
-      if (!isControlled) setInternal(next);
-      onValueChange?.(next);
-    },
-    [isControlled, onValueChange]
-  );
-
-  const ctx = useMemo<[Name]ContextValue>(
-    () => ({ activeValue: active, onValueChange: handleChange }),
-    [active, handleChange]
-  );
+  const setActiveValue = (next: string) => {
+    if (!isControlled) setInternalValue(next);
+    onValueChange?.(next);
+  };
 
   return (
-    <[Name]Context.Provider value={ctx}>
-      <div ref={ref} id={id} className={clsx(styles.root, className)}>
+    <[Name]Context.Provider value={{ activeValue, setActiveValue, baseId }}>
+      <div className={clsx(styles.root, className)}>
         {children}
       </div>
     </[Name]Context.Provider>
   );
-});
+}
 
-[Name].displayName = "[Name]";
+// --- Subcomponents ---
+
+export function [Name]Item({ value, children }: { value: string; children: React.ReactNode }) {
+  const context = useContext([Name]Context);
+  if (!context) throw new Error("[Name]Item must be used within <[Name]>");
+
+  const itemId = `[name]-item-${context.baseId}-${value}`;
+  // Use context.activeValue, context.setActiveValue, itemId for ARIA
+  return <div id={itemId}>{children}</div>;
+}
 ```
 
 Only use this pattern when the component genuinely has multiple composable parts. Simple components use the basic template from step 1.
@@ -229,6 +211,16 @@ export const Default: Story = {
     children: "[Name] Content",
   },
 };
+
+// For compound components, use render-based stories (not args-based):
+// export const Default: Story = {
+//   render: () => (
+//     <[Name] defaultValue="first">
+//       <[Name]Item value="first">First</[Name]Item>
+//       <[Name]Item value="second">Second</[Name]Item>
+//     </[Name]>
+//   ),
+// };
 ```
 
 ### 5. `components/[Name]/[Name].test.tsx`
@@ -325,8 +317,10 @@ Every interactive surface MUST use the appropriate mixins. This is non-negotiabl
 
 | Surface Type | Required |
 |---|---|
-| Clickable control (button, toggle, nav arrow) | `@include base-interactive`, `@include brutalist-hover`, `@include focus`, active press CSS |
-| Container/surface (panel, card, tree container) | `--shadow-hard` or `--shadow-sm`, `--card-bg`, `--card-border` |
+| Clickable control (button, toggle, nav arrow) | `@include control`, `@include hover`, `@include focus`, `@include press` |
+| Container/surface (panel, card, tree container) | `@include surface` or manual `--shadow-md`, `--card-bg`, `--card-border` |
+| Open/expanded control (dropdown, combobox) | `@include active-ring` (compose with `@include focus`) |
+| Size variants | `@include control-sm` / `@include control-lg` |
 | Disableable element | `@include disabled-state` |
 | Focusable element | `@include focus` on `:focus-visible` |
 | Error state | `@include error` |
@@ -344,8 +338,8 @@ Every interactive surface MUST use the appropriate mixins. This is non-negotiabl
 
 - Always use `var(--token-name)` for colors, spacing, and shadows — never hardcode hex values
 - Always use `clsx` for className composition
-- Always use `React.forwardRef` — every component is a forwardRef
+- Use forwardRef only when consumers need direct ref access to the underlying DOM element (e.g., form controls like Checkbox, Switch, Input). Most components use plain function exports.
 - Always add `'use client'` directive at the top of the `.tsx` file
 - Never skip the A2UI registration step (steps 7–8)
 - Never skip the skill doc step (step 9)
-- Available mixins: `base-interactive`, `brutalist-hover`, `focus`, `error`, `disabled-state`, `invert-theme`, `solid-variant`, `brutalist-shadow`, `mq` — there is no `active-press` mixin. Use `@use "../../styles/mixins" as *` (unqualified) — this is the dominant convention in the codebase (37/47 components)
+- Available mixins: `control`, `hover`, `focus`, `press`, `active-ring`, `error`, `disabled-state`, `surface`, `control-sm`, `control-lg`, `invert-theme`, `solid-variant`, `shadow-directional`, `mq`. Use `@use "../../styles/mixins" as *` (unqualified) — this is the dominant convention in the codebase

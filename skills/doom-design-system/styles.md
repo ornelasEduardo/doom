@@ -13,7 +13,7 @@ Every interactive element has a 2px solid border.
 
 ```scss
 // Correct
-border: var(--border-width) solid var(--card-border);
+border: var(--surface-border-width) solid var(--card-border);
 
 // Wrong
 border: 1px solid #ccc;
@@ -26,7 +26,7 @@ Hard offset shadows only. No blur.
 
 ```scss
 // Correct
-box-shadow: var(--shadow-hard);
+box-shadow: var(--shadow-md);
 
 // Wrong
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -37,10 +37,13 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 Elements lift on hover. Shadow compensates.
 
 ```scss
-// Correct
+// Correct — use the hover mixin
+@include hover;
+
+// Or manually:
 &:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-hover);
+  transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+  box-shadow: var(--shadow-lg);
 }
 
 // Wrong
@@ -89,8 +92,8 @@ Use the numeric spacing scale (base unit = 4px):
 
 ```tsx
 // Correct — use token variables
-padding: var(--spacing-4);  // 16px
-gap: var(--spacing-6);      // 24px
+padding: var(--space-4);  // 16px
+gap: var(--space-6);      // 24px
 
 // Correct — component gap prop
 <Stack gap={4}>...</Stack>
@@ -122,47 +125,44 @@ transition: all var(--duration-fast) var(--ease-in-out);
 @use "../../styles/mixins" as *;
 
 .component {
-  @include base-interactive; // border, shadow, transition
-  background: var(--card-bg);
+  @include control; // height, padding, border, shadow, transition
+  @include hover;   // lift + shadow grow
+  @include focus;   // focus-visible ring
+  @include press;   // active press state
 
-  @include brutalist-hover; // lift + shadow grow
-  @include focus; // focus-visible ring
+  background: var(--card-bg);
+  color: var(--foreground);
+
+  &:disabled {
+    @include disabled-state;
+  }
 }
 ```
 
 ## Design Tokens
 
-Source: `styles/_tokens.scss`
+Source: `styles/_primitives.scss` (primitives), `styles/_semantic.scss` (semantic tokens)
 
 ### Base Unit
 
-All spatial tokens derive from `$base-unit: 0.25rem` (4px).
+All spatial tokens derive from a 4px base unit.
 
 ### Spacing Scale
 
-Numeric scale where N = N * 4px.
+Intentionally gapped scale (no --space-5, --space-7, etc.):
 
 ```
---spacing-half: 2px     (design exception)
---spacing-1:   4px
---spacing-2:   8px
---spacing-3:   12px
---spacing-4:   16px
---spacing-5:   20px
---spacing-6:   24px
---spacing-8:   32px
---spacing-10:  40px
---spacing-12:  48px
---spacing-16:  64px
---spacing-20:  80px
---spacing-24:  96px
---spacing-32:  128px
---spacing-36:  144px
---spacing-40:  160px
---spacing-56:  224px
---spacing-64:  256px
---spacing-72:  288px
---spacing-100: 400px
+--space-px:   1px
+--space-0.5:  2px
+--space-1:    4px
+--space-1.5:  6px
+--space-2:    8px
+--space-3:    12px
+--space-4:    16px
+--space-6:    24px
+--space-8:    32px
+--space-12:   48px
+--space-16:   64px
 ```
 
 ### Typography Scale
@@ -178,7 +178,6 @@ Numeric scale where N = N * 4px.
 --text-3xl: 1.875rem  (30px)
 --text-4xl: 2.25rem   (36px)
 --text-5xl: 3rem      (48px)
---text-6xl: 3.75rem   (60px)
 ```
 
 ### Font Weights
@@ -198,45 +197,70 @@ Numeric scale where N = N * 4px.
 ### Structural
 
 ```
---border-width:   2px   (never change — neubrutalism requires it)
---radius:         4px
---radius-lg:      8px
---radius-xl:      16px
---radius-pill:    9999px
---radius-full:    50%
---outline-width:  2px
---outline-offset: 2px
+--surface-border-width: 2px   (never change — neubrutalism requires it)
+--radius-sm:    2px
+--radius-md:    4px
+--radius-lg:    8px
+--radius-pill:  9999px
+--radius-full:  50%
 ```
 
-### Shadows
+### Shadow Offsets (primitives)
 
 ```
---shadow-hard:             4px 4px 0 0 var(--shadow-base)       (buttons, cards)
---shadow-hover:            8px 8px 0 0 var(--shadow-base)       (hover state)
---shadow-sm:               4px 4px 0 0 var(--card-border)       (small elements)
---shadow-sm-hover:         8px 8px 0 0 var(--card-border)
---shadow-sm-checked:       4px 4px 0 0 var(--card-border)
---shadow-sm-checked-hover: 8px 8px 0 0 var(--card-border)
---shadow-lg:               8px 8px 0 0 var(--card-border)       (large elements)
+--shadow-offset-sm: var(--space-0.5) var(--space-0.5) 0 0    (2px 2px)
+--shadow-offset-md: var(--space-1) var(--space-1) 0 0        (4px 4px)
+--shadow-offset-lg: var(--space-1.5) var(--space-1.5) 0 0    (6px 6px)
+--shadow-offset-xl: var(--space-2) var(--space-2) 0 0        (8px 8px)
 ```
 
-### Control Heights
+### Shadows (semantic)
 
 ```
---control-height-sm: 32px
---control-height-md: 40px
---control-height-lg: 48px
+--shadow-sm:        var(--shadow-offset-sm) var(--shadow-base)   (small elements)
+--shadow-md:        var(--shadow-offset-md) var(--shadow-base)   (buttons, cards — default)
+--shadow-lg:        var(--shadow-offset-lg) var(--shadow-base)   (hover state)
+--shadow-xl:        var(--shadow-offset-xl) var(--shadow-base)   (focus state)
+--shadow-sm-border: var(--shadow-offset-sm) var(--card-border)
+--shadow-md-border: var(--shadow-offset-md) var(--card-border)
 ```
 
-### Sizing & Widths
+### Control Tokens (semantic)
+
+Default tier is "md". Size variants use `@include control-sm` / `@include control-lg` mixins to override locally.
 
 ```
---width-full:    100%
---width-screen:  100vw
---height-screen: 100vh
---width-min:     min-content
---width-max:     max-content
---width-fit:     fit-content
+--control-height:    var(--size-8)     (40px, default md)
+--control-padding-x: var(--space-3)
+--control-padding-y: var(--space-1.5)
+--control-font-size: var(--text-sm)
+--control-icon-size: var(--size-5)
+--control-gap:       var(--space-1.5)
+--control-radius:    var(--radius-md)
+```
+
+### Surface Tokens (semantic)
+
+```
+--surface-padding:       var(--space-4)
+--surface-padding-dense: var(--space-3)
+--surface-radius:        var(--radius-md)
+--surface-gap:           var(--space-4)
+--surface-border-width:  2px
+```
+
+### Sizes (primitives)
+
+```
+--size-4:  16px
+--size-5:  20px
+--size-6:  24px
+--size-7:  32px
+--size-8:  40px
+--size-9:  44px
+--size-10: 48px
+--size-11: 52px
+--size-12: 56px
 ```
 
 #### Prose (reading widths)
@@ -266,27 +290,24 @@ Numeric scale where N = N * 4px.
 --width-modal-xl: 1024px
 ```
 
-#### Controls
-```
---width-control-sm: 120px
---width-control-md: 240px
---width-control-lg: 320px
---width-control-xl: 400px
-```
-
-#### Form
-```
---form-col-min:      128px
---form-select-width: 144px
-```
-
-### Icon Sizes
+### Feedback Tokens (semantic)
 
 ```
---size-icon-sm:     20px
---size-icon-md:     24px
---size-icon-lg:     32px
---size-touch-target: 44px
+--toggle-size:    var(--size-5)    (20px)
+--toggle-size-sm: var(--size-4)    (16px)
+--switch-width:   var(--size-9)    (44px)
+--switch-height:  var(--size-6)    (24px)
+```
+
+### Display Tokens (semantic)
+
+```
+--badge-padding-x:  var(--space-1.5)
+--badge-padding-y:  var(--space-0.5)
+--badge-font-size:  var(--text-2xs)
+--chip-padding-x:   var(--space-2)
+--chip-padding-y:   var(--space-1)
+--chip-font-size:   var(--text-xs)
 ```
 
 ### Z-Index
@@ -427,19 +448,29 @@ Source: `styles/_mixins.scss`
 
 Import with `@use "../../styles/mixins" as *;` (unqualified — dominant codebase convention).
 
-### `base-interactive`
+### `control`
 
-Base styles for clickable elements: border, border-radius, shadow, transition.
+Base styles for every interactive control: height, padding, font-size, border, border-radius, shadow, transition.
 
 ```scss
 .myButton {
-  @include base-interactive;
+  @include control;
+}
+```
+
+### `hover`
+
+Hover lift effect. Element lifts up and left, shadow grows to `--shadow-lg`.
+
+```scss
+.myButton {
+  @include hover;
 }
 ```
 
 ### `focus`
 
-Focus-visible ring with lift and primary shadow. Also handles `aria-expanded`.
+Keyboard focus ring with lift and primary shadow on `:focus-visible`. Also suppresses default outline on `:focus`.
 
 ```scss
 .myInput {
@@ -447,35 +478,36 @@ Focus-visible ring with lift and primary shadow. Also handles `aria-expanded`.
 }
 ```
 
+### `active-ring`
+
+Active ring for open/expanded controls (same visual as focus). Targets `[aria-expanded="true"]`. Compose with `@include focus` for controls that need both.
+
+```scss
+.myDropdown {
+  @include focus;
+  @include active-ring;
+}
+```
+
+### `press`
+
+Active press state. Pushes element into the page (opposite of hover lift), removes shadow.
+
+```scss
+.myButton {
+  @include press;
+}
+```
+
 ### `error`
 
-Error state: red border + error shadow.
+Error state: red border + error shadow. Also overrides focus shadow to use error color.
 
 ```scss
 .myInput {
   &.hasError {
     @include error;
   }
-}
-```
-
-### `brutalist-hover($lift: 2px, $shadow-color: var(--shadow-base))`
-
-Hover lift effect. Shadow grows to compensate for lift.
-
-```scss
-.myCard {
-  @include brutalist-hover(2px, var(--shadow-base));
-}
-```
-
-### Active/press state (raw CSS, no mixin)
-
-```scss
-&:active {
-  transition: none;
-  transform: translate(var(--spacing-half), var(--spacing-half));
-  box-shadow: none;
 }
 ```
 
@@ -489,6 +521,25 @@ Disabled styling with hatched pattern overlay. Kills hover effects.
 }
 ```
 
+### `surface`
+
+Base styles for container elements (Card, Modal, Drawer, Sheet): padding, border, border-radius, background, shadow.
+
+```scss
+.myCard {
+  @include surface;
+}
+```
+
+### `control-sm` / `control-lg`
+
+Size overrides for controls. Apply as a class modifier to override semantic control variables locally.
+
+```scss
+.sm { @include control-sm; }  // --size-7 (32px) height, smaller padding/font
+.lg { @include control-lg; }  // --size-10 (48px) height, larger padding/font
+```
+
 ### `invert-theme`
 
 Inverts theme for content on primary-colored backgrounds. Swaps `--primary` and `--primary-foreground`.
@@ -497,13 +548,13 @@ Inverts theme for content on primary-colored backgrounds. Swaps `--primary` and 
 
 Applies full solid variant styling. Overrides all color, surface, button, input, and popover tokens for a solid-background context. Used by Modal, Sheet, Drawer with `variant="solid"`.
 
-### `brutalist-shadow($direction: "standard", $size: 8px, $color: var(--shadow-base))`
+### `shadow-directional($direction: "standard", $size: var(--space-2), $color: var(--shadow-base))`
 
 Directional hard shadows.
 
 ```scss
 .myElement {
-  @include brutalist-shadow("left", 8px, var(--shadow-base));
+  @include shadow-directional("left", var(--space-2), var(--shadow-base));
 }
 ```
 

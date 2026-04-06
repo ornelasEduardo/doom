@@ -57,12 +57,12 @@ All components are tree-shakeable. Named exports only.
 - Always use SCSS Modules — never CSS-in-JS, never inline styles
 - Always use `clsx` for conditional class names
 - Always use CSS variables for colors — never hardcode hex values
-- Always use `var(--border-width) solid var(--card-border)` for borders
-- Always use `var(--shadow-hard)` for shadows — no blur, offset only
+- Always use `var(--surface-border-width) solid var(--card-border)` for borders
+- Always use `var(--shadow-md)` for shadows — no blur, offset only
 - Always use `@use "../../styles/mixins" as *;` for interactive states
 
 ### Components
-- Always forward refs on primitive components
+- Use forwardRef only when consumers need direct ref access (form controls like Checkbox, Switch, Input). Most components use plain function exports.
 - Always use `<Text>` component for text rendering — never raw `<p>` or `<span>`
 - Always set `strokeWidth={2.5}` on Lucide icons
 - Always use `ReactNode` for title props — not `string`
@@ -84,23 +84,28 @@ See `a2ui.md` for full protocol.
 
 ## Design Tokens Quick-Ref
 
-| Category | Token                | Value               |
-|----------|----------------------|---------------------|
-| Colors   | `--primary`          | Purple (default)    |
-|          | `--background`       | Page background     |
-|          | `--card-bg`          | Card background     |
-|          | `--card-border`      | Border color        |
-|          | `--muted-foreground` | Muted text          |
-| Spacing  | `--spacing-1`        | 4px                 |
-|          | `--spacing-2`        | 8px                 |
-|          | `--spacing-3`        | 12px                |
-|          | `--spacing-4`        | 16px                |
-|          | `--spacing-6`        | 24px                |
-|          | `--spacing-8`        | 32px                |
-| Borders  | `--border-width`     | 2px                 |
-|          | `--radius`           | 4px                 |
-| Shadow   | `--shadow-hard`      | Hard offset, no blur|
-|          | `--shadow-primary`   | Colored shadow      |
+| Category | Token                  | Value               |
+|----------|------------------------|---------------------|
+| Colors   | `--primary`            | Purple (default)    |
+|          | `--background`         | Page background     |
+|          | `--card-bg`            | Card background     |
+|          | `--card-border`        | Border color        |
+|          | `--muted-foreground`   | Muted text          |
+| Spacing  | `--space-1`            | 4px                 |
+|          | `--space-2`            | 8px                 |
+|          | `--space-3`            | 12px                |
+|          | `--space-4`            | 16px                |
+|          | `--space-6`            | 24px                |
+|          | `--space-8`            | 32px                |
+| Borders  | `--surface-border-width` | 2px               |
+|          | `--radius-md`          | 4px                 |
+| Shadow   | `--shadow-md`          | Hard offset, no blur|
+|          | `--shadow-lg`          | Larger hard offset  |
+|          | `--shadow-primary`     | Colored shadow      |
+| Control  | `--control-height`     | 40px (md default)   |
+|          | `--control-radius`     | var(--radius-md)    |
+| Surface  | `--surface-padding`    | var(--space-4)      |
+|          | `--surface-radius`     | var(--radius-md)    |
 
 Full token reference: `styles.md`
 
@@ -125,20 +130,16 @@ The doom aesthetic: bold 2px borders, hard offset shadows (no blur), high contra
 @use "../../styles/mixins" as *;
 
 .root {
-  @include base-interactive;  // transitions + cursor
-  border: var(--border-width) solid var(--card-border);
-  box-shadow: var(--shadow-hard);
+  @include control;  // height, padding, border, shadow, transition
+  @include hover;    // lift + shadow grow on hover
+  @include focus;    // accessible focus ring
+  @include press;    // active press state (push into page)
 
-  &:hover {
-    @include brutalist-hover;  // signature press-and-shift effect
-  }
+  background: var(--card-bg);
+  color: var(--foreground);
 
-  @include focus;             // accessible focus ring
-
-  &:active {
-    transition: none;
-    transform: translate(var(--spacing-half), var(--spacing-half));
-    box-shadow: none;
+  &:disabled {
+    @include disabled-state;
   }
 }
 ```
