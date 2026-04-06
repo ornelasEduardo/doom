@@ -87,11 +87,11 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
         case "ArrowLeft":
         case "ArrowDown":
           e.preventDefault();
-          newValue = Math.max(currentValue - step, allowHalf ? 0.5 : 1);
+          newValue = Math.max(currentValue - step, 0);
           break;
         case "Home":
           e.preventDefault();
-          newValue = allowHalf ? 0.5 : 1;
+          newValue = 0;
           break;
         case "End":
           e.preventDefault();
@@ -119,7 +119,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
       <div
         ref={ref}
         role="img"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? `${currentValue} out of ${count}`}
         className={clsx(styles.rating, styles[size], className)}
       >
         {Array.from({ length: count }, (_, i) => {
