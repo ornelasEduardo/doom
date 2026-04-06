@@ -18,6 +18,15 @@ Five new components to fill gaps identified in the 1.0 readiness audit. Ordered 
 
 - `date-fns` — added as a **peer dependency** (tree-shakeable, consumer likely already has it). Used only by Calendar/DatePicker/DateRangePicker.
 
+### Pre-Requisite: Extend Checkbox
+
+TreeView requires **indeterminate checkbox state**. The current `Checkbox` component only renders checked/unchecked — it has no `indeterminate` prop. Before TreeView is built:
+
+- Add `indeterminate?: boolean` prop to `CheckboxProps`
+- When `indeterminate` is true, set `ref.current.indeterminate = true` via `useEffect` and render a `Minus` icon instead of `Check`
+- Update Checkbox tests and stories to cover indeterminate state
+- Update `skills/doom-design-system/components/checkbox.md`
+
 ### Shared Patterns (All Components)
 
 Every component follows existing Doom conventions:
@@ -27,27 +36,42 @@ Every component follows existing Doom conventions:
 - Only semantic tokens referenced (never primitives directly)
 - `clsx` for className composition
 - `forwardRef` for simple components, Context for compound components
-- Controlled + uncontrolled support via `value`/`defaultValue`
+- Controlled + uncontrolled support via `value`/`defaultValue` (using the `isControlled` flag pattern from Tabs, Accordion, Slider, etc.)
 - `useId` for auto-generated IDs
-- Variants/sizes applied as CSS classes via `clsx`
+- Variants/sizes use `ControlSize` type from `styles/types.ts` and applied as CSS classes via `clsx`
 - `role`, `aria-*` attributes for accessibility
 - Keyboard navigation
 
-### Deliverables Per Component
+### Required Artifacts Per Component
 
-- `components/<Name>/<Name>.tsx` — component source
-- `components/<Name>/<Name>.module.scss` — styles
-- `components/<Name>/<Name>.test.tsx` — vitest + RTL tests
-- `components/<Name>/<Name>.stories.tsx` — Storybook stories
-- `components/<Name>/index.ts` — re-export
-- `skills/doom-design-system/components/<name>.md` — skill doc
-- Update `SKILL.md` component reference
-- Update `A2UI/mapping.tsx` + `A2UI/catalog.ts`
-- Update root `index.ts` exports
+Every component **must** ship with all of the following:
+
+| Artifact | Path | Description |
+|----------|------|-------------|
+| Source | `components/<Name>/<Name>.tsx` | Component implementation |
+| Styles | `components/<Name>/<Name>.module.scss` | SCSS module, `@layer doom.components` |
+| Unit tests | `components/<Name>/<Name>.test.tsx` | vitest + @testing-library/react |
+| Stories | `components/<Name>/<Name>.stories.tsx` | Storybook stories with `autodocs` tag |
+| Barrel export | `components/<Name>/index.ts` | Re-export all public types + components |
+| Skill doc | `skills/doom-design-system/components/<name>.md` | AI skill documentation |
+| SKILL.md update | `skills/doom-design-system/SKILL.md` | Add to component reference table |
+| A2UI mapping | `components/A2UI/mapping.tsx` | Register in componentMap |
+| A2UI catalog | `components/A2UI/catalog.ts` | Add to catalog with props/category |
+| Root export | `index.ts` | Add `export * from "./components/<Name>"` |
+
+Components with internal hooks or types files list those explicitly in their section below.
 
 ---
 
 ## 1. ToggleGroup
+
+### Reuses Existing Components
+
+| Component | How |
+|-----------|-----|
+| — | No existing component reuse — ToggleGroup is a new primitive |
+
+**Pattern references:** Follows Accordion's `type="single"|"multiple"` + context pattern for value management. Follows Tabs' context + controlled/uncontrolled pattern.
 
 ### API
 
@@ -155,9 +179,32 @@ Shadows & Motion:
 "toggle-group-item" -> ToggleGroupItem
 ```
 
+### Required Files
+
+```
+components/ToggleGroup/
+  ToggleGroup.tsx              ToggleGroup + ToggleGroupItem + context
+  ToggleGroup.module.scss
+  ToggleGroup.test.tsx
+  ToggleGroup.stories.tsx
+  index.ts
+
+skills/doom-design-system/components/togglegroup.md
+```
+
+Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
+
 ---
 
 ## 2. Rating
+
+### Reuses Existing Components
+
+| Component | How |
+|-----------|-----|
+| `Tooltip` | Wraps each icon button to show hover label (e.g., "3 out of 5") when `aria-label` is present. Uses `placement="top"` and default delay. |
+
+**Pattern references:** Follows Slider's controlled/uncontrolled pattern and `aria-value*` attribute approach. Icon rendering matches lucide-react convention used by all Doom components.
 
 ### API
 
@@ -248,9 +295,35 @@ Motion:
 "rating" -> Rating
 ```
 
+### Required Files
+
+```
+components/Rating/
+  Rating.tsx
+  Rating.module.scss
+  Rating.test.tsx
+  Rating.stories.tsx
+  index.ts
+
+skills/doom-design-system/components/rating.md
+```
+
+Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
+
 ---
 
 ## 3. Stepper (Wizard)
+
+### Reuses Existing Components
+
+| Component | How |
+|-----------|-----|
+| `Button` | Navigation buttons — `variant="secondary"` for Back, `variant="primary"` for Next/Complete. Inherits all doom button behavior (hover, press, focus, shadow). |
+| `Badge` | "Optional" indicator on optional steps — `<Badge variant="secondary" size="sm">Optional</Badge>` rendered below step label. |
+| `Check` icon | Completed step indicator — same lucide `Check` icon used in Checkbox's checked state. |
+| `Flex` | Layout container for step indicators (horizontal) and navigation button row. |
+
+**Pattern references:** Follows Tabs' compound context pattern. Step indicator row mirrors Tabs' `TabsList`/`TabsTrigger` pattern with `role="tablist"`/`role="tab"`. Content panel mirrors `TabsContent` with `role="tabpanel"`.
 
 ### API
 
@@ -308,7 +381,7 @@ Compound component with context:
 - `StepperStep` registers via index, renders indicator and content
 - Only active step's content panel is rendered
 - `validator` called before step transition — blocks if returns false
-- `showNavigation` renders `<Button>` components in an `<ActionRow>`
+- `showNavigation` renders `<Button variant="secondary">` (Back) and `<Button variant="primary">` (Next/Complete) in a `<Flex>` with `justify="end"` and `gap={2}`
 
 ### Accessibility
 
@@ -375,7 +448,7 @@ Motion:
 - `@include hover` on clickable (completed) indicators
 - `@include press` on indicator click
 - `@include disabled-state` on disabled steps
-- Navigation uses actual `<Button>` + `<ActionRow>` components
+- Navigation uses actual `<Button>` components with doom behavior
 
 ### A2UI
 
@@ -384,9 +457,34 @@ Motion:
 "stepper-step" -> StepperStep
 ```
 
+### Required Files
+
+```
+components/Stepper/
+  Stepper.tsx              context + Stepper + StepperStep
+  Stepper.module.scss
+  Stepper.test.tsx
+  Stepper.stories.tsx
+  index.ts
+
+skills/doom-design-system/components/stepper.md
+```
+
+Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
+
 ---
 
 ## 4. TreeView
+
+### Reuses Existing Components
+
+| Component | How |
+|-----------|-----|
+| `Checkbox` | Rendered per node when `checkable` is true. Requires indeterminate extension (see Pre-Requisite above). Inherits all doom checkbox styling. |
+| `Spinner` | `<Spinner size="sm" />` shown inline during lazy loading while `onLoadChildren` resolves. |
+| `ChevronRight` icon | Expand/collapse arrow per node — same icon used in Sidebar.Group and Accordion. Rotates 90deg when expanded. |
+
+**Pattern references:** Follows Sidebar's expand/collapse context pattern and `useAutoExpand` hook concept for auto-expanding to active nodes. Follows Accordion's `type="single"|"multiple"` controlled state pattern for expansion management. Uses dnd-kit (`@dnd-kit/core` + `@dnd-kit/utilities`, already installed) and TanStack Virtual (`@tanstack/react-virtual`, already installed).
 
 ### API
 
@@ -454,34 +552,18 @@ TreeNode (declarative)
 ### Structure
 
 - `TreeView` manages state, sets up `DndContext` (dnd-kit) if draggable, `useVirtualizer` (TanStack Virtual) if virtualized
-- Internal `TreeNodeRow` renders: indent + expand chevron + checkbox (optional) + icon + label + drag handle
+- Internal `TreeNodeRow` renders: indent + expand chevron + `<Checkbox>` (when checkable) + icon + label + drag handle
 - Data-driven: tree flattened to visible-node list (respecting expansion), indexed by depth for indentation
 - Declarative: children collected via context into same internal structure
-- Checkbox cascade: parent checks all children, unchecking child makes parent indeterminate
+- Checkbox cascade: parent checks all children, unchecking child makes parent indeterminate (uses extended `<Checkbox indeterminate>`)
 - Drag-and-drop: `useSortable` per row, drop indicators for "before"/"after"/"inside"
 - Lazy loading: `onLoadChildren` on expand shows `<Spinner size="sm" />` until resolved
-
-### Internal Files
-
-```
-components/TreeView/
-  TreeView.tsx              root component + context
-  TreeNode.tsx              declarative TreeNode component
-  TreeView.module.scss
-  TreeView.test.tsx
-  TreeView.stories.tsx
-  useTreeState.ts           selection, expansion, checkbox cascade
-  useTreeDnd.ts             dnd-kit wiring
-  useTreeVirtualizer.ts     TanStack Virtual wiring
-  types.ts                  TreeNodeData, TreeDropEvent
-  index.ts
-```
 
 ### Accessibility
 
 - Root: `role="tree"`
 - Nodes: `role="treeitem"`, `aria-expanded`, `aria-selected`, `aria-level`, `aria-setsize`, `aria-posinset`
-- Checkbox: reuses `<Checkbox>`, `aria-checked="true|false|mixed"`
+- Checkbox: reuses `<Checkbox>`, `aria-checked="true|false|mixed"` (indeterminate = mixed)
 - Keyboard:
   - Up/Down: move focus
   - Right: expand or move to first child
@@ -545,7 +627,7 @@ Motion:
 - Expand arrow: `ChevronRight` (lucide), rotates 90deg, `--duration-fast`
 - Drag overlay: floating card with `--shadow-offset-md` (elevated feel)
 - Drop indicator: thick `--primary` line
-- Checkbox: reuses existing `<Checkbox>` directly
+- Checkbox: reuses existing `<Checkbox>` directly (with indeterminate extension)
 - Lazy loading: existing `<Spinner size="sm" />`
 
 ### A2UI
@@ -555,6 +637,30 @@ Motion:
 "tree-node"  -> TreeNode
 ```
 
+### Required Files
+
+```
+components/TreeView/
+  TreeView.tsx              root component + context
+  TreeNode.tsx              declarative TreeNode component
+  TreeView.module.scss
+  TreeView.test.tsx
+  TreeView.stories.tsx
+  useTreeState.ts           selection, expansion, checkbox cascade logic
+  useTreeDnd.ts             dnd-kit DndContext + SortableContext wiring
+  useTreeVirtualizer.ts     TanStack Virtual useVirtualizer wiring
+  types.ts                  TreeNodeData, TreeDropEvent, internal types
+  index.ts
+```
+
+Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
+
+**Pre-requisite file changes:**
+- `components/Checkbox/Checkbox.tsx` — add `indeterminate` prop
+- `components/Checkbox/Checkbox.test.tsx` — add indeterminate tests
+- `components/Checkbox/Checkbox.stories.tsx` — add Indeterminate story
+- `skills/doom-design-system/components/checkbox.md` — document indeterminate
+
 ---
 
 ## 5. Calendar / DatePicker / DateRangePicker
@@ -562,6 +668,18 @@ Motion:
 ### New Dependency
 
 `date-fns` as a **peer dependency**. Functions used: `format`, `parse`, `addMonths`, `subMonths`, `startOfMonth`, `endOfMonth`, `eachDayOfInterval`, `startOfWeek`, `endOfWeek`, `isSameDay`, `isSameMonth`, `isWithinInterval`.
+
+### Reuses Existing Components
+
+| Component | How |
+|-----------|-----|
+| `Input` | DatePicker and DateRangePicker text fields. Uses `endAdornment` for `CalendarDays` icon trigger. Uses `format` prop to display formatted date on blur. Uses `error` prop + `aria-invalid` for validation. |
+| `Popover` | Wraps Calendar dropdown in DatePicker/DateRangePicker. Uses `placement="bottom-start"`, controlled `isOpen`/`onClose`. Portal rendering, click-outside close, viewport clamping all inherited. |
+| `Button` | Calendar month navigation (prev/next) — `variant="ghost" size="sm"`. Inherits hover lift, press, focus ring. |
+| `Label` | DatePicker/DateRangePicker field labels with `required` indicator support. |
+| `Flex` | Layout for DateRangePicker dual-input container and calendar header row. |
+
+**Pattern references:** Popover usage follows Select and Combobox's dropdown pattern (controlled `isOpen`, `placement`, `onClose` on escape/click-outside). Input integration follows the same pattern as Combobox (input + popover + list).
 
 ### API
 
@@ -619,46 +737,21 @@ DateRangePicker (extends Calendar range-mode props, plus:)
 Three components, layered:
 
 **Calendar** — core grid:
-- Header: month/year label + prev/next chevron buttons + clickable label cycles days -> months -> years view
+- Header: month/year label + prev/next `<Button variant="ghost" size="sm">` + clickable label cycles days -> months -> years view
 - Grid: 7-column day cells
 - `date-fns` for all date math
 - Range mode: first click = `from`, second click = `to`, hover previews range between clicks
 
 **DatePicker** — wraps `<Input>` + `<Popover>` + `<Calendar>`:
-- Click input or calendar icon opens popover
-- Selecting date closes popover, formats into input
-- Reuses existing `Input` and `Popover` components
+- `<Input endAdornment={<CalendarDays />}>` — clicking icon or input opens popover
+- `<Popover placement="bottom-start" isOpen={open} onClose={close}>` — contains Calendar
+- Selecting date closes popover, formats value into Input via `date-fns/format`
+- `<Label>` rendered above Input when `label` prop is provided
 
-**DateRangePicker** — two `<Input>` fields in shared container + `<Popover>` + `<Calendar mode="range">`:
-- Shared bordered container with `->` separator
-- Container gets the offset shadow
-
-### Internal Files
-
-```
-components/Calendar/
-  Calendar.tsx
-  Calendar.module.scss
-  Calendar.test.tsx
-  Calendar.stories.tsx
-  useDateRange.ts           range selection + hover preview
-  types.ts                  DateRange, CalendarMode
-  index.ts
-
-components/DatePicker/
-  DatePicker.tsx
-  DatePicker.module.scss
-  DatePicker.test.tsx
-  DatePicker.stories.tsx
-  index.ts
-
-components/DateRangePicker/
-  DateRangePicker.tsx
-  DateRangePicker.module.scss
-  DateRangePicker.test.tsx
-  DateRangePicker.stories.tsx
-  index.ts
-```
+**DateRangePicker** — two `<Input>` fields in a shared `<Flex>` container + `<Popover>` + `<Calendar mode="range">`:
+- Shared bordered container with `ArrowRight` icon separator between inputs
+- Container gets the offset shadow, not individual inputs
+- `<Label>` rendered above container
 
 ### Accessibility
 
@@ -712,7 +805,7 @@ Surfaces:
   --surface-radius          container radius
   --surface-padding         padding
   --shadow-offset-sm        calendar shadow (standalone)
-  --shadow-offset-md        popover shadow (DatePicker/DateRangePicker)
+  --shadow-offset-md        popover shadow (DatePicker/DateRangePicker, inherited from Popover)
 
 DatePicker/DateRangePicker input:
   Inherits all Input tokens
@@ -732,11 +825,11 @@ Motion:
 - Range: flat `--primary` at 10% band with hard edges, start/end fully filled
 - Month transition: hard cut, no slide animation
 - Day-of-week headers: uppercase, `--text-2xs`, `--muted-foreground`, letter-spaced (stencil feel)
-- `@include hover` / `@include press` / `@include focus` on nav buttons
+- `@include hover` / `@include press` / `@include focus` on nav `<Button>` components (inherited)
 - Outside-month days: dimmed but clickable (navigates to that month)
 - Disabled days: diagonal strike-through line (2px, `--card-border`) over the number
-- DatePicker input: reuses `<Input>` with `CalendarDays` lucide trailing icon
-- DateRangePicker: two inputs in shared container with `->` separator, container gets shadow
+- DatePicker input: reuses `<Input>` with `CalendarDays` lucide via `endAdornment`
+- DateRangePicker: two `<Input>` fields in shared `<Flex>` container with `ArrowRight` separator, container gets shadow
 
 ### A2UI
 
@@ -746,6 +839,35 @@ Motion:
 "date-range-picker"  -> DateRangePicker
 ```
 
+### Required Files
+
+```
+components/Calendar/
+  Calendar.tsx              month grid + navigation + month/year picker views
+  Calendar.module.scss
+  Calendar.test.tsx
+  Calendar.stories.tsx
+  useDateRange.ts           range selection logic + hover preview state
+  types.ts                  DateRange, CalendarMode
+  index.ts
+
+components/DatePicker/
+  DatePicker.tsx            Input + Popover + Calendar composition
+  DatePicker.module.scss    minimal — mostly composes Input/Popover styles
+  DatePicker.test.tsx
+  DatePicker.stories.tsx
+  index.ts
+
+components/DateRangePicker/
+  DateRangePicker.tsx       dual Input + Popover + Calendar range composition
+  DateRangePicker.module.scss
+  DateRangePicker.test.tsx
+  DateRangePicker.stories.tsx
+  index.ts
+```
+
+Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts.
+
 ---
 
 ## Summary
@@ -753,16 +875,17 @@ Motion:
 | Component | Type | New Deps | Reuses | Complexity |
 |-----------|------|----------|--------|------------|
 | ToggleGroup | Compound (context) | None | — | Low |
-| Rating | Single | None | — | Low |
-| Stepper | Compound (context) | None | Button, ActionRow | Medium |
-| TreeView | Data-driven + declarative | None (dnd-kit, TanStack Virtual already installed) | Checkbox, Spinner | High |
-| Calendar | Single | date-fns (peer) | — | Medium |
-| DatePicker | Single | date-fns (peer) | Input, Popover, Calendar | Medium |
-| DateRangePicker | Single | date-fns (peer) | Input, Popover, Calendar | Medium |
+| Rating | Single | None | Tooltip | Low |
+| Stepper | Compound (context) | None | Button, Badge, Flex, Check icon | Medium |
+| TreeView | Data-driven + declarative | None (dnd-kit, TanStack Virtual already installed) | Checkbox (extended), Spinner, ChevronRight icon | High |
+| Calendar | Single | date-fns (peer) | Button (ghost) | Medium |
+| DatePicker | Single | date-fns (peer) | Input, Popover, Label, Calendar | Medium |
+| DateRangePicker | Single | date-fns (peer) | Input, Popover, Label, Flex, Calendar | Medium |
 
 ### Total New Files
 
 - 7 component directories
-- ~30 source files (tsx, scss, test, stories, hooks, types, index)
+- ~35 source files (tsx, scss, test, stories, hooks, types, index)
 - 7 skill docs: togglegroup.md, rating.md, stepper.md, treeview.md, calendar.md, datepicker.md, daterangepicker.md
+- 4 updated existing files: Checkbox (tsx, test, stories, skill doc) for indeterminate support
 - Updates to: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts
