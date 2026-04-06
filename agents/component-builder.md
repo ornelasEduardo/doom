@@ -129,7 +129,7 @@ import { createContext, useContext } from "react";
 export interface [Name]ContextValue {
   // shared state and callbacks
   activeValue: string | null;
-  onChange: (value: string) => void;
+  onValueChange: (value: string) => void;
 }
 
 export const [Name]Context = createContext<[Name]ContextValue | null>(null);
@@ -159,13 +159,13 @@ export interface [Name]Props {
   children?: React.ReactNode;
   value?: string | null;         // controlled
   defaultValue?: string | null;  // uncontrolled
-  onChange?: (value: string) => void;
+  onValueChange?: (value: string) => void;
 }
 
 export const [Name] = React.forwardRef<
   HTMLDivElement,
   [Name]Props
->(({ className, children, value, defaultValue = null, onChange }, ref) => {
+>(({ className, children, value, defaultValue = null, onValueChange }, ref) => {
   const id = useId();
   const isControlled = value !== undefined;
   const [internal, setInternal] = useState(defaultValue);
@@ -174,13 +174,13 @@ export const [Name] = React.forwardRef<
   const handleChange = useCallback(
     (next: string) => {
       if (!isControlled) setInternal(next);
-      onChange?.(next);
+      onValueChange?.(next);
     },
-    [isControlled, onChange]
+    [isControlled, onValueChange]
   );
 
   const ctx = useMemo<[Name]ContextValue>(
-    () => ({ activeValue: active, onChange: handleChange }),
+    () => ({ activeValue: active, onValueChange: handleChange }),
     [active, handleChange]
   );
 
@@ -250,9 +250,10 @@ import { describe, expect, it } from "vitest";
 import { [Name] } from "./[Name]";
 
 describe("[Name]", () => {
-  it("renders children", () => {
-    render(<[Name]>Test Content</[Name]>);
-    expect(screen.getByText("Test Content")).toBeInTheDocument();
+  it("renders correctly", () => {
+    render(<[Name]>Content</[Name]>);
+    // Query by role — adapt role to match your component's root element
+    expect(screen.getByRole("group")).toBeInTheDocument();
   });
 });
 ```
