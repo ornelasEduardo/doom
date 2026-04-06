@@ -62,9 +62,16 @@
       z-index: 1;
     }
 
+    // Custom focus for grouped items — no lift/shadow (unlike standalone controls).
+    // Matches RadioGroup's outline-based focus pattern.
     &:focus-visible {
-      @include focus;
+      outline: var(--surface-border-width) solid var(--primary);
+      outline-offset: calc(-1 * var(--surface-border-width));
       z-index: 2;
+    }
+
+    &:focus {
+      outline: none;
     }
 
     // --- Outline variant (default) ---
