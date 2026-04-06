@@ -72,13 +72,14 @@ describe("Checkbox", () => {
 
   it("shows Minus icon when indeterminate", () => {
     const { container } = render(<Checkbox label="Partial" indeterminate />);
-    expect(container.querySelector('[data-testid="minus-icon"], .icon')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="minus-icon"]')).toBeInTheDocument();
   });
 
   it("indeterminate is overridden by checked", () => {
-    render(<Checkbox label="Checked" indeterminate checked />);
+    render(<Checkbox label="Checked" indeterminate checked readOnly />);
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toBeChecked();
+    expect(checkbox).toHaveProperty("indeterminate", false);
   });
 
   it("generates unique ids if not provided", () => {
