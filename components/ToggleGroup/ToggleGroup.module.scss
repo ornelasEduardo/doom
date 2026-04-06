@@ -4,10 +4,13 @@
   .toggleGroup {
     display: inline-flex;
     align-items: stretch;
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--control-radius);
     box-shadow: var(--shadow-offset-sm);
+    overflow: hidden;
     position: relative;
 
-    &.primary .toggleGroupItem {
+    &.primary {
       border-color: var(--border-strong);
     }
   }
@@ -25,48 +28,33 @@
     color: var(--foreground);
     position: relative;
     transition: background-color var(--duration-fast) var(--ease-in-out),
-      color var(--duration-fast) var(--ease-in-out),
-      border-color var(--duration-fast) var(--ease-in-out);
+      color var(--duration-fast) var(--ease-in-out);
 
     // Default size (md)
     height: var(--control-height);
     padding: var(--control-padding-y) var(--control-padding-x);
     font-size: var(--control-font-size);
 
-    // Each item owns its border
-    border: var(--surface-border-width) solid var(--card-border);
-
-    // Collapse shared borders between adjacent items
-    &:not(:first-child) {
-      margin-left: calc(-1 * var(--surface-border-width));
-    }
-
-    // Border radius: first/last only, all others square
+    // No border on items — group owns the outer border.
+    // Dividers between items via border-left on non-first items.
+    border: none;
     border-radius: 0;
+    border-left: var(--surface-border-width) solid var(--card-border);
 
     &:first-child {
-      border-radius: var(--control-radius) 0 0 var(--control-radius);
+      border-left: none;
     }
 
-    &:last-child {
-      border-radius: 0 var(--control-radius) var(--control-radius) 0;
-    }
-
-    &:first-child:last-child {
-      border-radius: var(--control-radius);
-    }
-
-    // Subtle hover on unpressed items (no lift — this is inline, not a button)
+    // Subtle hover on unpressed items
     &:not(.pressed):not(.disabled):hover {
       background: var(--muted);
-      z-index: 1;
     }
 
-    // Custom focus for grouped items — no lift/shadow (unlike standalone controls).
-    // Uses border-color swap instead of outline to avoid double-border visual.
+    // Focus: border-color swap won't work inside overflow:hidden with no item border,
+    // so use a box-shadow inset ring instead.
     &:focus-visible {
-      border-color: var(--primary);
-      z-index: 2;
+      box-shadow: inset 0 0 0 var(--surface-border-width) var(--primary);
+      z-index: 1;
     }
 
     &:focus {
@@ -86,7 +74,6 @@
       &.pressed {
         background: var(--primary);
         color: var(--primary-foreground);
-        border-color: var(--border-strong);
       }
     }
 
