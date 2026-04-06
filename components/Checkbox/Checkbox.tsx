@@ -1,8 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { Check } from "lucide-react";
-import React, { forwardRef, useId } from "react";
+import { Check, Minus } from "lucide-react";
+import React, { forwardRef, useCallback, useEffect, useId, useRef } from "react";
 
 import { Label } from "../Label";
 import styles from "./Checkbox.module.scss";
@@ -13,6 +13,7 @@ export interface CheckboxProps extends Omit<
 > {
   label?: string;
   error?: boolean;
+  indeterminate?: boolean;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
@@ -24,6 +25,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       disabled,
       checked,
       defaultChecked,
+      indeterminate,
       onChange,
       id: propsId,
       ...props
@@ -32,6 +34,25 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ) => {
     const generatedId = useId();
     const id = propsId || generatedId;
+    const internalRef = useRef<HTMLInputElement>(null);
+
+    const mergedRef = useCallback(
+      (node: HTMLInputElement | null) => {
+        internalRef.current = node;
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+        }
+      },
+      [ref],
+    );
+
+    useEffect(() => {
+      if (internalRef.current) {
+        internalRef.current.indeterminate = !!(indeterminate && !checked);
+      }
+    }, [indeterminate, checked]);
 
     return (
       <Label
@@ -43,7 +64,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         htmlFor={id}
       >
         <input
-          ref={ref}
+          ref={mergedRef}
           checked={checked}
           className={styles.checkboxInput}
           defaultChecked={defaultChecked}
@@ -55,7 +76,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         />
 
         <span aria-hidden="true" className={clsx(styles.checkboxDisplay)}>
-          <Check className={styles.icon} />
+          {indeterminate && !checked ? (
+            <Minus className={styles.icon} data-testid="minus-icon" />
+          ) : (
+            <Check className={styles.icon} />
+          )}
         </span>
 
         {label && <span className={styles.labelOverride}>{label}</span>}

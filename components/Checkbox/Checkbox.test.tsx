@@ -64,6 +64,23 @@ describe("Checkbox", () => {
     // Wrappers (input and maybe label) should enforce disabled styles/behavior
   });
 
+  it("renders indeterminate state", () => {
+    render(<Checkbox label="Partial" indeterminate />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).toHaveProperty("indeterminate", true);
+  });
+
+  it("shows Minus icon when indeterminate", () => {
+    const { container } = render(<Checkbox label="Partial" indeterminate />);
+    expect(container.querySelector('[data-testid="minus-icon"], .icon')).toBeInTheDocument();
+  });
+
+  it("indeterminate is overridden by checked", () => {
+    render(<Checkbox label="Checked" indeterminate checked />);
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).toBeChecked();
+  });
+
   it("generates unique ids if not provided", () => {
     render(
       <>

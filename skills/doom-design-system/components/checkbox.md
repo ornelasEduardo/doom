@@ -13,6 +13,7 @@ import { Checkbox } from "doom-design-system";
 | `checked` | `boolean` | — | Controlled checked state |
 | `defaultChecked` | `boolean` | — | Uncontrolled initial state |
 | `disabled` | `boolean` | — | Disabled state |
+| `indeterminate` | `boolean` | `false` | Shows indeterminate (minus) state. Overridden by `checked`. Used for parent checkboxes in tree selections. |
 | `error` | `boolean` | — | Error state |
 | `onChange` | `(e: React.ChangeEvent<HTMLInputElement>) => void` | — | Change handler |
 
