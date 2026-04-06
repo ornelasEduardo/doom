@@ -18,7 +18,78 @@ Five new components to fill gaps identified in the 1.0 readiness audit. Ordered 
 
 - `date-fns` — added as a **peer dependency** (tree-shakeable, consumer likely already has it). Used only by Calendar/DatePicker/DateRangePicker.
 
-### Pre-Requisite: Extend Checkbox
+### Pre-Requisite 1: Enhance Component-Builder Skill
+
+The current `component-builder` agent and supporting skill docs can scaffold simple components but lack the guidance needed for compound components, proper doom style enforcement, and engineering rigor. Before building any new component, enhance the skill system with:
+
+**Fix inconsistencies:**
+- `SKILL.md` line 62 says `@use "../../styles/mixins" as m;` (qualified) — change to `as *` (unqualified) to match the dominant codebase convention (37/47 components) and what `component-builder.md` + `styles.md` already say
+
+**Add to `agents/component-builder.md`:**
+
+1. **Compound component scaffold** — a second template for context-based multi-part components. Shows:
+   - Context file in `context/` subdirectory with `createContext`, typed context value, and a `use[Name]Context` hook that throws when used outside the provider
+   - Root component that provides context
+   - Child components in `components/` subdirectory that consume context
+   - Controlled + uncontrolled pattern with `isControlled` flag
+   - Example: reference Tabs (TabsContext, Tabs, TabsList, TabsTrigger, TabsContent)
+
+2. **Complex component directory structure** — when a component has 3+ internal files beyond the base set (tsx, scss, test, stories, index), organize into subdirectories:
+   ```
+   components/[Name]/
+     [Name].tsx
+     [Name].module.scss
+     [Name].test.tsx
+     [Name].stories.tsx
+     index.ts
+     context/           (if compound)
+     components/         (if has internal subcomponents)
+     hooks/              (if has 2+ hooks)
+     types/              (if types are shared across files)
+     utils/              (if has pure utility functions)
+   ```
+
+3. **Mixin enforcement table** — which mixins are mandatory for which surface type:
+   | Surface Type | Required |
+   |---|---|
+   | Clickable control | `@include control` (or `base-interactive`), `@include hover` (or `brutalist-hover`), `@include focus`, active press CSS |
+   | Container/surface | `--shadow-hard` or `--shadow-sm`, `--card-bg`, `--card-border` |
+   | Disableable element | `@include disabled-state` |
+   | Focusable element | `@include focus` on `:focus-visible` |
+   | Error state | `@include error` |
+
+4. **Doom-isms that are NOT in the mixins** (design judgment the agent must apply):
+   - Surfaces get offset shadows — if it has a border and a background, it probably needs a shadow
+   - Dense repeated elements (tree rows, table rows, list items) do NOT lift on hover — use flat `--muted` background instead. Lift on 50 rows is chaos.
+   - Today/current indicators use bold markers (dots, borders), not subtle highlights
+   - Transitions are fast (`--duration-fast`) or instant — no slow fades, no slides
+   - Disabled days/items get a visual strike-through or hatched overlay, not just opacity
+   - Range/selection bands use `--primary` at 10% opacity with hard edges, not gradients
+
+5. **Test coverage checklist** — replace the bare "renders children" template with minimum required tests:
+   - Renders correctly (by role, not text)
+   - Every variant renders distinct styles (if applicable)
+   - Controlled and uncontrolled modes work
+   - Disabled state prevents interaction
+   - Keyboard navigation (if interactive)
+   - Accessibility attributes present (roles, aria-*)
+   - Compound components: child throws when used outside parent context
+   - Callbacks fire with correct arguments
+
+6. **Story coverage checklist** — minimum required stories:
+   - `Default` — base usage with args
+   - One story per variant (if applicable)
+   - `Sizes` — sm/md/lg side by side (if applicable)
+   - `Disabled` — disabled state
+   - `Controlled` — interactive render function showing controlled state
+   - Compound components: full composition example
+
+**Add to `skills/doom-design-system/SKILL.md`:**
+- Fix mixin import to `as *`
+- Add a "Doom Philosophy" section explaining *why* (not just *what*): neubrutalism draws from early web brutalism and print design — every element announces itself, nothing is subtle, form follows function with maximum honesty. This helps agents make judgment calls.
+- Add a "When NOT to use mixins" section: not every element is a control. Text, icons, layout containers, separators — these don't get hover/press/focus treatment.
+
+### Pre-Requisite 2: Extend Checkbox
 
 TreeView requires **indeterminate checkbox state**. The current `Checkbox` component only renders checked/unchecked — it has no `indeterminate` prop. Before TreeView is built:
 
@@ -976,10 +1047,17 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 | Calendar | Single | date-fns (peer) | Button (ghost) | Medium |
 | DatePicker | Single | date-fns (peer) | Input, Popover, Label, Flex, Calendar | Medium |
 
+### Pre-Requisite Work
+
+- Enhanced `agents/component-builder.md` — compound component template, directory structure guide, mixin enforcement table, doom judgment calls, test/story checklists
+- Updated `skills/doom-design-system/SKILL.md` — fixed mixin import, added doom philosophy section, added "when NOT to use mixins" guidance
+- Extended `Checkbox` — indeterminate prop, tests, stories, skill doc
+
 ### Total New Files
 
 - 6 component directories with organized subdirectories (context/, components/, hooks/, types/, utils/)
 - ~45 source files (tsx, scss, test, stories, hooks, context, types, utils, index)
 - 6 skill docs: togglegroup.md, rating.md, stepper.md, treeview.md, calendar.md, datepicker.md
+- 3 updated skill files: component-builder.md, SKILL.md, styles.md
 - 4 updated existing files: Checkbox (tsx, test, stories, skill doc) for indeterminate support
-- Updates to: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts
+- Updates to: A2UI mapping.tsx, A2UI catalog.ts, root index.ts
