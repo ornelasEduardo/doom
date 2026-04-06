@@ -211,6 +211,7 @@ Dense repeated elements (tree rows, table rows, list items) get a lighter touch:
 | SplitButton | `components/splitbutton.md`|
 | Switch      | `components/switch.md`     |
 | Textarea    | `components/textarea.md`   |
+| ToggleGroup | `components/togglegroup.md`|
 
 ### Data Display
 | Component   | File                       |

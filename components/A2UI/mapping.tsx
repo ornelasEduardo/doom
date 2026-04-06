@@ -51,6 +51,7 @@ import {
 } from "../Tabs/Tabs";
 import { Text } from "../Text/Text";
 import { Textarea } from "../Textarea/Textarea";
+import { ToggleGroup, ToggleGroupItem } from "../ToggleGroup/ToggleGroup";
 import { Tooltip } from "../Tooltip/Tooltip";
 // Wrappers (for components needing JSON-to-function adaptation)
 import { ChartWrapper } from "./wrappers";
@@ -75,6 +76,8 @@ export const componentMap: Record<string, React.ElementType> = {
   switch: Switch,
   text: Text,
   textarea: Textarea,
+  "toggle-group": ToggleGroup,
+  "toggle-group-item": ToggleGroupItem,
   tooltip: Tooltip,
 
   // Layout

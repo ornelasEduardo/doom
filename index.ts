@@ -41,6 +41,7 @@ export * from "./components/Table";
 export * from "./components/Tabs";
 export * from "./components/Text";
 export * from "./components/Textarea";
+export * from "./components/ToggleGroup";
 export * from "./components/Toast";
 export * from "./components/Tooltip";
 export * from "./DesignSystemProvider";

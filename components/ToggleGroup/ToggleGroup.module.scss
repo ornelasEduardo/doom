@@ -1,0 +1,106 @@
+@use "../../styles/mixins" as *;
+
+@layer doom.components {
+  .toggleGroup {
+    display: inline-flex;
+    align-items: stretch;
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--control-radius);
+    box-shadow: var(--shadow-offset-sm);
+    background: var(--card-bg);
+    position: relative;
+
+    @include hover;
+    @include press;
+
+    &.primary {
+      border-color: var(--border-strong);
+    }
+  }
+
+  .toggleGroupItem {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--control-gap);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: none;
+    background: var(--card-bg);
+    color: var(--foreground);
+    position: relative;
+    transition: background-color var(--duration-fast) var(--ease-in-out),
+      color var(--duration-fast) var(--ease-in-out),
+      box-shadow var(--duration-fast) var(--ease-in-out);
+
+    // Default size (md)
+    height: var(--control-height);
+    padding: var(--control-padding-y) var(--control-padding-x);
+    font-size: var(--control-font-size);
+
+    // Shared borders via border-right on all but last
+    border-right: var(--surface-border-width) solid var(--card-border);
+
+    &:last-child {
+      border-right: none;
+    }
+
+    // Border radius: first/last only
+    border-radius: 0;
+
+    &:first-child {
+      border-radius: var(--control-radius) 0 0 var(--control-radius);
+    }
+
+    &:last-child {
+      border-radius: 0 var(--control-radius) var(--control-radius) 0;
+    }
+
+    &:first-child:last-child {
+      border-radius: var(--control-radius);
+    }
+
+    &:focus-visible {
+      @include focus;
+      z-index: 1;
+    }
+
+    // --- Outline variant (default) ---
+    &.outline {
+      &.pressed {
+        background: var(--muted);
+        color: var(--muted-foreground);
+        box-shadow: inset 0 2px 0 0 var(--card-border);
+      }
+    }
+
+    // --- Primary variant ---
+    &.primary {
+      border-right-color: var(--border-strong);
+
+      &.pressed {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-right-color: var(--border-strong);
+        box-shadow: inset 0 2px 0 0 var(--card-border);
+      }
+    }
+
+    // --- Sizes ---
+    &.sm {
+      @include control-sm;
+    }
+
+    &.lg {
+      @include control-lg;
+    }
+
+    // --- Disabled ---
+    &.disabled {
+      @include disabled-state;
+      cursor: not-allowed;
+    }
+  }
+}
