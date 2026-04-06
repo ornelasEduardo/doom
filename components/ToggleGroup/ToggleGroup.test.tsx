@@ -254,6 +254,68 @@ describe("ToggleGroup", () => {
     expect(handleChange).not.toHaveBeenCalled();
   });
 
+  // --- Roving tabindex ---
+
+  it("only one item has tabIndex=0 (first non-disabled when nothing pressed)", () => {
+    render(
+      <ToggleGroup type="single">
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+        <ToggleGroupItem value="c">C</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons[0]).toHaveAttribute("tabindex", "0");
+    expect(buttons[1]).toHaveAttribute("tabindex", "-1");
+    expect(buttons[2]).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("pressed item gets tabIndex=0 in single mode", () => {
+    render(
+      <ToggleGroup type="single" defaultValue="b">
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+        <ToggleGroupItem value="c">C</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons[0]).toHaveAttribute("tabindex", "-1");
+    expect(buttons[1]).toHaveAttribute("tabindex", "0");
+    expect(buttons[2]).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("first pressed item gets tabIndex=0 in multiple mode", () => {
+    render(
+      <ToggleGroup type="multiple" defaultValue={["b", "c"]}>
+        <ToggleGroupItem value="a">A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+        <ToggleGroupItem value="c">C</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons[0]).toHaveAttribute("tabindex", "-1");
+    expect(buttons[1]).toHaveAttribute("tabindex", "0");
+    expect(buttons[2]).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("skips disabled items for tabbable fallback", () => {
+    render(
+      <ToggleGroup type="single">
+        <ToggleGroupItem value="a" disabled>A</ToggleGroupItem>
+        <ToggleGroupItem value="b">B</ToggleGroupItem>
+        <ToggleGroupItem value="c">C</ToggleGroupItem>
+      </ToggleGroup>,
+    );
+
+    const buttons = screen.getAllByRole("button");
+    expect(buttons[0]).toHaveAttribute("tabindex", "-1");
+    expect(buttons[1]).toHaveAttribute("tabindex", "0");
+    expect(buttons[2]).toHaveAttribute("tabindex", "-1");
+  });
+
   // --- Keyboard navigation ---
 
   it("arrow keys move focus between items (roving tabindex)", async () => {
