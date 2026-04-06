@@ -26,6 +26,74 @@ Read these files before scaffolding anything:
 
 If the component name is missing, ask. If the description is unclear, ask. Do not scaffold until you know both.
 
+## Spec-Driven Mode
+
+If a **spec file** is provided (via `--spec path/to/file.md`), this changes everything. The spec is your **primary source of truth** — it overrides the generic templates below for anything it specifies.
+
+### How to use the spec
+
+1. Read the spec file and find the section matching your component name (look for `## [Name]` or `## N. [Name]`)
+2. Extract these sections from the spec (each one overrides the corresponding generic template):
+
+| Spec Section | What It Overrides |
+|---|---|
+| **Props** | The props interface — use exactly these props, types, and defaults |
+| **Structure** | Whether it's simple/compound, what element types to use, what context contains |
+| **Reuses Existing Components** | Which existing components to import and compose |
+| **Accessibility** | ARIA roles, attributes, keyboard navigation — implement exactly as specified |
+| **Tokens** | Which CSS custom properties to use — use ONLY these tokens |
+| **Doom-isms** | Component-specific styling decisions — these override generic doom guidance |
+| **Required Files** | Exact file structure including subdirectories, hooks, types, utils |
+| **A2UI** | Exact A2UI registration keys |
+
+3. For anything the spec does NOT cover, fall back to the generic templates and rules below.
+
+### Spec format
+
+Component specs follow this structure:
+
+```markdown
+## [Component Name]
+
+### Reuses Existing Components
+| Component | How |
+
+### API
+[Usage examples in JSX]
+
+### Props
+[Complete props with types and defaults]
+
+### Structure
+[Component architecture: simple vs compound, context, state management]
+
+### Accessibility
+[Roles, aria-* attributes, keyboard navigation]
+
+### Tokens
+[Every CSS custom property the component uses, organized by category]
+
+### Doom-isms
+[Component-specific styling decisions that override generic patterns]
+
+### A2UI
+[A2UI registration keys]
+
+### Required Files
+[Exact file listing with subdirectories]
+```
+
+### Critical: Spec overrides templates
+
+When the spec says something different from the generic template, **the spec wins**. Examples:
+- Spec says "no offset shadow" → don't add `--shadow-md` even though the mixin enforcement table says surfaces need shadows
+- Spec says 5 sizes (xs-xl) → don't use `ControlSize` (sm/md/lg)
+- Spec says use `<div>` with `role="button"` → don't use `<button>` element
+- Spec says use forwardRef → use forwardRef even though the default is plain functions
+- Spec says "flat hover, no lift" → don't use `@include hover`
+
+The spec captures design judgment calls that can't be templated. Trust it.
+
 ## Scaffold Steps
 
 Create all 10 artifacts in order. Replace `[Name]` with the PascalCase component name throughout.
@@ -61,22 +129,24 @@ Extend props and markup to match the component description. Add all props the co
 ```scss
 @use "../../styles/mixins" as *;
 
-.root {
-  @include control;
-  @include hover;
-  @include focus;
-  @include press;
+@layer doom.components {
+  .root {
+    @include control;
+    @include hover;
+    @include focus;
+    @include press;
 
-  background: var(--card-bg);
-  color: var(--foreground);
+    background: var(--card-bg);
+    color: var(--foreground);
 
-  &:disabled {
-    @include disabled-state;
+    &:disabled {
+      @include disabled-state;
+    }
   }
 }
 ```
 
-Add variant classes and state styles as needed.
+All styles MUST be wrapped in `@layer doom.components`. Add variant classes and state styles as needed. The template above is for interactive controls — adapt mixins based on the Mixin Enforcement table and spec (if provided).
 
 ### 3. `components/[Name]/index.ts`
 
