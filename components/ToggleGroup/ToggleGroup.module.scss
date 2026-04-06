@@ -32,11 +32,22 @@
     padding: var(--control-padding-y) var(--control-padding-x);
     font-size: var(--control-font-size);
     border: none;
-    border-radius: 0;
     border-left: var(--surface-border-width) solid var(--card-border);
+
+    // Match inner radius of group container
+    border-radius: 0;
 
     &:first-child {
       border-left: none;
+      border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    }
+
+    &:last-child {
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    &:first-child:last-child {
+      border-radius: var(--radius-sm);
     }
 
     &:not(.pressed):not(.disabled):hover {
