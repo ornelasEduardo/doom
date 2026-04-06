@@ -63,10 +63,9 @@
     }
 
     // Custom focus for grouped items — no lift/shadow (unlike standalone controls).
-    // Matches RadioGroup's outline-based focus pattern.
+    // Uses border-color swap instead of outline to avoid double-border visual.
     &:focus-visible {
-      outline: var(--surface-border-width) solid var(--primary);
-      outline-offset: calc(-1 * var(--surface-border-width));
+      border-color: var(--primary);
       z-index: 2;
     }
 
