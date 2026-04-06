@@ -12,7 +12,7 @@ Five new components to fill gaps identified in the 1.0 readiness audit. Ordered 
 2. **Rating** — flexible icon-based rating with half-value support
 3. **Stepper** — wizard with step indicators, content panels, validation, navigation
 4. **TreeView** — data-driven and declarative tree with checkboxes, drag-and-drop, virtualization
-5. **Calendar / DatePicker / DateRangePicker** — inline calendar + input-triggered date selection
+5. **Calendar / DatePicker** — inline calendar + input-triggered date selection (single and range via `mode` prop)
 
 ### New Dependencies
 
@@ -663,7 +663,7 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 
 ---
 
-## 5. Calendar / DatePicker / DateRangePicker
+## 5. Calendar / DatePicker
 
 ### New Dependency
 
@@ -673,11 +673,11 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 
 | Component | How |
 |-----------|-----|
-| `Input` | DatePicker and DateRangePicker text fields. Uses `endAdornment` for `CalendarDays` icon trigger. Uses `format` prop to display formatted date on blur. Uses `error` prop + `aria-invalid` for validation. |
-| `Popover` | Wraps Calendar dropdown in DatePicker/DateRangePicker. Uses `placement="bottom-start"`, controlled `isOpen`/`onClose`. Portal rendering, click-outside close, viewport clamping all inherited. |
+| `Input` | DatePicker text field(s). Uses `endAdornment` for `CalendarDays` icon trigger. Uses `format` prop to display formatted date on blur. Uses `error` prop + `aria-invalid` for validation. Range mode renders two Inputs in a shared container. |
+| `Popover` | Wraps Calendar dropdown in DatePicker. Uses `placement="bottom-start"`, controlled `isOpen`/`onClose`. Portal rendering, click-outside close, viewport clamping all inherited. |
 | `Button` | Calendar month navigation (prev/next) — `variant="ghost" size="sm"`. Inherits hover lift, press, focus ring. |
-| `Label` | DatePicker/DateRangePicker field labels with `required` indicator support. |
-| `Flex` | Layout for DateRangePicker dual-input container and calendar header row. |
+| `Label` | DatePicker field label with `required` indicator support. |
+| `Flex` | Layout for range mode dual-input container and calendar header row. |
 
 **Pattern references:** Popover usage follows Select and Combobox's dropdown pattern (controlled `isOpen`, `placement`, `onClose` on escape/click-outside). Input integration follows the same pattern as Combobox (input + popover + list).
 
@@ -687,14 +687,19 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 // Inline calendar
 <Calendar value={date} onValueChange={setDate} />
 
-// Range
+// Inline calendar — range
 <Calendar mode="range" value={{ from: start, to: end }} onValueChange={setRange} />
 
-// DatePicker (input + popover + calendar)
+// DatePicker — single (one input + popover + calendar)
 <DatePicker value={date} onValueChange={setDate} label="Start date" />
 
-// DateRangePicker
-<DateRangePicker value={{ from: start, to: end }} onValueChange={setRange} label="Trip dates" />
+// DatePicker — range (dual input + popover + calendar)
+<DatePicker
+  mode="range"
+  value={{ from: start, to: end }}
+  onValueChange={setRange}
+  label="Trip dates"
+/>
 ```
 
 ### Props
@@ -714,27 +719,21 @@ Calendar
 
 DateRange = { from: Date; to: Date | null }
 
-DatePicker (extends Calendar single-mode props, plus:)
+DatePicker (extends Calendar props, plus:)
+  mode              "single" | "range"           default: "single"
   label             string
-  placeholder       string                       default: "Select date"
+  placeholder       string                       default: "Select date" (single mode)
+  startPlaceholder  string                       default: "Start date" (range mode)
+  endPlaceholder    string                       default: "End date" (range mode)
   error             boolean
   disabled          boolean
   format            string                       default: "PPP" (date-fns)
-  className         string
-
-DateRangePicker (extends Calendar range-mode props, plus:)
-  label             string
-  startPlaceholder  string                       default: "Start date"
-  endPlaceholder    string                       default: "End date"
-  error             boolean
-  disabled          boolean
-  format            string                       default: "PPP"
   className         string
 ```
 
 ### Structure
 
-Three components, layered:
+Two components, layered. `mode` prop controls behavior in both.
 
 **Calendar** — core grid:
 - Header: month/year label + prev/next `<Button variant="ghost" size="sm">` + clickable label cycles days -> months -> years view
@@ -743,15 +742,16 @@ Three components, layered:
 - Range mode: first click = `from`, second click = `to`, hover previews range between clicks
 
 **DatePicker** — wraps `<Input>` + `<Popover>` + `<Calendar>`:
-- `<Input endAdornment={<CalendarDays />}>` — clicking icon or input opens popover
-- `<Popover placement="bottom-start" isOpen={open} onClose={close}>` — contains Calendar
-- Selecting date closes popover, formats value into Input via `date-fns/format`
-- `<Label>` rendered above Input when `label` prop is provided
-
-**DateRangePicker** — two `<Input>` fields in a shared `<Flex>` container + `<Popover>` + `<Calendar mode="range">`:
-- Shared bordered container with `ArrowRight` icon separator between inputs
-- Container gets the offset shadow, not individual inputs
-- `<Label>` rendered above container
+- **Single mode (`mode="single"`, default):**
+  - One `<Input endAdornment={<CalendarDays />}>` — clicking icon or input opens popover
+  - `<Popover placement="bottom-start" isOpen={open} onClose={close}>` — contains `<Calendar>`
+  - Selecting date closes popover, formats value into Input via `date-fns/format`
+- **Range mode (`mode="range"`):**
+  - Two `<Input>` fields in a shared `<Flex>` container with `ArrowRight` icon separator
+  - Container gets the offset shadow, not individual inputs
+  - `<Popover>` contains `<Calendar mode="range">`
+  - Selecting a complete range (from + to) closes popover
+- `<Label>` rendered above input(s) when `label` prop is provided
 
 ### Accessibility
 
@@ -761,10 +761,11 @@ Three components, layered:
 - Today: `aria-current="date"`
 - Keyboard: arrows navigate days, Page Up/Down for months, Shift+Page for years, Home/End for week start/end, Enter/Space to select
 
-**DatePicker / DateRangePicker:**
+**DatePicker:**
 - Input: `role="combobox"`, `aria-expanded`, `aria-haspopup="dialog"`
 - Popover: `role="dialog"`, `aria-label="Choose date"`
 - Escape closes popover, returns focus to input
+- Range mode: both inputs share the same popover; focus returns to start input on close
 
 ### Tokens
 
@@ -805,9 +806,9 @@ Surfaces:
   --surface-radius          container radius
   --surface-padding         padding
   --shadow-offset-sm        calendar shadow (standalone)
-  --shadow-offset-md        popover shadow (DatePicker/DateRangePicker, inherited from Popover)
+  --shadow-offset-md        popover shadow (DatePicker, inherited from Popover)
 
-DatePicker/DateRangePicker input:
+DatePicker input:
   Inherits all Input tokens
   --error                   error state border
 
@@ -828,15 +829,14 @@ Motion:
 - `@include hover` / `@include press` / `@include focus` on nav `<Button>` components (inherited)
 - Outside-month days: dimmed but clickable (navigates to that month)
 - Disabled days: diagonal strike-through line (2px, `--card-border`) over the number
-- DatePicker input: reuses `<Input>` with `CalendarDays` lucide via `endAdornment`
-- DateRangePicker: two `<Input>` fields in shared `<Flex>` container with `ArrowRight` separator, container gets shadow
+- DatePicker single mode: reuses `<Input>` with `CalendarDays` lucide via `endAdornment`
+- DatePicker range mode: two `<Input>` fields in shared `<Flex>` container with `ArrowRight` separator, container gets shadow
 
 ### A2UI
 
 ```
-"calendar"           -> Calendar
-"date-picker"        -> DatePicker
-"date-range-picker"  -> DateRangePicker
+"calendar"     -> Calendar
+"date-picker"  -> DatePicker
 ```
 
 ### Required Files
@@ -852,17 +852,10 @@ components/Calendar/
   index.ts
 
 components/DatePicker/
-  DatePicker.tsx            Input + Popover + Calendar composition
-  DatePicker.module.scss    minimal — mostly composes Input/Popover styles
+  DatePicker.tsx            Input + Popover + Calendar, mode switches single/range
+  DatePicker.module.scss    range container styling, composes Input/Popover styles
   DatePicker.test.tsx
   DatePicker.stories.tsx
-  index.ts
-
-components/DateRangePicker/
-  DateRangePicker.tsx       dual Input + Popover + Calendar range composition
-  DateRangePicker.module.scss
-  DateRangePicker.test.tsx
-  DateRangePicker.stories.tsx
   index.ts
 ```
 
@@ -879,13 +872,12 @@ Plus standard updates: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.t
 | Stepper | Compound (context) | None | Button, Badge, Flex, Check icon | Medium |
 | TreeView | Data-driven + declarative | None (dnd-kit, TanStack Virtual already installed) | Checkbox (extended), Spinner, ChevronRight icon | High |
 | Calendar | Single | date-fns (peer) | Button (ghost) | Medium |
-| DatePicker | Single | date-fns (peer) | Input, Popover, Label, Calendar | Medium |
-| DateRangePicker | Single | date-fns (peer) | Input, Popover, Label, Flex, Calendar | Medium |
+| DatePicker | Single | date-fns (peer) | Input, Popover, Label, Flex, Calendar | Medium |
 
 ### Total New Files
 
-- 7 component directories
-- ~35 source files (tsx, scss, test, stories, hooks, types, index)
-- 7 skill docs: togglegroup.md, rating.md, stepper.md, treeview.md, calendar.md, datepicker.md, daterangepicker.md
+- 6 component directories
+- ~30 source files (tsx, scss, test, stories, hooks, types, index)
+- 6 skill docs: togglegroup.md, rating.md, stepper.md, treeview.md, calendar.md, datepicker.md
 - 4 updated existing files: Checkbox (tsx, test, stories, skill doc) for indeterminate support
 - Updates to: SKILL.md, A2UI mapping.tsx, A2UI catalog.ts, root index.ts
