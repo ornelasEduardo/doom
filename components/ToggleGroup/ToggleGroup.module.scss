@@ -26,7 +26,7 @@
     position: relative;
     transition: background-color var(--duration-fast) var(--ease-in-out),
       color var(--duration-fast) var(--ease-in-out),
-      box-shadow var(--duration-fast) var(--ease-in-out);
+      border-color var(--duration-fast) var(--ease-in-out);
 
     // Default size (md)
     height: var(--control-height);
