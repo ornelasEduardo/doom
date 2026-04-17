@@ -47,9 +47,9 @@ const ProfileFooter = () => {
       }}
     >
       <Avatar fallback="ED" size="sm" shape="circle" />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <Text variant="small" weight="bold">Eddie Ornelas</Text>
-        <Text variant="small" color="muted">eddie@doom.dev</Text>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+        <span style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>Eddie Ornelas</span>
+        <span style={{ fontSize: "var(--text-xs)", color: "var(--muted-foreground)" }}>eddie@doom.dev</span>
       </div>
       <ChevronUp
         size={16}
@@ -127,7 +127,7 @@ const ProfileFooter = () => {
       content={content}
       isOpen={open}
       onClose={() => setOpen(false)}
-      placement="top-start"
+      placement="right-end"
     />
   );
 };

@@ -2,6 +2,10 @@
   .popover {
     position: fixed;
     z-index: var(--z-tooltip);
+    background: var(--card-bg);
+    border: var(--surface-border-width) solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
     animation: popoverScale 0.1s ease-out;
   }
 

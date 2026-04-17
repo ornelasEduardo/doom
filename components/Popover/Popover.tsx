@@ -22,7 +22,13 @@ interface PopoverProps {
     | "bottom-center"
     | "top-start"
     | "top-end"
-    | "top-center";
+    | "top-center"
+    | "right-start"
+    | "right-end"
+    | "right-center"
+    | "left-start"
+    | "left-end"
+    | "left-center";
   offset?: number;
 }
 
@@ -53,57 +59,77 @@ export function Popover({
     let left = 0;
     let origin = "top center";
 
-    // Edge Config
     const padding = 16;
+    const side = placement.split("-")[0]; // top | bottom | left | right
+    const align = placement.split("-")[1]; // start | end | center
 
-    const isTop = placement.startsWith("top");
-
-    if (isTop) {
+    // Position perpendicular to the trigger based on side
+    if (side === "top") {
       top = triggerRect.top - contentRect.height - offset;
       origin = "bottom";
       if (top < 0) {
         top = triggerRect.bottom + offset;
         origin = "top";
       }
-    } else {
+    } else if (side === "bottom") {
       top = triggerRect.bottom + offset;
       origin = "top";
       if (top + contentRect.height > viewportHeight) {
         top = triggerRect.top - contentRect.height - offset;
         origin = "bottom";
-        if (top < 0) {
-          top = padding;
-        }
+        if (top < 0) top = padding;
+      }
+    } else if (side === "right") {
+      left = triggerRect.right + offset;
+      origin = "left";
+      if (left + contentRect.width > viewportWidth) {
+        left = triggerRect.left - contentRect.width - offset;
+        origin = "right";
+        if (left < 0) left = padding;
+      }
+    } else if (side === "left") {
+      left = triggerRect.left - contentRect.width - offset;
+      origin = "right";
+      if (left < 0) {
+        left = triggerRect.right + offset;
+        origin = "left";
       }
     }
 
-    // Vertical Clamping (Fail-safe)
-    if (top < padding) {
-      top = padding;
+    // Position along the trigger axis based on align
+    if (side === "top" || side === "bottom") {
+      if (align === "start") {
+        left = triggerRect.left;
+        origin += " left";
+      } else if (align === "end") {
+        left = triggerRect.right - contentRect.width;
+        origin += " right";
+      } else {
+        left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
+        origin += " center";
+      }
+    } else {
+      // left/right placements align vertically
+      if (align === "start") {
+        top = triggerRect.top;
+        origin = "top " + origin;
+      } else if (align === "end") {
+        top = triggerRect.bottom - contentRect.height;
+        origin = "bottom " + origin;
+      } else {
+        top = triggerRect.top + triggerRect.height / 2 - contentRect.height / 2;
+        origin = "center " + origin;
+      }
     }
+
+    // Clamp to viewport
+    if (top < padding) top = padding;
     if (top + contentRect.height > viewportHeight - padding) {
       top = viewportHeight - contentRect.height - padding;
     }
-
-    const align = placement.split("-")[1];
-
-    if (align === "start") {
-      left = triggerRect.left;
-      origin += " left";
-    } else if (align === "end") {
-      left = triggerRect.right - contentRect.width;
-      origin += " right";
-    } else {
-      left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
-      origin += " center";
-    }
-
-    // Horizontal Clamping
+    if (left < padding) left = padding;
     if (left + contentRect.width > viewportWidth - padding) {
       left = viewportWidth - contentRect.width - padding;
-    }
-    if (left < padding) {
-      left = padding;
     }
 
     setPosition({ top, left });
