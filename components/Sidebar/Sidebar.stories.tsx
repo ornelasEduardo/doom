@@ -26,6 +26,44 @@ import { Popover } from "../Popover/Popover";
 import { Text } from "../Text/Text";
 import { Sidebar } from "./Sidebar";
 
+const MenuItem = ({
+  icon,
+  label,
+  onClick,
+  variant = "default",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  variant?: "default" | "danger";
+}) => {
+  const [hovered, setHovered] = useState(false);
+  const isDanger = variant === "danger";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-2)",
+        padding: "var(--space-2) var(--space-3)",
+        background: hovered ? "color-mix(in srgb, var(--primary), transparent 85%)" : "transparent",
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        font: "inherit",
+        color: isDanger ? "var(--error)" : "inherit",
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+};
+
 const ProfileFooter = () => {
   const [open, setOpen] = useState(false);
 
@@ -64,60 +102,15 @@ const ProfileFooter = () => {
 
   const content = (
     <div style={{ display: "flex", flexDirection: "column", minWidth: "200px" }}>
-      <button
-        type="button"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--space-2)",
-          padding: "var(--space-2) var(--space-3)",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          font: "inherit",
-        }}
-      >
-        <User size={16} strokeWidth={2.5} />
-        Profile
-      </button>
-      <button
-        type="button"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--space-2)",
-          padding: "var(--space-2) var(--space-3)",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          font: "inherit",
-        }}
-      >
-        <Settings size={16} strokeWidth={2.5} />
-        Settings
-      </button>
+      <MenuItem icon={<User size={16} strokeWidth={2.5} />} label="Profile" />
+      <MenuItem icon={<Settings size={16} strokeWidth={2.5} />} label="Settings" />
       <div style={{ height: "var(--surface-border-width)", background: "var(--card-border)" }} />
-      <button
-        type="button"
+      <MenuItem
+        icon={<LogOut size={16} strokeWidth={2.5} />}
+        label="Logout"
+        variant="danger"
         onClick={() => setOpen(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--space-2)",
-          padding: "var(--space-2) var(--space-3)",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          textAlign: "left",
-          font: "inherit",
-          color: "var(--error)",
-        }}
-      >
-        <LogOut size={16} strokeWidth={2.5} />
-        Logout
-      </button>
+      />
     </div>
   );
 
