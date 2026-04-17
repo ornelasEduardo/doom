@@ -1,8 +1,58 @@
 import { describe, expect, it } from "vitest";
 
-import { createRoundedTopBarPath } from "./shapes";
+import { createRoundedBarPath, createRoundedTopBarPath } from "./shapes";
 
 describe("shapes utils", () => {
+  describe("createRoundedBarPath", () => {
+    it("rounds the top side (default behavior)", () => {
+      const path = createRoundedBarPath(10, 20, 40, 100, 5, "top");
+      expect(path).toContain("M 10,120");
+      expect(path).toContain("A 5,5 0 0 1 15,20");
+      expect(path).toContain("A 5,5 0 0 1 50,25");
+      expect(path.trim()).toMatch(/Z\s*$/);
+    });
+
+    it("rounds the right side for horizontal bars", () => {
+      const path = createRoundedBarPath(10, 20, 100, 40, 5, "right");
+      // Bars rounded on right: top-right and bottom-right corners
+      expect(path).toContain("M 10,20");
+      expect(path).toContain("A 5,5 0 0 1 110,25"); // top-right curve start
+      expect(path).toContain("A 5,5 0 0 1 105,60"); // bottom-right curve end
+    });
+
+    it("rounds the bottom side", () => {
+      const path = createRoundedBarPath(10, 20, 40, 100, 5, "bottom");
+      expect(path).toContain("M 10,20");
+      expect(path).toContain("A 5,5 0 0 1 45,120"); // bottom-right curve
+      expect(path).toContain("A 5,5 0 0 1 10,115"); // bottom-left curve
+    });
+
+    it("rounds the left side", () => {
+      const path = createRoundedBarPath(10, 20, 100, 40, 5, "left");
+      expect(path).toContain("L 110,20");
+      expect(path).toContain("A 5,5 0 0 1 10,55"); // bottom-left curve
+      expect(path).toContain("A 5,5 0 0 1 15,20"); // top-left curve
+    });
+
+    it("returns empty string for zero or negative dimensions", () => {
+      expect(createRoundedBarPath(0, 0, 10, 0, 5, "top")).toBe("");
+      expect(createRoundedBarPath(0, 0, 0, 10, 5, "top")).toBe("");
+      expect(createRoundedBarPath(0, 0, -10, 10, 5, "top")).toBe("");
+    });
+
+    it("clamps radius for top/bottom sides to half-width and height", () => {
+      // Width 20, radius 15 → clamp to 10
+      const path = createRoundedBarPath(0, 0, 20, 100, 15, "top");
+      expect(path).toContain("A 10,10");
+    });
+
+    it("clamps radius for left/right sides to half-height and width", () => {
+      // Height 20, radius 15 → clamp to 10
+      const path = createRoundedBarPath(0, 0, 100, 20, 15, "right");
+      expect(path).toContain("A 10,10");
+    });
+  });
+
   describe("createRoundedTopBarPath", () => {
     it("creates path for standard bar dimensions", () => {
       const path = createRoundedTopBarPath(10, 20, 40, 100, 5);
