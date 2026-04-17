@@ -46,7 +46,7 @@
     }
 
     &:not(.pressed):not(.disabled):hover {
-      background: var(--muted);
+      background: color-mix(in srgb, var(--primary), transparent 85%);
     }
 
     &:focus-visible {
@@ -58,12 +58,7 @@
       outline: none;
     }
 
-    &.outline.pressed {
-      background: var(--muted);
-      color: var(--muted-foreground);
-    }
-
-    &.primary.pressed {
+    &.pressed {
       background: var(--primary);
       color: var(--primary-foreground);
     }
