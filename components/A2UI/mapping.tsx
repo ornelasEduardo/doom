@@ -24,6 +24,7 @@ import { Link } from "../Link/Link";
 // Feedback - Static display
 import { ProgressBar } from "../ProgressBar/ProgressBar";
 import { RadioGroup, RadioGroupItem } from "../RadioGroup/RadioGroup";
+import { Rating } from "../Rating/Rating";
 import { Select } from "../Select/Select";
 import {
   Sidebar,
@@ -51,6 +52,7 @@ import {
 } from "../Tabs/Tabs";
 import { Text } from "../Text/Text";
 import { Textarea } from "../Textarea/Textarea";
+import { ToggleGroup, ToggleGroupItem } from "../ToggleGroup/ToggleGroup";
 import { Tooltip } from "../Tooltip/Tooltip";
 // Wrappers (for components needing JSON-to-function adaptation)
 import { ChartWrapper } from "./wrappers";
@@ -70,11 +72,14 @@ export const componentMap: Record<string, React.ElementType> = {
   link: Link,
   "radio-group": RadioGroup,
   "radio-group-item": RadioGroupItem,
+  rating: Rating,
   slider: Slider,
   spinner: Spinner,
   switch: Switch,
   text: Text,
   textarea: Textarea,
+  "toggle-group": ToggleGroup,
+  "toggle-group-item": ToggleGroupItem,
   tooltip: Tooltip,
 
   // Layout

@@ -1,0 +1,134 @@
+@use "../../styles/mixins" as *;
+
+@layer doom.components {
+  .rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--control-gap);
+    position: relative;
+
+    &.disabled {
+      @include disabled-state;
+      cursor: not-allowed;
+    }
+  }
+
+  .sm {
+    gap: var(--space-1);
+  }
+
+  .lg {
+    gap: var(--space-2);
+  }
+
+  .iconWrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon {
+    display: inline-flex;
+    transition: transform var(--duration-fast) var(--ease-in-out),
+      color var(--duration-fast) var(--ease-in-out);
+  }
+
+  .filled {
+    color: var(--warning);
+  }
+
+  .unfilled {
+    color: var(--muted-foreground);
+  }
+
+  .filledOverlay {
+    position: absolute;
+    inset: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .halfClip {
+    clip-path: inset(0 50% 0 0);
+  }
+
+  .iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-in-out),
+      color var(--duration-fast) var(--ease-in-out);
+
+    &:focus-visible {
+      @include focus;
+      border-radius: var(--radius-md);
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &:hover {
+      transform: scale(1.15);
+    }
+
+    &:active {
+      transform: scale(0.85);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+
+  .radioButton {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    z-index: 1;
+
+    &:focus-visible {
+      @include focus;
+      border-radius: var(--radius-md);
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+
+  .halfLeft {
+    left: 0;
+    width: 50%;
+  }
+
+  .halfRight {
+    right: 0;
+    width: 50%;
+  }
+
+  .iconWrapper:hover .icon {
+    transform: scale(1.15);
+  }
+
+  .iconWrapper:active .icon {
+    transform: scale(0.85);
+  }
+}

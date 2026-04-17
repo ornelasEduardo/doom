@@ -57,12 +57,12 @@ All components are tree-shakeable. Named exports only.
 - Always use SCSS Modules — never CSS-in-JS, never inline styles
 - Always use `clsx` for conditional class names
 - Always use CSS variables for colors — never hardcode hex values
-- Always use `var(--border-width) solid var(--card-border)` for borders
-- Always use `var(--shadow-hard)` for shadows — no blur, offset only
-- Always use `@use "../../styles/mixins" as m;` for interactive states
+- Always use `var(--surface-border-width) solid var(--card-border)` for borders
+- Always use `var(--shadow-md)` for shadows — no blur, offset only
+- Always use `@use "../../styles/mixins" as *;` for interactive states
 
 ### Components
-- Always forward refs on primitive components
+- Use forwardRef only when consumers need direct ref access (form controls like Checkbox, Switch, Input). Most components use plain function exports.
 - Always use `<Text>` component for text rendering — never raw `<p>` or `<span>`
 - Always set `strokeWidth={2.5}` on Lucide icons
 - Always use `ReactNode` for title props — not `string`
@@ -84,23 +84,28 @@ See `a2ui.md` for full protocol.
 
 ## Design Tokens Quick-Ref
 
-| Category | Token                | Value               |
-|----------|----------------------|---------------------|
-| Colors   | `--primary`          | Purple (default)    |
-|          | `--background`       | Page background     |
-|          | `--card-bg`          | Card background     |
-|          | `--card-border`      | Border color        |
-|          | `--muted-foreground` | Muted text          |
-| Spacing  | `--spacing-1`        | 4px                 |
-|          | `--spacing-2`        | 8px                 |
-|          | `--spacing-3`        | 12px                |
-|          | `--spacing-4`        | 16px                |
-|          | `--spacing-6`        | 24px                |
-|          | `--spacing-8`        | 32px                |
-| Borders  | `--border-width`     | 2px                 |
-|          | `--radius`           | 4px                 |
-| Shadow   | `--shadow-hard`      | Hard offset, no blur|
-|          | `--shadow-primary`   | Colored shadow      |
+| Category | Token                  | Value               |
+|----------|------------------------|---------------------|
+| Colors   | `--primary`            | Purple (default)    |
+|          | `--background`         | Page background     |
+|          | `--card-bg`            | Card background     |
+|          | `--card-border`        | Border color        |
+|          | `--muted-foreground`   | Muted text          |
+| Spacing  | `--space-1`            | 4px                 |
+|          | `--space-2`            | 8px                 |
+|          | `--space-3`            | 12px                |
+|          | `--space-4`            | 16px                |
+|          | `--space-6`            | 24px                |
+|          | `--space-8`            | 32px                |
+| Borders  | `--surface-border-width` | 2px               |
+|          | `--radius-md`          | 4px                 |
+| Shadow   | `--shadow-md`          | Hard offset, no blur|
+|          | `--shadow-lg`          | Larger hard offset  |
+|          | `--shadow-primary`     | Colored shadow      |
+| Control  | `--control-height`     | 40px (md default)   |
+|          | `--control-radius`     | var(--radius-md)    |
+| Surface  | `--surface-padding`    | var(--space-4)      |
+|          | `--surface-radius`     | var(--radius-md)    |
 
 Full token reference: `styles.md`
 
@@ -122,28 +127,51 @@ Full token reference: `styles.md`
 The doom aesthetic: bold 2px borders, hard offset shadows (no blur), high contrast, UPPERCASE labels, 4px radius, aggressive hover states.
 
 ```scss
-@use "../../styles/mixins" as m;
+@use "../../styles/mixins" as *;
 
 .root {
-  @include m.base-interactive;  // transitions + cursor
-  border: var(--border-width) solid var(--card-border);
-  box-shadow: var(--shadow-hard);
+  @include control;  // height, padding, border, shadow, transition
+  @include hover;    // lift + shadow grow on hover
+  @include focus;    // accessible focus ring
+  @include press;    // active press state (push into page)
 
-  &:hover {
-    @include m.brutalist-hover;  // signature press-and-shift effect
-  }
+  background: var(--card-bg);
+  color: var(--foreground);
 
-  @include m.focus;             // accessible focus ring
-
-  &:active {
-    transition: none;
-    transform: translate(var(--spacing-half), var(--spacing-half));
-    box-shadow: none;
+  &:disabled {
+    @include disabled-state;
   }
 }
 ```
 
 Full mixin reference: `styles.md`
+
+### Doom Philosophy
+
+Neubrutalism draws from early web brutalism and print design. The core principle: **every element announces itself**. Nothing is subtle. Form follows function with maximum honesty.
+
+This means:
+- Borders are visible and thick — elements don't float in space
+- Shadows are hard and offset — depth is graphic, not photorealistic
+- Hover states are physical — elements lift off the page like stickers
+- Press states are physical — elements push into the page
+- Disabled states are visual — hatched overlays say "blocked", not just faded
+- Typography is bold and uppercase for labels — whisper nothing
+
+When making design judgment calls, ask: "Would this feel at home on a punk zine or a protest poster?" If the answer is "it's too refined," make it bolder.
+
+### When NOT to Use Mixins
+
+Not every element is a control. These do NOT get hover/press/focus treatment:
+- Plain text (`<Text>`, `<span>`, `<p>`)
+- Icons used as decoration (not as buttons)
+- Layout containers (`<Flex>`, `<Stack>`, `<Grid>`)
+- Separators, dividers, connector lines
+- Static labels, descriptions, badges (unless clickable)
+
+Only interactive elements — things the user clicks, types into, or focuses — get the full mixin treatment.
+
+Dense repeated elements (tree rows, table rows, list items) get a lighter touch: flat `--muted` background on hover instead of the full lift animation. Lifting 50 rows would be chaos.
 
 ---
 
@@ -178,11 +206,13 @@ Full mixin reference: `styles.md`
 | Input       | `components/input.md`      |
 | Label       | `components/label.md`      |
 | RadioGroup  | `components/radiogroup.md` |
+| Rating      | `components/rating.md`     |
 | Select      | `components/select.md`     |
 | Slider      | `components/slider.md`     |
 | SplitButton | `components/splitbutton.md`|
 | Switch      | `components/switch.md`     |
 | Textarea    | `components/textarea.md`   |
+| ToggleGroup | `components/togglegroup.md`|
 
 ### Data Display
 | Component   | File                       |

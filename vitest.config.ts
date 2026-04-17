@@ -5,6 +5,11 @@ export default defineConfig({
     environment: "happy-dom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**", "tests/**"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "tests/**",
+      "**/.worktrees/**",
+    ],
   },
 });

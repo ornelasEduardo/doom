@@ -451,6 +451,104 @@ export const componentCatalog: ComponentDescriptor[] = [
     ],
   },
   {
+    type: "rating",
+    name: "Rating",
+    category: "primitives",
+    description: "Icon-based rating with half-value support",
+    props: [
+      {
+        name: "value",
+        type: "number",
+        description: "Controlled rating value",
+      },
+      {
+        name: "defaultValue",
+        type: "number",
+        description: "Uncontrolled initial value",
+      },
+      {
+        name: "count",
+        type: "number",
+        description: "Number of icons",
+        default: "5",
+      },
+      {
+        name: "allowHalf",
+        type: "boolean",
+        description: "Enable half-value selection",
+      },
+      {
+        name: "size",
+        type: "'sm' | 'md' | 'lg'",
+        description: "Icon size",
+        default: "md",
+      },
+      {
+        name: "readOnly",
+        type: "boolean",
+        description: "Read-only display mode",
+      },
+      { name: "disabled", type: "boolean", description: "Disable rating" },
+    ],
+  },
+  {
+    type: "toggle-group",
+    name: "ToggleGroup",
+    category: "primitives",
+    description: "Grouped toggle buttons with single or multi select",
+    props: [
+      {
+        name: "type",
+        type: "'single' | 'multiple'",
+        required: true,
+        description: "Selection mode",
+      },
+      {
+        name: "value",
+        type: "string | string[]",
+        description: "Controlled value",
+      },
+      {
+        name: "defaultValue",
+        type: "string | string[]",
+        description: "Default value (uncontrolled)",
+      },
+      {
+        name: "size",
+        type: "'sm' | 'md' | 'lg'",
+        description: "Control size",
+        default: "md",
+      },
+      { name: "disabled", type: "boolean", description: "Disable all items" },
+      {
+        name: "children",
+        type: "A2UIChildRef",
+        description: "toggle-group-item children",
+      },
+    ],
+  },
+  {
+    type: "toggle-group-item",
+    name: "ToggleGroupItem",
+    category: "primitives",
+    description: "Single toggle option within a ToggleGroup",
+    usesTextProp: true,
+    props: [
+      {
+        name: "value",
+        type: "string",
+        required: true,
+        description: "Item value",
+      },
+      {
+        name: "text",
+        type: "A2UITextValue",
+        description: "Label text",
+      },
+      { name: "disabled", type: "boolean", description: "Disable this item" },
+    ],
+  },
+  {
     type: "link",
     name: "Link",
     category: "primitives",

@@ -28,6 +28,13 @@ export const Checked: Story = {
   },
 };
 
+export const Indeterminate: Story = {
+  args: {
+    label: "Select all (partial)",
+    indeterminate: true,
+  },
+};
+
 export const Disabled: Story = {
   args: {
     label: "Cannot uncheck this",

@@ -22,7 +22,13 @@ interface PopoverProps {
     | "bottom-center"
     | "top-start"
     | "top-end"
-    | "top-center";
+    | "top-center"
+    | "right-start"
+    | "right-end"
+    | "right-center"
+    | "left-start"
+    | "left-end"
+    | "left-center";
   offset?: number;
 }
 
@@ -53,19 +59,18 @@ export function Popover({
     let left = 0;
     let origin = "top center";
 
-    // Edge Config
     const padding = 16;
+    const side = placement.split("-")[0];
+    const align = placement.split("-")[1];
 
-    const isTop = placement.startsWith("top");
-
-    if (isTop) {
+    if (side === "top") {
       top = triggerRect.top - contentRect.height - offset;
       origin = "bottom";
       if (top < 0) {
         top = triggerRect.bottom + offset;
         origin = "top";
       }
-    } else {
+    } else if (side === "bottom") {
       top = triggerRect.bottom + offset;
       origin = "top";
       if (top + contentRect.height > viewportHeight) {
@@ -75,42 +80,66 @@ export function Popover({
           top = padding;
         }
       }
+    } else if (side === "right") {
+      left = triggerRect.right + offset;
+      origin = "left";
+      if (left + contentRect.width > viewportWidth) {
+        left = triggerRect.left - contentRect.width - offset;
+        origin = "right";
+        if (left < 0) {
+          left = padding;
+        }
+      }
+    } else if (side === "left") {
+      left = triggerRect.left - contentRect.width - offset;
+      origin = "right";
+      if (left < 0) {
+        left = triggerRect.right + offset;
+        origin = "left";
+      }
     }
 
-    // Vertical Clamping (Fail-safe)
+    if (side === "top" || side === "bottom") {
+      if (align === "start") {
+        left = triggerRect.left;
+        origin += " left";
+      } else if (align === "end") {
+        left = triggerRect.right - contentRect.width;
+        origin += " right";
+      } else {
+        left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
+        origin += " center";
+      }
+    } else {
+      if (align === "start") {
+        top = triggerRect.top;
+        origin = "top " + origin;
+      } else if (align === "end") {
+        top = triggerRect.bottom - contentRect.height;
+        origin = "bottom " + origin;
+      } else {
+        top = triggerRect.top + triggerRect.height / 2 - contentRect.height / 2;
+        origin = "center " + origin;
+      }
+    }
+
     if (top < padding) {
       top = padding;
     }
     if (top + contentRect.height > viewportHeight - padding) {
       top = viewportHeight - contentRect.height - padding;
     }
-
-    const align = placement.split("-")[1];
-
-    if (align === "start") {
-      left = triggerRect.left;
-      origin += " left";
-    } else if (align === "end") {
-      left = triggerRect.right - contentRect.width;
-      origin += " right";
-    } else {
-      left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2;
-      origin += " center";
-    }
-
-    // Horizontal Clamping
-    if (left + contentRect.width > viewportWidth - padding) {
-      left = viewportWidth - contentRect.width - padding;
-    }
     if (left < padding) {
       left = padding;
+    }
+    if (left + contentRect.width > viewportWidth - padding) {
+      left = viewportWidth - contentRect.width - padding;
     }
 
     setPosition({ top, left });
     setTransformOrigin(origin);
   }, [isOpen, placement, offset]);
 
-  // Use useLayoutEffect for layout measurements to prevent flash
   useLayoutEffect(() => {
     if (isOpen) {
       updatePosition();
@@ -123,7 +152,6 @@ export function Popover({
     };
   }, [isOpen, updatePosition]);
 
-  // Handle click outside
   useEffect(() => {
     if (!isOpen) {
       return;

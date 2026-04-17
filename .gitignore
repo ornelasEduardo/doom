@@ -36,6 +36,9 @@ storybook-static/
 # Docs (internal specs, not for version control)
 /docs/
 
+# Claude local config / symlinks (user-specific)
+.claude/
+
 # Git worktrees
 .worktrees/
 

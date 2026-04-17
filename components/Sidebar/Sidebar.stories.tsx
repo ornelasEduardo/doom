@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import {
   BarChart3,
   CheckSquare,
+  ChevronRight,
   FileText,
   Home,
   Inbox,
@@ -18,9 +19,150 @@ import {
 import type { ComponentProps } from "react";
 import React, { useEffect, useState } from "react";
 
+import { Avatar } from "../Avatar/Avatar";
 import { Chip } from "../Chip/Chip";
+import { Page } from "../Page/Page";
+import { Popover } from "../Popover/Popover";
 import { Text } from "../Text/Text";
 import { Sidebar } from "./Sidebar";
+
+const MenuItem = ({
+  icon,
+  label,
+  onClick,
+  variant = "default",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  variant?: "default" | "danger";
+}) => {
+  const [hovered, setHovered] = useState(false);
+  const isDanger = variant === "danger";
+  const tintColor = isDanger ? "var(--error)" : "var(--primary)";
+  return (
+    <button
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-2)",
+        padding: "var(--space-2) var(--space-3)",
+        background: hovered
+          ? `color-mix(in srgb, ${tintColor}, transparent 85%)`
+          : "transparent",
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        font: "inherit",
+        color: isDanger ? "var(--error)" : "inherit",
+      }}
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+};
+
+const ProfileFooter = () => {
+  const [open, setOpen] = useState(false);
+
+  const trigger = (
+    <button
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-3)",
+        width: "100%",
+        padding: "var(--space-2) var(--space-3)",
+        background: "transparent",
+        border: "none",
+        borderRadius: "var(--radius-md)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+      type="button"
+      onClick={() => setOpen((o) => !o)}
+    >
+      <Avatar fallback="ED" shape="circle" size="sm" />
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          lineHeight: 1.2,
+        }}
+      >
+        <span style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>
+          Eddie Ornelas
+        </span>
+        <span
+          style={{
+            fontSize: "var(--text-xs)",
+            color: "var(--muted-foreground)",
+          }}
+        >
+          eddie@doom.dev
+        </span>
+      </div>
+      <ChevronRight
+        size={16}
+        strokeWidth={2.5}
+        style={{
+          transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform var(--duration-fast) var(--ease-in-out)",
+        }}
+      />
+    </button>
+  );
+
+  const content = (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minWidth: "200px",
+        background: "var(--card-bg)",
+        border: "var(--surface-border-width) solid var(--card-border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-md)",
+        overflow: "hidden",
+      }}
+    >
+      <MenuItem icon={<User size={16} strokeWidth={2.5} />} label="Profile" />
+      <MenuItem
+        icon={<Settings size={16} strokeWidth={2.5} />}
+        label="Settings"
+      />
+      <div
+        style={{
+          height: "var(--surface-border-width)",
+          background: "var(--card-border)",
+        }}
+      />
+      <MenuItem
+        icon={<LogOut size={16} strokeWidth={2.5} />}
+        label="Logout"
+        variant="danger"
+        onClick={() => setOpen(false)}
+      />
+    </div>
+  );
+
+  return (
+    <Popover
+      content={content}
+      isOpen={open}
+      placement="right-end"
+      trigger={trigger}
+      onClose={() => setOpen(false)}
+    />
+  );
+};
 
 const StatefulSidebar = (props: ComponentProps<typeof Sidebar>) => {
   const [activeItem, setActiveItem] = useState(props.activeItem);
@@ -57,14 +199,21 @@ const meta: Meta<typeof Sidebar> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ height: "100vh", display: "flex" }}>
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          gap: "var(--space-6)",
+          background: "var(--background)",
+        }}
+      >
         <Story />
-        <div style={{ flex: 1, padding: "var(--spacing-6)" }}>
+        <Page>
           <Text variant="h2">Main Content</Text>
           <Text color="muted">
             This is the main content area. The sidebar is on the left.
           </Text>
-        </div>
+        </Page>
       </div>
     ),
   ],
@@ -227,9 +376,7 @@ export const WithRail: Story = {
           </Sidebar.Section>
         </Sidebar.Nav>
         <Sidebar.Footer>
-          <Sidebar.Item href="/logout" icon={<LogOut size={20} />}>
-            Logout
-          </Sidebar.Item>
+          <ProfileFooter />
         </Sidebar.Footer>
       </>
     ),
