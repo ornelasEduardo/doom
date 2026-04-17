@@ -27,7 +27,7 @@ export function findNearestPoint2D<T>(
       xPos = (xScale as any)(valX) || 0;
     }
 
-    const yPos = yScale(valY);
+    const yPos = (yScale as any)(valY);
 
     if (xPos === undefined || yPos === undefined) {
       continue;
