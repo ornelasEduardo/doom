@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import {
   BarChart3,
   CheckSquare,
-  ChevronUp,
+  ChevronRight,
   FileText,
   Home,
   Inbox,
@@ -89,7 +89,7 @@ const ProfileFooter = () => {
         <span style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>Eddie Ornelas</span>
         <span style={{ fontSize: "var(--text-xs)", color: "var(--muted-foreground)" }}>eddie@doom.dev</span>
       </div>
-      <ChevronUp
+      <ChevronRight
         size={16}
         strokeWidth={2.5}
         style={{
