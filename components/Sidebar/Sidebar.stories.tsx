@@ -58,7 +58,7 @@ const meta: Meta<typeof Sidebar> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ height: "100vh", display: "flex", background: "var(--background)" }}>
+      <div style={{ height: "100vh", display: "flex", gap: "var(--space-6)", background: "var(--background)" }}>
         <Story />
         <Page>
           <Text variant="h2">Main Content</Text>
