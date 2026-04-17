@@ -25,13 +25,14 @@ export function Axis() {
 
     const xAxis = d3.axisBottom(xScale as any);
     const xIsContinuous =
-      typeof (xScale as any).ticks === "function" &&
-      !("bandwidth" in xScale);
+      typeof (xScale as any).ticks === "function" && !("bandwidth" in xScale);
     if (xIsContinuous) {
       xAxis.ticks(isMobile ? 3 : 5);
       xAxis.tickFormat((d) => {
         const val = typeof d === "number" ? d : (d as any).valueOf();
-        if (val === 0) return "0";
+        if (val === 0) {
+          return "0";
+        }
         return d3.format(".2s")(val).replace("G", "B");
       });
     }
@@ -44,7 +45,9 @@ export function Axis() {
       yAxis.ticks(isMobile ? 3 : 5);
       yAxis.tickFormat((d) => {
         const val = typeof d === "number" ? d : (d as any).valueOf();
-        if (val === 0) return "0";
+        if (val === 0) {
+          return "0";
+        }
         return d3.format(".2s")(val).replace("G", "B");
       });
     }

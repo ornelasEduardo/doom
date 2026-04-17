@@ -143,25 +143,33 @@ const BarSeriesComponent = <T,>({
   const ownSeries = processedSeries.find((s) => s.id === seriesId);
 
   const seriesAboveInStack = ownSeries?.stackId
-    ? processedSeries.slice(
-        processedSeries.findIndex((s) => s.id === ownSeries.id) + 1,
-      ).filter((s) => s.stackId === ownSeries.stackId)
+    ? processedSeries
+        .slice(processedSeries.findIndex((s) => s.id === ownSeries.id) + 1)
+        .filter((s) => s.stackId === ownSeries.stackId)
     : [];
 
   const isVisualTopForDatum = (datum: any) => {
-    if (seriesAboveInStack.length === 0) return true;
-    if (!ownSeries?.categoryAccessor) return true;
+    if (seriesAboveInStack.length === 0) {
+      return true;
+    }
+    if (!ownSeries?.categoryAccessor) {
+      return true;
+    }
     const categoryAccessor = resolveAccessor(ownSeries.categoryAccessor);
     const datumCategory = categoryAccessor(datum);
 
     return !seriesAboveInStack.some((s) => {
-      if (!s.data || !s.valueAccessor || !s.categoryAccessor) return false;
+      if (!s.data || !s.valueAccessor || !s.categoryAccessor) {
+        return false;
+      }
       const otherCategoryAccessor = resolveAccessor(s.categoryAccessor);
       const otherValueAccessor = resolveAccessor(s.valueAccessor);
       const match = s.data.find(
         (d) => otherCategoryAccessor(d) === datumCategory,
       );
-      if (!match) return false;
+      if (!match) {
+        return false;
+      }
       const v = otherValueAccessor(match);
       return typeof v === "number" && v > 0;
     });

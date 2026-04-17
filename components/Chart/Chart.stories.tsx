@@ -109,14 +109,14 @@ export const BarChart: Story = {
 export const HorizontalBarChart: Story = {
   render: () => (
     <Chart.Root
+      d3Config={{ grid: true, xAxisLabel: "Revenue" }}
       data={data}
       style={{ width: "100%", maxWidth: 800, height: 400 }}
       type="bar"
       x={(d: any) => d.value}
       y={(d: any) => d.label}
-      d3Config={{ grid: true, xAxisLabel: "Revenue" }}
     >
-      <Chart.Header title="Revenue by Month" subtitle="Horizontal bar chart" />
+      <Chart.Header subtitle="Horizontal bar chart" title="Revenue by Month" />
       <Chart.Plot>
         <Chart.Grid />
         <Chart.Series
@@ -136,12 +136,48 @@ export const HorizontalBarChart: Story = {
 export const StackedBarChart: Story = {
   render: () => {
     const raw = [
-      { label: "Jan", product: 8000, services: 4000, support: 2000, target: 18000 },
-      { label: "Feb", product: 12000, services: 6000, support: 3000, target: 22000 },
-      { label: "Mar", product: 10000, services: 5000, support: 2500, target: 25000 },
-      { label: "Apr", product: 16000, services: 8000, support: 4000, target: 28000 },
-      { label: "May", product: 20000, services: 10000, support: 5000, target: 35000 },
-      { label: "Jun", product: 18000, services: 9000, support: 4500, target: 40000 },
+      {
+        label: "Jan",
+        product: 8000,
+        services: 4000,
+        support: 2000,
+        target: 18000,
+      },
+      {
+        label: "Feb",
+        product: 12000,
+        services: 6000,
+        support: 3000,
+        target: 22000,
+      },
+      {
+        label: "Mar",
+        product: 10000,
+        services: 5000,
+        support: 2500,
+        target: 25000,
+      },
+      {
+        label: "Apr",
+        product: 16000,
+        services: 8000,
+        support: 4000,
+        target: 28000,
+      },
+      {
+        label: "May",
+        product: 20000,
+        services: 10000,
+        support: 5000,
+        target: 35000,
+      },
+      {
+        label: "Jun",
+        product: 18000,
+        services: 9000,
+        support: 4500,
+        target: 40000,
+      },
     ];
     const stackData = raw.map((d) => ({
       ...d,
@@ -150,16 +186,16 @@ export const StackedBarChart: Story = {
 
     return (
       <Chart.Root
+        d3Config={{ grid: true, yAxisLabel: "Revenue" }}
         data={stackData}
         style={{ width: "100%", maxWidth: 800, height: 400 }}
         type="bar"
         x={(d: any) => d.label}
         y={(d: any) => d.target}
-        d3Config={{ grid: true, yAxisLabel: "Revenue" }}
       >
         <Chart.Header
-          title="Revenue by Source vs Target"
           subtitle="Stacked bar chart with target overlay"
+          title="Revenue by Source vs Target"
         />
         <Chart.Plot>
           <Chart.Grid />

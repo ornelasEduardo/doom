@@ -103,14 +103,15 @@ export const selectChartOrientation = (
     .map((s) => s.orientation)
     .filter((o): o is SeriesOrientation => o !== undefined);
 
-  if (declared.length === 0) return "vertical";
+  if (declared.length === 0) {
+    return "vertical";
+  }
 
   const first = declared[0];
 
   if (process.env.NODE_ENV !== "production") {
     const conflicting = declared.some((o) => o !== first);
     if (conflicting) {
-      // eslint-disable-next-line no-console
       console.warn(
         `[Chart] Mixed series orientations detected (${[...new Set(declared)].join(", ")}). ` +
           `Using "${first}" (first declared). Use a single orientation per chart.`,
