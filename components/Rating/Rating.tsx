@@ -135,12 +135,14 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
                     {React.createElement(IconComponent, {
                       size: iconSize,
                       strokeWidth: 2.5,
+                      fill: "none",
                     })}
                   </span>
                   <span className={clsx(styles.icon, styles.filled, styles.halfClip)}>
                     {React.createElement(IconComponent, {
                       size: iconSize,
                       strokeWidth: 2.5,
+                      fill: "currentColor",
                     })}
                   </span>
                 </>
@@ -149,6 +151,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
                   {React.createElement(IconComponent, {
                     size: iconSize,
                     strokeWidth: 2.5,
+                    fill: isFilled ? "currentColor" : "none",
                   })}
                 </span>
               )}
@@ -183,6 +186,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
                   {React.createElement(IconComponent, {
                     size: iconSize,
                     strokeWidth: 2.5,
+                    fill: "none",
                   })}
                 </span>
 
@@ -200,6 +204,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
                     {React.createElement(IconComponent, {
                       size: iconSize,
                       strokeWidth: 2.5,
+                      fill: "currentColor",
                     })}
                   </span>
                 )}
@@ -271,6 +276,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(function Rat
                   {React.createElement(IconComponent, {
                     size: iconSize,
                     strokeWidth: 2.5,
+                    fill: isFilled ? "currentColor" : "none",
                   })}
                 </button>
               </Tooltip>
