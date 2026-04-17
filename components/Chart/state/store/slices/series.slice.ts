@@ -1,7 +1,7 @@
 import { BinaryXStrategy } from "../../../sensors/utils/strategies/BinaryXStrategy/index";
 import { LinearStrategy } from "../../../sensors/utils/strategies/LinearStrategy/index";
 import { QuadtreeStrategy } from "../../../sensors/utils/strategies/QuadtreeStrategy/index";
-import { Series } from "../../../types";
+import { Series, SeriesOrientation } from "../../../types";
 
 export interface SeriesSlice {
   series: Map<string, Series[]>;
@@ -33,6 +33,7 @@ export const hydrateSeries = (
     hideCursor: props.hideCursor,
     interactionMode: props.interactionMode,
     type: props.type,
+    orientation: props.orientation,
     data,
   };
 
@@ -74,4 +75,44 @@ export const combineSeries = (map: Map<string, Series[]>) => {
   const series: Series[] = [];
   map.forEach((val) => series.push(...val));
   return series;
+};
+
+// =============================================================================
+// SELECTORS
+// =============================================================================
+
+/**
+ * Derives the chart-level orientation from registered series.
+ *
+ * Rules:
+ * - First series that declares an orientation wins
+ * - If no series declares one, defaults to "vertical"
+ * - Mixed orientations log a warning (in dev) but still return the first declared
+ *
+ * Used by axes, cursor, tooltip, and grid to coordinate horizontal vs
+ * vertical layout without each component reaching into individual series.
+ */
+export const selectChartOrientation = (
+  state: Pick<SeriesSlice, "processedSeries">,
+): SeriesOrientation => {
+  const declared = state.processedSeries
+    .map((s) => s.orientation)
+    .filter((o): o is SeriesOrientation => o !== undefined);
+
+  if (declared.length === 0) return "vertical";
+
+  const first = declared[0];
+
+  if (process.env.NODE_ENV !== "production") {
+    const conflicting = declared.some((o) => o !== first);
+    if (conflicting) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[Chart] Mixed series orientations detected (${[...new Set(declared)].join(", ")}). ` +
+          `Using "${first}" (first declared). Use a single orientation per chart.`,
+      );
+    }
+  }
+
+  return first;
 };

@@ -4,6 +4,16 @@ import { Accessor } from "./accessors";
 import { SeriesType } from "./common";
 import { RenderFrame } from "./context";
 
+/**
+ * Orientation a series declares for itself. Series that don't have a
+ * meaningful orientation (Line, Scatter) leave this undefined.
+ *
+ * The chart store derives a chart-level orientation from registered series:
+ * the first series that declares an orientation wins. Mixed orientations
+ * within one chart fall back to the first declared with a console warning.
+ */
+export type SeriesOrientation = "vertical" | "horizontal";
+
 // =============================================================================
 // SERIES PROPS - Per-series configuration
 // =============================================================================
@@ -40,6 +50,14 @@ export interface SeriesProps<T> {
 
   // Behavior
   hideCursor?: boolean;
+
+  /**
+   * Orientation declared by the series. Picked up by the chart store and
+   * exposed for downstream components (axes, cursor, tooltip, grid) to
+   * coordinate. Optional — only series whose rendering depends on
+   * orientation (bars) need to set this.
+   */
+  orientation?: SeriesOrientation;
 }
 
 export interface Series {
@@ -52,5 +70,7 @@ export interface Series {
   hideCursor?: boolean;
   interactionMode?: "x" | "xy";
   type?: SeriesType | string;
+  /** Orientation declared by the series. See SeriesOrientation. */
+  orientation?: SeriesOrientation;
   strategy?: import("../sensors/utils/strategies/types").InteractionStrategy<any>;
 }
