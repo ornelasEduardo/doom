@@ -81,10 +81,6 @@ export const combineSeries = (map: Map<string, Series[]>) => {
   return series;
 };
 
-// =============================================================================
-// SELECTORS
-// =============================================================================
-
 /**
  * Derives the chart-level orientation from registered series.
  *

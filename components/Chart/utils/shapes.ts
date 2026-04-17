@@ -32,7 +32,6 @@ export function createRoundedBarPath(
     return `M ${x},${y} L ${x + w},${y} L ${x + w},${y + h - r} A ${r},${r} 0 0 1 ${x + w - r},${y + h} L ${x + r},${y + h} A ${r},${r} 0 0 1 ${x},${y + h - r} Z`;
   }
 
-  // side === "left"
   const r = Math.min(radius, h / 2, w);
   return `M ${x + r},${y} L ${x + w},${y} L ${x + w},${y + h} L ${x + r},${y + h} A ${r},${r} 0 0 1 ${x},${y + h - r} L ${x},${y + r} A ${r},${r} 0 0 1 ${x + r},${y} Z`;
 }
