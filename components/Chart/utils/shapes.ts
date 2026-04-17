@@ -36,16 +36,3 @@ export function createRoundedBarPath(
   const r = Math.min(radius, h / 2, w);
   return `M ${x + r},${y} L ${x + w},${y} L ${x + w},${y + h} L ${x + r},${y + h} A ${r},${r} 0 0 1 ${x},${y + h - r} L ${x},${y + r} A ${r},${r} 0 0 1 ${x + r},${y} Z`;
 }
-
-/**
- * @deprecated Use createRoundedBarPath(..., "top") instead.
- */
-export function createRoundedTopBarPath(
-  xPos: number,
-  yPos: number,
-  width: number,
-  height: number,
-  radius: number,
-): string {
-  return createRoundedBarPath(xPos, yPos, width, height, radius, "top");
-}
