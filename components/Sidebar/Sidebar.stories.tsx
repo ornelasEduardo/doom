@@ -39,6 +39,7 @@ const MenuItem = ({
 }) => {
   const [hovered, setHovered] = useState(false);
   const isDanger = variant === "danger";
+  const tintColor = isDanger ? "var(--error)" : "var(--primary)";
   return (
     <button
       type="button"
@@ -50,7 +51,7 @@ const MenuItem = ({
         alignItems: "center",
         gap: "var(--space-2)",
         padding: "var(--space-2) var(--space-3)",
-        background: hovered ? "color-mix(in srgb, var(--primary), transparent 85%)" : "transparent",
+        background: hovered ? `color-mix(in srgb, ${tintColor}, transparent 85%)` : "transparent",
         border: "none",
         cursor: "pointer",
         textAlign: "left",
