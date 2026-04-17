@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import {
   BarChart3,
   CheckSquare,
+  ChevronUp,
   FileText,
   Home,
   Inbox,
@@ -18,10 +19,118 @@ import {
 import type { ComponentProps } from "react";
 import React, { useEffect, useState } from "react";
 
+import { Avatar } from "../Avatar/Avatar";
 import { Chip } from "../Chip/Chip";
 import { Page } from "../Page/Page";
+import { Popover } from "../Popover/Popover";
 import { Text } from "../Text/Text";
 import { Sidebar } from "./Sidebar";
+
+const ProfileFooter = () => {
+  const [open, setOpen] = useState(false);
+
+  const trigger = (
+    <button
+      type="button"
+      onClick={() => setOpen((o) => !o)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-3)",
+        width: "100%",
+        padding: "var(--space-2) var(--space-3)",
+        background: "transparent",
+        border: "none",
+        borderRadius: "var(--radius-md)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <Avatar fallback="ED" size="sm" shape="circle" />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <Text variant="small" weight="bold">Eddie Ornelas</Text>
+        <Text variant="small" color="muted">eddie@doom.dev</Text>
+      </div>
+      <ChevronUp
+        size={16}
+        strokeWidth={2.5}
+        style={{
+          transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          transition: "transform var(--duration-fast) var(--ease-in-out)",
+        }}
+      />
+    </button>
+  );
+
+  const content = (
+    <div style={{ display: "flex", flexDirection: "column", minWidth: "200px" }}>
+      <button
+        type="button"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          padding: "var(--space-2) var(--space-3)",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          font: "inherit",
+        }}
+      >
+        <User size={16} strokeWidth={2.5} />
+        Profile
+      </button>
+      <button
+        type="button"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          padding: "var(--space-2) var(--space-3)",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          font: "inherit",
+        }}
+      >
+        <Settings size={16} strokeWidth={2.5} />
+        Settings
+      </button>
+      <div style={{ height: "var(--surface-border-width)", background: "var(--card-border)" }} />
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-2)",
+          padding: "var(--space-2) var(--space-3)",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+          font: "inherit",
+          color: "var(--error)",
+        }}
+      >
+        <LogOut size={16} strokeWidth={2.5} />
+        Logout
+      </button>
+    </div>
+  );
+
+  return (
+    <Popover
+      trigger={trigger}
+      content={content}
+      isOpen={open}
+      onClose={() => setOpen(false)}
+      placement="top-start"
+    />
+  );
+};
 
 const StatefulSidebar = (props: ComponentProps<typeof Sidebar>) => {
   const [activeItem, setActiveItem] = useState(props.activeItem);
@@ -228,9 +337,7 @@ export const WithRail: Story = {
           </Sidebar.Section>
         </Sidebar.Nav>
         <Sidebar.Footer>
-          <Sidebar.Item href="/logout" icon={<LogOut size={20} />}>
-            Logout
-          </Sidebar.Item>
+          <ProfileFooter />
         </Sidebar.Footer>
       </>
     ),
