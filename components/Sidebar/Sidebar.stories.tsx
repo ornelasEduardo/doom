@@ -102,7 +102,18 @@ const ProfileFooter = () => {
   );
 
   const content = (
-    <div style={{ display: "flex", flexDirection: "column", minWidth: "200px" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minWidth: "200px",
+        background: "var(--card-bg)",
+        border: "var(--surface-border-width) solid var(--card-border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-md)",
+        overflow: "hidden",
+      }}
+    >
       <MenuItem icon={<User size={16} strokeWidth={2.5} />} label="Profile" />
       <MenuItem icon={<Settings size={16} strokeWidth={2.5} />} label="Settings" />
       <div style={{ height: "var(--surface-border-width)", background: "var(--card-border)" }} />
