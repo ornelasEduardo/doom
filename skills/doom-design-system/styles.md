@@ -272,7 +272,7 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 
 #### Layout
 ```
---width-sidebar:           280px
+--width-sidebar:           240px
 --width-sidebar-collapsed: 64px
 --width-panel:             400px   (drawers, panels)
 --width-panel-wide:        600px
