@@ -14,8 +14,7 @@
     margin: 0 auto;
     padding: 0 var(--space-4) var(--space-4);
 
-    // First child sits in a header-height zone, vertically centered.
-    // Aligns titles with the Sidebar header when used in a sidebar layout.
+    // First child gets header-height zone so titles align with Sidebar header.
     & > *:first-child {
       min-height: var(--header-height);
       display: flex;

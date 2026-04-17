@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
-
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Italic,
+  Underline,
+} from "lucide-react";
 import React, { useState } from "react";
 
 import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
@@ -16,14 +22,18 @@ type Story = StoryObj<typeof ToggleGroup>;
 
 export const Default: Story = {
   render: () => (
-    <ToggleGroup type="single" defaultValue="center" aria-label="Text alignment">
-      <ToggleGroupItem value="left" aria-label="Align left">
+    <ToggleGroup
+      aria-label="Text alignment"
+      defaultValue="center"
+      type="single"
+    >
+      <ToggleGroupItem aria-label="Align left" value="left">
         <AlignLeft size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
-      <ToggleGroupItem value="center" aria-label="Align center">
+      <ToggleGroupItem aria-label="Align center" value="center">
         <AlignCenter size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
-      <ToggleGroupItem value="right" aria-label="Align right">
+      <ToggleGroupItem aria-label="Align right" value="right">
         <AlignRight size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
     </ToggleGroup>
@@ -32,14 +42,18 @@ export const Default: Story = {
 
 export const Multiple: Story = {
   render: () => (
-    <ToggleGroup type="multiple" defaultValue={["bold"]} aria-label="Text formatting">
-      <ToggleGroupItem value="bold" aria-label="Bold">
+    <ToggleGroup
+      aria-label="Text formatting"
+      defaultValue={["bold"]}
+      type="multiple"
+    >
+      <ToggleGroupItem aria-label="Bold" value="bold">
         <Bold size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
-      <ToggleGroupItem value="italic" aria-label="Italic">
+      <ToggleGroupItem aria-label="Italic" value="italic">
         <Italic size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
-      <ToggleGroupItem value="underline" aria-label="Underline">
+      <ToggleGroupItem aria-label="Underline" value="underline">
         <Underline size={16} strokeWidth={2.5} />
       </ToggleGroupItem>
     </ToggleGroup>
@@ -48,7 +62,7 @@ export const Multiple: Story = {
 
 export const WithLabels: Story = {
   render: () => (
-    <ToggleGroup type="single" defaultValue="bold" aria-label="Text formatting">
+    <ToggleGroup aria-label="Text formatting" defaultValue="bold" type="single">
       <ToggleGroupItem value="bold">
         <Bold size={16} strokeWidth={2.5} /> Bold
       </ToggleGroupItem>
@@ -64,18 +78,39 @@ export const WithLabels: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-      <ToggleGroup type="single" size="sm" defaultValue="bold" aria-label="Small">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-4)",
+      }}
+    >
+      <ToggleGroup
+        aria-label="Small"
+        defaultValue="bold"
+        size="sm"
+        type="single"
+      >
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
       </ToggleGroup>
-      <ToggleGroup type="single" size="md" defaultValue="bold" aria-label="Medium">
+      <ToggleGroup
+        aria-label="Medium"
+        defaultValue="bold"
+        size="md"
+        type="single"
+      >
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
       </ToggleGroup>
-      <ToggleGroup type="single" size="lg" defaultValue="bold" aria-label="Large">
+      <ToggleGroup
+        aria-label="Large"
+        defaultValue="bold"
+        size="lg"
+        type="single"
+      >
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
@@ -86,7 +121,12 @@ export const Sizes: Story = {
 
 export const Disabled: Story = {
   render: () => (
-    <ToggleGroup type="single" disabled defaultValue="bold" aria-label="Disabled group">
+    <ToggleGroup
+      disabled
+      aria-label="Disabled group"
+      defaultValue="bold"
+      type="single"
+    >
       <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
       <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
@@ -100,16 +140,18 @@ export const Controlled: Story = {
     return (
       <div>
         <ToggleGroup
+          aria-label="Controlled alignment"
           type="single"
           value={value}
           onValueChange={(v) => setValue(v as string)}
-          aria-label="Controlled alignment"
         >
           <ToggleGroupItem value="left">Left</ToggleGroupItem>
           <ToggleGroupItem value="center">Center</ToggleGroupItem>
           <ToggleGroupItem value="right">Right</ToggleGroupItem>
         </ToggleGroup>
-        <p style={{ marginTop: "var(--space-4)" }}>Selected: {value || "none"}</p>
+        <p style={{ marginTop: "var(--space-4)" }}>
+          Selected: {value || "none"}
+        </p>
       </div>
     );
   },

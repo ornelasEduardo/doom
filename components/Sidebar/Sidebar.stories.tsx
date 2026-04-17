@@ -42,22 +42,24 @@ const MenuItem = ({
   const tintColor = isDanger ? "var(--error)" : "var(--primary)";
   return (
     <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         alignItems: "center",
         gap: "var(--space-2)",
         padding: "var(--space-2) var(--space-3)",
-        background: hovered ? `color-mix(in srgb, ${tintColor}, transparent 85%)` : "transparent",
+        background: hovered
+          ? `color-mix(in srgb, ${tintColor}, transparent 85%)`
+          : "transparent",
         border: "none",
         cursor: "pointer",
         textAlign: "left",
         font: "inherit",
         color: isDanger ? "var(--error)" : "inherit",
       }}
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {icon}
       {label}
@@ -70,8 +72,6 @@ const ProfileFooter = () => {
 
   const trigger = (
     <button
-      type="button"
-      onClick={() => setOpen((o) => !o)}
       style={{
         display: "flex",
         alignItems: "center",
@@ -84,11 +84,30 @@ const ProfileFooter = () => {
         cursor: "pointer",
         textAlign: "left",
       }}
+      type="button"
+      onClick={() => setOpen((o) => !o)}
     >
-      <Avatar fallback="ED" size="sm" shape="circle" />
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-        <span style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>Eddie Ornelas</span>
-        <span style={{ fontSize: "var(--text-xs)", color: "var(--muted-foreground)" }}>eddie@doom.dev</span>
+      <Avatar fallback="ED" shape="circle" size="sm" />
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          lineHeight: 1.2,
+        }}
+      >
+        <span style={{ fontWeight: 700, fontSize: "var(--text-sm)" }}>
+          Eddie Ornelas
+        </span>
+        <span
+          style={{
+            fontSize: "var(--text-xs)",
+            color: "var(--muted-foreground)",
+          }}
+        >
+          eddie@doom.dev
+        </span>
       </div>
       <ChevronRight
         size={16}
@@ -115,8 +134,16 @@ const ProfileFooter = () => {
       }}
     >
       <MenuItem icon={<User size={16} strokeWidth={2.5} />} label="Profile" />
-      <MenuItem icon={<Settings size={16} strokeWidth={2.5} />} label="Settings" />
-      <div style={{ height: "var(--surface-border-width)", background: "var(--card-border)" }} />
+      <MenuItem
+        icon={<Settings size={16} strokeWidth={2.5} />}
+        label="Settings"
+      />
+      <div
+        style={{
+          height: "var(--surface-border-width)",
+          background: "var(--card-border)",
+        }}
+      />
       <MenuItem
         icon={<LogOut size={16} strokeWidth={2.5} />}
         label="Logout"
@@ -128,11 +155,11 @@ const ProfileFooter = () => {
 
   return (
     <Popover
-      trigger={trigger}
       content={content}
       isOpen={open}
-      onClose={() => setOpen(false)}
       placement="right-end"
+      trigger={trigger}
+      onClose={() => setOpen(false)}
     />
   );
 };
@@ -172,7 +199,14 @@ const meta: Meta<typeof Sidebar> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ height: "100vh", display: "flex", gap: "var(--space-6)", background: "var(--background)" }}>
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          gap: "var(--space-6)",
+          background: "var(--background)",
+        }}
+      >
         <Story />
         <Page>
           <Text variant="h2">Main Content</Text>

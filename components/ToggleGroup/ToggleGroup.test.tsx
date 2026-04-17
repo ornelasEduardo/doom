@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -8,8 +8,6 @@ import { describe, expect, it, vi } from "vitest";
 import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
 
 describe("ToggleGroup", () => {
-  // --- Rendering ---
-
   it("renders a group with role='group'", () => {
     render(
       <ToggleGroup type="single">
@@ -44,12 +42,10 @@ describe("ToggleGroup", () => {
     );
   });
 
-  // --- Single select ---
-
   it("single: selects a value on click", async () => {
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="single" defaultValue="">
+      <ToggleGroup defaultValue="" type="single">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -63,7 +59,7 @@ describe("ToggleGroup", () => {
   it("single: deselects current value on re-click", async () => {
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="single" defaultValue="bold">
+      <ToggleGroup defaultValue="bold" type="single">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -78,7 +74,7 @@ describe("ToggleGroup", () => {
   it("single: only one item selected at a time", async () => {
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="single" defaultValue="bold">
+      <ToggleGroup defaultValue="bold" type="single">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -108,12 +104,10 @@ describe("ToggleGroup", () => {
     expect(handleChange).toHaveBeenCalledWith("bold");
   });
 
-  // --- Multiple select ---
-
   it("multiple: selects multiple values", async () => {
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="multiple" defaultValue={[]}>
+      <ToggleGroup defaultValue={[]} type="multiple">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
         <ToggleGroupItem value="underline">Underline</ToggleGroupItem>
@@ -133,7 +127,7 @@ describe("ToggleGroup", () => {
   it("multiple: deselects on re-click", async () => {
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="multiple" defaultValue={["bold"]}>
+      <ToggleGroup defaultValue={["bold"]} type="multiple">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -150,7 +144,11 @@ describe("ToggleGroup", () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();
     render(
-      <ToggleGroup type="multiple" defaultValue={[]} onValueChange={handleChange}>
+      <ToggleGroup
+        defaultValue={[]}
+        type="multiple"
+        onValueChange={handleChange}
+      >
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -162,8 +160,6 @@ describe("ToggleGroup", () => {
     await user.click(screen.getByRole("button", { name: "Italic" }));
     expect(handleChange).toHaveBeenCalledWith(["bold", "italic"]);
   });
-
-  // --- Controlled mode ---
 
   it("controlled single: value prop controls selection", () => {
     render(
@@ -223,11 +219,9 @@ describe("ToggleGroup", () => {
     );
   });
 
-  // --- Disabled ---
-
   it("disabled group disables all items", () => {
     render(
-      <ToggleGroup type="single" disabled>
+      <ToggleGroup disabled type="single">
         <ToggleGroupItem value="bold">Bold</ToggleGroupItem>
         <ToggleGroupItem value="italic">Italic</ToggleGroupItem>
       </ToggleGroup>,
@@ -244,7 +238,7 @@ describe("ToggleGroup", () => {
     const user = userEvent.setup();
     render(
       <ToggleGroup type="single" onValueChange={handleChange}>
-        <ToggleGroupItem value="bold" disabled>
+        <ToggleGroupItem disabled value="bold">
           Bold
         </ToggleGroupItem>
       </ToggleGroup>,
@@ -253,8 +247,6 @@ describe("ToggleGroup", () => {
     await user.click(screen.getByRole("button", { name: "Bold" }));
     expect(handleChange).not.toHaveBeenCalled();
   });
-
-  // --- Roving tabindex ---
 
   it("only one item has tabIndex=0 (first non-disabled when nothing pressed)", () => {
     render(
@@ -273,7 +265,7 @@ describe("ToggleGroup", () => {
 
   it("pressed item gets tabIndex=0 in single mode", () => {
     render(
-      <ToggleGroup type="single" defaultValue="b">
+      <ToggleGroup defaultValue="b" type="single">
         <ToggleGroupItem value="a">A</ToggleGroupItem>
         <ToggleGroupItem value="b">B</ToggleGroupItem>
         <ToggleGroupItem value="c">C</ToggleGroupItem>
@@ -288,7 +280,7 @@ describe("ToggleGroup", () => {
 
   it("first pressed item gets tabIndex=0 in multiple mode", () => {
     render(
-      <ToggleGroup type="multiple" defaultValue={["b", "c"]}>
+      <ToggleGroup defaultValue={["b", "c"]} type="multiple">
         <ToggleGroupItem value="a">A</ToggleGroupItem>
         <ToggleGroupItem value="b">B</ToggleGroupItem>
         <ToggleGroupItem value="c">C</ToggleGroupItem>
@@ -304,7 +296,9 @@ describe("ToggleGroup", () => {
   it("skips disabled items for tabbable fallback", () => {
     render(
       <ToggleGroup type="single">
-        <ToggleGroupItem value="a" disabled>A</ToggleGroupItem>
+        <ToggleGroupItem disabled value="a">
+          A
+        </ToggleGroupItem>
         <ToggleGroupItem value="b">B</ToggleGroupItem>
         <ToggleGroupItem value="c">C</ToggleGroupItem>
       </ToggleGroup>,
@@ -315,8 +309,6 @@ describe("ToggleGroup", () => {
     expect(buttons[1]).toHaveAttribute("tabindex", "0");
     expect(buttons[2]).toHaveAttribute("tabindex", "-1");
   });
-
-  // --- Keyboard navigation ---
 
   it("arrow keys move focus between items (roving tabindex)", async () => {
     const user = userEvent.setup();
@@ -372,7 +364,7 @@ describe("ToggleGroup", () => {
     render(
       <ToggleGroup type="single">
         <ToggleGroupItem value="a">A</ToggleGroupItem>
-        <ToggleGroupItem value="b" disabled>
+        <ToggleGroupItem disabled value="b">
           B
         </ToggleGroupItem>
         <ToggleGroupItem value="c">C</ToggleGroupItem>
@@ -408,8 +400,6 @@ describe("ToggleGroup", () => {
     expect(handleChange).toHaveBeenCalledWith("italic");
   });
 
-  // --- Context error ---
-
   it("ToggleGroupItem throws when used outside ToggleGroup", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => {
@@ -420,7 +410,7 @@ describe("ToggleGroup", () => {
 
   it("applies size class to items", () => {
     render(
-      <ToggleGroup type="single" size="sm">
+      <ToggleGroup size="sm" type="single">
         <ToggleGroupItem value="a">A</ToggleGroupItem>
       </ToggleGroup>,
     );

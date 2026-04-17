@@ -13,7 +13,6 @@
     }
   }
 
-  // --- Size variants ---
   .sm {
     gap: var(--space-1);
   }
@@ -22,7 +21,6 @@
     gap: var(--space-2);
   }
 
-  // --- Icon wrapper (for half-value layering) ---
   .iconWrapper {
     position: relative;
     display: inline-flex;
@@ -30,7 +28,6 @@
     justify-content: center;
   }
 
-  // --- Base icon styles ---
   .icon {
     display: inline-flex;
     transition: transform var(--duration-fast) var(--ease-in-out),
@@ -45,7 +42,6 @@
     color: var(--muted-foreground);
   }
 
-  // --- Filled overlay (absolute positioned over unfilled base) ---
   .filledOverlay {
     position: absolute;
     inset: 0;
@@ -55,12 +51,10 @@
     pointer-events: none;
   }
 
-  // --- Half clip ---
   .halfClip {
     clip-path: inset(0 50% 0 0);
   }
 
-  // --- Interactive icon button (standard mode) ---
   .iconButton {
     display: inline-flex;
     align-items: center;
@@ -95,7 +89,6 @@
     }
   }
 
-  // --- Half-mode invisible buttons (positioned over the icon) ---
   .radioButton {
     position: absolute;
     top: 0;
@@ -131,7 +124,6 @@
     width: 50%;
   }
 
-  // --- Hover scale on wrapper when half mode ---
   .iconWrapper:hover .icon {
     transform: scale(1.15);
   }

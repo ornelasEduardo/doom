@@ -60,23 +60,23 @@ describe("Checkbox", () => {
     render(<Checkbox disabled label="Test" />);
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toBeDisabled();
-
-    // Wrappers (input and maybe label) should enforce disabled styles/behavior
   });
 
   it("renders indeterminate state", () => {
-    render(<Checkbox label="Partial" indeterminate />);
+    render(<Checkbox indeterminate label="Partial" />);
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toHaveProperty("indeterminate", true);
   });
 
   it("shows Minus icon when indeterminate", () => {
-    const { container } = render(<Checkbox label="Partial" indeterminate />);
-    expect(container.querySelector('[data-testid="minus-icon"]')).toBeInTheDocument();
+    const { container } = render(<Checkbox indeterminate label="Partial" />);
+    expect(
+      container.querySelector('[data-testid="minus-icon"]'),
+    ).toBeInTheDocument();
   });
 
   it("indeterminate is overridden by checked", () => {
-    render(<Checkbox label="Checked" indeterminate checked readOnly />);
+    render(<Checkbox checked indeterminate readOnly label="Checked" />);
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toBeChecked();
     expect(checkbox).toHaveProperty("indeterminate", false);

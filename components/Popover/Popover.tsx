@@ -60,10 +60,9 @@ export function Popover({
     let origin = "top center";
 
     const padding = 16;
-    const side = placement.split("-")[0]; // top | bottom | left | right
-    const align = placement.split("-")[1]; // start | end | center
+    const side = placement.split("-")[0];
+    const align = placement.split("-")[1];
 
-    // Position perpendicular to the trigger based on side
     if (side === "top") {
       top = triggerRect.top - contentRect.height - offset;
       origin = "bottom";
@@ -77,7 +76,9 @@ export function Popover({
       if (top + contentRect.height > viewportHeight) {
         top = triggerRect.top - contentRect.height - offset;
         origin = "bottom";
-        if (top < 0) top = padding;
+        if (top < 0) {
+          top = padding;
+        }
       }
     } else if (side === "right") {
       left = triggerRect.right + offset;
@@ -85,7 +86,9 @@ export function Popover({
       if (left + contentRect.width > viewportWidth) {
         left = triggerRect.left - contentRect.width - offset;
         origin = "right";
-        if (left < 0) left = padding;
+        if (left < 0) {
+          left = padding;
+        }
       }
     } else if (side === "left") {
       left = triggerRect.left - contentRect.width - offset;
@@ -96,7 +99,6 @@ export function Popover({
       }
     }
 
-    // Position along the trigger axis based on align
     if (side === "top" || side === "bottom") {
       if (align === "start") {
         left = triggerRect.left;
@@ -109,7 +111,6 @@ export function Popover({
         origin += " center";
       }
     } else {
-      // left/right placements align vertically
       if (align === "start") {
         top = triggerRect.top;
         origin = "top " + origin;
@@ -122,12 +123,15 @@ export function Popover({
       }
     }
 
-    // Clamp to viewport
-    if (top < padding) top = padding;
+    if (top < padding) {
+      top = padding;
+    }
     if (top + contentRect.height > viewportHeight - padding) {
       top = viewportHeight - contentRect.height - padding;
     }
-    if (left < padding) left = padding;
+    if (left < padding) {
+      left = padding;
+    }
     if (left + contentRect.width > viewportWidth - padding) {
       left = viewportWidth - contentRect.width - padding;
     }
@@ -136,7 +140,6 @@ export function Popover({
     setTransformOrigin(origin);
   }, [isOpen, placement, offset]);
 
-  // Use useLayoutEffect for layout measurements to prevent flash
   useLayoutEffect(() => {
     if (isOpen) {
       updatePosition();
@@ -149,7 +152,6 @@ export function Popover({
     };
   }, [isOpen, updatePosition]);
 
-  // Handle click outside
   useEffect(() => {
     if (!isOpen) {
       return;

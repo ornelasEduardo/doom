@@ -11,7 +11,20 @@ const meta: Meta<typeof Popover> = {
   argTypes: {
     placement: {
       control: "select",
-      options: ["bottom-start", "bottom-end", "bottom-center"],
+      options: [
+        "bottom-start",
+        "bottom-center",
+        "bottom-end",
+        "top-start",
+        "top-center",
+        "top-end",
+        "right-start",
+        "right-center",
+        "right-end",
+        "left-start",
+        "left-center",
+        "left-end",
+      ],
     },
   },
 };
@@ -111,6 +124,87 @@ export const Placements: Story = {
               }
               onClose={() => setIsOpen3(false)}
             />
+          </Flex>
+        </Flex>
+      </Page>
+    );
+  },
+};
+
+export const AllPlacements: Story = {
+  render: function Render() {
+    type Placement =
+      | "bottom-start"
+      | "bottom-center"
+      | "bottom-end"
+      | "top-start"
+      | "top-center"
+      | "top-end"
+      | "right-start"
+      | "right-center"
+      | "right-end"
+      | "left-start"
+      | "left-center"
+      | "left-end";
+
+    const placements: Placement[] = [
+      "top-start",
+      "top-center",
+      "top-end",
+      "right-start",
+      "right-center",
+      "right-end",
+      "bottom-start",
+      "bottom-center",
+      "bottom-end",
+      "left-start",
+      "left-center",
+      "left-end",
+    ];
+
+    const [openPlacement, setOpenPlacement] = useState<Placement | null>(null);
+
+    return (
+      <Page>
+        <Flex
+          align="center"
+          justify="center"
+          style={{ minHeight: "600px", padding: "8rem" }}
+        >
+          <Flex direction="column" gap={3}>
+            {[0, 1, 2, 3].map((row) => (
+              <Flex key={row} gap={3}>
+                {placements.slice(row * 3, row * 3 + 3).map((placement) => (
+                  <Popover
+                    key={placement}
+                    content={
+                      <Card style={{ padding: "1rem", width: "180px" }}>
+                        <Stack gap={2}>
+                          <Text weight="bold">{placement}</Text>
+                          <Text variant="small">
+                            Popover anchored {placement.replace("-", " ")}.
+                          </Text>
+                        </Stack>
+                      </Card>
+                    }
+                    isOpen={openPlacement === placement}
+                    placement={placement}
+                    trigger={
+                      <Button
+                        onClick={() =>
+                          setOpenPlacement(
+                            openPlacement === placement ? null : placement,
+                          )
+                        }
+                      >
+                        {placement}
+                      </Button>
+                    }
+                    onClose={() => setOpenPlacement(null)}
+                  />
+                ))}
+              </Flex>
+            ))}
           </Flex>
         </Flex>
       </Page>

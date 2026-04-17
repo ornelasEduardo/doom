@@ -1,13 +1,16 @@
-'use client';
+"use client";
 
 import clsx from "clsx";
-import React, { createContext, useCallback, useContext, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 
 import type { ControlSize } from "../../styles/types";
-
 import styles from "./ToggleGroup.module.scss";
-
-// --- Context (inline) ---
 
 interface ItemEntry {
   value: string;
@@ -20,15 +23,17 @@ interface ToggleGroupContextType {
   type: "single" | "multiple";
   size: ControlSize;
   disabled: boolean;
-  registerItem: (ref: HTMLButtonElement | null, value: string, itemDisabled: boolean) => void;
+  registerItem: (
+    ref: HTMLButtonElement | null,
+    value: string,
+    itemDisabled: boolean,
+  ) => void;
   unregisterItem: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent, value: string) => void;
   tabbableValue: string | null;
 }
 
 const ToggleGroupContext = createContext<ToggleGroupContextType | null>(null);
-
-// --- ToggleGroup ---
 
 export interface ToggleGroupProps {
   type: "single" | "multiple";
@@ -69,7 +74,9 @@ export function ToggleGroup({
     (itemValue: string) => {
       let nextValue: string | string[];
       if (type === "single") {
-        const current = (typeof activeValue === "string" ? activeValue : "") as string;
+        const current = (
+          typeof activeValue === "string" ? activeValue : ""
+        ) as string;
         nextValue = current === itemValue ? "" : itemValue;
       } else {
         const arr = Array.isArray(activeValue) ? activeValue : [];
@@ -86,23 +93,27 @@ export function ToggleGroup({
     [type, activeValue, isControlled, onValueChange],
   );
 
-  const registerItem = useCallback((ref: HTMLButtonElement | null, value: string, itemDisabled: boolean) => {
-    if (ref) {
-      itemRefs.current.set(value, ref);
-      if (!itemOrder.current.includes(value)) {
-        itemOrder.current.push(value);
+  const registerItem = useCallback(
+    (ref: HTMLButtonElement | null, value: string, itemDisabled: boolean) => {
+      if (ref) {
+        itemRefs.current.set(value, ref);
+        if (!itemOrder.current.includes(value)) {
+          itemOrder.current.push(value);
+        }
+        setItems((prev) => {
+          const existing = prev.find((it) => it.value === value);
+          if (existing && existing.disabled === itemDisabled) {
+            return prev;
+          }
+          const filtered = prev.filter((it) => it.value !== value);
+          const idx = itemOrder.current.indexOf(value);
+          filtered.splice(idx, 0, { value, disabled: itemDisabled });
+          return filtered;
+        });
       }
-      setItems((prev) => {
-        const existing = prev.find((it) => it.value === value);
-        if (existing && existing.disabled === itemDisabled) return prev;
-        const filtered = prev.filter((it) => it.value !== value);
-        // Insert at same position as itemOrder
-        const idx = itemOrder.current.indexOf(value);
-        filtered.splice(idx, 0, { value, disabled: itemDisabled });
-        return filtered;
-      });
-    }
-  }, []);
+    },
+    [],
+  );
 
   const unregisterItem = useCallback((value: string) => {
     itemRefs.current.delete(value);
@@ -119,30 +130,39 @@ export function ToggleGroup({
 
   // Compute the tabbable item: focused > pressed > first enabled
   const tabbableValue = (() => {
-    const enabledValues = items.filter((it) => !it.disabled).map((it) => it.value);
-    if (enabledValues.length === 0) return null;
+    const enabledValues = items
+      .filter((it) => !it.disabled)
+      .map((it) => it.value);
+    if (enabledValues.length === 0) {
+      return null;
+    }
 
-    // If a focused value is set and still enabled, use it
-    if (focusedValue && enabledValues.includes(focusedValue)) return focusedValue;
+    if (focusedValue && enabledValues.includes(focusedValue)) {
+      return focusedValue;
+    }
 
-    // Use the pressed item (first pressed in multiple mode)
     if (type === "single") {
       const pressed = typeof activeValue === "string" ? activeValue : "";
-      if (pressed && enabledValues.includes(pressed)) return pressed;
+      if (pressed && enabledValues.includes(pressed)) {
+        return pressed;
+      }
     } else {
       const arr = Array.isArray(activeValue) ? activeValue : [];
       const firstPressed = arr.find((v) => enabledValues.includes(v));
-      if (firstPressed) return firstPressed;
+      if (firstPressed) {
+        return firstPressed;
+      }
     }
 
-    // Fall back to first enabled item
     return enabledValues[0] ?? null;
   })();
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, _value: string) => {
       const enabledItems = getEnabledItems();
-      if (enabledItems.length === 0) return;
+      if (enabledItems.length === 0) {
+        return;
+      }
 
       const currentEl = e.currentTarget as HTMLButtonElement;
       const currentValue = currentEl.getAttribute("data-value") || "";
@@ -155,7 +175,8 @@ export function ToggleGroup({
         nextIndex = (currentIndex + 1) % enabledItems.length;
       } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        nextIndex = (currentIndex - 1 + enabledItems.length) % enabledItems.length;
+        nextIndex =
+          (currentIndex - 1 + enabledItems.length) % enabledItems.length;
       }
 
       if (nextIndex !== null) {
@@ -193,8 +214,6 @@ export function ToggleGroup({
   );
 }
 
-// --- ToggleGroupItem ---
-
 export interface ToggleGroupItemProps {
   value: string;
   disabled?: boolean;
@@ -220,7 +239,8 @@ export function ToggleGroupItem({
   const isPressed =
     context.type === "single"
       ? context.activeValue === value
-      : Array.isArray(context.activeValue) && context.activeValue.includes(value);
+      : Array.isArray(context.activeValue) &&
+        context.activeValue.includes(value);
 
   const refCallback = useCallback(
     (el: HTMLButtonElement | null) => {
@@ -240,13 +260,19 @@ export function ToggleGroupItem({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowUp") {
+    if (
+      e.key === "ArrowRight" ||
+      e.key === "ArrowDown" ||
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowUp"
+    ) {
       context.handleKeyDown(e, value);
     }
   };
 
   return (
     <button
+      ref={refCallback}
       aria-label={ariaLabel}
       aria-pressed={isPressed}
       className={clsx(
@@ -258,7 +284,6 @@ export function ToggleGroupItem({
       )}
       data-value={value}
       disabled={isDisabled}
-      ref={refCallback}
       tabIndex={context.tabbableValue === value ? 0 : -1}
       type="button"
       onClick={handleClick}

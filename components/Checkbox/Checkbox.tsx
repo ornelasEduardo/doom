@@ -2,7 +2,13 @@
 
 import clsx from "clsx";
 import { Check, Minus } from "lucide-react";
-import React, { forwardRef, useCallback, useEffect, useId, useRef } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+} from "react";
 
 import { Label } from "../Label";
 import styles from "./Checkbox.module.scss";
@@ -42,7 +48,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         if (typeof ref === "function") {
           ref(node);
         } else if (ref) {
-          (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+          (ref as React.MutableRefObject<HTMLInputElement | null>).current =
+            node;
         }
       },
       [ref],

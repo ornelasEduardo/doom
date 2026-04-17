@@ -177,7 +177,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   );
 
   const isFileAccepted = (file: File): boolean => {
-    if (!accept) return true;
+    if (!accept) {
+      return true;
+    }
     const acceptedTypes = accept.split(",").map((t) => t.trim().toLowerCase());
     const fileName = file.name.toLowerCase();
     const mimeType = file.type.toLowerCase();
@@ -206,9 +208,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     Array.from(fileList).forEach((file) => {
       if (!isFileAccepted(file)) {
-        setUploadError(
-          `File "${file.name}" is not an accepted file type`,
-        );
+        setUploadError(`File "${file.name}" is not an accepted file type`);
         return;
       }
       if (maxSize && file.size > maxSize) {
