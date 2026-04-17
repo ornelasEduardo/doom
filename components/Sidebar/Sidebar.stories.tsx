@@ -19,6 +19,7 @@ import type { ComponentProps } from "react";
 import React, { useEffect, useState } from "react";
 
 import { Chip } from "../Chip/Chip";
+import { Page } from "../Page/Page";
 import { Text } from "../Text/Text";
 import { Sidebar } from "./Sidebar";
 
@@ -57,14 +58,14 @@ const meta: Meta<typeof Sidebar> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ height: "100vh", display: "flex" }}>
+      <div style={{ height: "100vh", display: "flex", background: "var(--background)" }}>
         <Story />
-        <div style={{ flex: 1, padding: "var(--spacing-6)" }}>
+        <Page>
           <Text variant="h2">Main Content</Text>
           <Text color="muted">
             This is the main content area. The sidebar is on the left.
           </Text>
-        </div>
+        </Page>
       </div>
     ),
   ],
