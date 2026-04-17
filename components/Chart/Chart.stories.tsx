@@ -111,12 +111,12 @@ export const HorizontalBarChart: Story = {
     <Chart.Root
       data={data}
       style={{ width: "100%", maxWidth: 800, height: 400 }}
-      title="Revenue by Month (Horizontal)"
       type="bar"
       x={(d: any) => d.value}
       y={(d: any) => d.label}
       d3Config={{ grid: true, xAxisLabel: "Revenue" }}
     >
+      <Chart.Header title="Revenue by Month" subtitle="Horizontal bar chart" />
       <Chart.Plot>
         <Chart.Grid />
         <Chart.Series
@@ -131,6 +131,75 @@ export const HorizontalBarChart: Story = {
       </Chart.Plot>
     </Chart.Root>
   ),
+};
+
+export const StackedBarChart: Story = {
+  render: () => {
+    const raw = [
+      { label: "Jan", product: 8000, services: 4000, support: 2000, target: 18000 },
+      { label: "Feb", product: 12000, services: 6000, support: 3000, target: 22000 },
+      { label: "Mar", product: 10000, services: 5000, support: 2500, target: 25000 },
+      { label: "Apr", product: 16000, services: 8000, support: 4000, target: 28000 },
+      { label: "May", product: 20000, services: 10000, support: 5000, target: 35000 },
+      { label: "Jun", product: 18000, services: 9000, support: 4500, target: 40000 },
+    ];
+    const stackData = raw.map((d) => ({
+      ...d,
+      gap: Math.max(0, d.target - (d.product + d.services + d.support)),
+    }));
+
+    return (
+      <Chart.Root
+        data={stackData}
+        style={{ width: "100%", maxWidth: 800, height: 400 }}
+        type="bar"
+        x={(d: any) => d.label}
+        y={(d: any) => d.target}
+        d3Config={{ grid: true, yAxisLabel: "Revenue" }}
+      >
+        <Chart.Header
+          title="Revenue by Source vs Target"
+          subtitle="Stacked bar chart with target overlay"
+        />
+        <Chart.Plot>
+          <Chart.Grid />
+          <Chart.Series
+            color="var(--primary)"
+            label="Product"
+            stackId="revenue"
+            type="bar"
+            x={(d: any) => d.label}
+            y={(d: any) => d.product}
+          />
+          <Chart.Series
+            color="var(--success)"
+            label="Services"
+            stackId="revenue"
+            type="bar"
+            x={(d: any) => d.label}
+            y={(d: any) => d.services}
+          />
+          <Chart.Series
+            color="var(--warning)"
+            label="Support"
+            stackId="revenue"
+            type="bar"
+            x={(d: any) => d.label}
+            y={(d: any) => d.support}
+          />
+          <Chart.Series
+            color="color-mix(in srgb, var(--muted-foreground), transparent 70%)"
+            label="To Target"
+            stackId="revenue"
+            type="bar"
+            x={(d: any) => d.label}
+            y={(d: any) => d.gap}
+          />
+          <Chart.Axis />
+        </Chart.Plot>
+      </Chart.Root>
+    );
+  },
 };
 
 export const WithLegendAndSubtitle: Story = {

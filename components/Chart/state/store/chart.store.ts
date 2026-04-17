@@ -1,6 +1,7 @@
 import { Accessor, Config } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { createScales } from "../../utils/scales";
+import { getMaxStackedValue } from "../../utils/stack";
 import { createStore, StoreApi } from "./createStore";
 import { DataSlice, getDataInitialState } from "./slices/data.slice";
 import {
@@ -195,26 +196,16 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
     nextSeries.set(id, hydrated);
 
     const nextProcessed = combineSeries(nextSeries);
-    const prevOrientation = selectChartOrientation(state);
-    const nextOrientation = selectChartOrientation({
-      processedSeries: nextProcessed,
-    });
 
-    const partial: Partial<State> = {
+    return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
       processedSeries: nextProcessed,
-    };
-
-    // Recompute scales if orientation changed (categorical/value axis flips).
-    if (prevOrientation !== nextOrientation) {
-      partial.scales = calculateScales(state.data, state.dimensions, {
+      scales: calculateScales(state.data, state.dimensions, {
         ...state,
         processedSeries: nextProcessed,
-      });
-    }
-
-    return partial;
+      }),
+    };
   });
 };
 
@@ -230,25 +221,16 @@ export const unregisterSeries = (store: Store, id: string) => {
     nextConfigs.delete(id);
 
     const nextProcessed = combineSeries(nextSeries);
-    const prevOrientation = selectChartOrientation(state);
-    const nextOrientation = selectChartOrientation({
-      processedSeries: nextProcessed,
-    });
 
-    const partial: Partial<State> = {
+    return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
       processedSeries: nextProcessed,
-    };
-
-    if (prevOrientation !== nextOrientation) {
-      partial.scales = calculateScales(state.data, state.dimensions, {
+      scales: calculateScales(state.data, state.dimensions, {
         ...state,
         processedSeries: nextProcessed,
-      });
-    }
-
-    return partial;
+      }),
+    };
   });
 };
 
@@ -296,6 +278,7 @@ const calculateScales = (data: any[], dims: Dimensions, state: State) => {
     resolveAccessor(state.y),
     state.type as any,
     selectChartOrientation(state),
+    getMaxStackedValue(state.processedSeries),
   );
 
   return {

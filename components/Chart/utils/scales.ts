@@ -26,6 +26,7 @@ export function createScales<T>(
   y: (d: T) => number | string,
   type?: ChartType,
   orientation: Orientation = "vertical",
+  valueDomainMax?: number,
 ): {
   xScale: ChartXScale;
   yScale: ChartYScale;
@@ -44,9 +45,11 @@ export function createScales<T>(
       .padding(0.25);
 
     const xValues = data.map(x) as number[];
+    const dataMax = d3.max(xValues) || 0;
+    const max = Math.max(valueDomainMax ?? 0, dataMax);
     const xScale = d3
       .scaleLinear()
-      .domain([0, (d3.max(xValues) || 0) * 1.1])
+      .domain([0, max * 1.1])
       .nice()
       .range([0, innerWidth]);
 
@@ -83,9 +86,11 @@ export function createScales<T>(
   }
 
   const yValues = data.map(y) as number[];
+  const dataMax = d3.max(yValues) || 0;
+  const max = Math.max(valueDomainMax ?? 0, dataMax);
   const yScale = d3
     .scaleLinear()
-    .domain([0, (d3.max(yValues) || 0) * 1.1])
+    .domain([0, max * 1.1])
     .nice()
     .range([innerHeight, 0]);
 

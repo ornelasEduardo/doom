@@ -12,6 +12,7 @@ import { selectChartOrientation } from "../../state/store/slices/series.slice";
 import { Accessor, SeriesOrientation } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { createRoundedBarPath } from "../../utils/shapes";
+import { getStackOffset } from "../../utils/stack";
 import styles from "./BarSeries.module.scss";
 
 interface BarSeriesProps<T> {
@@ -22,6 +23,18 @@ interface BarSeriesProps<T> {
   hideCursor?: boolean;
   label?: string;
   orientation?: SeriesOrientation;
+  /**
+   * Bar thickness perpendicular to value growth (width in vertical mode,
+   * height in horizontal mode). "auto" fills the band; a number renders
+   * a fixed-pixel bar centered within the band — useful for overlay
+   * patterns like target-vs-actual where one series sits inside another.
+   */
+  barWidth?: number | "auto";
+  /**
+   * Groups bar series into a stack. Series sharing a stackId render
+   * stacked on top of each other in registration order.
+   */
+  stackId?: string;
 }
 
 const BAR_RADIUS = 4;
@@ -51,6 +64,8 @@ const BarSeriesComponent = <T,>({
   hideCursor,
   label,
   orientation,
+  barWidth = "auto",
+  stackId,
 }: BarSeriesProps<T>) => {
   const { chartStore, x: contextX, y: contextY } = useChartContext<T>();
 
@@ -60,6 +75,7 @@ const BarSeriesComponent = <T,>({
   const innerHeight = chartStore.useStore((s) => s.dimensions.innerHeight);
   const dimensions = chartStore.useStore((s) => s.dimensions);
   const chartOrientation = chartStore.useStore(selectChartOrientation);
+  const processedSeries = chartStore.useStore((s) => s.processedSeries);
 
   const xAccessor = useMemo(
     () =>
@@ -91,6 +107,7 @@ const BarSeriesComponent = <T,>({
         hideCursor: hideCursor ?? true,
         type: "bar",
         orientation,
+        stackId,
         data,
       },
     ]);
@@ -107,6 +124,7 @@ const BarSeriesComponent = <T,>({
     hideCursor,
     data,
     orientation,
+    stackId,
   ]);
 
   if (
@@ -122,6 +140,32 @@ const BarSeriesComponent = <T,>({
 
   const fillColor = color || "var(--primary)";
   const isHorizontal = chartOrientation === "horizontal";
+  const ownSeries = processedSeries.find((s) => s.id === seriesId);
+
+  const seriesAboveInStack = ownSeries?.stackId
+    ? processedSeries.slice(
+        processedSeries.findIndex((s) => s.id === ownSeries.id) + 1,
+      ).filter((s) => s.stackId === ownSeries.stackId)
+    : [];
+
+  const isVisualTopForDatum = (datum: any) => {
+    if (seriesAboveInStack.length === 0) return true;
+    if (!ownSeries?.categoryAccessor) return true;
+    const categoryAccessor = resolveAccessor(ownSeries.categoryAccessor);
+    const datumCategory = categoryAccessor(datum);
+
+    return !seriesAboveInStack.some((s) => {
+      if (!s.data || !s.valueAccessor || !s.categoryAccessor) return false;
+      const otherCategoryAccessor = resolveAccessor(s.categoryAccessor);
+      const otherValueAccessor = resolveAccessor(s.valueAccessor);
+      const match = s.data.find(
+        (d) => otherCategoryAccessor(d) === datumCategory,
+      );
+      if (!match) return false;
+      const v = otherValueAccessor(match);
+      return typeof v === "number" && v > 0;
+    });
+  };
 
   return (
     <g className="chart-bar-series">
@@ -131,24 +175,38 @@ const BarSeriesComponent = <T,>({
         let pathW: number;
         let pathH: number;
 
+        const stackOffset = ownSeries
+          ? getStackOffset(ownSeries, d, processedSeries)
+          : 0;
+
         if (isHorizontal) {
           const categoryPos = (yScale as any)(yAccessor(d)) ?? 0;
-          const valuePixel = (xScale as any)(xAccessor(d)) ?? 0;
+          const datumValue = (xAccessor(d) as number) ?? 0;
+          const startPixel = (xScale as any)(stackOffset) ?? 0;
+          const endPixel = (xScale as any)(stackOffset + datumValue) ?? 0;
           const { width: bandwidth, offset } = resolveBandwidth(yScale);
+          const thickness =
+            barWidth === "auto" ? bandwidth : Math.min(barWidth, bandwidth);
+          const centerOffset = (bandwidth - thickness) / 2;
 
-          pathX = 0;
-          pathY = categoryPos - offset;
-          pathW = valuePixel;
-          pathH = bandwidth;
+          pathX = startPixel;
+          pathY = categoryPos - offset + centerOffset;
+          pathW = endPixel - startPixel;
+          pathH = thickness;
         } else {
           const categoryPos = (xScale as any)(xAccessor(d)) ?? 0;
-          const valuePixel = (yScale as any)(yAccessor(d)) ?? 0;
+          const datumValue = (yAccessor(d) as number) ?? 0;
+          const topPixel = (yScale as any)(stackOffset + datumValue) ?? 0;
+          const baselinePixel = (yScale as any)(stackOffset) ?? innerHeight;
           const { width: bandwidth, offset } = resolveBandwidth(xScale);
+          const thickness =
+            barWidth === "auto" ? bandwidth : Math.min(barWidth, bandwidth);
+          const centerOffset = (bandwidth - thickness) / 2;
 
-          pathX = categoryPos - offset;
-          pathY = valuePixel;
-          pathW = bandwidth;
-          pathH = innerHeight - valuePixel;
+          pathX = categoryPos - offset + centerOffset;
+          pathY = topPixel;
+          pathW = thickness;
+          pathH = baselinePixel - topPixel;
         }
 
         return (
@@ -172,7 +230,7 @@ const BarSeriesComponent = <T,>({
               pathY,
               pathW,
               pathH,
-              BAR_RADIUS,
+              isVisualTopForDatum(d) ? BAR_RADIUS : 0,
               isHorizontal ? "right" : "top",
             )}
             role="graphics-symbol"

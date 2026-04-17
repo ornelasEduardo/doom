@@ -37,6 +37,7 @@ export const hydrateSeries = (
     interactionMode: props.interactionMode,
     type: props.type,
     orientation: props.orientation,
+    stackId: props.stackId,
     data,
   };
 

@@ -58,6 +58,21 @@ export interface SeriesProps<T> {
    * orientation (bars) need to set this.
    */
   orientation?: SeriesOrientation;
+
+  /**
+   * Bar thickness perpendicular to value growth. "auto" fills the band;
+   * a number renders a fixed-pixel bar centered within the band — useful
+   * for overlay patterns like target-vs-actual. Bar series only.
+   */
+  barWidth?: number | "auto";
+
+  /**
+   * Groups multiple bar series into a stack. Series sharing a stackId
+   * stack on top of each other in the order they're registered, with
+   * each bar's value-axis position offset by the sum of preceding
+   * series' values for the same category. Bar series only.
+   */
+  stackId?: string;
 }
 
 export interface Series {
@@ -84,5 +99,7 @@ export interface Series {
   interactionMode?: "x" | "xy";
   type?: SeriesType | string;
   orientation?: SeriesOrientation;
+  /** When set, this series stacks with other bar series sharing the same stackId. */
+  stackId?: string;
   strategy?: import("../sensors/utils/strategies/types").InteractionStrategy<any>;
 }
