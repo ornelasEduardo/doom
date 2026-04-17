@@ -206,6 +206,7 @@ Dense repeated elements (tree rows, table rows, list items) get a lighter touch:
 | Input       | `components/input.md`      |
 | Label       | `components/label.md`      |
 | RadioGroup  | `components/radiogroup.md` |
+| Rating      | `components/rating.md`     |
 | Select      | `components/select.md`     |
 | Slider      | `components/slider.md`     |
 | SplitButton | `components/splitbutton.md`|

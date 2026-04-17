@@ -418,19 +418,6 @@ describe("ToggleGroup", () => {
     consoleSpy.mockRestore();
   });
 
-  // --- Variants ---
-
-  it("applies variant class to items", () => {
-    render(
-      <ToggleGroup type="single" variant="primary">
-        <ToggleGroupItem value="a">A</ToggleGroupItem>
-      </ToggleGroup>,
-    );
-    // The button should have a class that includes the variant
-    const button = screen.getByRole("button");
-    expect(button.className).toMatch(/primary/);
-  });
-
   it("applies size class to items", () => {
     render(
       <ToggleGroup type="single" size="sm">

@@ -7,10 +7,6 @@
     border: var(--surface-border-width) solid var(--card-border);
     border-radius: var(--control-radius);
     box-shadow: var(--shadow-sm);
-
-    &.primary {
-      border-color: var(--border-strong);
-    }
   }
 
   .toggleGroupItem {

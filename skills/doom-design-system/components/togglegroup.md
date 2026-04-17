@@ -17,7 +17,6 @@ import { ToggleGroup, ToggleGroupItem } from "doom-design-system";
 | `defaultValue` | `string \| string[]` | — | Uncontrolled initial value |
 | `onValueChange` | `(value: string \| string[]) => void` | — | Callback when value changes |
 | `size` | `"sm" \| "md" \| "lg"` | `"md"` | Control size |
-| `variant` | `"primary" \| "outline"` | `"outline"` | Visual variant |
 | `disabled` | `boolean` | `false` | Disable all items |
 | `className` | `string` | — | Additional CSS classes |
 | `aria-label` | `string` | — | Accessible group label |

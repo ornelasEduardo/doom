@@ -19,7 +19,6 @@ interface ToggleGroupContextType {
   toggle: (itemValue: string) => void;
   type: "single" | "multiple";
   size: ControlSize;
-  variant: "primary" | "outline";
   disabled: boolean;
   registerItem: (ref: HTMLButtonElement | null, value: string, itemDisabled: boolean) => void;
   unregisterItem: (value: string) => void;
@@ -37,7 +36,6 @@ export interface ToggleGroupProps {
   defaultValue?: string | string[];
   onValueChange?: (value: string | string[]) => void;
   size?: ControlSize;
-  variant?: "primary" | "outline";
   disabled?: boolean;
   className?: string;
   children: React.ReactNode;
@@ -50,7 +48,6 @@ export function ToggleGroup({
   defaultValue,
   onValueChange,
   size = "md",
-  variant = "outline",
   disabled = false,
   className,
   children,
@@ -178,7 +175,6 @@ export function ToggleGroup({
         toggle,
         type,
         size,
-        variant,
         disabled,
         registerItem,
         unregisterItem,
@@ -188,7 +184,7 @@ export function ToggleGroup({
     >
       <div
         aria-label={ariaLabel}
-        className={clsx(styles.toggleGroup, styles[variant], className)}
+        className={clsx(styles.toggleGroup, className)}
         role="group"
       >
         {children}
@@ -255,7 +251,6 @@ export function ToggleGroupItem({
       aria-pressed={isPressed}
       className={clsx(
         styles.toggleGroupItem,
-        styles[context.variant],
         styles[context.size],
         isPressed && styles.pressed,
         isDisabled && styles.disabled,

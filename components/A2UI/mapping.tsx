@@ -51,6 +51,7 @@ import {
 } from "../Tabs/Tabs";
 import { Text } from "../Text/Text";
 import { Textarea } from "../Textarea/Textarea";
+import { Rating } from "../Rating/Rating";
 import { ToggleGroup, ToggleGroupItem } from "../ToggleGroup/ToggleGroup";
 import { Tooltip } from "../Tooltip/Tooltip";
 // Wrappers (for components needing JSON-to-function adaptation)
@@ -71,6 +72,7 @@ export const componentMap: Record<string, React.ElementType> = {
   link: Link,
   "radio-group": RadioGroup,
   "radio-group-item": RadioGroupItem,
+  rating: Rating,
   slider: Slider,
   spinner: Spinner,
   switch: Switch,

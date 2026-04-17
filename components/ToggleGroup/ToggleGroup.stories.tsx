@@ -46,25 +46,9 @@ export const Multiple: Story = {
   ),
 };
 
-export const Primary: Story = {
+export const WithLabels: Story = {
   render: () => (
-    <ToggleGroup type="single" variant="primary" defaultValue="bold" aria-label="Text formatting">
-      <ToggleGroupItem value="bold">
-        <Bold size={16} strokeWidth={2.5} /> Bold
-      </ToggleGroupItem>
-      <ToggleGroupItem value="italic">
-        <Italic size={16} strokeWidth={2.5} /> Italic
-      </ToggleGroupItem>
-      <ToggleGroupItem value="underline">
-        <Underline size={16} strokeWidth={2.5} /> Underline
-      </ToggleGroupItem>
-    </ToggleGroup>
-  ),
-};
-
-export const Outline: Story = {
-  render: () => (
-    <ToggleGroup type="single" variant="outline" defaultValue="bold" aria-label="Text formatting">
+    <ToggleGroup type="single" defaultValue="bold" aria-label="Text formatting">
       <ToggleGroupItem value="bold">
         <Bold size={16} strokeWidth={2.5} /> Bold
       </ToggleGroupItem>

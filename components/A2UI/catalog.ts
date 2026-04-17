@@ -451,6 +451,47 @@ export const componentCatalog: ComponentDescriptor[] = [
     ],
   },
   {
+    type: "rating",
+    name: "Rating",
+    category: "primitives",
+    description: "Icon-based rating with half-value support",
+    props: [
+      {
+        name: "value",
+        type: "number",
+        description: "Controlled rating value",
+      },
+      {
+        name: "defaultValue",
+        type: "number",
+        description: "Uncontrolled initial value",
+      },
+      {
+        name: "count",
+        type: "number",
+        description: "Number of icons",
+        default: "5",
+      },
+      {
+        name: "allowHalf",
+        type: "boolean",
+        description: "Enable half-value selection",
+      },
+      {
+        name: "size",
+        type: "'sm' | 'md' | 'lg'",
+        description: "Icon size",
+        default: "md",
+      },
+      {
+        name: "readOnly",
+        type: "boolean",
+        description: "Read-only display mode",
+      },
+      { name: "disabled", type: "boolean", description: "Disable rating" },
+    ],
+  },
+  {
     type: "toggle-group",
     name: "ToggleGroup",
     category: "primitives",
@@ -471,12 +512,6 @@ export const componentCatalog: ComponentDescriptor[] = [
         name: "defaultValue",
         type: "string | string[]",
         description: "Default value (uncontrolled)",
-      },
-      {
-        name: "variant",
-        type: "'primary' | 'outline'",
-        description: "Visual variant",
-        default: "outline",
       },
       {
         name: "size",
