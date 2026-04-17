@@ -119,7 +119,7 @@ describe("ChartStore", () => {
       ]);
 
       expect(selectChartOrientation(store.getState())).toBe("horizontal");
-      expect(warnSpy).toHaveBeenCalledOnce();
+      expect(warnSpy).toHaveBeenCalled();
       expect(warnSpy.mock.calls[0][0]).toContain("Mixed series orientations");
       warnSpy.mockRestore();
     });

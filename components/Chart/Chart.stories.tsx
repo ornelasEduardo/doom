@@ -106,6 +106,33 @@ export const BarChart: Story = {
   },
 };
 
+export const HorizontalBarChart: Story = {
+  render: () => (
+    <Chart.Root
+      data={data}
+      style={{ width: "100%", maxWidth: 800, height: 400 }}
+      title="Revenue by Month (Horizontal)"
+      type="bar"
+      x={(d: any) => d.value}
+      y={(d: any) => d.label}
+      d3Config={{ grid: true, xAxisLabel: "Revenue" }}
+    >
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          color="var(--primary)"
+          label="Revenue"
+          orientation="horizontal"
+          type="bar"
+          x={(d: any) => d.value}
+          y={(d: any) => d.label}
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+    </Chart.Root>
+  ),
+};
+
 export const WithLegendAndSubtitle: Story = {
   args: {
     data,

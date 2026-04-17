@@ -23,6 +23,7 @@ import {
   combineSeries,
   getSeriesInitialState,
   hydrateSeries,
+  selectChartOrientation,
   SeriesSlice,
 } from "./slices/series.slice";
 
@@ -184,9 +185,8 @@ export const updateChartState = <T>(
 export const registerSeries = (store: Store, id: string, configs: any[]) => {
   store.setState((state) => {
     const nextSeries = new Map(state.series);
-    const nextConfigs = new Map(state.seriesConfigs); // Clone configs map
+    const nextConfigs = new Map(state.seriesConfigs);
 
-    // Store raw configs for future re-hydration
     nextConfigs.set(id, configs);
 
     const hydrated = configs.map((c, i) =>
@@ -194,11 +194,27 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
     );
     nextSeries.set(id, hydrated);
 
-    return {
+    const nextProcessed = combineSeries(nextSeries);
+    const prevOrientation = selectChartOrientation(state);
+    const nextOrientation = selectChartOrientation({
+      processedSeries: nextProcessed,
+    });
+
+    const partial: Partial<State> = {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries: nextProcessed,
     };
+
+    // Recompute scales if orientation changed (categorical/value axis flips).
+    if (prevOrientation !== nextOrientation) {
+      partial.scales = calculateScales(state.data, state.dimensions, {
+        ...state,
+        processedSeries: nextProcessed,
+      });
+    }
+
+    return partial;
   });
 };
 
@@ -213,11 +229,26 @@ export const unregisterSeries = (store: Store, id: string) => {
     nextSeries.delete(id);
     nextConfigs.delete(id);
 
-    return {
+    const nextProcessed = combineSeries(nextSeries);
+    const prevOrientation = selectChartOrientation(state);
+    const nextOrientation = selectChartOrientation({
+      processedSeries: nextProcessed,
+    });
+
+    const partial: Partial<State> = {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries: nextProcessed,
     };
+
+    if (prevOrientation !== nextOrientation) {
+      partial.scales = calculateScales(state.data, state.dimensions, {
+        ...state,
+        processedSeries: nextProcessed,
+      });
+    }
+
+    return partial;
   });
 };
 
@@ -264,6 +295,7 @@ const calculateScales = (data: any[], dims: Dimensions, state: State) => {
     resolveAccessor(state.x),
     resolveAccessor(state.y),
     state.type as any,
+    selectChartOrientation(state),
   );
 
   return {

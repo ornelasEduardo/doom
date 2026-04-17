@@ -65,12 +65,24 @@ export interface Series {
   label: string;
   color: string;
   data?: any[];
+  /** Position on the x-axis (physical). Use valueAccessor/categoryAccessor for semantic reads. */
   xAccessor?: Accessor<any, string | number>;
-  yAccessor?: Accessor<any, number>;
+  /** Position on the y-axis (physical). Use valueAccessor/categoryAccessor for semantic reads. */
+  yAccessor?: Accessor<any, number | string>;
+  /**
+   * Returns the numeric value being plotted, regardless of orientation.
+   * For vertical bars: yAccessor. For horizontal bars: xAccessor.
+   * Consumers (Tooltip, Axis, Cursor) should prefer this over xAccessor/yAccessor.
+   */
+  valueAccessor?: Accessor<any, number>;
+  /**
+   * Returns the categorical bucket the datum belongs to, regardless of orientation.
+   * For vertical bars: xAccessor. For horizontal bars: yAccessor.
+   */
+  categoryAccessor?: Accessor<any, string | number>;
   hideCursor?: boolean;
   interactionMode?: "x" | "xy";
   type?: SeriesType | string;
-  /** Orientation declared by the series. See SeriesOrientation. */
   orientation?: SeriesOrientation;
   strategy?: import("../sensors/utils/strategies/types").InteractionStrategy<any>;
 }

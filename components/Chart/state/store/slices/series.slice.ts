@@ -23,6 +23,7 @@ export const hydrateSeries = (
   defaultData: any[],
 ): Series => {
   const data = props.data || defaultData;
+  const isHorizontal = props.orientation === "horizontal";
 
   const series: Series = {
     id: props.id || `series-${index}`,
@@ -30,6 +31,8 @@ export const hydrateSeries = (
     color: props.color || LEGEND_PALETTE[index % LEGEND_PALETTE.length],
     xAccessor: props.x as any,
     yAccessor: props.y as any,
+    valueAccessor: (isHorizontal ? props.x : props.y) as any,
+    categoryAccessor: (isHorizontal ? props.y : props.x) as any,
     hideCursor: props.hideCursor,
     interactionMode: props.interactionMode,
     type: props.type,
