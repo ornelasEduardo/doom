@@ -1,6 +1,7 @@
 import { Accessor, Config } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { createScales } from "../../utils/scales";
+import { getMaxStackedValue } from "../../utils/stack";
 import { createStore, StoreApi } from "./createStore";
 import { DataSlice, getDataInitialState } from "./slices/data.slice";
 import {
@@ -23,6 +24,7 @@ import {
   combineSeries,
   getSeriesInitialState,
   hydrateSeries,
+  selectChartOrientation,
   SeriesSlice,
 } from "./slices/series.slice";
 
@@ -184,9 +186,8 @@ export const updateChartState = <T>(
 export const registerSeries = (store: Store, id: string, configs: any[]) => {
   store.setState((state) => {
     const nextSeries = new Map(state.series);
-    const nextConfigs = new Map(state.seriesConfigs); // Clone configs map
+    const nextConfigs = new Map(state.seriesConfigs);
 
-    // Store raw configs for future re-hydration
     nextConfigs.set(id, configs);
 
     const hydrated = configs.map((c, i) =>
@@ -194,10 +195,16 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
     );
     nextSeries.set(id, hydrated);
 
+    const nextProcessed = combineSeries(nextSeries);
+
     return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries: nextProcessed,
+      scales: calculateScales(state.data, state.dimensions, {
+        ...state,
+        processedSeries: nextProcessed,
+      }),
     };
   });
 };
@@ -213,10 +220,16 @@ export const unregisterSeries = (store: Store, id: string) => {
     nextSeries.delete(id);
     nextConfigs.delete(id);
 
+    const nextProcessed = combineSeries(nextSeries);
+
     return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries: nextProcessed,
+      scales: calculateScales(state.data, state.dimensions, {
+        ...state,
+        processedSeries: nextProcessed,
+      }),
     };
   });
 };
@@ -264,6 +277,8 @@ const calculateScales = (data: any[], dims: Dimensions, state: State) => {
     resolveAccessor(state.x),
     resolveAccessor(state.y),
     state.type as any,
+    selectChartOrientation(state),
+    getMaxStackedValue(state.processedSeries),
   );
 
   return {

@@ -120,14 +120,14 @@ const LineSeriesComponent = <T,>({
     const lineGenerator = d3
       .line<T>()
       .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
-      .y((d) => yScale(yAccessor(d)))
+      .y((d) => (yScale as any)(yAccessor(d)) ?? 0)
       .curve(curve || config.curve || d3.curveLinear);
 
     const areaGenerator = d3
       .area<T>()
       .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
       .y0(innerHeight)
-      .y1((d) => yScale(yAccessor(d)))
+      .y1((d) => (yScale as any)(yAccessor(d)) ?? 0)
       .curve(curve || config.curve || d3.curveLinear);
 
     return {
@@ -226,7 +226,7 @@ const LineSeriesComponent = <T,>({
         xAccessor &&
         data.map((d, i) => {
           const cx = (xScale as any)(xAccessor(d));
-          const cy = yScale(yAccessor(d));
+          const cy = (yScale as any)(yAccessor(d));
           return (
             <SeriesPoint key={i} color={strokeColor} datum={d} x={cx} y={cy} />
           );
