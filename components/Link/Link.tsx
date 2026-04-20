@@ -62,9 +62,12 @@ export function Link({
     }
   }, [shouldPrefetch, props.href]);
 
-  const externalProps = isExternal
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const { target: propsTarget, rel: propsRel, ...restProps } = props;
+
+  const target = isExternal ? "_blank" : propsTarget;
+  const isNewTab = target === "_blank";
+
+  const rel = isNewTab ? clsx(propsRel, "noopener noreferrer") : propsRel;
 
   return (
     <a
@@ -77,8 +80,9 @@ export function Link({
       )}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      {...externalProps}
-      {...props}
+      rel={rel}
+      target={target}
+      {...restProps}
     >
       {children}
       {isExternal && <ExternalLink className="ml-1" size={14} />}

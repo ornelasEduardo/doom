@@ -33,6 +33,17 @@ describe("Link Component", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("should enforce noopener noreferrer when target='_blank' is passed manually", () => {
+    render(
+      <Link href="https://example.com" target="_blank">
+        Manual Target
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("should handle disabled state", () => {
     const handleClick = vi.fn();
     const handleMouseEnter = vi.fn();
