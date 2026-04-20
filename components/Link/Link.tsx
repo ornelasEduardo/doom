@@ -62,9 +62,18 @@ export function Link({
     }
   }, [shouldPrefetch, props.href]);
 
-  const externalProps = isExternal
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const { target, rel, ...restProps } = props;
+  const computedTarget = target ?? (isExternal ? "_blank" : undefined);
+
+  // Use simple array join to avoid depending on clsx behavior for non-class attributes
+  // and ensure we don't accidentally rely on external libs for security critical path if we can avoid it.
+  // Note: clsx is imported for className usage, but keeping rel logic vanilla is safer/cleaner here.
+  const computedRel = [
+    rel,
+    computedTarget === "_blank" && "noopener noreferrer"
+  ]
+  .filter(Boolean)
+  .join(" ");
 
   return (
     <a
@@ -77,8 +86,9 @@ export function Link({
       )}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      {...externalProps}
-      {...props}
+      rel={computedRel || undefined}
+      target={computedTarget}
+      {...restProps}
     >
       {children}
       {isExternal && <ExternalLink className="ml-1" size={14} />}

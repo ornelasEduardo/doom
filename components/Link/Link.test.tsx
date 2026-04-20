@@ -100,4 +100,29 @@ describe("Link Component", () => {
     const icon = container.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
+
+  // New test case for the vulnerability
+  it("should add rel='noopener noreferrer' when target='_blank' is passed without isExternal", () => {
+    render(
+      <Link href="https://example.com" target="_blank">
+        Manual Target
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("should merge user provided rel with noopener noreferrer when target='_blank'", () => {
+     render(
+      <Link href="https://example.com" target="_blank" rel="nofollow">
+        Manual Target with Rel
+      </Link>,
+    );
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
+    expect(link).toHaveAttribute("rel", expect.stringContaining("nofollow"));
+  });
 });
