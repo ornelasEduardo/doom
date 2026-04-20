@@ -62,9 +62,24 @@ export function Link({
     }
   }, [shouldPrefetch, props.href]);
 
-  const externalProps = isExternal
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  // Merge external props with potentially user-provided props
+  const target = isExternal ? "_blank" : props.target;
+
+  let rel = props.rel;
+  if (target === "_blank") {
+    const relParts = new Set((props.rel || "").split(" ").filter(Boolean));
+    relParts.add("noopener");
+    relParts.add("noreferrer");
+    rel = Array.from(relParts).join(" ");
+  }
+  // If isExternal is true, we force target="_blank"
+  // If user provided target="_blank", we also ensure rel is set.
+
+  const mergedProps = {
+    ...props,
+    target,
+    rel,
+  };
 
   return (
     <a
@@ -77,8 +92,7 @@ export function Link({
       )}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      {...externalProps}
-      {...props}
+      {...mergedProps}
     >
       {children}
       {isExternal && <ExternalLink className="ml-1" size={14} />}
