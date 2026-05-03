@@ -14,15 +14,15 @@ import {
 } from "@dnd-kit/core";
 import React, { useEffect, useId, useState } from "react";
 
-import { Button } from "../../Button/Button";
-import { Flex } from "../../Layout/Layout";
-import { Sheet } from "../../Sheet/Sheet";
-import { Text } from "../../Text/Text";
+import { Button } from "../../../components/Button/Button";
+import { Flex } from "../../../components/Layout/Layout";
+import { Sheet } from "../../../components/Sheet/Sheet";
+import { Text } from "../../../components/Text/Text";
 import type { FilterField } from "./FilterBuilder";
 import type {
-  FilterConditionItem,
-  FilterGroupItem,
-  FilterItem,
+  FilterDraft,
+  FilterDraftCondition,
+  FilterDraftGroup,
 } from "./FilterGroup";
 import { ConditionRow, FilterGroup } from "./FilterGroup";
 import styles from "./FilterSheet.module.scss";
@@ -39,11 +39,11 @@ interface FilterSheetNestedProps {
   isOpen: boolean;
   onClose: () => void;
   fields: FilterField[];
-  initialValue: FilterGroupItem | null;
-  onApply: (group: FilterGroupItem) => void;
+  initialValue: FilterDraftGroup | null;
+  onApply: (group: FilterDraftGroup) => void;
 }
 
-function countValidConditions(item: FilterItem): number {
+function countValidConditions(item: FilterDraft): number {
   if (item.type === "condition") {
     return item.field && item.value ? 1 : 0;
   }
@@ -62,9 +62,9 @@ export function FilterSheetNested({
 }: FilterSheetNestedProps) {
   const idPrefix = useId();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeItem, setActiveItem] = useState<FilterItem | null>(null);
+  const [activeItem, setActiveItem] = useState<FilterDraft | null>(null);
 
-  const [rootGroup, setRootGroup] = useState<FilterGroupItem>(() => {
+  const [rootGroup, setRootGroup] = useState<FilterDraftGroup>(() => {
     if (initialValue) {
       return initialValue;
     }
@@ -107,7 +107,7 @@ export function FilterSheetNested({
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id as string);
-    setActiveItem(active.data.current?.item as FilterItem);
+    setActiveItem(active.data.current?.item as FilterDraft);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -120,7 +120,7 @@ export function FilterSheetNested({
     }
 
     const sourceId = active.id as string;
-    const sourceItem = active.data.current?.item as FilterItem;
+    const sourceItem = active.data.current?.item as FilterDraft;
 
     const data = over.data.current || {};
     const destTargetId = data.targetId;
@@ -213,7 +213,7 @@ export function FilterSheetNested({
             parentId=""
             onRemove={() => removeChildById(rootGroup.id)}
             onUpdate={(updated) => {
-              setRootGroup(updated as FilterGroupItem);
+              setRootGroup(updated as FilterDraftGroup);
             }}
           />
         </div>
@@ -225,7 +225,7 @@ export function FilterSheetNested({
               <FilterGroup
                 fields={fields}
                 isGlobalDragging={true}
-                item={activeItem as FilterGroupItem}
+                item={activeItem as FilterDraftGroup}
                 parentId="overlay"
                 onRemove={() => {}}
                 onUpdate={() => {}}
@@ -234,7 +234,7 @@ export function FilterSheetNested({
               <ConditionRow
                 fields={fields}
                 isGlobalDragging={true}
-                item={activeItem as FilterConditionItem}
+                item={activeItem as FilterDraftCondition}
                 parentId="overlay"
                 onRemove={() => {}}
                 onUpdate={() => {}}

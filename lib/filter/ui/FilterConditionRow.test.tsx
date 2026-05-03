@@ -9,7 +9,7 @@ import {
 } from "./FilterConditionRow";
 
 // Mock Select component
-vi.mock("../../Select/Select", () => ({
+vi.mock("../../../components/Select/Select", () => ({
   Select: ({
     value,
     onChange,

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { FilterGroupItem, FilterItem } from "../FilterGroup";
+import type { FilterDraft, FilterDraftGroup } from "../FilterGroup";
 import { getItemDepth, getMaxRelativeDepth, insertItem } from "./tree-utils";
 
 describe("tree-utils", () => {
   describe("getItemDepth", () => {
     it("should return 0 for root ID", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [],
@@ -15,7 +15,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 1 for direct child", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [
@@ -32,7 +32,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 2 for nested child", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [
@@ -55,7 +55,7 @@ describe("tree-utils", () => {
     });
 
     it("should return -1 for non-existent item", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [],
@@ -66,7 +66,7 @@ describe("tree-utils", () => {
 
   describe("getMaxRelativeDepth", () => {
     it("should return 0 for condition", () => {
-      const item: FilterItem = {
+      const item: FilterDraft = {
         type: "condition",
         id: "c1",
         field: "f",
@@ -77,7 +77,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 0 for empty group", () => {
-      const item: FilterItem = {
+      const item: FilterDraft = {
         type: "group",
         id: "g1",
         children: [],
@@ -86,7 +86,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 0 for group with only conditions", () => {
-      const item: FilterItem = {
+      const item: FilterDraft = {
         type: "group",
         id: "g1",
         children: [
@@ -103,7 +103,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 1 for group with nested group", () => {
-      const item: FilterItem = {
+      const item: FilterDraft = {
         type: "group",
         id: "g1",
         children: [{ type: "group", id: "g2", children: [] }],
@@ -112,7 +112,7 @@ describe("tree-utils", () => {
     });
 
     it("should return 2 for group -> group -> group", () => {
-      const item: FilterItem = {
+      const item: FilterDraft = {
         type: "group",
         id: "g1",
         children: [
@@ -129,13 +129,13 @@ describe("tree-utils", () => {
 
   describe("insertItem", () => {
     it("should insert 'inside' a group by appending to children", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [{ type: "group", id: "g1", children: [] }],
       };
 
-      const newItem: FilterItem = {
+      const newItem: FilterDraft = {
         type: "condition",
         id: "new",
         field: "f",
@@ -145,13 +145,13 @@ describe("tree-utils", () => {
 
       const res = insertItem(root, newItem, "g1", "inside");
 
-      const g1 = res.children.find((c) => c.id === "g1") as FilterGroupItem;
+      const g1 = res.children.find((c) => c.id === "g1") as FilterDraftGroup;
       expect(g1.children).toHaveLength(1);
       expect(g1.children[0].id).toBe("new");
     });
 
     it("should create new group when inserting 'inside' a condition", () => {
-      const root: FilterGroupItem = {
+      const root: FilterDraftGroup = {
         type: "group",
         id: "root",
         children: [
@@ -165,7 +165,7 @@ describe("tree-utils", () => {
         ],
       };
 
-      const newItem: FilterItem = {
+      const newItem: FilterDraft = {
         type: "condition",
         id: "new",
         field: "f",
@@ -176,7 +176,7 @@ describe("tree-utils", () => {
       const res = insertItem(root, newItem, "c1", "inside");
 
       expect(res.children).toHaveLength(1);
-      const newGroup = res.children[0] as FilterGroupItem;
+      const newGroup = res.children[0] as FilterDraftGroup;
       expect(newGroup.type).toBe("group");
       expect(newGroup.children).toHaveLength(2);
       expect(newGroup.children[0].id).toBe("c1");

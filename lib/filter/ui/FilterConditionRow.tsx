@@ -3,11 +3,11 @@
 import { Trash2 } from "lucide-react";
 import React from "react";
 
-import { Button } from "../../Button/Button";
-import { Input } from "../../Input/Input";
-import { Select } from "../../Select/Select";
-import type { FilterOperatorKey } from "../utils/filterAst";
-import { OPERATORS } from "../utils/filterAst";
+import { Button } from "../../../components/Button/Button";
+import { Input } from "../../../components/Input/Input";
+import { Select } from "../../../components/Select/Select";
+import type { FilterOperatorKey } from "../ast";
+import { OPERATORS } from "../ast";
 import type { FilterField } from "./FilterBuilder";
 import styles from "./FilterConditionRow.module.scss";
 

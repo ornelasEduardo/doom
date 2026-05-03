@@ -3,7 +3,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { FilterField } from "./FilterBuilder";
-import type { FilterConditionItem, FilterGroupItem } from "./FilterGroup";
+import type { FilterDraftCondition, FilterDraftGroup } from "./FilterGroup";
 import { FilterSheetNested } from "./FilterSheetNested";
 
 // Mock @dnd-kit/core
@@ -33,7 +33,7 @@ vi.mock("@dnd-kit/core", () => ({
 }));
 
 // Mock Sheet
-vi.mock("../../Sheet/Sheet", () => ({
+vi.mock("../../../components/Sheet/Sheet", () => ({
   Sheet: ({
     children,
     footer,
@@ -64,8 +64,8 @@ vi.mock("./FilterGroup", () => {
     item,
     onUpdate,
   }: {
-    item: FilterGroupItem;
-    onUpdate: (g: FilterGroupItem) => void;
+    item: FilterDraftGroup;
+    onUpdate: (g: FilterDraftGroup) => void;
   }) => (
     <div data-testid={`group-${item.id}`}>
       <span data-testid="group-id">{item.id}</span>
@@ -98,7 +98,7 @@ vi.mock("./FilterGroup", () => {
                 field: "name",
                 operator: "eq",
                 value: "Alice",
-              } as FilterConditionItem,
+              } as FilterDraftCondition,
             ],
           })
         }
@@ -167,7 +167,7 @@ describe("FilterSheetNested", () => {
   });
 
   it("should render initial value structure", () => {
-    const initial: FilterGroupItem = {
+    const initial: FilterDraftGroup = {
       type: "group",
       id: "root",
       children: [

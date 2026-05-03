@@ -20,45 +20,28 @@ import clsx from "clsx";
 import { ChevronRight, Filter, ListFilter, Search } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
+import {
+  countConditions,
+  draftToFilter,
+  evaluateFilter,
+  type FilterDraftGroup,
+  type FilterOperatorKey,
+  FilterSheetNested,
+} from "../../lib/filter";
 import { Button } from "../Button/Button";
 import { Chip } from "../Chip/Chip";
 import { Input } from "../Input/Input";
 import { Flex } from "../Layout/Layout";
 import { Pagination } from "../Pagination/Pagination";
 import { Select } from "../Select/Select";
-import {
-  countConditions,
-  type FilterOperatorKey,
-} from "./FilterBuilder/FilterBuilder";
-import type { FilterGroupItem, FilterItem } from "./FilterBuilder/FilterGroup";
-import { FilterSheetNested } from "./FilterBuilder/FilterSheetNested";
 import styles from "./Table.module.scss";
 import { TableHeaderFilter } from "./TableHeaderFilter";
-import type { FilterNode } from "./utils/filterAst";
-import { evaluateFilter } from "./utils/filterAst";
 
 const coreRowModel = getCoreRowModel();
 const sortedRowModel = getSortedRowModel();
 const paginationRowModel = getPaginationRowModel();
 const filteredRowModel = getFilteredRowModel();
 const expandedRowModel = getExpandedRowModel();
-
-const convertToFilterNode = (item: FilterItem): FilterNode => {
-  if (item.type === "group") {
-    return {
-      type: "group",
-      logic: item.logic,
-      conditions: (item.children || []).map(convertToFilterNode),
-    };
-  }
-  return {
-    type: "condition",
-    field: item.field,
-    operator: item.operator,
-    value: item.value,
-    logic: item.logic,
-  };
-};
 
 export interface TableProps<T> {
   data: T[];
@@ -74,7 +57,7 @@ export interface TableProps<T> {
   enableSorting?: boolean;
   enableVirtualization?: boolean;
   enableAdvancedFiltering?: boolean;
-  onAdvancedFilterChange?: (value: FilterGroupItem) => void;
+  onAdvancedFilterChange?: (value: FilterDraftGroup) => void;
   pageSize?: number;
   height?: string | number;
   maxHeight?: string | number;
@@ -280,7 +263,7 @@ export function Table<T>({
   });
 
   const [advancedFilterValue, setAdvancedFilterValue] =
-    useState<FilterGroupItem | null>(null);
+    useState<FilterDraftGroup | null>(null);
   const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
 
   const smartColumnFilterFn = useMemo<FilterFn<T>>(
@@ -301,7 +284,7 @@ export function Table<T>({
       return data;
     }
 
-    const filterNode = convertToFilterNode(advancedFilterValue);
+    const filterNode = draftToFilter(advancedFilterValue);
     if (filterNode.type === "group" && filterNode.conditions.length === 0) {
       return data;
     }
@@ -490,7 +473,7 @@ export function Table<T>({
                 onClick={() => setIsFilterBuilderOpen(true)}
                 onDismiss={() => {
                   setAdvancedFilterValue(null);
-                  onAdvancedFilterChange?.(null as unknown as FilterGroupItem);
+                  onAdvancedFilterChange?.(null as unknown as FilterDraftGroup);
                 }}
               >
                 {activeAdvancedCount} Filter
