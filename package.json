@@ -10,14 +10,21 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./filter": {
+      "types": "./dist/lib/filter/index.d.ts",
+      "import": "./dist/lib/filter/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles --no-source-map && node scripts/fix-imports.cjs",
+    "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles lib:dist/lib --no-source-map && node scripts/fix-imports.cjs",
     "verify": "npm run validate:build && npm run lint:package && npm run test:integration",
     "prepack": "npm run build && npm run verify",
     "storybook": "storybook dev -p 6006",

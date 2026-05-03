@@ -3,7 +3,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { FilterField } from "./FilterBuilder";
-import type { FilterGroupItem } from "./FilterGroup";
+import type { FilterDraftGroup } from "./FilterGroup";
 import { FilterGroup } from "./FilterGroup";
 
 // Mock @dnd-kit/core
@@ -38,13 +38,13 @@ describe("FilterGroup", () => {
     { key: "age", label: "Age", type: "number" },
   ];
 
-  const emptyGroup: FilterGroupItem = {
+  const emptyGroup: FilterDraftGroup = {
     type: "group",
     id: "group-1",
     children: [],
   };
 
-  const populatedGroup: FilterGroupItem = {
+  const populatedGroup: FilterDraftGroup = {
     type: "group",
     id: "group-1",
     children: [

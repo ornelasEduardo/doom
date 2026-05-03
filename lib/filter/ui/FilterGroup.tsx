@@ -11,19 +11,19 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { Badge } from "../../Badge/Badge";
-import { Button } from "../../Button/Button";
-import { Card } from "../../Card/Card";
-import { Input } from "../../Input/Input";
-import { Select } from "../../Select/Select";
-import { Text } from "../../Text/Text";
-import type { FilterOperatorKey } from "../utils/filterAst";
-import { OPERATORS } from "../utils/filterAst";
+import { Badge } from "../../../components/Badge/Badge";
+import { Button } from "../../../components/Button/Button";
+import { Card } from "../../../components/Card/Card";
+import { Input } from "../../../components/Input/Input";
+import { Select } from "../../../components/Select/Select";
+import { Text } from "../../../components/Text/Text";
+import type { FilterOperatorKey } from "../ast";
+import { OPERATORS } from "../ast";
 import type { FilterField } from "./FilterBuilder";
 import styles from "./FilterGroup.module.scss";
 import { MAX_DEPTH } from "./utils/tree-utils";
 
-export interface FilterConditionItem {
+export interface FilterDraftCondition {
   type: "condition";
   id: string;
   field: string;
@@ -32,17 +32,17 @@ export interface FilterConditionItem {
   logic?: "and" | "or";
 }
 
-export interface FilterGroupItem {
+export interface FilterDraftGroup {
   type: "group";
   id: string;
-  children: FilterItem[];
+  children: FilterDraft[];
   collapsed?: boolean;
   logic?: "and" | "or";
 }
 
-export type FilterItem = FilterConditionItem | FilterGroupItem;
+export type FilterDraft = FilterDraftCondition | FilterDraftGroup;
 
-function countConditions(item: FilterItem): number {
+function countConditions(item: FilterDraft): number {
   if (item.type === "condition") {
     return 1;
   }
@@ -85,13 +85,13 @@ function DropZone({
 }
 
 export interface ConditionRowProps {
-  item: FilterConditionItem;
+  item: FilterDraftCondition;
   fields: FilterField[];
   parentId: string;
   logic?: "and" | "or";
   showLogic?: boolean;
   isGlobalDragging: boolean;
-  onUpdate: (updated: FilterConditionItem) => void;
+  onUpdate: (updated: FilterDraftCondition) => void;
   onRemove: () => void;
   onLogicChange?: (logic: "and" | "or") => void;
 }
@@ -285,13 +285,13 @@ export function ConditionRow({
 }
 
 interface FilterGroupProps {
-  item: FilterGroupItem;
+  item: FilterDraftGroup;
   fields: FilterField[];
   parentId: string;
   depth?: number;
   showLogic?: boolean;
   isGlobalDragging?: boolean;
-  onUpdate: (updated: FilterGroupItem) => void;
+  onUpdate: (updated: FilterDraftGroup) => void;
   onRemove?: () => void;
   onRemoveSourceById?: (id: string) => void;
   onLogicChange?: (logic: "and" | "or") => void;
@@ -331,7 +331,7 @@ export function FilterGroup({
   };
 
   const addCondition = () => {
-    const newCondition: FilterConditionItem = {
+    const newCondition: FilterDraftCondition = {
       type: "condition",
       id: `${idPrefix}-${Date.now()}`,
       field: "",
@@ -343,7 +343,7 @@ export function FilterGroup({
   };
 
   const addNestedGroup = () => {
-    const newGroup: FilterGroupItem = {
+    const newGroup: FilterDraftGroup = {
       type: "group",
       id: `${idPrefix}-group-${Date.now()}`,
       children: [],
@@ -352,7 +352,7 @@ export function FilterGroup({
     onUpdate({ ...item, children: [...item.children, newGroup] });
   };
 
-  const updateChild = (index: number, updated: FilterItem) => {
+  const updateChild = (index: number, updated: FilterDraft) => {
     const next = [...item.children];
     next[index] = updated;
     onUpdate({ ...item, children: next });
@@ -361,14 +361,16 @@ export function FilterGroup({
   const removeChild = (index: number) => {
     onUpdate({
       ...item,
-      children: item.children.filter((_: FilterItem, i: number) => i !== index),
+      children: item.children.filter(
+        (_: FilterDraft, i: number) => i !== index,
+      ),
     });
   };
 
   const removeChildById = (id: string) => {
     onUpdate({
       ...item,
-      children: item.children.filter((c: FilterItem) => c.id !== id),
+      children: item.children.filter((c: FilterDraft) => c.id !== id),
     });
   };
 
@@ -516,7 +518,7 @@ export function FilterGroup({
               </div>
             </div>
           ) : (
-            item.children.map((child: FilterItem, index: number) => (
+            item.children.map((child: FilterDraft, index: number) => (
               <React.Fragment key={child.id}>
                 {child.type === "condition" ? (
                   <ConditionRow
@@ -538,7 +540,7 @@ export function FilterGroup({
                       depth={depth + 1}
                       fields={fields}
                       isGlobalDragging={isGlobalDragging}
-                      item={child as FilterGroupItem}
+                      item={child as FilterDraftGroup}
                       parentId={item.id}
                       showLogic={index > 0}
                       onLogicChange={(newLogic) =>

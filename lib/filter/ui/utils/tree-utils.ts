@@ -1,4 +1,4 @@
-import { FilterGroupItem, FilterItem } from "../FilterGroup";
+import { FilterDraft, FilterDraftGroup } from "../FilterGroup";
 
 export const MAX_DEPTH = 3;
 
@@ -6,7 +6,7 @@ export type DropPosition = "before" | "after" | "inside";
 
 // Calculate depth of an item by ID (Root is depth 0, Children depth 1, etc)
 export function getItemDepth(
-  root: FilterGroupItem,
+  root: FilterDraftGroup,
   id: string,
   currentDepth = 0,
 ): number {
@@ -31,7 +31,7 @@ export function getItemDepth(
 // Condition -> 0
 // Group w/o subgroups -> 0
 // Group w/ subdomain -> 1 + max(children)
-export function getMaxRelativeDepth(item: FilterItem): number {
+export function getMaxRelativeDepth(item: FilterDraft): number {
   if (item.type === "condition") {
     return 0;
   }
@@ -45,10 +45,10 @@ export function getMaxRelativeDepth(item: FilterItem): number {
 }
 
 export function findItemPath(
-  root: FilterGroupItem,
+  root: FilterDraftGroup,
   targetId: string,
-  path: { group: FilterGroupItem; index: number }[] = [],
-): { group: FilterGroupItem; index: number }[] | null {
+  path: { group: FilterDraftGroup; index: number }[] = [],
+): { group: FilterDraftGroup; index: number }[] | null {
   for (let i = 0; i < root.children.length; i++) {
     const child = root.children[i];
     if (child.id === targetId) {
@@ -67,7 +67,10 @@ export function findItemPath(
   return null;
 }
 
-export function removeItem(root: FilterGroupItem, id: string): FilterGroupItem {
+export function removeItem(
+  root: FilterDraftGroup,
+  id: string,
+): FilterDraftGroup {
   return {
     ...root,
     children: root.children
@@ -77,7 +80,7 @@ export function removeItem(root: FilterGroupItem, id: string): FilterGroupItem {
 }
 
 // Just finds the item itself
-export function findItem(root: FilterItem, id: string): FilterItem | null {
+export function findItem(root: FilterDraft, id: string): FilterDraft | null {
   if (root.id === id) {
     return root;
   }
@@ -93,11 +96,11 @@ export function findItem(root: FilterItem, id: string): FilterItem | null {
 }
 
 export function insertItem(
-  root: FilterGroupItem,
-  item: FilterItem,
+  root: FilterDraftGroup,
+  item: FilterDraft,
   targetId: string,
   position: DropPosition,
-): FilterGroupItem {
+): FilterDraftGroup {
   // If we are inserting into root (if targetId is root id), handle separately?
   // Usually targetId is a sibling for before/after, or a group for inside.
 
@@ -132,7 +135,7 @@ export function insertItem(
       } else {
         // Grouping with a condition -> Create new group
         // target (child) + source (item)
-        const newGroup: FilterGroupItem = {
+        const newGroup: FilterDraftGroup = {
           type: "group",
           id: `group-combined-${Date.now()}`,
           logic: "and",

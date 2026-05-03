@@ -3,24 +3,18 @@
 import { ListFilter } from "lucide-react";
 import React, { useState } from "react";
 
-import { Button } from "../../Button/Button";
-import { Chip } from "../../Chip/Chip";
-import { OPERATORS } from "../utils/filterAst";
+import { Button } from "../../../components/Button/Button";
+import { Chip } from "../../../components/Chip/Chip";
+import { type FilterOperatorKey, OPERATORS } from "../ast";
 import styles from "./FilterBuilder.module.scss";
-import type { FilterConditionItem, FilterGroupItem } from "./FilterGroup";
+import type { FilterDraftCondition, FilterDraftGroup } from "./FilterGroup";
 import { FilterSheetNested } from "./FilterSheetNested";
 
-export type FilterOperatorKey =
-  | "eq"
-  | "neq"
-  | "contains"
-  | "gt"
-  | "lt"
-  | "gte"
-  | "lte"
-  | "startsWith"
-  | "endsWith";
-
+/**
+ * Describes a column the user can filter on. Provides display metadata
+ * (label, input type, select options) and optionally restricts which
+ * operators apply.
+ */
 export interface FilterField {
   key: string;
   label: string;
@@ -31,11 +25,11 @@ export interface FilterField {
 
 export interface FilterBuilderProps {
   fields: FilterField[];
-  value: FilterGroupItem | null;
-  onChange: (value: FilterGroupItem) => void;
+  value: FilterDraftGroup | null;
+  onChange: (value: FilterDraftGroup) => void;
 }
 
-export function countConditions(group: FilterGroupItem): number {
+export function countConditions(group: FilterDraftGroup): number {
   return group.children.reduce((sum, child) => {
     if (child.type === "condition") {
       return sum + (child.field && child.value ? 1 : 0);
@@ -45,9 +39,9 @@ export function countConditions(group: FilterGroupItem): number {
 }
 
 export function flattenConditions(
-  group: FilterGroupItem,
-): FilterConditionItem[] {
-  const result: FilterConditionItem[] = [];
+  group: FilterDraftGroup,
+): FilterDraftCondition[] {
+  const result: FilterDraftCondition[] = [];
   for (const child of group.children) {
     if (child.type === "condition") {
       if (child.field && child.value) {
@@ -71,7 +65,7 @@ export function FilterBuilder({ fields, value, onChange }: FilterBuilderProps) {
       return;
     }
 
-    function removeById(group: FilterGroupItem): FilterGroupItem {
+    function removeById(group: FilterDraftGroup): FilterDraftGroup {
       return {
         ...group,
         children: group.children

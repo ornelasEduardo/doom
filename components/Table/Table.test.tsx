@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Table } from "./Table";
 
 // Mock FilterSheetNested
-vi.mock("./FilterBuilder/FilterSheetNested", () => ({
+vi.mock("../../lib/filter/ui/FilterSheetNested", () => ({
   FilterSheetNested: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="filter-sheet">Filter Sheet</div> : null,
 }));
@@ -370,7 +370,7 @@ describe("Table Component", () => {
 
   it("should apply advanced filter and filter data correctly", async () => {
     // Test the evaluateFilter function that powers advanced filtering
-    const { evaluateFilter } = await import("./utils/filterAst");
+    const { evaluateFilter } = await import("../../lib/filter");
 
     const filterNode = {
       type: "group" as const,
@@ -434,7 +434,7 @@ describe("Table Component", () => {
   });
 
   it("should support numeric comparison operators", async () => {
-    const { evaluateFilter } = await import("./utils/filterAst");
+    const { evaluateFilter } = await import("../../lib/filter");
 
     const gtFilter = {
       type: "group" as const,
@@ -469,7 +469,7 @@ describe("Table Component", () => {
   });
 
   it("should support OR logic in filters", async () => {
-    const { evaluateFilter } = await import("./utils/filterAst");
+    const { evaluateFilter } = await import("../../lib/filter");
 
     const orFilter = {
       type: "group" as const,
@@ -496,7 +496,7 @@ describe("Table Component", () => {
   });
 
   it("should support nested filter groups", async () => {
-    const { evaluateFilter } = await import("./utils/filterAst");
+    const { evaluateFilter } = await import("../../lib/filter");
 
     // Complex filter: (name = Alice AND age > 20) OR (name = Charlie)
     const nestedFilter = {
@@ -655,7 +655,7 @@ describe("Table Component", () => {
   });
 
   it("should support startsWith and endsWith operators", async () => {
-    const { evaluateFilter } = await import("./utils/filterAst");
+    const { evaluateFilter } = await import("../../lib/filter");
 
     const startsWithFilter = {
       type: "group" as const,

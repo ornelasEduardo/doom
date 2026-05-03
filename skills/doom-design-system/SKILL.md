@@ -255,6 +255,16 @@ Dense repeated elements (tree rows, table rows, list items) get a lighter touch:
 
 ---
 
+## Libraries
+
+Tree-shakeable utilities exposed via subpath exports. Each lib ships independently of the React component layer.
+
+| Library | Subpath                            | File              |
+|---------|------------------------------------|-------------------|
+| filter  | `doom-design-system/filter`        | `lib/filter.md`   |
+
+---
+
 ## Common Commands
 
 | Action    | Command              |

@@ -8,7 +8,7 @@ import {
   type FilterField,
   flattenConditions,
 } from "./FilterBuilder";
-import type { FilterGroupItem } from "./FilterGroup";
+import type { FilterDraftGroup } from "./FilterGroup";
 
 // Mock FilterSheetNested
 vi.mock("./FilterSheetNested", () => ({
@@ -18,7 +18,7 @@ vi.mock("./FilterSheetNested", () => ({
     onClose,
   }: {
     isOpen: boolean;
-    onApply: (group: FilterGroupItem) => void;
+    onApply: (group: FilterDraftGroup) => void;
     onClose: () => void;
   }) => {
     if (!isOpen) {
@@ -44,7 +44,7 @@ vi.mock("./FilterSheetNested", () => ({
 }));
 
 describe("FilterBuilder Helpers", () => {
-  const group: FilterGroupItem = {
+  const group: FilterDraftGroup = {
     type: "group",
     id: "root",
     children: [
@@ -89,7 +89,7 @@ describe("FilterBuilder Component", () => {
     { key: "age", label: "Age", type: "number" },
   ];
 
-  const value: FilterGroupItem = {
+  const value: FilterDraftGroup = {
     type: "group",
     id: "root",
     children: [
