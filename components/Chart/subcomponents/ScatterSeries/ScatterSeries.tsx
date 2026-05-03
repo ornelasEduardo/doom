@@ -118,7 +118,7 @@ const ScatterSeriesComponent = <T,>({
     <g className="chart-scatter-series">
       {data.map((d, i) => {
         const cx = (xScale as any)(xAccessor(d));
-        const cy = yScale(yAccessor(d));
+        const cy = (yScale as any)(yAccessor(d));
 
         let radius = 6;
         if (rScale && sizeAccessor) {

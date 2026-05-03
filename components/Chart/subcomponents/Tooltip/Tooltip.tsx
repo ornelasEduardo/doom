@@ -121,14 +121,17 @@ function DefaultTooltipContent<T>({
   config,
   variant,
 }: DefaultTooltipContentProps<T>) {
-  const xLabel = x ? String(resolveAccessor(x as any)(activeData)) : "Value";
+  const categoryAccessorRef = series[0]?.categoryAccessor ?? x;
+  const headerLabel = categoryAccessorRef
+    ? String(resolveAccessor(categoryAccessorRef as any)(activeData))
+    : "Value";
 
   return (
     <Card
       className={clsx(styles.tooltipCard, variant === "solid" && styles.solid)}
     >
       <Text className={styles.tooltipLabel} variant="h6">
-        {xLabel}
+        {headerLabel}
       </Text>
 
       {series.length > 0 ? (
@@ -171,7 +174,8 @@ function TooltipSeriesItem<T>({
   fallbackY,
   config,
 }: TooltipSeriesItemProps<T>) {
-  const accessor = series.yAccessor ? resolveAccessor(series.yAccessor) : null;
+  const accessorRef = series.valueAccessor ?? series.yAccessor;
+  const accessor = accessorRef ? resolveAccessor(accessorRef) : null;
   const val = accessor
     ? accessor(activeData)
     : fallbackY

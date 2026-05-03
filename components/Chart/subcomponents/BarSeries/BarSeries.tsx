@@ -8,18 +8,52 @@ import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/chart.store";
-import { Accessor } from "../../types";
+import { selectChartOrientation } from "../../state/store/slices/series.slice";
+import { Accessor, SeriesOrientation } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
-import { createRoundedTopBarPath } from "../../utils/shapes";
+import { createRoundedBarPath } from "../../utils/shapes";
+import { getStackOffset } from "../../utils/stack";
 import styles from "./BarSeries.module.scss";
 
 interface BarSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, number | string>;
   color?: string;
   hideCursor?: boolean;
   label?: string;
+  orientation?: SeriesOrientation;
+  /**
+   * Bar thickness perpendicular to value growth (width in vertical mode,
+   * height in horizontal mode). "auto" fills the band; a number renders
+   * a fixed-pixel bar centered within the band — useful for overlay
+   * patterns like target-vs-actual where one series sits inside another.
+   */
+  barWidth?: number | "auto";
+  /**
+   * Groups bar series into a stack. Series sharing a stackId render
+   * stacked on top of each other in registration order.
+   */
+  stackId?: string;
+}
+
+const BAR_RADIUS = 4;
+const POINT_SCALE_BAND_FRACTION = 0.8;
+
+function resolveBandwidth(scale: any): { width: number; offset: number } {
+  if ("bandwidth" in scale && typeof scale.bandwidth === "function") {
+    const w = scale.bandwidth();
+    if (w === 0 && "step" in scale) {
+      const stepWidth = scale.step() * POINT_SCALE_BAND_FRACTION;
+      return { width: stepWidth, offset: stepWidth / 2 };
+    }
+    return { width: w, offset: 0 };
+  }
+  if ("step" in scale) {
+    const stepWidth = scale.step() * POINT_SCALE_BAND_FRACTION;
+    return { width: stepWidth, offset: stepWidth / 2 };
+  }
+  return { width: 10, offset: 0 };
 }
 
 const BarSeriesComponent = <T,>({
@@ -29,15 +63,19 @@ const BarSeriesComponent = <T,>({
   color,
   hideCursor,
   label,
+  orientation,
+  barWidth = "auto",
+  stackId,
 }: BarSeriesProps<T>) => {
-  const { chartStore, config, x: contextX, y: contextY } = useChartContext<T>();
+  const { chartStore, x: contextX, y: contextY } = useChartContext<T>();
 
   const data = chartStore.useStore((s) => localData || s.data);
   const xScale = chartStore.useStore((s) => s.scales.x);
   const yScale = chartStore.useStore((s) => s.scales.y);
   const innerHeight = chartStore.useStore((s) => s.dimensions.innerHeight);
-
   const dimensions = chartStore.useStore((s) => s.dimensions);
+  const chartOrientation = chartStore.useStore(selectChartOrientation);
+  const processedSeries = chartStore.useStore((s) => s.processedSeries);
 
   const xAccessor = useMemo(
     () =>
@@ -53,36 +91,40 @@ const BarSeriesComponent = <T,>({
     [localY, contextY],
   );
 
-  const gradientId = useId();
+  const seriesId = useId();
 
   useEffect(() => {
     if (!yAccessor) {
       return;
     }
-    registerSeries(chartStore, gradientId, [
+    registerSeries(chartStore, seriesId, [
       {
-        id: gradientId,
+        id: seriesId,
         label: label || "Bar Series",
         color: color || "var(--primary)",
         x: xAccessor,
         y: yAccessor,
         hideCursor: hideCursor ?? true,
         type: "bar",
+        orientation,
+        stackId,
         data,
       },
     ]);
     return () => {
-      unregisterSeries(chartStore, gradientId);
+      unregisterSeries(chartStore, seriesId);
     };
   }, [
     chartStore,
-    gradientId,
+    seriesId,
     color,
     yAccessor,
     xAccessor,
     label,
     hideCursor,
     data,
+    orientation,
+    stackId,
   ]);
 
   if (
@@ -96,32 +138,84 @@ const BarSeriesComponent = <T,>({
     return null;
   }
 
-  const BAR_RADIUS = 4;
   const fillColor = color || "var(--primary)";
+  const isHorizontal = chartOrientation === "horizontal";
+  const ownSeries = processedSeries.find((s) => s.id === seriesId);
+
+  const seriesAboveInStack = ownSeries?.stackId
+    ? processedSeries
+        .slice(processedSeries.findIndex((s) => s.id === ownSeries.id) + 1)
+        .filter((s) => s.stackId === ownSeries.stackId)
+    : [];
+
+  const isVisualTopForDatum = (datum: any) => {
+    if (seriesAboveInStack.length === 0) {
+      return true;
+    }
+    if (!ownSeries?.categoryAccessor) {
+      return true;
+    }
+    const categoryAccessor = resolveAccessor(ownSeries.categoryAccessor);
+    const datumCategory = categoryAccessor(datum);
+
+    return !seriesAboveInStack.some((s) => {
+      if (!s.data || !s.valueAccessor || !s.categoryAccessor) {
+        return false;
+      }
+      const otherCategoryAccessor = resolveAccessor(s.categoryAccessor);
+      const otherValueAccessor = resolveAccessor(s.valueAccessor);
+      const match = s.data.find(
+        (d) => otherCategoryAccessor(d) === datumCategory,
+      );
+      if (!match) {
+        return false;
+      }
+      const v = otherValueAccessor(match);
+      return typeof v === "number" && v > 0;
+    });
+  };
 
   return (
     <g className="chart-bar-series">
       {data.map((d, i) => {
-        const xPos = (xScale as any)(xAccessor(d)) ?? 0;
-        const yVal = yScale(yAccessor(d));
-        let w = 10;
-        let offset = 0;
+        let pathX: number;
+        let pathY: number;
+        let pathW: number;
+        let pathH: number;
 
-        if ("bandwidth" in xScale && typeof xScale.bandwidth === "function") {
-          w = xScale.bandwidth();
-          if (w === 0 && "step" in xScale) {
-            // Fallback for ScalePoint (bandwidth=0) -> use 80% of step
-            w = (xScale as any).step() * 0.8;
-            offset = w / 2;
-          }
-        } else if ("step" in xScale) {
-          w = (xScale as any).step() * 0.8;
-          offset = w / 2;
+        const stackOffset = ownSeries
+          ? getStackOffset(ownSeries, d, processedSeries)
+          : 0;
+
+        if (isHorizontal) {
+          const categoryPos = (yScale as any)(yAccessor(d)) ?? 0;
+          const datumValue = (xAccessor(d) as number) ?? 0;
+          const startPixel = (xScale as any)(stackOffset) ?? 0;
+          const endPixel = (xScale as any)(stackOffset + datumValue) ?? 0;
+          const { width: bandwidth, offset } = resolveBandwidth(yScale);
+          const thickness =
+            barWidth === "auto" ? bandwidth : Math.min(barWidth, bandwidth);
+          const centerOffset = (bandwidth - thickness) / 2;
+
+          pathX = startPixel;
+          pathY = categoryPos - offset + centerOffset;
+          pathW = endPixel - startPixel;
+          pathH = thickness;
+        } else {
+          const categoryPos = (xScale as any)(xAccessor(d)) ?? 0;
+          const datumValue = (yAccessor(d) as number) ?? 0;
+          const topPixel = (yScale as any)(stackOffset + datumValue) ?? 0;
+          const baselinePixel = (yScale as any)(stackOffset) ?? innerHeight;
+          const { width: bandwidth, offset } = resolveBandwidth(xScale);
+          const thickness =
+            barWidth === "auto" ? bandwidth : Math.min(barWidth, bandwidth);
+          const centerOffset = (bandwidth - thickness) / 2;
+
+          pathX = categoryPos - offset + centerOffset;
+          pathY = topPixel;
+          pathW = thickness;
+          pathH = baselinePixel - topPixel;
         }
-
-        const finalX = xPos - offset;
-
-        const h = innerHeight - yVal;
 
         return (
           <path
@@ -139,7 +233,14 @@ const BarSeriesComponent = <T,>({
             }
             aria-roledescription="bar"
             className={`${styles.bar} chart-bar`}
-            d={createRoundedTopBarPath(finalX, yVal, w, h, BAR_RADIUS)}
+            d={createRoundedBarPath(
+              pathX,
+              pathY,
+              pathW,
+              pathH,
+              isVisualTopForDatum(d) ? BAR_RADIUS : 0,
+              isHorizontal ? "right" : "top",
+            )}
             role="graphics-symbol"
             style={{
               fill: fillColor,
@@ -147,7 +248,7 @@ const BarSeriesComponent = <T,>({
             }}
             {...{
               [CHART_DATA_ATTRS.TYPE]: "bar",
-              [CHART_DATA_ATTRS.SERIES_ID]: gradientId,
+              [CHART_DATA_ATTRS.SERIES_ID]: seriesId,
               [CHART_DATA_ATTRS.INDEX]: i,
               [CHART_DATA_ATTRS.DRAGGABLE]: false,
             }}

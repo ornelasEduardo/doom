@@ -24,22 +24,33 @@ export function Axis() {
     }
 
     const xAxis = d3.axisBottom(xScale as any);
-    if ("bandwidth" in xScale) {
-      xAxis.ticks(5);
-    } else {
-      xAxis.ticks(5);
+    const xIsContinuous =
+      typeof (xScale as any).ticks === "function" && !("bandwidth" in xScale);
+    if (xIsContinuous) {
+      xAxis.ticks(isMobile ? 3 : 5);
+      xAxis.tickFormat((d) => {
+        const val = typeof d === "number" ? d : (d as any).valueOf();
+        if (val === 0) {
+          return "0";
+        }
+        return d3.format(".2s")(val).replace("G", "B");
+      });
     }
 
     d3.select(gx.current).call(xAxis);
 
-    const yAxis = d3.axisLeft(yScale).ticks(isMobile ? 3 : 5);
-    yAxis.tickFormat((d) => {
-      const val = typeof d === "number" ? d : d.valueOf();
-      if (val === 0) {
-        return "0";
-      }
-      return d3.format(".2s")(val).replace("G", "B");
-    });
+    const yAxis = d3.axisLeft(yScale as any);
+    const yIsContinuous = typeof (yScale as any).ticks === "function";
+    if (yIsContinuous) {
+      yAxis.ticks(isMobile ? 3 : 5);
+      yAxis.tickFormat((d) => {
+        const val = typeof d === "number" ? d : (d as any).valueOf();
+        if (val === 0) {
+          return "0";
+        }
+        return d3.format(".2s")(val).replace("G", "B");
+      });
+    }
 
     d3.select(gy.current).call(yAxis);
 
