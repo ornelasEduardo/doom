@@ -11,12 +11,12 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./filter": {
-      "import": "./dist/lib/filter/index.js",
-      "types": "./dist/lib/filter/index.d.ts"
+      "types": "./dist/lib/filter/index.d.ts",
+      "import": "./dist/lib/filter/index.js"
     },
     "./package.json": "./package.json"
   },
