@@ -10,7 +10,14 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./filter": {
+      "import": "./dist/lib/filter/index.js",
+      "types": "./dist/lib/filter/index.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
