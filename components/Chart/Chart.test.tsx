@@ -1,9 +1,25 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import React from "react";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import React, { useEffect, useState } from "react";
+import { renderToString } from "react-dom/server";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { Chart } from "./Chart";
-import { leavePointer, movePointer } from "./tests/chart-test-utils";
+import { Engine } from "./engine/Engine";
+import {
+  leavePointer,
+  movePointer,
+  type StubbedGeometry,
+  stubChartGeometry,
+} from "./tests/chart-test-utils";
 
 class MockResizeObserver {
   callback: ResizeObserverCallback;
@@ -99,6 +115,14 @@ describe("Chart", () => {
     expect(container.querySelector("path")).toBeInTheDocument();
   });
 
+  it("renders on the server without throwing", () => {
+    // Chart is a "use client" component, but that still server-renders under
+    // the App Router. Any hook that cannot produce a server snapshot takes the
+    // whole page down rather than degrading to client-only.
+    const html = renderToString(<Chart data={data} x={x} y={y} />);
+    expect(html.length).toBeGreaterThan(0);
+  });
+
   it("renders bars for bar chart (using paths)", () => {
     const { container } = render(<Chart data={data} type="bar" x={x} y={y} />);
 
@@ -108,6 +132,24 @@ describe("Chart", () => {
 
     const paths = container.querySelectorAll("path");
     expect(paths.length).toBeGreaterThan(0);
+  });
+
+  it("omits the axes when showAxes is false", () => {
+    const { container: shown } = render(<Chart data={data} x={x} y={y} />);
+    act(() => {
+      vi.runAllTimers();
+    });
+    expect(shown.querySelector('[aria-label="X Axis"]')).toBeInTheDocument();
+
+    const { container: hidden } = render(
+      <Chart d3Config={{ showAxes: false }} data={data} x={x} y={y} />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+    expect(
+      hidden.querySelector('[aria-label="X Axis"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("renders a custom visualization via render prop", () => {
@@ -448,22 +490,374 @@ describe("Chart", () => {
       return { x: 0, y: 0, width: 0, height: 0 } as DOMRect;
     };
 
-    const { container } = render(
-      <Chart
-        d3Config={{ margin: { left: 40, top: 20, bottom: 20, right: 20 } }}
-        data={data}
-        x={x}
-        y={y}
-      />,
-    );
+    try {
+      const { container } = render(
+        <Chart
+          d3Config={{ margin: { left: 40, top: 20, bottom: 20, right: 20 } }}
+          data={data}
+          x={x}
+          y={y}
+        />,
+      );
 
-    act(() => {
-      vi.runAllTimers();
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const g = container.querySelector("g");
+      expect(g).toHaveAttribute("transform", "translate(120, 20)");
+    } finally {
+      // Without the finally, one failure here leaks the prototype patch into
+      // every later test in the file and turns one red into seven.
+      SVGGraphicsElement.prototype.getBBox = originalGetBBox;
+    }
+  });
+
+  /**
+   * Regression coverage for the interaction pipeline (hover -> onValueChange
+   * -> tooltip DOM) surviving every mount lifecycle it can hit in practice:
+   * a deferred mount behind a loader gate, data arriving after mount,
+   * unmount/remount flicker, and React StrictMode's simulated
+   * unmount/remount (dev), which runs effect cleanup + setup against the
+   * same memoized Engine instance. Engine.dispose() must be reversible or
+   * every pointer signal is silently swallowed afterwards (dead tooltips)
+   * while the chart still renders fine.
+   */
+  describe("interaction pipeline across mount lifecycles", () => {
+    /** Simulates `{loading ? <Spinner/> : <Chart/>}` — flips after a tick. */
+    function LoaderGate({ children }: { children: React.ReactNode }) {
+      const [ready, setReady] = useState(false);
+      useEffect(() => {
+        const t = setTimeout(() => setReady(true), 50);
+        return () => clearTimeout(t);
+      }, []);
+      return ready ? <>{children}</> : <div>loading…</div>;
+    }
+
+    /** Hover over point A (container coords ~(50, 140) with 500x300 + defaults). */
+    function hoverPointA(container: HTMLElement) {
+      const root = container.querySelector(
+        "[data-chart-container]",
+      ) as HTMLElement;
+      expect(root).toBeTruthy();
+      movePointer(root, 60, 150, { pointerType: "mouse" });
+    }
+
+    function expectTooltipForA(
+      container: HTMLElement,
+      onValueChange: ReturnType<typeof vi.fn>,
+    ) {
+      expect(onValueChange).toHaveBeenCalledWith(
+        expect.objectContaining({ label: "A" }),
+      );
+      expect(
+        Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6")).some((h) =>
+          h.textContent?.includes("A"),
+        ),
+      ).toBe(true);
+    }
+
+    beforeEach(() => {
+      vi.restoreAllMocks();
     });
 
-    const g = container.querySelector("g");
-    expect(g).toHaveAttribute("transform", "translate(120, 20)");
+    it("hover works when mounted directly with data", () => {
+      const onValueChange = vi.fn();
+      const { container } = render(
+        <Chart data={data} x={x} y={y} onValueChange={onValueChange} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
 
-    SVGGraphicsElement.prototype.getBBox = originalGetBBox;
+      hoverPointA(container);
+
+      expectTooltipForA(container, onValueChange);
+    });
+
+    it("hover works when mounted behind a loader gate", () => {
+      const onValueChange = vi.fn();
+      const { container } = render(
+        <LoaderGate>
+          <Chart data={data} x={x} y={y} onValueChange={onValueChange} />
+        </LoaderGate>,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      hoverPointA(container);
+
+      expectTooltipForA(container, onValueChange);
+    });
+
+    it("hover works when data arrives after mount (empty -> filled)", () => {
+      const onValueChange = vi.fn();
+      const { container, rerender } = render(
+        <Chart data={[]} x={x} y={y} onValueChange={onValueChange} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      rerender(<Chart data={data} x={x} y={y} onValueChange={onValueChange} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      hoverPointA(container);
+
+      expectTooltipForA(container, onValueChange);
+    });
+
+    it("hover works after unmount/remount flicker", () => {
+      const onValueChange = vi.fn();
+      const chart = (
+        <Chart data={data} x={x} y={y} onValueChange={onValueChange} />
+      );
+      const { container, rerender } = render(<div>{chart}</div>);
+      act(() => {
+        vi.runAllTimers();
+      });
+      rerender(<div>loading…</div>);
+      rerender(<div>{chart}</div>);
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      hoverPointA(container);
+
+      expectTooltipForA(container, onValueChange);
+    });
+
+    it("hover survives StrictMode's simulated unmount/remount (direct mount)", () => {
+      const disposeSpy = vi.spyOn(Engine.prototype, "dispose");
+      const onValueChange = vi.fn();
+
+      const { container } = render(
+        <React.StrictMode>
+          <Chart data={data} x={x} y={y} onValueChange={onValueChange} />
+        </React.StrictMode>,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      hoverPointA(container);
+
+      // StrictMode really did run the cleanup — the engine must recover from it.
+      expect(disposeSpy).toHaveBeenCalled();
+      expectTooltipForA(container, onValueChange);
+    });
+
+    it("hover survives StrictMode with a loader gate", () => {
+      const onValueChange = vi.fn();
+
+      const { container } = render(
+        <React.StrictMode>
+          <LoaderGate>
+            <Chart data={data} x={x} y={y} onValueChange={onValueChange} />
+          </LoaderGate>
+        </React.StrictMode>,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      hoverPointA(container);
+
+      expectTooltipForA(container, onValueChange);
+    });
+  });
+
+  /**
+   * The chart resolves pointer coordinates against its container's viewport
+   * rect. Anything that moves the chart on screen WITHOUT resizing it — a page
+   * scroll, a sticky header collapsing, a sibling chart's tooltip reflowing the
+   * page, navigating away and back to a different scroll offset — must not
+   * break hit-testing. No ResizeObserver fires for a position-only change, so
+   * the container rect has to be correct at the moment the pointer is resolved.
+   */
+  describe("hover targeting and dismissal", () => {
+    const points = [
+      { label: "A", value: 10 },
+      { label: "B", value: 20 },
+      { label: "C", value: 15 },
+      { label: "D", value: 25 },
+    ];
+
+    let geometry: StubbedGeometry;
+
+    beforeEach(() => {
+      vi.restoreAllMocks();
+      geometry = stubChartGeometry({ left: 0, top: 0 });
+    });
+
+    afterEach(() => {
+      geometry.restore();
+    });
+
+    function mountChart() {
+      const { container } = render(<Chart data={points} x={x} y={y} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+      const root = container.querySelector(
+        "[data-chart-container]",
+      ) as HTMLElement;
+      expect(root).toBeTruthy();
+      geometry.attach(root);
+      return { container, root };
+    }
+
+    /** Whatever the tooltip is currently showing, or "" when it is hidden. */
+    function tooltipText(container: HTMLElement) {
+      return Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"))
+        .map((h) => h.textContent)
+        .join("|");
+    }
+
+    it("shows the point under the pointer, not always the first one", () => {
+      const { container, root } = mountChart();
+
+      movePointer(root, 60, 150, { pointerType: "mouse" });
+      expect(tooltipText(container)).toContain("A");
+
+      movePointer(root, 360, 150, { pointerType: "mouse" });
+
+      // Moving to a different point must change what the tooltip reports.
+      // Resolving every hover to the first datum would leave this on "A".
+      expect(tooltipText(container)).toContain("C");
+      expect(tooltipText(container)).not.toContain("A");
+    });
+
+    it("hides the tooltip when the pointer leaves the chart", () => {
+      const { container, root } = mountChart();
+
+      movePointer(root, 60, 150, { pointerType: "mouse" });
+      expect(tooltipText(container)).toContain("A");
+
+      leavePointer(root, { pointerType: "mouse" });
+
+      expect(tooltipText(container)).toBe("");
+    });
+  });
+
+  describe("interaction after the chart moves on screen", () => {
+    const points = [
+      { label: "A", value: 10 },
+      { label: "B", value: 20 },
+      { label: "C", value: 15 },
+      { label: "D", value: 25 },
+    ];
+
+    let stubs: StubbedGeometry[];
+
+    beforeEach(() => {
+      vi.restoreAllMocks();
+      stubs = [];
+    });
+
+    afterEach(() => {
+      stubs.forEach((stub) => stub.restore());
+    });
+
+    /** Place a chart at a spot on screen and track it for cleanup. */
+    function placeAt(top: number, left = 0) {
+      const geometry = stubChartGeometry({ left, top });
+      stubs.push(geometry);
+      return geometry;
+    }
+
+    function renderChart(geometry: StubbedGeometry) {
+      const { container } = render(<Chart data={points} x={x} y={y} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+      const root = container.querySelector(
+        "[data-chart-container]",
+      ) as HTMLElement;
+      expect(root).toBeTruthy();
+      geometry.attach(root);
+      return { container, root };
+    }
+
+    /** Hover the spot 60px right / 150px down from the chart's top-left corner. */
+    function hoverPointA(root: HTMLElement, geometry: StubbedGeometry) {
+      const { x: clientX, y: clientY } = geometry.clientPoint(60, 150);
+      movePointer(root, clientX, clientY, { pointerType: "mouse" });
+    }
+
+    function tooltipShowsA(container: HTMLElement) {
+      return Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6")).some(
+        (h) => h.textContent?.includes("A"),
+      );
+    }
+
+    it("hover works after the page scrolls while nothing is hovered", () => {
+      const geometry = placeAt(0);
+      const { container, root } = renderChart(geometry);
+
+      // Hover once, then leave — this clears the hover interaction, which is
+      // the state a user is in whenever they scroll before reaching a chart.
+      hoverPointA(root, geometry);
+      expect(tooltipShowsA(container)).toBe(true);
+      leavePointer(root, { pointerType: "mouse" });
+
+      // Scroll the page. The chart moves; its size is unchanged.
+      geometry.moveBy(0, -200);
+
+      hoverPointA(root, geometry);
+
+      expect(tooltipShowsA(container)).toBe(true);
+    });
+
+    it("hover works after the page scrolls mid-hover", () => {
+      const geometry = placeAt(0);
+      const { container, root } = renderChart(geometry);
+
+      hoverPointA(root, geometry);
+      expect(tooltipShowsA(container)).toBe(true);
+
+      geometry.moveBy(0, -200);
+
+      hoverPointA(root, geometry);
+
+      expect(tooltipShowsA(container)).toBe(true);
+    });
+
+    it("hover works when the chart's position settles after mount", () => {
+      const geometry = placeAt(91, 137);
+      const { container, root } = renderChart(geometry);
+
+      hoverPointA(root, geometry);
+
+      expect(tooltipShowsA(container)).toBe(true);
+    });
+
+    it("a chart that moved still hovers after a sibling chart is used", () => {
+      const geometryA = placeAt(0);
+      const geometryB = placeAt(400);
+      const chartA = renderChart(geometryA);
+      const chartB = renderChart(geometryB);
+
+      // Both charts start out working.
+      hoverPointA(chartA.root, geometryA);
+      expect(tooltipShowsA(chartA.container)).toBe(true);
+      leavePointer(chartA.root, { pointerType: "mouse" });
+
+      // Something reflows the page — a sibling tooltip, a lazy image, an
+      // expanding panel — and chart A moves while nothing is hovering it.
+      geometryA.moveBy(0, -120);
+
+      // The user works with chart B, then comes back to chart A.
+      hoverPointA(chartB.root, geometryB);
+      expect(tooltipShowsA(chartB.container)).toBe(true);
+      leavePointer(chartB.root, { pointerType: "mouse" });
+
+      hoverPointA(chartA.root, geometryA);
+
+      expect(tooltipShowsA(chartA.container)).toBe(true);
+    });
   });
 });

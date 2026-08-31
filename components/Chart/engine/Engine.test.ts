@@ -226,16 +226,15 @@ describe("SpatialMap", () => {
       const points = createMockPoints(5);
       index.updateIndex(points);
 
-      // Query between two points (at 50,50 and 100,100)
-      const candidates = index.find(75, 75);
+      // Query nearer the LATER of two in-range points, so insertion order and
+      // distance order disagree: (150,150) is 28px away, (100,100) is 42px.
+      // A query equidistant between two points could not tell the two apart.
+      const candidates = index.find(130, 130);
 
-      // Should have at least 2 candidates
-      expect(candidates.length).toBeGreaterThanOrEqual(2);
-
-      // First candidate should be closer
-      expect(candidates[0].distance).toBeLessThanOrEqual(
-        candidates[1].distance,
-      );
+      expect(candidates.length).toBe(2);
+      expect(candidates[0].dataIndex).toBe(3);
+      expect(candidates[1].dataIndex).toBe(2);
+      expect(candidates[0].distance).toBeLessThan(candidates[1].distance);
     });
 
     it("should respect custom magnetic radius", () => {
@@ -349,6 +348,44 @@ describe("Engine", () => {
       engine.input(signal);
 
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("should process inputs again after activate() re-arms a disposed engine", () => {
+      // StrictMode runs effect cleanup (dispose) then re-runs effects
+      // (activate + setHandler) against the same engine instance.
+      engine.dispose();
+      engine.activate();
+      engine.setHandler(handler as any);
+
+      const signal = createMockSignal({ action: InputAction.START });
+      engine.input(signal);
+
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("Candidate Selection", () => {
+    it("should report the nearest candidate as primary when several are in range", () => {
+      const localEngine = new Engine({
+        useDomHitTesting: false,
+        magneticRadius: 50,
+      });
+      const localHandler = vi.fn();
+      localEngine.setHandler(localHandler);
+      localEngine.updateData(createMockPoints(5));
+
+      // (150,150) is 28px from the pointer; (100,100) is 42px. Both are in
+      // range, and the nearer one was indexed later — so returning "the first
+      // candidate found" rather than "the closest" picks the wrong point.
+      localEngine.input(
+        createMockSignal({ x: 130, y: 130, action: InputAction.START }),
+      );
+
+      const event = localHandler.mock.calls[0][0] as EngineEvent;
+      expect(event.candidates.length).toBe(2);
+      expect(event.primaryCandidate.dataIndex).toBe(3);
+
+      localEngine.dispose();
     });
   });
 
@@ -466,6 +503,67 @@ describe("Engine", () => {
       const event = handler.mock.calls[0][0] as EngineEvent;
       expect(event.chartX).toBe(50); // 150 - 100
       expect(event.chartY).toBe(50); // 100 - 50
+    });
+
+    it("recomputes the plot offset when the plot moves inside the container", () => {
+      const localEngine = new Engine({
+        useDomHitTesting: false,
+        magneticRadius: 5,
+      });
+      const localHandler = vi.fn();
+      localEngine.setHandler(localHandler);
+
+      // The plot sits below a header, inset from the top of the container.
+      let plotTop = 40;
+      const container = {
+        getBoundingClientRect: () => new DOMRect(0, 0, 500, 300),
+      } as Element;
+      const plot = {
+        getBoundingClientRect: () => new DOMRect(0, plotTop, 500, 260),
+      } as Element;
+
+      localEngine.setContainer(container, plot, {
+        x: 0,
+        y: 0,
+        width: 500,
+        height: 260,
+      });
+      localEngine.updateData([
+        { x: 60, y: 110, data: { id: "p" }, seriesId: "s", dataIndex: 0 },
+      ]);
+
+      // The point is 110px below the plot's top edge.
+      localEngine.input(
+        createMockSignal({
+          x: 60,
+          y: plotTop + 110,
+          action: InputAction.START,
+        }),
+      );
+      expect(
+        (localHandler.mock.calls[0][0] as EngineEvent).primaryCandidate,
+      ).toBeTruthy();
+
+      // A header grows and pushes the plot 30px further down. The container
+      // itself neither moves nor resizes, so a ResizeObserver reports the same
+      // rect — but the plot's offset within it has changed.
+      localHandler.mockClear();
+      plotTop = 70;
+      localEngine.updateBounds(new DOMRect(0, 0, 500, 300));
+
+      localEngine.input(
+        createMockSignal({
+          x: 60,
+          y: plotTop + 110,
+          action: InputAction.START,
+        }),
+      );
+
+      expect(
+        (localHandler.mock.calls[0][0] as EngineEvent).primaryCandidate,
+      ).toBeTruthy();
+
+      localEngine.dispose();
     });
   });
 
