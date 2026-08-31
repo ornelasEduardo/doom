@@ -229,6 +229,38 @@ describe("Chart in a real browser", () => {
     expect(getComputedStyle(tooltip).zIndex).toBe("500");
   });
 
+  it("keeps every categorical label when they all fit", async () => {
+    // Six short categories across 600px fit comfortably. Thinning them to a
+    // fixed budget throws away labels the chart had room to show.
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((m, i) => ({
+      label: m,
+      value: (i + 1) * 10,
+    }));
+
+    const { host } = await mount(
+      <Chart
+        data={months}
+        style={{ width: 600, height: 360 }}
+        type="line"
+        x="label"
+        y="value"
+      />,
+    );
+
+    const labels = Array.from(
+      host.querySelectorAll('[aria-label="X Axis"] .tick text'),
+    ).filter((t) => (t.textContent ?? "").trim().length > 0);
+
+    expect(labels.map((t) => t.textContent)).toEqual([
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+    ]);
+  });
+
   it("thins categorical axis labels instead of drawing one per row", async () => {
     const many = Array.from({ length: 30 }, (_, i) => ({
       label: `Category ${i}`,

@@ -445,7 +445,7 @@ describe("Chart", () => {
   });
 
   describe("axis ticks", () => {
-    it("caps tick labels on a categorical x-axis", () => {
+    it("keeps every categorical label when it cannot measure them", () => {
       const many = Array.from({ length: 30 }, (_, i) => ({
         label: `Category ${i}`,
         value: i,
@@ -456,13 +456,16 @@ describe("Chart", () => {
         vi.runAllTimers();
       });
 
-      // d3's axis.ticks() is a no-op on band/point scales, so every category
-      // rendered a label — 30 overlapping strings across the axis.
+      // Thinning is driven by measuring the rendered labels, and happy-dom
+      // reports zero-size boxes for all of them. With nothing to measure the
+      // axis must fail safe by showing every category rather than hiding data
+      // it cannot prove is colliding. Whether thinning happens when labels
+      // genuinely overlap is asserted in the browser lane, where getBBox is
+      // real.
       const xLabels = container.querySelectorAll(
         '[aria-label="X Axis"] .tick text',
       );
-      expect(xLabels.length).toBeGreaterThan(0);
-      expect(xLabels.length).toBeLessThanOrEqual(8);
+      expect(xLabels.length).toBe(30);
     });
 
     it("keeps the grid and the y-axis on the same tick budget", () => {

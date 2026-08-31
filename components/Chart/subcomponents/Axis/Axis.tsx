@@ -9,6 +9,43 @@ import styles from "./Axis.module.scss";
 
 const X_LABEL_OFFSET = 40;
 
+/** Minimum clear space between neighbouring tick labels. */
+const LABEL_GAP = 8;
+
+/**
+ * How many categories to skip so tick labels stop colliding.
+ *
+ * Band and point scales ignore d3's tick count, so every category is drawn.
+ * Thinning against a fixed budget instead would drop labels a chart had room
+ * for — six months across 600px would show three. Measure what is actually
+ * rendered and thin only when the text genuinely does not fit.
+ */
+const strideToAvoidOverlap = (
+  group: SVGGElement,
+  categories: number,
+  innerWidth: number,
+): number => {
+  if (categories < 2 || innerWidth <= 0) {
+    return 1;
+  }
+
+  let widest = 0;
+  group.querySelectorAll<SVGTextElement>(".tick text").forEach((label) => {
+    try {
+      widest = Math.max(widest, label.getBBox().width);
+    } catch {
+      // Not laid out (no layout engine): fall through to keeping every label.
+    }
+  });
+
+  if (widest === 0) {
+    return 1;
+  }
+
+  const step = innerWidth / categories;
+  return Math.max(1, Math.ceil((widest + LABEL_GAP) / step));
+};
+
 export function Axis() {
   const { chartStore, config, requestLayoutAdjustment, isMobile } =
     useChartContext();
@@ -28,20 +65,28 @@ export function Axis() {
     }
 
     const xAxis = d3.axisBottom(xScale as any);
-    const xTickCount = isMobile ? 3 : 5;
+    const isContinuousX = typeof (xScale as any).ticks === "function";
 
-    if (typeof (xScale as any).ticks === "function") {
-      xAxis.ticks(xTickCount);
-    } else {
-      // Band and point scales have no .ticks(), so d3 ignores the count and
-      // draws one label per category — 30 categories meant 30 overlapping
-      // labels. Thin the domain to roughly the same budget instead.
-      const domain = (xScale as any).domain() as (string | number)[];
-      const stride = Math.max(1, Math.ceil(domain.length / xTickCount));
-      xAxis.tickValues(domain.filter((_, i) => i % stride === 0) as any);
+    if (isContinuousX) {
+      xAxis.ticks(isMobile ? 3 : 5);
     }
 
     d3.select(gx.current).call(xAxis);
+
+    if (!isContinuousX) {
+      // Draw every category first, then thin only if they actually collide.
+      const domain = (xScale as any).domain() as (string | number)[];
+      const stride = strideToAvoidOverlap(
+        gx.current,
+        domain.length,
+        innerWidth,
+      );
+
+      if (stride > 1) {
+        xAxis.tickValues(domain.filter((_, i) => i % stride === 0) as any);
+        d3.select(gx.current).call(xAxis);
+      }
+    }
 
     const yAxis = d3.axisLeft(yScale).ticks(yTickCount(isMobile));
     yAxis.tickFormat((d) => {
