@@ -11,7 +11,7 @@
  * - Wire up event handler with stable callback pattern
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { Engine, EngineEvent, IndexedPoint } from "../engine";
 
@@ -48,9 +48,6 @@ export interface UseEngineOptions<T = unknown> {
 export interface UseEngineResult<T = unknown> {
   /** The Engine instance */
   engine: Engine<T>;
-
-  /** Ref to attach to the container element */
-  containerRef: React.RefObject<HTMLElement | null>;
 }
 
 // =============================================================================
@@ -70,14 +67,6 @@ export function useEngine<T = unknown>(
     onEvent,
     magneticRadius,
   } = options;
-
-  // Container ref for DOM attachment
-  const containerRef = useRef<HTMLElement | null>(null);
-
-  // Track container element state for triggering effects
-  const [containerElement, setContainerElement] = useState<HTMLElement | null>(
-    null,
-  );
 
   // =========================================================================
   // Engine Creation (Stable)
@@ -100,11 +89,22 @@ export function useEngine<T = unknown>(
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
 
+  const hasOnEvent = Boolean(onEvent);
+
   useEffect(() => {
+    // The Engine has one handler slot, and in the Chart it belongs to
+    // SensorManager. Claiming it here when the caller never asked to observe
+    // events would silently overwrite the real handler — whichever effect runs
+    // last wins, which is exactly the kind of ordering that changes between a
+    // fresh mount and an <Activity>/Offscreen re-show.
+    if (!hasOnEvent) {
+      return;
+    }
+
     engine.setHandler((event: EngineEvent<T>) => {
       onEventRef.current?.(event);
     });
-  }, [engine]);
+  }, [engine, hasOnEvent]);
 
   // =========================================================================
   // Plot Bounds Sync
@@ -145,54 +145,15 @@ export function useEngine<T = unknown>(
   }, [engine, data, getX, getY, getSeriesId, getDataIndex]);
 
   // =========================================================================
-  // Container Ref Detection
-  // Refs don't trigger re-renders, so we poll on RAF to detect changes
-  // =========================================================================
-
-  useEffect(() => {
-    if (containerRef.current && containerRef.current !== containerElement) {
-      setContainerElement(containerRef.current);
-    }
-
-    const rafId = requestAnimationFrame(() => {
-      if (containerRef.current !== containerElement) {
-        setContainerElement(containerRef.current);
-      }
-    });
-
-    return () => cancelAnimationFrame(rafId);
-  }, [containerElement]);
-
-  // =========================================================================
-  // Container Attachment & ResizeObserver
-  // =========================================================================
-
-  useEffect(() => {
-    if (!containerElement) {
-      return;
-    }
-
-    engine.setContainer(containerElement, null, plotBounds);
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const rect = entry.target.getBoundingClientRect();
-        engine.updateBounds(rect as DOMRect, plotBounds);
-      }
-    });
-
-    resizeObserver.observe(containerElement);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [engine, containerElement, plotBounds]);
-
-  // =========================================================================
   // Cleanup on Unmount
   // =========================================================================
 
   useEffect(() => {
+    // StrictMode (and Suspense/Activity hides) run this effect's cleanup and
+    // then re-run it against the same memoized engine — re-arm it so input
+    // isn't permanently swallowed after the simulated unmount.
+    engine.activate();
+
     return () => {
       engine.dispose();
     };
@@ -204,6 +165,5 @@ export function useEngine<T = unknown>(
 
   return {
     engine,
-    containerRef,
   };
 }

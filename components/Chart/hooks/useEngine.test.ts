@@ -5,7 +5,7 @@
  * Tests are written FIRST, before implementation.
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Engine, InputAction } from "../engine";
@@ -59,39 +59,6 @@ describe("useEngine - Lifecycle", () => {
 });
 
 // =============================================================================
-// CONTAINER REF TESTS
-// =============================================================================
-
-describe("useEngine - Container Ref", () => {
-  it("should provide a containerRef for attaching to DOM", () => {
-    const { result } = renderHook(() => useEngine());
-
-    expect(result.current.containerRef).toBeDefined();
-    expect(result.current.containerRef.current).toBeNull();
-  });
-
-  it("should update engine container when ref is attached", async () => {
-    const { result } = renderHook(() => useEngine());
-
-    // Simulate attaching ref to a DOM element
-    const mockElement = document.createElement("div");
-    mockElement.getBoundingClientRect = () => new DOMRect(0, 0, 400, 300);
-
-    act(() => {
-      (
-        result.current
-          .containerRef as React.MutableRefObject<HTMLElement | null>
-      ).current = mockElement;
-    });
-
-    // The hook should detect the ref change and update the engine
-    await waitFor(() => {
-      expect(result.current.engine.getContainerRect()).not.toBeNull();
-    });
-  });
-});
-
-// =============================================================================
 // DATA SYNC TESTS
 // =============================================================================
 
@@ -136,57 +103,23 @@ describe("useEngine - Data Sync", () => {
 });
 
 // =============================================================================
-// RESIZE OBSERVER TESTS
-// =============================================================================
-
-describe("useEngine - Resize Observer", () => {
-  // Note: Testing ResizeObserver integration is tricky with the ref pattern.
-  // These tests focus on verifying the hook doesn't crash and handles the
-  // observer lifecycle correctly at a high level.
-  // Full integration testing should be done with rendered components.
-
-  it("should not crash when ResizeObserver is available", () => {
-    // Just verify the hook works in an environment with ResizeObserver
-    const { result, unmount } = renderHook(() => useEngine());
-
-    expect(result.current.engine).toBeInstanceOf(Engine);
-
-    // Cleanup should not throw
-    expect(() => unmount()).not.toThrow();
-  });
-
-  it("should handle missing ResizeObserver gracefully", () => {
-    // Temporarily remove ResizeObserver
-    const originalResizeObserver = global.ResizeObserver;
-    // @ts-expect-error - testing missing global
-    delete global.ResizeObserver;
-
-    // This should not throw even without ResizeObserver
-    // (the hook should handle this gracefully)
-    let error: Error | null = null;
-    try {
-      const { unmount } = renderHook(() => useEngine());
-      unmount();
-    } catch (e) {
-      error = e as Error;
-    }
-
-    // Restore
-    global.ResizeObserver = originalResizeObserver;
-
-    // We expect it might fail, but that's okay - the test documents the behavior
-    // In production, ResizeObserver is always available
-    expect(error === null || error.message.includes("ResizeObserver")).toBe(
-      true,
-    );
-  });
-});
-
-// =============================================================================
 // EVENT HANDLER TESTS
 // =============================================================================
 
 describe("useEngine - Event Handler", () => {
+  it("does not claim the engine handler when no onEvent is given", () => {
+    const setHandler = vi.spyOn(Engine.prototype, "setHandler");
+
+    renderHook(() => useEngine());
+
+    // The Engine has a single handler slot. In the real component SensorManager
+    // owns it (SensorManager.tsx:96) and useEngine is called with no options,
+    // so installing a handler here can only overwrite the real one — whichever
+    // effect happens to run last wins.
+    expect(setHandler).not.toHaveBeenCalled();
+    setHandler.mockRestore();
+  });
+
   it("should accept an onEvent callback", () => {
     const onEvent = vi.fn();
     const { result } = renderHook(() => useEngine({ onEvent }));
