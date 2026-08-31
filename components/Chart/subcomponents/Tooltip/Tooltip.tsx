@@ -206,7 +206,7 @@ function TooltipSeriesItem<T>({
           backgroundColor: series.color,
         }}
       />
-      <Text style={{ color: "var(--text-secondary)" }} variant="body">
+      <Text style={{ color: "var(--muted-foreground)" }} variant="body">
         {series.label}:
       </Text>
       <Text as="p" variant="h6">

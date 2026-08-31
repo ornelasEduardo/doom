@@ -3,9 +3,9 @@
 @layer doom.components {
   .axes {
     pointer-events: none;
-    font-family: var(
-      --font-montserrat
-    ); /* Keep this as it matches font-bold usually */
+    /* The semantic token, not the raw family the host app supplies via
+     * next/font — --font-montserrat is not defined by the design system. */
+    font-family: var(--font-heading);
     font-size: var(--text-xs);
 
     :global(.domain) {

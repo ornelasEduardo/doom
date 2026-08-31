@@ -179,7 +179,7 @@ export const CustomRender1: Story = {
             <Text style={{ marginBottom: 4 }} variant="h6">
               {data && data.data.name}
             </Text>
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+            <Text style={{ color: "var(--muted-foreground)" }} variant="body">
               Personnel:{" "}
               <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
                 {data && data.value}
@@ -370,7 +370,7 @@ export const CustomRender2: Story = {
             <Text style={{ marginBottom: 4 }} variant="h6">
               {data && data.id}
             </Text>
-            <Text style={{ color: "var(--text-secondary)" }} variant="body">
+            <Text style={{ color: "var(--muted-foreground)" }} variant="body">
               Value:{" "}
               <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
                 {data && data.value}
@@ -452,8 +452,8 @@ export const CustomRender2: Story = {
           .attr("fill", (_: any, i: number) => colors[i % colors.length])
           .attr("stroke", "var(--card-bg)")
           .attr("fill-opacity", 0.8)
-          .style("rx", "var(--radius)")
-          .style("ry", "var(--radius)");
+          .style("rx", "var(--radius-md)")
+          .style("ry", "var(--radius-md)");
 
         nodes
           .append("text")
@@ -545,7 +545,7 @@ export const IntegratedChart: Story = {
           gap={0}
           style={{ marginBottom: "-1.5rem" }}
         >
-          <Text style={{ color: "var(--text-secondary)" }} variant="h6">
+          <Text style={{ color: "var(--muted-foreground)" }} variant="h6">
             Total Balance
           </Text>
           <Flex align="center" gap={2}>
@@ -657,14 +657,14 @@ export const DetailedTooltip: Story = {
           <Card style={{ padding: "12px", minWidth: "200px" }}>
             <div
               style={{
-                borderBottom: "1px solid var(--border-width)",
+                borderBottom: "1px solid var(--card-border)",
                 paddingBottom: "8px",
                 marginBottom: "8px",
               }}
             >
               <Text
                 style={{
-                  color: "var(--text-secondary)",
+                  color: "var(--muted-foreground)",
                   textTransform: "uppercase",
                 }}
                 variant="h6"
@@ -682,7 +682,10 @@ export const DetailedTooltip: Story = {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                <Text
+                  style={{ color: "var(--muted-foreground)" }}
+                  variant="body"
+                >
                   Revenue
                 </Text>
                 <Text style={{ fontWeight: 800 }} variant="h6">
@@ -696,7 +699,10 @@ export const DetailedTooltip: Story = {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                <Text
+                  style={{ color: "var(--muted-foreground)" }}
+                  variant="body"
+                >
                   Active Users
                 </Text>
                 <Text variant="h6">{data.users}</Text>
@@ -708,7 +714,10 @@ export const DetailedTooltip: Story = {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ color: "var(--text-secondary)" }} variant="body">
+                <Text
+                  style={{ color: "var(--muted-foreground)" }}
+                  variant="body"
+                >
                   Churn Rate
                 </Text>
                 <Text style={{ color: "var(--error)" }} variant="h6">
