@@ -435,6 +435,50 @@ describe("Chart", () => {
     });
   });
 
+  describe("documented examples", () => {
+    it("renders the composition example from chart.md", () => {
+      // Kept in step with skills/doom-design-system/components/chart.md. The
+      // previously documented form passed `type`/`color` to Chart.Plot, which
+      // accepts neither, and rendered an empty plot.
+      const rows = [
+        { label: "Jan", value: 10 },
+        { label: "Feb", value: 20 },
+      ];
+
+      const { container } = render(
+        <Chart.Root
+          d3Config={{ grid: true }}
+          data={rows}
+          type="line"
+          x="label"
+          y="value"
+        >
+          <Chart.Header subtitle="Last 12 months" title="Sales">
+            <Chart.Legend />
+          </Chart.Header>
+          <Chart.Plot>
+            <Chart.Grid />
+            <Chart.Cursor />
+            <Chart.Series type="area" x="label" y="value" />
+            <Chart.Axis />
+          </Chart.Plot>
+          <Chart.Footer>Custom footer content</Chart.Footer>
+        </Chart.Root>,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(container.querySelectorAll("path").length).toBeGreaterThan(0);
+      expect(container.querySelector("[data-chart-grid]")).toBeInTheDocument();
+      expect(
+        container.querySelector('[aria-label="X Axis"]'),
+      ).toBeInTheDocument();
+      expect(container.textContent).toContain("Sales");
+      expect(container.textContent).toContain("Custom footer content");
+    });
+  });
+
   describe("extension API", () => {
     it("keeps stable sensors registered across re-renders", () => {
       const sensor: Sensor = vi.fn();
