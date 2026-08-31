@@ -235,6 +235,42 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("per-frame cost", () => {
+    it("does not rebuild the spatial index on every pointer move", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(<Chart data={data} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        // Spy only after the chart has settled, so this counts rebuilds
+        // caused by interaction rather than by mounting.
+        const updateData = vi.spyOn(Engine.prototype, "updateData");
+        const setContainer = vi.spyOn(Engine.prototype, "setContainer");
+
+        for (let i = 0; i < 5; i += 1) {
+          movePointer(root, 60 + i, 150, { pointerType: "mouse" });
+        }
+
+        // Hovering writes an interaction, which notifies the store. Rebuilding
+        // the quadtree and re-reading layout from that notification makes every
+        // hover frame O(n) in the data plus two forced layouts.
+        expect(updateData).not.toHaveBeenCalled();
+        expect(setContainer).not.toHaveBeenCalled();
+
+        updateData.mockRestore();
+        setContainer.mockRestore();
+      } finally {
+        geometry.restore();
+      }
+    });
+  });
+
   describe("extension API", () => {
     it("drives a custom sensor through the real event pipeline", () => {
       const seen: Array<{ action: string; label?: string }> = [];

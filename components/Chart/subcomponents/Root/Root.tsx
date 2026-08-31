@@ -243,6 +243,12 @@ export function Root<T>({
     isMobile,
   ]);
 
+  // The spatial index and the container measurement depend only on the data,
+  // scales, dimensions and registered series. The store also notifies on every
+  // hover, so without this guard each pointer frame rebuilt the whole quadtree
+  // and forced two layout reads — O(n) in the data, 60 times a second.
+  const indexInputsRef = useRef<unknown[] | null>(null);
+
   useEffect(() => {
     return chartStore.subscribe(() => {
       const state = chartStore.getState();
@@ -252,6 +258,17 @@ export function Root<T>({
 
       const { data, scales, dimensions, processedSeries } = state;
       const { x: xScale, y: yScale } = scales;
+
+      const inputs = [data, xScale, yScale, dimensions, processedSeries];
+      const previous = indexInputsRef.current;
+      if (
+        previous &&
+        previous.length === inputs.length &&
+        previous.every((value, i) => value === inputs[i])
+      ) {
+        return;
+      }
+      indexInputsRef.current = inputs;
 
       if (containerRef.current) {
         // In composition mode wrapperRef is null; use the SVG registered by Plot.tsx.
