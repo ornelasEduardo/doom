@@ -339,6 +339,26 @@ describe("Chart in a real browser", () => {
     expect(box.left).toBeGreaterThanOrEqual(-1);
   });
 
+  it("keeps the full tick budget at ordinary dashboard sizes", async () => {
+    // The complementary half of the responsive test below. Switching isMobile
+    // from a viewport query to a container width silently pushed ordinary
+    // 500px charts into the compact layout until the threshold was moved onto
+    // the system scale.
+    const { host } = await mount(
+      <Chart
+        d3Config={{ grid: true }}
+        data={data}
+        style={{ width: 500, height: 300 }}
+        type="line"
+        x="label"
+        y="value"
+      />,
+    );
+
+    const yTicks = host.querySelectorAll('[aria-label="Y Axis"] .tick');
+    expect(yTicks.length).toBeGreaterThan(3);
+  });
+
   it("adapts to its own width, not the window's", async () => {
     // A narrow chart in a wide viewport. Reading window.matchMedia says
     // "desktop" and the chart keeps its full-size tick budget, crowding a

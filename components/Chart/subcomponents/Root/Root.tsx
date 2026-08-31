@@ -157,7 +157,15 @@ function RootPlot({
  * rows also catches `d => d[field]`, whose source text never changes. A pair of
  * accessors that agree on every sampled row is treated as unchanged.
  */
-const MOBILE_WIDTH = 600;
+/**
+ * Below this the chart switches to its compact treatment.
+ *
+ * The system's `xs` breakpoint. The previous 600px was a viewport query and is
+ * not on the system scale; reusing that number against a container width would
+ * have pushed ordinary 500px dashboard charts into the compact layout they did
+ * not previously get.
+ */
+const COMPACT_WIDTH = 480;
 
 const accessorSignature = (accessor: unknown, data: any[]): string => {
   if (accessor == null) {
@@ -223,7 +231,7 @@ export function Root<T>({
   const chartWidth = chartStore.useStore(
     (state: any) => state.dimensions.width,
   ) as number;
-  const isMobile = chartWidth > 0 && chartWidth < MOBILE_WIDTH;
+  const isMobile = chartWidth > 0 && chartWidth < COMPACT_WIDTH;
 
   // Tooltip edge detection converts its anchor into absolute coordinates using
   // this rect. wrapperRef is only attached in the auto-layout branch, so in
