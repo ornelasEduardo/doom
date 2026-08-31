@@ -15,6 +15,7 @@ export const DefaultTooltip = (data: any) => {
   return (
     <Card style={{ padding: "8px 12px", minWidth: 120, pointerEvents: "none" }}>
       <Text
+        as="p"
         style={{ marginBottom: 4, color: "var(--text-secondary)" }}
         variant="h6"
       >

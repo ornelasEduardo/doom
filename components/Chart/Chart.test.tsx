@@ -235,6 +235,34 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("document structure", () => {
+    it("does not inject headings into the page outline while hovering", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(<Chart data={data} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+
+        const tooltip = container.querySelector("[data-chart-tooltip]");
+        expect(tooltip?.textContent).toContain("A");
+
+        // A tooltip is transient annotation, not a document section. Emitting
+        // real <h4>/<h6> puts a new entry in the screen reader's heading
+        // outline on every hover.
+        expect(tooltip!.querySelectorAll("h1,h2,h3,h4,h5,h6")).toHaveLength(0);
+      } finally {
+        geometry.restore();
+      }
+    });
+  });
+
   describe("stale interaction state", () => {
     it("clears a hover when the data changes underneath it", () => {
       const before = [
@@ -260,9 +288,7 @@ describe("Chart", () => {
         geometry.attach(root);
 
         const tooltipText = () =>
-          Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"))
-            .map((h) => h.textContent)
-            .join("|");
+          container.querySelector("[data-chart-tooltip]")?.textContent ?? "";
 
         movePointer(root, 60, 150, { pointerType: "mouse" });
         expect(tooltipText()).toContain("A");
@@ -931,10 +957,8 @@ describe("Chart", () => {
         expect.objectContaining({ label: "A" }),
       );
       expect(
-        Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6")).some((h) =>
-          h.textContent?.includes("A"),
-        ),
-      ).toBe(true);
+        container.querySelector("[data-chart-tooltip]")?.textContent ?? "",
+      ).toContain("A");
     }
 
     beforeEach(() => {
@@ -1092,9 +1116,7 @@ describe("Chart", () => {
 
     /** Whatever the tooltip is currently showing, or "" when it is hidden. */
     function tooltipText(container: HTMLElement) {
-      return Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"))
-        .map((h) => h.textContent)
-        .join("|");
+      return container.querySelector("[data-chart-tooltip]")?.textContent ?? "";
     }
 
     it("shows the point under the pointer, not always the first one", () => {
@@ -1169,9 +1191,9 @@ describe("Chart", () => {
     }
 
     function tooltipShowsA(container: HTMLElement) {
-      return Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6")).some(
-        (h) => h.textContent?.includes("A"),
-      );
+      return (
+        container.querySelector("[data-chart-tooltip]")?.textContent ?? ""
+      ).includes("A");
     }
 
     it("hover works after the page scrolls while nothing is hovered", () => {

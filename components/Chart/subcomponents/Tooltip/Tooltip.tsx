@@ -72,6 +72,7 @@ export function Tooltip<T>({
   return (
     <div
       ref={tooltipRef}
+      data-chart-tooltip
       className={styles.tooltipWrapper}
       style={{
         pointerEvents: "none",
@@ -127,7 +128,7 @@ function DefaultTooltipContent<T>({
     <Card
       className={clsx(styles.tooltipCard, variant === "solid" && styles.solid)}
     >
-      <Text className={styles.tooltipLabel} variant="h6">
+      <Text as="p" className={styles.tooltipLabel} variant="h6">
         {xLabel}
       </Text>
 
@@ -150,7 +151,7 @@ function DefaultTooltipContent<T>({
           ))}
         </div>
       ) : (
-        <Text variant="h4">
+        <Text as="p" variant="h4">
           {y ? String(resolveAccessor(y as any)(activeData)) : ""}
         </Text>
       )}
@@ -206,7 +207,9 @@ function TooltipSeriesItem<T>({
       <Text style={{ color: "var(--text-secondary)" }} variant="body">
         {series.label}:
       </Text>
-      <Text variant="h6">{formattedVal}</Text>
+      <Text as="p" variant="h6">
+        {formattedVal}
+      </Text>
     </div>
   );
 }
