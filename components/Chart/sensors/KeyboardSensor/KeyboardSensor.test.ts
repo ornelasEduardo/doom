@@ -30,7 +30,9 @@ const createMockContext = (): SensorContext => {
             x: (v: number) => v * 10,
             y: (v: number) => 100 - v,
           },
-          config: { x: "x", y: "y" },
+          config: {},
+          x: "x",
+          y: "y",
           dimensions: {
             margin: { left: 0, top: 0 },
           },
@@ -130,6 +132,27 @@ describe("KeyboardSensor (Engine)", () => {
 
     expect(ctx.removeInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
+    );
+  });
+
+  it("should report the focused point's real scale coordinate", () => {
+    const ctx = createMockContext();
+    const sensor = KeyboardSensor();
+
+    // Two presses lands on p1 { x: 1, y: 20 }. With scales x*10 and 100-y that
+    // is (10, 80). A sensor that fails to resolve the accessors reports (0, 0),
+    // which pins the cursor line to the plot's top-left corner for every point.
+    sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
+    sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
+
+    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        target: expect.objectContaining({
+          dataIndex: 1,
+          coordinate: { x: 10, y: 80 },
+        }),
+      }),
     );
   });
 

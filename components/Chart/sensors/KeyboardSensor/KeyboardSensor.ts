@@ -22,7 +22,7 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
     const ctx = getChartContext();
     const { chartStore } = ctx;
     const state = chartStore.getState();
-    const { data, scales, config } = state;
+    const { data, scales, x: xAccessor, y: yAccessor } = state;
 
     if (!data || data.length === 0 || !scales.x) {
       return;
@@ -49,10 +49,11 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
       const d = data[focusedIndex];
       const { x: xScale, y: yScale } = scales;
 
-      // Resolve coordinates
-      // TODO: Accessor resolution should be centralized or consistent with Root
-      const xAcc = (config as any).x || ((v: any) => v[0]); // fallback
-      const yAcc = (config as any).y || ((v: any) => v[1]);
+      // Accessors live on the store root (createChartStore takes them as
+      // separate params), not on `config` — reading them from `config` yields
+      // undefined and silently collapses every point to (0, 0).
+      const xAcc = xAccessor ?? ((v: any) => v[0]);
+      const yAcc = yAccessor ?? ((v: any) => v[1]);
 
       const getX = resolveAccessor(xAcc);
       const getY = resolveAccessor(yAcc);

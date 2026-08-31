@@ -213,6 +213,23 @@ describe("InteractionLayer", () => {
       expect(mockEngineInput).toHaveBeenCalled();
     });
 
+    it("should forward Escape so keyboard users can dismiss the tooltip", () => {
+      render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
+      );
+
+      const container = document.querySelector("[data-chart-container]")!;
+      fireEvent.keyDown(container, { key: "Escape" });
+
+      // KeyboardSensor implements Escape-to-dismiss, but it is unreachable
+      // unless the key survives this whitelist. WCAG 2.1 AAA 1.4.13 requires
+      // a dismiss mechanism for content shown on hover or focus.
+      expect(mockCreateKeySignal).toHaveBeenCalled();
+      expect(mockEngineInput).toHaveBeenCalled();
+    });
+
     it("should ignore non-navigation keyboard events", () => {
       render(
         <ContainerWrapper>
@@ -233,6 +250,39 @@ describe("InteractionLayer", () => {
   // ===========================================================================
 
   describe("Throttling", () => {
+    it("coalesces pointermove events into one engine input per frame", () => {
+      // Hold the frame instead of running it, so we can observe what is queued.
+      let frameCallback: FrameRequestCallback | null = null;
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        frameCallback = cb;
+        return 1;
+      });
+
+      render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
+      );
+
+      const container = document.querySelector("[data-chart-container]")!;
+
+      fireEvent.pointerMove(container, { clientX: 10, clientY: 10 });
+      fireEvent.pointerMove(container, { clientX: 20, clientY: 20 });
+      fireEvent.pointerMove(container, { clientX: 30, clientY: 30 });
+
+      // All three share one frame, so nothing has reached the engine yet.
+      expect(mockEngineInput).not.toHaveBeenCalled();
+
+      frameCallback!(0);
+
+      // One dispatch for the whole frame, carrying the most recent position.
+      expect(mockEngineInput).toHaveBeenCalledTimes(1);
+      const dispatched =
+        mockCreateSignal.mock.calls[mockCreateSignal.mock.calls.length - 1][0];
+      expect(dispatched.clientX).toBe(30);
+      expect(dispatched.clientY).toBe(30);
+    });
+
     it("should process state-change events immediately (not throttled)", () => {
       // Reset RAF mock to NOT execute immediately
       vi.restoreAllMocks();

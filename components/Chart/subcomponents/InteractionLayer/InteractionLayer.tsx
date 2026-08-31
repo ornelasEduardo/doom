@@ -90,6 +90,8 @@ export const InteractionLayer: React.FC = () => {
           "ArrowDown",
           "Enter",
           " ",
+          // Escape reaches KeyboardSensor, which clears the active interaction.
+          "Escape",
         ].includes(e.key)
       ) {
         // Create and send keyboard signal
