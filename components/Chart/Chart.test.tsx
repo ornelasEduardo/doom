@@ -14,6 +14,7 @@ import {
 
 import { Chart } from "./Chart";
 import { Engine } from "./engine/Engine";
+import { InputAction, InteractionChannel, type Sensor } from "./index";
 import {
   leavePointer,
   movePointer,
@@ -232,6 +233,50 @@ describe("Chart", () => {
     });
 
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
+  });
+
+  describe("extension API", () => {
+    it("drives a custom sensor through the real event pipeline", () => {
+      const seen: Array<{ action: string; label?: string }> = [];
+
+      const RecordingSensor: Sensor = (event, ctx) => {
+        seen.push({
+          action: String(event.signal.action),
+          label: (event.primaryCandidate?.data as any)?.label,
+        });
+        if (
+          event.signal.action === InputAction.MOVE &&
+          event.primaryCandidate
+        ) {
+          ctx.upsertInteraction(InteractionChannel.PRIMARY_HOVER, {
+            targets: [event.primaryCandidate],
+          } as any);
+        }
+      };
+
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(
+          <Chart data={data} sensors={[RecordingSensor]} x={x} y={y} />,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+
+        // A consumer-supplied sensor must receive real EngineEvents with
+        // resolved hit-test candidates — that is the whole extension contract.
+        expect(seen.length).toBeGreaterThan(0);
+        expect(seen.some((e) => e.label === "A")).toBe(true);
+      } finally {
+        geometry.restore();
+      }
+    });
   });
 
   describe("composition API", () => {
