@@ -15,7 +15,6 @@ import { ChartContext } from "../../context";
 import { useChartBehaviors } from "../../hooks/useChartBehaviors";
 import { useEngine } from "../../hooks/useEngine";
 import { SensorManager } from "../../sensors/SensorManager/SensorManager";
-import { EventsProvider } from "../../state/EventContext";
 import {
   createChartStore,
   Store,
@@ -611,62 +610,60 @@ export function Root<T>({
 
   return (
     <ChartContext.Provider value={value as any}>
-      <EventsProvider>
-        <BehaviorManager behaviors={behaviors as any} value={value as any} />
-        <div
-          ref={containerRef}
-          data-chart-container
-          aria-describedby={summaryId}
-          aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
-          className={clsx(
-            styles.chartContainer,
-            variant === "solid" && styles.solid,
-            flat && styles.flat,
-            isMobile && styles.mobile,
-            !withFrame && styles.frameless,
-            className,
-          )}
-          role="region"
-          style={style}
-          tabIndex={0}
-        >
-          <InteractionLayer />
-          <SensorManager sensors={sensors as any} />
-          <Announcer summaryId={summaryId} />
+      <BehaviorManager behaviors={behaviors as any} value={value as any} />
+      <div
+        ref={containerRef}
+        data-chart-container
+        aria-describedby={summaryId}
+        aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
+        className={clsx(
+          styles.chartContainer,
+          variant === "solid" && styles.solid,
+          flat && styles.flat,
+          isMobile && styles.mobile,
+          !withFrame && styles.frameless,
+          className,
+        )}
+        role="region"
+        style={style}
+        tabIndex={0}
+      >
+        <InteractionLayer />
+        <SensorManager sensors={sensors as any} />
+        <Announcer summaryId={summaryId} />
 
-          {isAutoLayout && (title || subtitle) && (
-            <Header subtitle={subtitle} title={title} />
-          )}
+        {isAutoLayout && (title || subtitle) && (
+          <Header subtitle={subtitle} title={title} />
+        )}
 
-          {isAutoLayout ? (
-            <div
-              ref={wrapperRef}
-              className={styles.responsiveWrapper}
-              style={{ flex: 1, position: "relative" }}
-            >
-              <RootPlot chartStore={chartStore}>
-                {!hasGrid && config.grid !== false && <Grid />}
+        {isAutoLayout ? (
+          <div
+            ref={wrapperRef}
+            className={styles.responsiveWrapper}
+            style={{ flex: 1, position: "relative" }}
+          >
+            <RootPlot chartStore={chartStore}>
+              {!hasGrid && config.grid !== false && <Grid />}
 
-                {!hasCursor && !render && <CursorWrapper mode="line" />}
+              {!hasCursor && !render && <CursorWrapper mode="line" />}
 
-                {children}
+              {children}
 
-                {!hasAxis && config.showAxes !== false && <Axis />}
+              {!hasAxis && config.showAxes !== false && <Axis />}
 
-                {showShorthand && (
-                  <Series render={render} type={type} x={x} y={y} />
-                )}
-              </RootPlot>
-            </div>
-          ) : (
-            children
-          )}
+              {showShorthand && (
+                <Series render={render} type={type} x={x} y={y} />
+              )}
+            </RootPlot>
+          </div>
+        ) : (
+          children
+        )}
 
-          {withLegend && <Legend />}
+        {withLegend && <Legend />}
 
-          <Tooltip containerRef={wrapperRef} />
-        </div>
-      </EventsProvider>
+        <Tooltip containerRef={wrapperRef} />
+      </div>
     </ChartContext.Provider>
   );
 }
