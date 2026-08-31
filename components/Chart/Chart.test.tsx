@@ -235,6 +235,38 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("hover marker constancy", () => {
+    it("reuses the marker element across frames on the same point", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(
+          <Chart data={data} type="line" x={x} y={y} />,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+        const first = container.querySelector("circle");
+        expect(first).toBeTruthy();
+
+        movePointer(root, 61, 151, { pointerType: "mouse" });
+        const second = container.querySelector("circle");
+
+        // Keying the d3 join on Math.random() makes every datum look new, so
+        // the marker is torn down and re-appended on every frame — no object
+        // constancy, and any transition restarts each time.
+        expect(second).toBe(first);
+      } finally {
+        geometry.restore();
+      }
+    });
+  });
+
   describe("axis ticks", () => {
     it("caps tick labels on a categorical x-axis", () => {
       const many = Array.from({ length: 30 }, (_, i) => ({

@@ -53,9 +53,26 @@ export const Dim = <T = unknown>(options: DimOptions<T> = {}): Behavior => {
 
     const { g } = ctx;
 
+    // The store notifies on every pointer frame. Re-querying the plot subtree
+    // and rewriting inline opacity on every element each time is a full DOM
+    // sweep per frame, so skip it unless the active set or the data changed.
+    let lastKey: string | null = null;
+    let lastData: unknown = null;
+
     const update = () => {
       const interaction = getInteraction(on) as any;
       const targets = (interaction?.targets as InteractionTarget[]) || [];
+      const currentData = ctx.chartStore.getState().data;
+      const key = targets
+        .map((t: any) => `${t?.seriesId ?? ""}:${t?.dataIndex ?? ""}`)
+        .join("|");
+
+      if (key === lastKey && currentData === lastData) {
+        return;
+      }
+      lastKey = key;
+      lastData = currentData;
+
       const activeData = new Set(targets.map((t) => t.data));
       const hasActive = activeData.size > 0;
 
