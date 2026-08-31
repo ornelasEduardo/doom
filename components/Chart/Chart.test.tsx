@@ -14,7 +14,12 @@ import {
 
 import { Chart } from "./Chart";
 import { Engine } from "./engine/Engine";
-import { InputAction, InteractionChannel, type Sensor } from "./index";
+import {
+  type Behavior,
+  InputAction,
+  InteractionChannel,
+  type Sensor,
+} from "./index";
 import {
   leavePointer,
   movePointer,
@@ -517,6 +522,35 @@ describe("Chart", () => {
   });
 
   describe("extension API", () => {
+    it("keeps stable behaviors attached across re-renders", () => {
+      const attach = vi.fn();
+      const detach = vi.fn();
+      const behavior: Behavior = () => {
+        attach();
+        return () => detach();
+      };
+
+      const { rerender } = render(
+        <Chart behaviors={[behavior]} data={data} x={x} y={y} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const attachedOnce = attach.mock.calls.length;
+      expect(attachedOnce).toBeGreaterThan(0);
+
+      // Same behavior, fresh array literal. Keying off array identity tears
+      // down and re-appends every d3 layer on any unrelated parent render.
+      rerender(<Chart behaviors={[behavior]} data={data} x={x} y={y} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(detach).not.toHaveBeenCalled();
+      expect(attach.mock.calls.length).toBe(attachedOnce);
+    });
+
     it("keeps stable sensors registered across re-renders", () => {
       const sensor: Sensor = vi.fn();
 
