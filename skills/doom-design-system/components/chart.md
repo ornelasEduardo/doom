@@ -165,6 +165,11 @@ Key operations:
 | `"tooltip-config"` | `InteractionChannel.TOOLTIP_CONFIG` | Tooltip behavior |
 | `"crosshair"` | `InteractionChannel.CROSSHAIR` | Custom crosshair state |
 
+> **Channel payloads are not uniform.** `primary-hover` and `drag` carry
+> `targets`, while `selection` carries `selection` — a plain array of the
+> selected data objects, plus `mode`. Read the channel you are writing a
+> behavior against rather than assuming a shared shape.
+
 ## Series System
 
 Each series type registers itself with the store and gets an automatic interaction strategy.
