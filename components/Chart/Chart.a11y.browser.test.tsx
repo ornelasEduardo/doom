@@ -5,7 +5,21 @@
  * assertions. This runs axe over the real rendered output so the whole
  * ruleset is enforced rather than the handful of rules someone remembered.
  *
- * The project standard is WCAG 2.1 AAA, so the AAA tags are included.
+ * Enforced at AA, strictly and with no exceptions.
+ *
+ * AAA is a deliberate deferral, not an oversight. Running the AAA ruleset
+ * across every theme surfaced two contrast gaps, both palette decisions rather
+ * than component defects:
+ *
+ *   - doom and vigilante: the chart subtitle renders --muted-foreground at 12px
+ *     and measures 6.96:1 and 6.5:1. AAA (1.4.6) wants 7:1.
+ *   - solid variant on default and captain: the legend label is black on the
+ *     solid background (#a855f7) at 5.3:1. White on that purple is roughly
+ *     3.4:1, so no text colour clears 7:1 on it — the background itself would
+ *     have to change.
+ *
+ * Both need a palette pass rather than a code change, so they are recorded here
+ * for that work rather than papered over with an allowlist.
  */
 import "../../styles/globals.scss";
 
@@ -43,26 +57,6 @@ afterEach(() => {
 
 const THEMES = ["default", "doom", "captain", "vigilante"] as const;
 
-/**
- * Known WCAG AAA contrast gaps, measured rather than assumed. These are design
- * decisions about the palette, not component defects, so they are recorded
- * exactly — a new violation of any kind still fails the assertion.
- *
- *  - doom / vigilante: the chart subtitle renders in --muted-foreground at
- *    12px and measures 6.96:1 and 6.5:1 against the theme background. AAA
- *    (1.4.6) wants 7:1. A small token nudge would clear it.
- *  - solid variant: the legend label is black on the solid background
- *    (#a855f7 in default). That measures 5.3:1, and white on the same purple
- *    is roughly 3.4:1 — no text colour clears 7:1 on it. Resolving this needs
- *    a darker solid background or larger legend text, both design calls.
- */
-const KNOWN_AAA_GAPS: Record<string, string[]> = {
-  doom: ["color-contrast-enhanced"],
-  vigilante: ["color-contrast-enhanced"],
-  "solid:default": ["color-contrast-enhanced"],
-  "solid:captain": ["color-contrast-enhanced"],
-};
-
 const mount = async (
   ui: React.ReactElement,
   theme: (typeof THEMES)[number] = "default",
@@ -85,7 +79,7 @@ const audit = async (host: HTMLElement) => {
   const results = await axe.run(host, {
     runOnly: {
       type: "tag",
-      values: ["wcag2a", "wcag2aa", "wcag2aaa", "wcag21a", "wcag21aa"],
+      values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
     },
   });
   return results.violations.map((v) => v.id).sort();
@@ -218,12 +212,12 @@ describe("Chart accessibility (axe)", () => {
         theme,
       );
 
-      expect(await audit(host)).toEqual(KNOWN_AAA_GAPS[theme] ?? []);
+      expect(await audit(host)).toEqual([]);
     },
   );
 
   it.each(THEMES)(
-    "has only the known contrast gap in the %s theme, solid variant",
+    "has no violations in the %s theme, solid variant",
     async (theme) => {
       const host = await mount(
         <Chart
@@ -239,7 +233,7 @@ describe("Chart accessibility (axe)", () => {
         theme,
       );
 
-      expect(await audit(host)).toEqual(KNOWN_AAA_GAPS[`solid:${theme}`] ?? []);
+      expect(await audit(host)).toEqual([]);
     },
   );
 });

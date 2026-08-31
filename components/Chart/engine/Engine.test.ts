@@ -389,6 +389,46 @@ describe("Engine", () => {
     });
   });
 
+  describe("dispose and activate", () => {
+    it("restores full function, not just the disposed flag", () => {
+      engine.updateData(createMockPoints(5));
+      engine.setHandler(handler);
+
+      engine.dispose();
+      engine.activate();
+
+      engine.input(
+        createMockSignal({ x: 50, y: 50, action: InputAction.START }),
+      );
+
+      // activate() exists so a StrictMode or Offscreen teardown is reversible.
+      // Restoring only the flag leaves an engine that accepts input and then
+      // finds nothing, because dispose() also dropped the handler and the
+      // spatial index — a silently dead chart rather than an obviously broken
+      // one.
+      expect(handler).toHaveBeenCalled();
+      const event = handler.mock.calls[0][0] as EngineEvent;
+      expect(event.candidates.length).toBeGreaterThan(0);
+    });
+
+    it("still cancels scheduled work when disposed", async () => {
+      const cancel = vi.spyOn(globalThis, "cancelAnimationFrame");
+      engine.setHandler(handler);
+      // A MOVE is VISUAL priority, so it queues on an animation frame.
+      engine.input(createMockSignal({ x: 0, y: 0, action: InputAction.MOVE }));
+
+      engine.dispose();
+
+      // The pending frame must be cancelled rather than dispatching into a
+      // torn-down chart, and no dispatch may happen afterwards.
+      expect(cancel).toHaveBeenCalled();
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      expect(handler).not.toHaveBeenCalled();
+
+      cancel.mockRestore();
+    });
+  });
+
   describe("Keyboard signals", () => {
     it("does not run a spatial query for key signals", () => {
       engine.updateData(createMockPoints(5));

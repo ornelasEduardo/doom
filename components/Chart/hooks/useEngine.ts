@@ -128,7 +128,14 @@ export function useEngine<T = unknown>(
   // =========================================================================
 
   useEffect(() => {
-    if (!data || !getX || !getY) {
+    // Only manage the index when this hook was actually given data to index.
+    // Clearing otherwise discards whatever another owner put there — in the
+    // Chart that is Root, which builds points from the registered series.
+    if (!data) {
+      return;
+    }
+
+    if (!getX || !getY) {
       engine.updateData([]);
       return;
     }

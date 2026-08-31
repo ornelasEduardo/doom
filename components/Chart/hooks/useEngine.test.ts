@@ -106,6 +106,43 @@ describe("useEngine - Data Sync", () => {
 // EVENT HANDLER TESTS
 // =============================================================================
 
+describe("useEngine - Data Sync guards", () => {
+  it("leaves an externally populated index alone when given no data", () => {
+    const points = [
+      { x: 10, y: 10, data: { id: "a" }, seriesId: "s", dataIndex: 0 },
+    ];
+
+    // Accessors supplied inline, data arriving later — the shape a caller
+    // naturally writes. Each render hands the effect new accessor identities.
+    const { result, rerender } = renderHook(({ getX }) => useEngine({ getX }), {
+      initialProps: { getX: (d: any) => d.x },
+    });
+
+    // Something else owns the index — in the Chart, that is Root.
+    result.current.engine.updateData(points);
+    result.current.engine.setHandler(vi.fn());
+
+    rerender({ getX: (d: any) => d.x });
+
+    const handler = vi.fn();
+    result.current.engine.setHandler(handler);
+    result.current.engine.input({
+      id: 1,
+      action: InputAction.START,
+      source: "mouse" as any,
+      x: 10,
+      y: 10,
+      timestamp: 0,
+      userId: "local",
+    });
+
+    // Clearing an index the hook never populated throws away another owner's
+    // data on every render.
+    const event = handler.mock.calls[0][0] as any;
+    expect(event.candidates.length).toBeGreaterThan(0);
+  });
+});
+
 describe("useEngine - Event Handler", () => {
   it("does not claim the engine handler when no onEvent is given", () => {
     const setHandler = vi.spyOn(Engine.prototype, "setHandler");

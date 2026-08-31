@@ -123,8 +123,11 @@ export class Engine<T = unknown> {
     }
     this.disposed = true;
 
+    // Release scheduled work only. The handler and the spatial index are not
+    // resources to reclaim — the engine is per-instance and becomes garbage
+    // with its owner on a real unmount — and dropping them is what made
+    // activate() insufficient after a StrictMode or Offscreen teardown.
     this.scheduler.dispose();
-    this.spatialMap.clear();
   }
 
   // ===========================================================================

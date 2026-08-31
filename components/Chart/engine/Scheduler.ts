@@ -152,6 +152,5 @@ export class Scheduler<T = unknown> {
     }
     this.visualQueue = [];
     this.idleQueue = [];
-    this.handler = null;
   }
 }
