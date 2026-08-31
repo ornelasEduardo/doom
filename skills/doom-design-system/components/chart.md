@@ -174,10 +174,23 @@ hit-testing. Scales are still derived from the root `data`, so a series whose
 values fall outside that domain will render off-plot — give `Chart.Root` a
 dataset that spans the full range.
 
-Series that do not name a `color` are assigned one from a theme-token palette
-(`--primary`, `--secondary`, `--accent`, `--success`, `--warning`, `--error`) in
-registration order, so sibling series are distinguishable and re-theme with the
-rest of the system.
+Series that do not name a `color` are assigned one from the categorical data
+palette in registration order, so sibling series are distinguishable and
+re-theme with the rest of the system:
+
+| Token | Default |
+|-------|---------|
+| `--chart-series-1` | `var(--primary)` |
+| `--chart-series-2` | `var(--accent)` |
+| `--chart-series-3` | `var(--success)` |
+| `--chart-series-4` | `var(--warning)` |
+| `--chart-series-5` | `var(--error)` |
+| `--chart-series-6` | `var(--secondary)` |
+
+These are deliberately separate from the semantic UI tokens: `variant="solid"`
+remaps `--primary` to the axis colour and `--secondary` to near-background, so a
+palette built on those would render two series unreadable. Override
+`--chart-series-*` to brand the palette.
 
 
 

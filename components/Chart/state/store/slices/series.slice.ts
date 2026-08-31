@@ -22,12 +22,12 @@ export const getSeriesInitialState = (): SeriesSlice => ({
  * rest of the system. Themes own the contrast relationship between these.
  */
 export const SERIES_PALETTE = [
-  "var(--primary)",
-  "var(--secondary)",
-  "var(--accent)",
-  "var(--success)",
-  "var(--warning)",
-  "var(--error)",
+  "var(--chart-series-1)",
+  "var(--chart-series-2)",
+  "var(--chart-series-3)",
+  "var(--chart-series-4)",
+  "var(--chart-series-5)",
+  "var(--chart-series-6)",
 ];
 
 export const hydrateSeries = (

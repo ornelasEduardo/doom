@@ -7,6 +7,21 @@
 @use "primitives";
 
 :root {
+  /* ---------------------------------------------------------------------
+   * Chart series palette
+   *
+   * Categorical data colours need their own tokens. Borrowing semantic UI
+   * tokens breaks under variants that remap them — variant="solid" turns
+   * --primary into --solid-fg (the axis colour) and --secondary into
+   * near-background, which silently makes two series unreadable.
+   * ------------------------------------------------------------------- */
+  --chart-series-1: var(--primary);
+  --chart-series-2: var(--accent);
+  --chart-series-3: var(--success);
+  --chart-series-4: var(--warning);
+  --chart-series-5: var(--error);
+  --chart-series-6: var(--secondary);
+
   // ---------------------------------------------------------------------------
   // COMMON COLORS — Absolute black/white, theme-independent
   // ---------------------------------------------------------------------------
