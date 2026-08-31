@@ -234,3 +234,14 @@
     padding: 0 var(--space-2);
   }
 }
+
+@layer doom.components {
+  /* WCAG 2.3.3 — honour a stated preference for reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}

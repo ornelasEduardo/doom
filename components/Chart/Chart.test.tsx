@@ -240,6 +240,35 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("layering", () => {
+    it("places the tooltip on the system tooltip layer", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(<Chart data={data} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+
+        // A hardcoded 10 is --z-elevated, 490 levels below where the system
+        // puts tooltips, so the chart tooltip renders under dropdowns, modals
+        // and drawers.
+        const tooltip = container.querySelector(
+          "[data-chart-tooltip]",
+        ) as HTMLElement;
+        expect(tooltip).toBeTruthy();
+        expect(tooltip.style.zIndex).toBe("var(--z-tooltip)");
+      } finally {
+        geometry.restore();
+      }
+    });
+  });
+
   describe("mark accessible names", () => {
     it("names data points by their values, not by dumping the raw datum", () => {
       const rows = [
