@@ -4,6 +4,7 @@ import clsx from "clsx";
 import React, {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -18,6 +19,7 @@ import { EventsProvider } from "../../state/EventContext";
 import {
   createChartStore,
   Store,
+  updateChartAccessors,
   updateChartDimensions,
   updateChartState,
 } from "../../state/store/chart.store";
@@ -32,6 +34,7 @@ import {
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
+import { Announcer } from "../Announcer";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
 import { Grid } from "../Grid/Grid";
@@ -142,6 +145,41 @@ function RootPlot({
  * It initializes the core state (chartStore) and provides the context
  * required by all subcomponents and behaviors.
  */
+/**
+ * A value that changes when an accessor's *behaviour* changes, but not when an
+ * inline arrow is merely re-created on every render.
+ *
+ * Source text catches `d => d.a` becoming `d => d.b`. Projecting a few sample
+ * rows also catches `d => d[field]`, whose source text never changes. A pair of
+ * accessors that agree on every sampled row is treated as unchanged.
+ */
+const accessorSignature = (accessor: unknown, data: any[]): string => {
+  if (accessor == null) {
+    return "none";
+  }
+  if (typeof accessor !== "function") {
+    return `key:${String(accessor)}`;
+  }
+
+  const fn = accessor as (d: any) => unknown;
+  const rows = data ?? [];
+  const probe = [rows[0], rows[rows.length >> 1], rows[rows.length - 1]];
+
+  let projected = "";
+  for (const row of probe) {
+    if (row === undefined) {
+      continue;
+    }
+    try {
+      projected += `${String(fn(row))}\u0001`;
+    } catch {
+      projected += "err\u0001";
+    }
+  }
+
+  return `fn:${fn.toString()}|${projected}`;
+};
+
 export function Root<T>({
   data,
   d3Config,
@@ -169,6 +207,7 @@ export function Root<T>({
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
+  const summaryId = useId();
 
   const { engine } = useEngine<T>();
 
@@ -297,6 +336,33 @@ export function Root<T>({
       dimensions: chartStore.getState().dimensions,
     });
   }, [chartStore, data, type]);
+
+  // The store is built once in a useState initialiser, so the accessors it was
+  // seeded with would otherwise stay frozen for the component's whole life and
+  // a changed `x`/`y` prop would silently keep charting the old field.
+  //
+  // No dependency array: `x` and `y` are usually inline arrows with fresh
+  // identity every render, so a dependency array would fire constantly. The
+  // signature guard converges instead — once written, the next render computes
+  // the same signature and this becomes a no-op.
+  const accessorSyncRef = useRef<string | null>(null);
+  useEffect(() => {
+    const signature = `${accessorSignature(x, data)}::${accessorSignature(y, data)}`;
+
+    if (accessorSyncRef.current === signature) {
+      return;
+    }
+
+    const isFirstRun = accessorSyncRef.current === null;
+    accessorSyncRef.current = signature;
+
+    // Mount already seeded the store with these accessors.
+    if (isFirstRun) {
+      return;
+    }
+
+    updateChartAccessors(chartStore, { x, y });
+  });
 
   useEffect(() => {
     return chartStore.subscribe(() => {
@@ -502,7 +568,7 @@ export function Root<T>({
         <div
           ref={containerRef}
           data-chart-container
-          aria-describedby={subtitle ? "chart-subtitle" : undefined}
+          aria-describedby={summaryId}
           aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
           className={clsx(
             styles.chartContainer,
@@ -518,6 +584,7 @@ export function Root<T>({
         >
           <InteractionLayer />
           <SensorManager sensors={sensors as any} />
+          <Announcer summaryId={summaryId} />
 
           {isAutoLayout && (title || subtitle) && (
             <Header subtitle={subtitle} title={title} />

@@ -178,6 +178,30 @@ export const updateChartState = <T>(
 };
 
 /**
+ * Replaces the x/y accessors and re-derives the scales from them.
+ *
+ * Deliberately leaves `dimensions` untouched: Root subscribes to that slice, so
+ * writing a fresh dimensions object here would re-render Root, re-run the sync
+ * effect and loop.
+ */
+export const updateChartAccessors = <T>(
+  store: Store,
+  next: {
+    x?: Accessor<T, string | number>;
+    y?: Accessor<T, number>;
+  },
+) => {
+  store.setState((prev) => {
+    const merged = { ...prev, ...next } as State;
+    return {
+      x: next.x,
+      y: next.y,
+      scales: calculateScales(prev.data, prev.dimensions, merged),
+    } as Partial<State>;
+  });
+};
+
+/**
  * Registers a series id and its configurations.
  * Often called by the `<Series />` component or sub-series layers.
  */

@@ -152,6 +152,182 @@ describe("Chart", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("re-derives the scales when the x accessor prop changes", () => {
+    const rows = [
+      { month: "Jan", quarter: "Q1", value: 10 },
+      { month: "Feb", quarter: "Q2", value: 20 },
+    ];
+
+    const { container, rerender } = render(
+      <Chart data={rows} x={(d: any) => d.month} y={(d: any) => d.value} />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+    expect(container.textContent).toContain("Jan");
+
+    // Point the chart at a different field. The store is built in a useState
+    // lazy initialiser, so without a sync the accessors stay frozen at their
+    // mount-time values and this silently renders the old field forever.
+    rerender(
+      <Chart data={rows} x={(d: any) => d.quarter} y={(d: any) => d.value} />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(container.textContent).toContain("Q1");
+    expect(container.textContent).not.toContain("Jan");
+  });
+
+  it("does not re-derive the scales when an equivalent accessor is re-created", () => {
+    const rows = [
+      { month: "Jan", quarter: "Q1", value: 10 },
+      { month: "Feb", quarter: "Q2", value: 20 },
+    ];
+    const scales: any[] = [];
+    const capture = (ctx: any) => scales.push(ctx.scales.x);
+
+    const { rerender } = render(
+      <Chart
+        data={rows}
+        render={capture}
+        x={(d: any) => d.month}
+        y={(d: any) => d.value}
+      />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+    const beforeRerender = scales[scales.length - 1];
+
+    // A brand-new arrow with identical behaviour. If the sync effect keyed off
+    // identity it would rebuild the scales here — and, because that write
+    // re-renders subscribers, keep doing so forever.
+    rerender(
+      <Chart
+        data={rows}
+        render={capture}
+        x={(d: any) => d.month}
+        y={(d: any) => d.value}
+      />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(scales[scales.length - 1]).toBe(beforeRerender);
+
+    // A genuinely different accessor must still rebuild them.
+    rerender(
+      <Chart
+        data={rows}
+        render={capture}
+        x={(d: any) => d.quarter}
+        y={(d: any) => d.value}
+      />,
+    );
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(scales[scales.length - 1]).not.toBe(beforeRerender);
+  });
+
+  describe("assistive technology", () => {
+    function chartRegion(container: HTMLElement) {
+      return container.querySelector("[data-chart-container]") as HTMLElement;
+    }
+
+    function describedText(container: HTMLElement) {
+      const ids = chartRegion(container).getAttribute("aria-describedby");
+      if (!ids) {
+        return null;
+      }
+      return ids
+        .split(/\s+/)
+        .map((id) => container.querySelector(`[id="${id}"]`))
+        .filter(Boolean)
+        .map((el) => el!.textContent)
+        .join(" ");
+    }
+
+    it("describes the chart with a summary of its data", () => {
+      const { container } = render(
+        <Chart data={data} title="Revenue" x={x} y={y} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      // The only accessible name was "Chart: Revenue" and the SVG is
+      // aria-hidden, so nothing conveyed what the chart actually contains.
+      const text = describedText(container);
+      expect(text).toBeTruthy();
+      expect(text).toMatch(/2 data points/i);
+      expect(text).toMatch(/10/);
+      expect(text).toMatch(/20/);
+    });
+
+    it("points aria-describedby at elements that exist", () => {
+      const { container } = render(
+        <Chart data={data} subtitle="Monthly" title="Revenue" x={x} y={y} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const ids = chartRegion(container)
+        .getAttribute("aria-describedby")!
+        .split(/\s+/);
+
+      for (const id of ids) {
+        expect(container.querySelector(`[id="${id}"]`)).toBeInTheDocument();
+      }
+    });
+
+    it("announces the active value in a live region", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(<Chart data={data} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = chartRegion(container);
+        geometry.attach(root);
+
+        const live = container.querySelector('[aria-live="polite"]');
+        expect(live).toBeInTheDocument();
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+
+        expect(live!.textContent).toContain("A");
+      } finally {
+        geometry.restore();
+      }
+    });
+
+    it("gives each chart instance its own aria ids", () => {
+      const first = render(
+        <Chart data={data} subtitle="One" title="One" x={x} y={y} />,
+      );
+      const second = render(
+        <Chart data={data} subtitle="Two" title="Two" x={x} y={y} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const idsOf = (c: HTMLElement) =>
+        Array.from(c.querySelectorAll("[id]")).map((el) => el.id);
+
+      const a = idsOf(first.container);
+      const b = idsOf(second.container);
+      expect(a.length).toBeGreaterThan(0);
+      expect(a.filter((id) => b.includes(id))).toEqual([]);
+    });
+  });
+
   it("renders a custom visualization via render prop", () => {
     const renderSpy = vi.fn();
     render(<Chart data={data} render={renderSpy} x={x} y={y} />);
