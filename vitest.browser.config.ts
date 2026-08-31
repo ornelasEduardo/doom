@@ -17,6 +17,10 @@ export default defineConfig({
       provider: playwright(),
       headless: true,
       screenshotFailures: false,
+      // A desktop viewport by default: the runner's own window is narrow
+      // enough to read as mobile, which would mask any container-vs-viewport
+      // responsive behaviour.
+      viewport: { width: 1280, height: 800 },
       instances: [{ browser: "chromium" }],
     },
   },

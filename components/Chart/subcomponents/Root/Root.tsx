@@ -153,6 +153,8 @@ function RootPlot({
  * rows also catches `d => d[field]`, whose source text never changes. A pair of
  * accessors that agree on every sampled row is treated as unchanged.
  */
+const MOBILE_WIDTH = 600;
+
 const accessorSignature = (accessor: unknown, data: any[]): string => {
   if (accessor == null) {
     return "none";
@@ -203,11 +205,35 @@ export function Root<T>({
   const [chartStore] = useState(() =>
     createChartStore({ ...d3Config, type }, x, y),
   );
-  const [isMobile, setIsMobile] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
   const summaryId = useId();
+
+  // Layout decisions here are about how much room the chart has, not what
+  // device it is on: a 320px chart in a dashboard cell needs the same
+  // treatment on a wide monitor as on a phone. Reading window.matchMedia got
+  // that wrong in both directions and added a window listener per chart.
+  const chartWidth = chartStore.useStore(
+    (state: any) => state.dimensions.width,
+  ) as number;
+  const isMobile = chartWidth > 0 && chartWidth < MOBILE_WIDTH;
+
+  // Tooltip edge detection converts its anchor into absolute coordinates using
+  // this rect. wrapperRef is only attached in the auto-layout branch, so in
+  // composition mode it stayed null and the chart was treated as if it sat at
+  // the viewport origin — the flip then happened at the wrong moment and the
+  // tooltip could run off screen. Resolved lazily so it follows whichever
+  // element actually mounted.
+  const tooltipBoundsRef = useMemo(
+    () => ({
+      get current() {
+        return wrapperRef.current ?? containerRef.current;
+      },
+    }),
+    [],
+  ) as React.RefObject<HTMLDivElement | null>;
 
   const { engine } = useEngine<T>();
 
@@ -514,15 +540,8 @@ export function Root<T>({
 
     resizeObserver.observe(wrapperRef.current);
 
-    const checkMobile = () => {
-      setIsMobile(window.matchMedia("(max-width: 600px)").matches);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", checkMobile);
     };
   }, [chartStore]);
 
@@ -662,7 +681,7 @@ export function Root<T>({
 
         {withLegend && <Legend />}
 
-        <Tooltip containerRef={wrapperRef} />
+        <Tooltip containerRef={tooltipBoundsRef} />
       </div>
     </ChartContext.Provider>
   );

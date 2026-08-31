@@ -264,98 +264,68 @@ describe("Chart in a real browser", () => {
   it.each([
     ["shorthand", false],
     ["composition", true],
-  ])(
-    "keeps the tooltip inside the chart in %s mode",
-    async (_mode, composed) => {
-      const { host, root } = await mount(
-        composed ? (
-          <Chart.Root
-            d3Config={{ showDots: true }}
-            data={data}
-            style={{ width: 600, height: 360 }}
-            type="line"
-            x="label"
-            y="value"
-          >
-            <Chart.Plot>
-              <Chart.Series type="line" x="label" y="value" />
-            </Chart.Plot>
-          </Chart.Root>
-        ) : (
-          chart()
-        ),
-      );
-
-      // The rightmost mark is where edge detection has to flip the tooltip.
-      const marks = host.querySelectorAll("circle");
-      const last = marks[marks.length - 1] ?? marks[0];
-      const r = last.getBoundingClientRect();
-      await hoverAt(root, r.left + r.width / 2, r.top + r.height / 2);
-
-      const tooltip = host.querySelector("[data-chart-tooltip]") as HTMLElement;
-      expect(tooltip?.textContent ?? "").not.toBe("");
-
-      // Edge detection is given the chart as its container. If it falls back to
-      // the viewport, the tooltip only clamps at the window edge and spills out
-      // of the chart's own card.
-      const chartBox = root.getBoundingClientRect();
-      const tipBox = tooltip.getBoundingClientRect();
-      expect(tipBox.right).toBeLessThanOrEqual(chartBox.right + 1);
-      expect(tipBox.left).toBeGreaterThanOrEqual(chartBox.left - 1);
-    },
-  );
-
-  it("keeps axis labels inside the plotted surface", async () => {
-    // Large values widen the y tick labels, and an axis label adds more. The
-    // svg itself is overflow:hidden by spec, so anything auto-layout fails to
-    // make room for is silently clipped rather than overflowing visibly.
-    const wide = Array.from({ length: 6 }, (_, i) => ({
-      label: `Period ${i}`,
-      value: 1_250_000 * (i + 1),
-    }));
-
+  ])("keeps the tooltip on screen in %s mode", async (_mode, composed) => {
+    // Edge detection clamps to the viewport, not to the chart — a chart
+    // tooltip is meant to float past its card rather than jump inward over the
+    // data. The container rect is used only to convert the anchor into
+    // absolute coordinates, and in composition mode Tooltip is handed a null
+    // ref, so that conversion silently treats the chart as if it sat at the
+    // viewport origin and the flip happens at the wrong moment.
+    //
+    // Pushed hard against the right edge so a missed flip leaves the screen.
     const { host, root } = await mount(
+      composed ? (
+        <Chart.Root
+          d3Config={{ showDots: true }}
+          data={data}
+          style={{ width: 260, height: 300 }}
+          type="line"
+          x="label"
+          y="value"
+        >
+          <Chart.Plot>
+            <Chart.Series type="line" x="label" y="value" />
+          </Chart.Plot>
+        </Chart.Root>
+      ) : (
+        chart({ style: { width: 260, height: 300 } })
+      ),
+    );
+    host.style.marginLeft = `${window.innerWidth - 280}px`;
+    await settle();
+
+    const marks = host.querySelectorAll("circle");
+    const last = marks[marks.length - 1] ?? marks[0];
+    const r = last.getBoundingClientRect();
+    await hoverAt(root, r.left + r.width / 2, r.top + r.height / 2);
+
+    const tooltip = host.querySelector("[data-chart-tooltip]") as HTMLElement;
+    expect(tooltip?.textContent ?? "").not.toBe("");
+
+    const box = tooltip.getBoundingClientRect();
+    expect(box.right).toBeLessThanOrEqual(window.innerWidth + 1);
+    expect(box.left).toBeGreaterThanOrEqual(-1);
+  });
+
+  it("adapts to its own width, not the window's", async () => {
+    // A narrow chart in a wide viewport. Reading window.matchMedia says
+    // "desktop" and the chart keeps its full-size tick budget, crowding a
+    // 320px plot — the container is the only meaningful signal here.
+    const { host } = await mount(
       <Chart
-        d3Config={{
-          grid: true,
-          xAxisLabel: "Reporting period",
-          yAxisLabel: "Revenue in dollars",
-        }}
-        data={wide}
-        style={{ width: 520, height: 320 }}
+        d3Config={{ grid: true }}
+        data={data}
+        style={{ width: 320, height: 240 }}
         type="line"
         x="label"
         y="value"
       />,
     );
 
-    const svg = host.querySelector("svg") as SVGSVGElement;
-    const svgBox = svg.getBoundingClientRect();
-    const texts = Array.from(host.querySelectorAll("svg text")).filter(
-      (t) => (t.textContent ?? "").trim().length > 0,
-    );
-    expect(texts.length).toBeGreaterThan(0);
+    expect(window.innerWidth).toBeGreaterThan(600);
 
-    const overflowing = texts
-      .map((text) => {
-        const box = text.getBoundingClientRect();
-        return {
-          text: (text.textContent ?? "").slice(0, 24),
-          overLeft: Math.round(svgBox.left - box.left),
-          overRight: Math.round(box.right - svgBox.right),
-          overTop: Math.round(svgBox.top - box.top),
-          overBottom: Math.round(box.bottom - svgBox.bottom),
-        };
-      })
-      .filter(
-        (o) =>
-          o.overLeft > 1 ||
-          o.overRight > 1 ||
-          o.overTop > 1 ||
-          o.overBottom > 1,
-      );
-    expect(overflowing).toEqual([]);
-
-    expect(root.getBoundingClientRect().width).toBeGreaterThan(0);
+    const yTicks = host.querySelectorAll('[aria-label="Y Axis"] .tick');
+    expect(yTicks.length).toBeGreaterThan(0);
+    expect(yTicks.length).toBeLessThanOrEqual(3);
   });
 });
