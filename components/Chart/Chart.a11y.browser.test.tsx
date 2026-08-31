@@ -41,11 +41,36 @@ afterEach(() => {
   teardown = [];
 });
 
-const mount = async (ui: React.ReactElement) => {
+const THEMES = ["default", "doom", "captain", "vigilante"] as const;
+
+/**
+ * Known WCAG AAA contrast gaps, measured rather than assumed. These are design
+ * decisions about the palette, not component defects, so they are recorded
+ * exactly — a new violation of any kind still fails the assertion.
+ *
+ *  - doom / vigilante: the chart subtitle renders in --muted-foreground at
+ *    12px and measures 6.96:1 and 6.5:1 against the theme background. AAA
+ *    (1.4.6) wants 7:1. A small token nudge would clear it.
+ *  - solid variant: the legend label is black on the solid background
+ *    (#a855f7 in default). That measures 5.3:1, and white on the same purple
+ *    is roughly 3.4:1 — no text colour clears 7:1 on it. Resolving this needs
+ *    a darker solid background or larger legend text, both design calls.
+ */
+const KNOWN_AAA_GAPS: Record<string, string[]> = {
+  doom: ["color-contrast-enhanced"],
+  vigilante: ["color-contrast-enhanced"],
+  "solid:default": ["color-contrast-enhanced"],
+  "solid:captain": ["color-contrast-enhanced"],
+};
+
+const mount = async (
+  ui: React.ReactElement,
+  theme: (typeof THEMES)[number] = "default",
+) => {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const result = render(
-    <DesignSystemProvider initialTheme="default">{ui}</DesignSystemProvider>,
+    <DesignSystemProvider initialTheme={theme}>{ui}</DesignSystemProvider>,
     { container: host },
   );
   teardown.push(() => {
@@ -63,12 +88,7 @@ const audit = async (host: HTMLElement) => {
       values: ["wcag2a", "wcag2aa", "wcag2aaa", "wcag21a", "wcag21aa"],
     },
   });
-  return results.violations.map((v) => ({
-    id: v.id,
-    impact: v.impact,
-    help: v.help,
-    nodes: v.nodes.length,
-  }));
+  return results.violations.map((v) => v.id).sort();
 };
 
 describe("Chart accessibility (axe)", () => {
@@ -80,9 +100,7 @@ describe("Chart accessibility (axe)", () => {
     document.body.appendChild(host);
     teardown.push(() => host.remove());
 
-    const violations = await audit(host);
-
-    expect(violations.map((v) => v.id)).toContain("image-alt");
+    expect(await audit(host)).toContain("image-alt");
   });
 
   it("has no violations in its default form", async () => {
@@ -181,4 +199,47 @@ describe("Chart accessibility (axe)", () => {
 
     expect(await audit(host)).toEqual([]);
   });
+
+  it.each(THEMES)(
+    "has only the known contrast gap in the %s theme",
+    async (theme) => {
+      const host = await mount(
+        <Chart
+          withLegend
+          d3Config={{ grid: true, showDots: true }}
+          data={data}
+          style={{ width: 600, height: 360 }}
+          subtitle="Last four periods"
+          title="Revenue"
+          type="line"
+          x="label"
+          y="value"
+        />,
+        theme,
+      );
+
+      expect(await audit(host)).toEqual(KNOWN_AAA_GAPS[theme] ?? []);
+    },
+  );
+
+  it.each(THEMES)(
+    "has only the known contrast gap in the %s theme, solid variant",
+    async (theme) => {
+      const host = await mount(
+        <Chart
+          withLegend
+          data={data}
+          style={{ width: 600, height: 360 }}
+          title="Revenue"
+          type="line"
+          variant="solid"
+          x="label"
+          y="value"
+        />,
+        theme,
+      );
+
+      expect(await audit(host)).toEqual(KNOWN_AAA_GAPS[`solid:${theme}`] ?? []);
+    },
+  );
 });
