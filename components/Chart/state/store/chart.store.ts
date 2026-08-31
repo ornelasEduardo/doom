@@ -213,8 +213,12 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
     // Store raw configs for future re-hydration
     nextConfigs.set(id, configs);
 
+    // Palette slot follows the series' registration order, not the current
+    // series count — otherwise re-registering an existing series (an effect
+    // re-run) would shift its index and change its colour.
+    const slot = Array.from(nextConfigs.keys()).indexOf(id);
     const hydrated = configs.map((c, i) =>
-      hydrateSeries(c, (state.processedSeries.length || 0) + i, state.data),
+      hydrateSeries(c, slot + i, state.data),
     );
     nextSeries.set(id, hydrated);
 

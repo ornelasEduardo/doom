@@ -10,6 +10,7 @@ import {
 } from "../../state/store/chart.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
+import { useSeriesColor } from "../../utils/hooks";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
 interface ScatterSeriesProps<T> {
@@ -72,7 +73,7 @@ const ScatterSeriesComponent = <T,>({
   }, [data, sizeAccessor]);
 
   const seriesId = useId();
-  const strokeColor = color || "var(--primary)";
+  const strokeColor = useSeriesColor(chartStore, seriesId, color);
 
   useEffect(() => {
     if (!yAccessor) {
@@ -82,7 +83,8 @@ const ScatterSeriesComponent = <T,>({
       {
         id: seriesId,
         label: label || "Scatter Series",
-        color: strokeColor,
+        color,
+        data: localData,
         x: xAccessor,
         y: yAccessor,
         hideCursor: hideCursor ?? true,
@@ -95,7 +97,7 @@ const ScatterSeriesComponent = <T,>({
   }, [
     chartStore,
     seriesId,
-    strokeColor,
+    color,
     yAccessor,
     xAccessor,
     label,

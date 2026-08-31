@@ -10,6 +10,7 @@ import {
 } from "../../state/store/chart.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
+import { useSeriesColor } from "../../utils/hooks";
 import { createRoundedTopBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
 
@@ -54,6 +55,7 @@ const BarSeriesComponent = <T,>({
   );
 
   const gradientId = useId();
+  const fillColor = useSeriesColor(chartStore, gradientId, color);
 
   useEffect(() => {
     if (!yAccessor) {
@@ -63,12 +65,12 @@ const BarSeriesComponent = <T,>({
       {
         id: gradientId,
         label: label || "Bar Series",
-        color: color || "var(--primary)",
+        color,
+        data: localData,
         x: xAccessor,
         y: yAccessor,
         hideCursor: hideCursor ?? true,
         type: "bar",
-        data,
       },
     ]);
     return () => {
@@ -97,7 +99,6 @@ const BarSeriesComponent = <T,>({
   }
 
   const BAR_RADIUS = 4;
-  const fillColor = color || "var(--primary)";
 
   return (
     <g className="chart-bar-series">

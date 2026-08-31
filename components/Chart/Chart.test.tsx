@@ -234,6 +234,82 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("composition API", () => {
+    it("hit-tests against a series' own data, not the root data", () => {
+      const rootData = [
+        { label: "A", value: 10 },
+        { label: "B", value: 20 },
+      ];
+      // Inside the root-derived domain: scales are still computed from the
+      // root data, so a series whose values sit outside it renders off-plot.
+      const seriesData = [
+        { label: "A", value: 12 },
+        { label: "B", value: 18 },
+      ];
+      const onValueChange = vi.fn();
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+
+      try {
+        const { container } = render(
+          <Chart.Root
+            data={rootData}
+            x="label"
+            y="value"
+            onValueChange={onValueChange}
+          >
+            <Chart.Plot>
+              <Chart.Series data={seriesData} type="line" x="label" y="value" />
+            </Chart.Plot>
+          </Chart.Root>,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+
+        // The line is drawn from seriesData, so hit-testing must resolve
+        // against it too. Registering the series without its data makes the
+        // rendered geometry and the reported datum disagree.
+        expect(onValueChange).toHaveBeenCalledWith(
+          expect.objectContaining({ value: 12 }),
+        );
+      } finally {
+        geometry.restore();
+      }
+    });
+
+    it("gives sibling series distinct colors when none are specified", () => {
+      const rows = [
+        { m: "A", r: 10, e: 5 },
+        { m: "B", r: 20, e: 8 },
+      ];
+
+      const { container } = render(
+        <Chart.Root data={rows} type="line" x="m" y="r">
+          <Chart.Plot>
+            <Chart.Series label="Revenue" type="line" x="m" y="r" />
+            <Chart.Series label="Expenses" type="line" x="m" y="e" />
+          </Chart.Plot>
+        </Chart.Root>,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const strokes = Array.from(container.querySelectorAll("path"))
+        .map((p) => (p as SVGElement).style.stroke)
+        .filter(Boolean);
+
+      expect(strokes.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(strokes).size).toBeGreaterThan(1);
+    });
+  });
+
   describe("assistive technology", () => {
     function chartRegion(container: HTMLElement) {
       return container.querySelector("[data-chart-container]") as HTMLElement;
