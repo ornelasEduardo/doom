@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import React, { useEffect, useState } from "react";
 import { renderToString } from "react-dom/server";
 import {
@@ -238,6 +238,30 @@ describe("Chart", () => {
     });
 
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
+  });
+
+  describe("touch interaction", () => {
+    it("resolves a touch hover the same way as a pointer hover", () => {
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+      try {
+        const { container } = render(<Chart data={data} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        movePointer(root, 60, 150, { pointerType: "touch", isPrimary: true });
+
+        expect(
+          container.querySelector("[data-chart-tooltip]")?.textContent ?? "",
+        ).toContain("A");
+      } finally {
+        geometry.restore();
+      }
+    });
   });
 
   describe("layering", () => {
@@ -850,188 +874,6 @@ describe("Chart", () => {
 
     expect(getByText("Time")).toBeInTheDocument();
     expect(getByText("Value")).toBeInTheDocument();
-  });
-
-  it.skip("shows tooltip on mouse interaction", async () => {
-    const { container } = render(<Chart data={data} x={x} y={y} />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    expect(container.querySelector("svg")).toBeInTheDocument();
-
-    const root = container.firstChild as HTMLElement;
-    const svg = container.querySelector("svg") as SVGSVGElement;
-    const wrapper = svg?.parentElement as HTMLElement;
-
-    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    const innerPlot = container.querySelector("[data-chart-inner-plot]");
-    if (innerPlot) {
-      vi.spyOn(innerPlot, "getBoundingClientRect").mockReturnValue({
-        left: 70,
-        top: 40,
-        width: 410,
-        height: 210,
-        x: 70,
-        y: 40,
-        bottom: 250,
-        right: 480,
-        toJSON: () => {},
-      } as DOMRect);
-    }
-
-    vi.spyOn(window, "getComputedStyle").mockImplementation((el) => {
-      const style = {
-        getPropertyValue: (prop: string) => {
-          if (el === root) {
-            if (prop === "border-left-width") {
-              return "0px";
-            }
-            if (prop === "border-top-width") {
-              return "0px";
-            }
-          }
-          return "";
-        },
-      };
-      return style as unknown as CSSStyleDeclaration;
-    });
-
-    // Use Point A coordinates: 20, 150
-    // scalePoint padding 0 -> A at 0.
-    // Margin left 20 -> Screen X = 20.
-    movePointer(root, 20, 150, { pointerType: "mouse" });
-
-    await waitFor(
-      () => {
-        expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
-      },
-      { timeout: 1000 },
-    );
-
-    leavePointer(root, { pointerType: "mouse" });
-  });
-
-  it.skip("shows tooltip on touch interaction", async () => {
-    const { container } = render(<Chart data={data} x={x} y={y} />);
-
-    act(() => {
-      vi.runAllTimers();
-    });
-
-    const root = container.firstChild as HTMLElement;
-    const svg = container.querySelector("svg") as SVGSVGElement;
-    const wrapper = svg?.parentElement as HTMLElement;
-    const innerPlot = container.querySelector("[data-chart-inner-plot]");
-
-    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    vi.spyOn(wrapper, "getBoundingClientRect").mockReturnValue({
-      left: 0,
-      top: 0,
-      width: 500,
-      height: 300,
-      x: 0,
-      y: 0,
-      bottom: 300,
-      right: 500,
-      toJSON: () => {},
-    } as DOMRect);
-
-    if (innerPlot) {
-      vi.spyOn(innerPlot, "getBoundingClientRect").mockReturnValue({
-        left: 70,
-        top: 40,
-        width: 430,
-        height: 210,
-        x: 70,
-        y: 40,
-        bottom: 250,
-        right: 480,
-        toJSON: () => {},
-      } as DOMRect);
-    }
-
-    vi.spyOn(window, "getComputedStyle").mockImplementation((el) => {
-      const style = {
-        getPropertyValue: (prop: string) => {
-          if (el === root) {
-            if (prop === "border-left-width") {
-              return "0px";
-            }
-            if (prop === "border-top-width") {
-              return "0px";
-            }
-          }
-          return "";
-        },
-      };
-      return style as unknown as CSSStyleDeclaration;
-    });
-
-    movePointer(root, 50, 150, { pointerType: "touch", isPrimary: true });
-
-    await waitFor(() => {
-      expect(screen.getAllByRole("heading").length).toBeGreaterThan(0);
-    });
   });
 
   it("correctly resolves element data and ignores background", () => {
