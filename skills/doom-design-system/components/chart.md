@@ -50,7 +50,6 @@ component's own semantics win on conflict.
 | `withGradient` | `boolean` | — | Fill area with gradient |
 | `showDots` | `boolean` | — | Show data point dots |
 | `hideYAxisDomain` | `boolean` | — | Hide Y-axis domain line |
-| `animate` | `boolean` | — | Animate on mount |
 | `type` | `SeriesType` | — | Series type override within config |
 
 ## Usage
@@ -64,7 +63,7 @@ component's own semantics win on conflict.
   y={(d) => d.revenue}  // Function accessor
   title="Monthly Revenue"
   withLegend
-  d3Config={{ grid: true, withGradient: true, animate: true }}
+  d3Config={{ grid: true, withGradient: true }}
 />
 
 // Composition API — custom layouts
