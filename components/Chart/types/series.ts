@@ -18,15 +18,12 @@ export interface SeriesProps<T> {
 
   // Multivariate encoding
   size?: Accessor<T, number>;
-  colorEncoding?: Accessor<T, string>; // Data-driven color encoding
 
   // Per-series data (optional, falls back to Chart data)
   data?: T[];
 
   // Styling (static colors)
   color?: string; // Single color for entire series
-  stroke?: string;
-  fill?: string;
   label?: string;
 
   // Tooltip

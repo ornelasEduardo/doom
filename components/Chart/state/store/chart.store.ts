@@ -193,6 +193,35 @@ export const updateChartState = <T>(
 };
 
 /**
+ * Applies a new baseline margin from d3Config.
+ *
+ * Axis auto-layout adjusts the margin from whatever baseline is in the store,
+ * so this sets the baseline and lets the next measurement re-adjust from it.
+ */
+export const updateChartMargin = (
+  store: Store,
+  margin: Dimensions["margin"],
+) => {
+  store.setState((prev) => {
+    const { innerWidth, innerHeight } = calculateInnerDimensions(
+      prev.dimensions.width,
+      prev.dimensions.height,
+      margin,
+    );
+    const nextDimensions = {
+      ...prev.dimensions,
+      margin,
+      innerWidth,
+      innerHeight,
+    };
+    return {
+      dimensions: nextDimensions,
+      scales: calculateScales(prev.data, nextDimensions, prev),
+    } as Partial<State>;
+  });
+};
+
+/**
  * Replaces the x/y accessors and re-derives the scales from them.
  *
  * Deliberately leaves `dimensions` untouched: Root subscribes to that slice, so

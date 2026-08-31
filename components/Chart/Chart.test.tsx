@@ -240,6 +240,42 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("d3Config overrides", () => {
+    it("applies a changed margin after mount", () => {
+      const { container, rerender } = render(
+        <Chart
+          d3Config={{ margin: { left: 40, top: 20, right: 20, bottom: 20 } }}
+          data={data}
+          x={x}
+          y={y}
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+      const before = container.querySelector("g")?.getAttribute("transform");
+      expect(before).toContain("40");
+
+      // margin is documented as a d3Config override, but the store read it
+      // once at construction, so changing it afterwards did nothing.
+      rerender(
+        <Chart
+          d3Config={{ margin: { left: 90, top: 20, right: 20, bottom: 20 } }}
+          data={data}
+          x={x}
+          y={y}
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(container.querySelector("g")?.getAttribute("transform")).toContain(
+        "90",
+      );
+    });
+  });
+
   describe("touch interaction", () => {
     it("resolves a touch hover the same way as a pointer hover", () => {
       const geometry = stubChartGeometry({ left: 0, top: 0 });

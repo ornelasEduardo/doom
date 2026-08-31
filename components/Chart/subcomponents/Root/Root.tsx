@@ -21,6 +21,7 @@ import {
   Store,
   updateChartAccessors,
   updateChartDimensions,
+  updateChartMargin,
   updateChartState,
 } from "../../state/store/chart.store";
 import {
@@ -362,6 +363,27 @@ export function Root<T>({
   // identity every render, so a dependency array would fire constantly. The
   // signature guard converges instead — once written, the next render computes
   // the same signature and this becomes a no-op.
+  // d3Config.margin is documented as an override, so a change to it has to
+  // reach the store — it was previously read once at construction. Compared by
+  // value because d3Config is almost always an inline object literal.
+  const marginSyncRef = useRef<string | null>(null);
+  useEffect(() => {
+    const configured = d3Config?.margin;
+    if (!configured) {
+      return;
+    }
+    const signature = JSON.stringify(configured);
+    if (marginSyncRef.current === signature) {
+      return;
+    }
+    const isFirstRun = marginSyncRef.current === null;
+    marginSyncRef.current = signature;
+    if (isFirstRun) {
+      return;
+    }
+    updateChartMargin(chartStore, configured);
+  });
+
   const accessorSyncRef = useRef<string | null>(null);
   useEffect(() => {
     const signature = `${accessorSignature(x, data)}::${accessorSignature(y, data)}`;

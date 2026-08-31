@@ -146,10 +146,17 @@ export class Engine<T = unknown> {
     const searchX = signal.x - plotOffset.x;
     const searchY = signal.y - plotOffset.y;
 
-    const candidates = this.spatialMap.find(searchX, searchY, {
-      x: signal.x,
-      y: signal.y,
-    });
+    // Key signals carry no position — createKeySignal reports (0, 0) — so a
+    // hit test there returns whatever sits near the plot origin and hands
+    // sensors phantom candidates for every keystroke. KeyboardSensor resolves
+    // its own target from the focused index instead.
+    const candidates =
+      signal.action === InputAction.KEY
+        ? []
+        : this.spatialMap.find(searchX, searchY, {
+            x: signal.x,
+            y: signal.y,
+          });
 
     const { chartX, chartY, isWithinPlot } =
       this.coords.resolveChartCoordinates(searchX, searchY);

@@ -389,6 +389,27 @@ describe("Engine", () => {
     });
   });
 
+  describe("Keyboard signals", () => {
+    it("does not run a spatial query for key signals", () => {
+      engine.updateData(createMockPoints(5));
+
+      const signal = createMockSignal({
+        action: InputAction.KEY,
+        x: 0,
+        y: 0,
+        key: "ArrowRight",
+      });
+      engine.input(signal);
+
+      // Key signals carry no position — createKeySignal reports (0, 0). Hit
+      // testing there returns whatever happens to sit near the plot origin,
+      // so sensors were handed phantom candidates for every keystroke.
+      const event = handler.mock.calls[0][0] as EngineEvent;
+      expect(event.candidates).toEqual([]);
+      expect(event.primaryCandidate).toBeUndefined();
+    });
+  });
+
   describe("Coordinate Calculation", () => {
     it("should calculate chart coordinates relative to plot bounds", () => {
       engine.setContainer(null, null, {
