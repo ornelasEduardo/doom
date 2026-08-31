@@ -118,10 +118,27 @@ describe("Axis", () => {
     expect(groups.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("renders nothing when showAxes is false", () => {
+  it("renders nothing until the scales exist", () => {
+    // Axis's only guard is `if (!xScale || !yScale) return null`. It does not
+    // read config.showAxes — that is decided by the parent, which simply does
+    // not render <Axis> (Chart.tsx:37, Root.tsx:539). Asserting showAxes here
+    // tested a responsibility this component does not have.
     useChartContextMock.mockReturnValue({
       ...defaultContext,
-      config: { ...defaultContext.config, showAxes: false },
+      chartStore: {
+        ...defaultContext.chartStore,
+        // Axis reads through useStore, not getState.
+        useStore: vi.fn((selector: any) =>
+          selector({
+            dimensions: {
+              margin: { top: 20, right: 20, bottom: 20, left: 20 },
+              innerWidth: 160,
+              innerHeight: 160,
+            },
+            scales: { x: null, y: null },
+          }),
+        ),
+      },
     });
 
     const { container } = render(
@@ -130,22 +147,6 @@ describe("Axis", () => {
       </svg>,
     );
 
-    expect(container.querySelector(".chart-axes")).not.toBeInTheDocument();
-  });
-
-  it("renders nothing when dimensions are zero", () => {
-    useChartContextMock.mockReturnValue({
-      ...defaultContext,
-      width: 0,
-      height: 0,
-    });
-
-    const { container } = render(
-      <svg>
-        <Axis />
-      </svg>,
-    );
-
-    expect(container.querySelector(".chart-axes")).not.toBeInTheDocument();
+    expect(container.querySelector("g")).not.toBeInTheDocument();
   });
 });

@@ -89,11 +89,13 @@ const renderWithContext = (
 };
 
 describe("Series", () => {
-  it("renders SVG element", () => {
+  it("renders a series group", () => {
     const { container } = renderWithContext(
       <Series type="line" x="label" y="value" />,
     );
-    expect(container.querySelector("svg")).toBeInTheDocument();
+    // The harness supplies the <svg> wrapper, so querying for one passes even
+    // when Series renders nothing. The <g> is Series' own output.
+    expect(container.querySelector("g")).toBeInTheDocument();
   });
 
   it("applies custom className", () => {
