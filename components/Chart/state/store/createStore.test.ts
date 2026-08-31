@@ -87,4 +87,42 @@ describe("createStore", () => {
     expect(() => renderToString(React.createElement(Probe))).not.toThrow();
     expect(renderToString(React.createElement(Probe))).toContain("7");
   });
+
+  it("supports a selector that derives a new object each call", () => {
+    const store = createStore({ a: 1, b: 2, other: "x" });
+
+    // useSyncExternalStore compares snapshots with Object.is. A selector that
+    // builds a fresh object every call therefore looks like a new snapshot on
+    // every read, and React gives up with "Maximum update depth exceeded".
+    const { result } = renderHook(() =>
+      store.useStore((s) => ({ a: s.a, b: s.b })),
+    );
+
+    expect(result.current).toEqual({ a: 1, b: 2 });
+
+    const first = result.current;
+    act(() => {
+      store.setState({ other: "y" });
+    });
+
+    // Unrelated change: the derived value is equal, so the identity should be
+    // preserved rather than forcing a re-render.
+    expect(result.current).toBe(first);
+  });
+
+  it("does not treat two different Maps as the same snapshot", () => {
+    const store = createStore({ items: new Map([["a", 1]]) });
+    const { result } = renderHook(() => store.useStore((s) => s.items));
+
+    expect(result.current.get("a")).toBe(1);
+
+    // A Map has no own enumerable keys, so comparing snapshots key-by-key
+    // would call any two Maps equal and swallow the update. The interactions
+    // channel is stored in a Map, so this would freeze every hover.
+    act(() => {
+      store.setState({ items: new Map([["a", 2]]) });
+    });
+
+    expect(result.current.get("a")).toBe(2);
+  });
 });

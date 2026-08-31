@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 export type Listener = () => void;
 
@@ -12,6 +12,46 @@ export interface StoreApi<T> {
    */
   useStore: <U>(selector?: (state: T) => U) => U;
 }
+
+const isPlainObjectOrArray = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return true;
+  }
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+};
+
+/**
+ * Shallow comparison used to decide whether a derived snapshot is materially
+ * unchanged and its previous identity can be reused.
+ */
+const shallowEqual = (a: unknown, b: unknown): boolean => {
+  if (Object.is(a, b)) {
+    return true;
+  }
+  // Only plain objects and arrays are safe to compare key-by-key. A Map or Set
+  // has no own enumerable keys, so a key comparison would call every pair equal
+  // and silently swallow real updates — the interactions Map is exactly that.
+  if (!isPlainObjectOrArray(a) || !isPlainObjectOrArray(b)) {
+    return false;
+  }
+
+  const aKeys = Object.keys(a as Record<string, unknown>);
+  const bKeys = Object.keys(b as Record<string, unknown>);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+
+  return aKeys.every((key) =>
+    Object.is(
+      (a as Record<string, unknown>)[key],
+      (b as Record<string, unknown>)[key],
+    ),
+  );
+};
 
 export function createStore<T>(initialState: T): StoreApi<T> {
   let state = initialState;
@@ -37,7 +77,34 @@ export function createStore<T>(initialState: T): StoreApi<T> {
   };
 
   const useStore = <U>(selector: (state: T) => U = (s) => s as any): U => {
-    const getSnapshot = () => selector(getState());
+    // useSyncExternalStore compares snapshots with Object.is, so a selector
+    // that derives a fresh object each call — `s => ({ a: s.a, b: s.b })` —
+    // looks like a new snapshot on every read and React bails out with
+    // "Maximum update depth exceeded". Cache per call site: reuse the value
+    // while the state is untouched, and keep the previous identity when the
+    // derived result is shallowly equal.
+    const selectorRef = useRef(selector);
+    selectorRef.current = selector;
+    const cache = useRef<{ state: T; value: U } | null>(null);
+
+    const getSnapshot = () => {
+      const state = getState();
+      const cached = cache.current;
+
+      if (cached && cached.state === state) {
+        return cached.value;
+      }
+
+      const next = selectorRef.current(state);
+
+      if (cached && shallowEqual(cached.value, next)) {
+        cache.current = { state, value: cached.value };
+        return cached.value;
+      }
+
+      cache.current = { state, value: next };
+      return next;
+    };
     // The server snapshot reads the same store: state lives in a per-instance
     // closure created during render, so there is nothing to hydrate from a
     // different source. Omitting it makes React throw "Missing
