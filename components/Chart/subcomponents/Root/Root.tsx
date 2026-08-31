@@ -228,10 +228,29 @@ export function Root<T>({
   // device it is on: a 320px chart in a dashboard cell needs the same
   // treatment on a wide monitor as on a phone. Reading window.matchMedia got
   // that wrong in both directions and added a window listener per chart.
-  const chartWidth = chartStore.useStore(
-    (state: any) => state.dimensions.width,
-  ) as number;
+  // Measured on the chart element itself, not the inner plot area. The plot
+  // width varies with card padding and theme, so comparing against it made the
+  // threshold unpredictable — a chart authored at 500px measured ~450 and
+  // landed on either side of the cutoff depending on font rendering. The outer
+  // width is the number the consumer actually set.
+  const [chartWidth, setChartWidth] = useState(0);
   const isMobile = chartWidth > 0 && chartWidth < COMPACT_WIDTH;
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setChartWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Tooltip edge detection converts its anchor into absolute coordinates using
   // this rect. wrapperRef is only attached in the auto-layout branch, so in

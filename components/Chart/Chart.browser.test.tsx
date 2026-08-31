@@ -355,6 +355,12 @@ describe("Chart in a real browser", () => {
       />,
     );
 
+    // Assert the premise: 500 is comfortably above the 480 cutoff. Without
+    // this the test could drift to the boundary and start reporting platform
+    // font differences instead of the behaviour it means to pin.
+    const root = host.querySelector("[data-chart-container]") as HTMLElement;
+    expect(Math.round(root.getBoundingClientRect().width)).toBe(500);
+
     const yTicks = host.querySelectorAll('[aria-label="Y Axis"] .tick');
     expect(yTicks.length).toBeGreaterThan(3);
   });
@@ -375,6 +381,8 @@ describe("Chart in a real browser", () => {
     );
 
     expect(window.innerWidth).toBeGreaterThan(600);
+    const narrow = host.querySelector("[data-chart-container]") as HTMLElement;
+    expect(Math.round(narrow.getBoundingClientRect().width)).toBe(320);
 
     const yTicks = host.querySelectorAll('[aria-label="Y Axis"] .tick');
     expect(yTicks.length).toBeGreaterThan(0);
