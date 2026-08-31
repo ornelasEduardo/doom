@@ -304,4 +304,58 @@ describe("Chart in a real browser", () => {
       expect(tipBox.left).toBeGreaterThanOrEqual(chartBox.left - 1);
     },
   );
+
+  it("keeps axis labels inside the plotted surface", async () => {
+    // Large values widen the y tick labels, and an axis label adds more. The
+    // svg itself is overflow:hidden by spec, so anything auto-layout fails to
+    // make room for is silently clipped rather than overflowing visibly.
+    const wide = Array.from({ length: 6 }, (_, i) => ({
+      label: `Period ${i}`,
+      value: 1_250_000 * (i + 1),
+    }));
+
+    const { host, root } = await mount(
+      <Chart
+        d3Config={{
+          grid: true,
+          xAxisLabel: "Reporting period",
+          yAxisLabel: "Revenue in dollars",
+        }}
+        data={wide}
+        style={{ width: 520, height: 320 }}
+        type="line"
+        x="label"
+        y="value"
+      />,
+    );
+
+    const svg = host.querySelector("svg") as SVGSVGElement;
+    const svgBox = svg.getBoundingClientRect();
+    const texts = Array.from(host.querySelectorAll("svg text")).filter(
+      (t) => (t.textContent ?? "").trim().length > 0,
+    );
+    expect(texts.length).toBeGreaterThan(0);
+
+    const overflowing = texts
+      .map((text) => {
+        const box = text.getBoundingClientRect();
+        return {
+          text: (text.textContent ?? "").slice(0, 24),
+          overLeft: Math.round(svgBox.left - box.left),
+          overRight: Math.round(box.right - svgBox.right),
+          overTop: Math.round(svgBox.top - box.top),
+          overBottom: Math.round(box.bottom - svgBox.bottom),
+        };
+      })
+      .filter(
+        (o) =>
+          o.overLeft > 1 ||
+          o.overRight > 1 ||
+          o.overTop > 1 ||
+          o.overBottom > 1,
+      );
+    expect(overflowing).toEqual([]);
+
+    expect(root.getBoundingClientRect().width).toBeGreaterThan(0);
+  });
 });

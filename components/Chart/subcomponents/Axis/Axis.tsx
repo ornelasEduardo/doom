@@ -7,6 +7,8 @@ import { d3 } from "../../utils/d3";
 import { yTickCount } from "../../utils/scales";
 import styles from "./Axis.module.scss";
 
+const X_LABEL_OFFSET = 40;
+
 export function Axis() {
   const { chartStore, config, requestLayoutAdjustment, isMobile } =
     useChartContext();
@@ -17,6 +19,7 @@ export function Axis() {
   const { x: xScale, y: yScale } = scales;
 
   const gx = useRef<SVGGElement>(null);
+  const xLabelRef = useRef<SVGTextElement>(null);
   const gy = useRef<SVGGElement>(null);
 
   useEffect(() => {
@@ -69,10 +72,22 @@ export function Axis() {
       }
 
       const xBBox = gx.current.getBBox();
-      if (xBBox.y + xBBox.height > innerHeight) {
-        requestLayoutAdjustment?.({
-          bottom: Math.abs(xBBox.y + xBBox.height - innerHeight) + 20,
-        });
+      const tickOverflow = xBBox.y + xBBox.height - innerHeight;
+
+      // The x-axis label lives outside gx — it is a sibling <text> offset below
+      // the plot — so the tick group's own box never accounts for it, and the
+      // bottom margin was left too small. The svg is overflow:hidden by spec,
+      // so the shortfall clipped the label's descenders rather than spilling.
+      // getBBox reports the text's own coordinate space, before the translate
+      // that positions it below the plot, so the offset has to be added back.
+      const labelBox = xLabelRef.current?.getBBox();
+      const labelOverflow = labelBox
+        ? X_LABEL_OFFSET + labelBox.y + labelBox.height
+        : 0;
+
+      const overflow = Math.max(tickOverflow, labelOverflow);
+      if (overflow > 0) {
+        requestLayoutAdjustment?.({ bottom: overflow + 20 });
       }
     } catch {
       // Ignore measurement errors if SVG not in DOM
@@ -82,6 +97,7 @@ export function Axis() {
     yScale,
     config.hideYAxisDomain,
     config.yAxisLabel,
+    config.xAxisLabel,
     isMobile,
     requestLayoutAdjustment,
     innerHeight,
@@ -101,9 +117,10 @@ export function Axis() {
       <g ref={gy} aria-label="Y Axis" />
       {config.xAxisLabel && (
         <text
+          ref={xLabelRef}
           className={styles.label}
           style={{ textAnchor: "middle" }}
-          transform={`translate(${innerWidth / 2}, ${innerHeight + 40})`}
+          transform={`translate(${innerWidth / 2}, ${innerHeight + X_LABEL_OFFSET})`}
         >
           {config.xAxisLabel}
         </text>
