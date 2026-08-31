@@ -164,16 +164,41 @@ export const updateChartState = <T>(
     });
 
     // A hover points at a specific row. When the data is replaced the pointer
-    // has not moved, but the row it resolved to may be gone — leaving the
-    // tooltip, markers and onValueChange reporting a datum that no longer
-    // exists. Drop it and let the next pointer frame re-resolve.
+    // has not moved, but the row it resolved to may be gone — which would
+    // leave the tooltip, markers and onValueChange reporting a datum that no
+    // longer exists.
+    //
+    // Re-point rather than drop. A live chart re-supplies a fresh array on
+    // every tick with new object identities but the same rows, and clearing
+    // outright made the reading blink out from under the cursor. Rows are
+    // matched by position, so the tooltip follows the updated value and is
+    // only dropped when its row genuinely went away.
     let nextInteractions = prev.interactions;
-    if (
-      data !== prev.data &&
-      nextInteractions.has(InteractionChannel.PRIMARY_HOVER)
-    ) {
+    const hover = nextInteractions.get(InteractionChannel.PRIMARY_HOVER) as
+      | { targets?: Array<{ dataIndex?: number; data?: unknown }> }
+      | undefined;
+
+    if (data !== prev.data && hover?.targets?.length) {
+      const targets = hover.targets
+        .map((target) => {
+          const index = target.dataIndex;
+          if (index === undefined || index < 0 || index >= data.length) {
+            return null;
+          }
+          return { ...target, data: data[index] };
+        })
+        .filter(Boolean);
+
       nextInteractions = new Map(nextInteractions);
-      nextInteractions.delete(InteractionChannel.PRIMARY_HOVER);
+      if (targets.length) {
+        nextInteractions.set(InteractionChannel.PRIMARY_HOVER, {
+          ...hover,
+          targets,
+          target: targets[0],
+        });
+      } else {
+        nextInteractions.delete(InteractionChannel.PRIMARY_HOVER);
+      }
     }
 
     return {

@@ -535,6 +535,50 @@ describe("Chart", () => {
   });
 
   describe("stale interaction state", () => {
+    it("keeps a hover alive when the data updates under it", () => {
+      const before = [
+        { label: "A", value: 10 },
+        { label: "B", value: 20 },
+      ];
+      // A live chart re-supplies a fresh array every tick, with new object
+      // identities but the same rows. The reading must follow the new values
+      // rather than blinking out from under the cursor.
+      const after = [
+        { label: "A", value: 11 },
+        { label: "B", value: 21 },
+      ];
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+
+      try {
+        const { container, rerender } = render(
+          <Chart data={before} x={x} y={y} />,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        const tooltipText = () =>
+          container.querySelector("[data-chart-tooltip]")?.textContent ?? "";
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+        expect(tooltipText()).toContain("10");
+
+        rerender(<Chart data={after} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+
+        expect(tooltipText()).toContain("A");
+        expect(tooltipText()).toContain("11");
+      } finally {
+        geometry.restore();
+      }
+    });
+
     it("clears a hover when the data changes underneath it", () => {
       const before = [
         { label: "A", value: 10 },
