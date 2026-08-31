@@ -61,7 +61,7 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
       .attr("class", "drag-ghost")
       .attr("r", radius)
       .attr("fill", "none")
-      .attr("stroke", "var(--text-tertiary)")
+      .attr("stroke", "var(--muted-foreground)")
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "4,2")
       .style("opacity", 0)
@@ -83,7 +83,7 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
     const line = layer
       .append("line")
       .attr("class", "drag-line")
-      .attr("stroke", "var(--text-tertiary)")
+      .attr("stroke", "var(--muted-foreground)")
       .attr("stroke-width", 1)
       .attr("stroke-dasharray", "2,2")
       .style("opacity", 0)

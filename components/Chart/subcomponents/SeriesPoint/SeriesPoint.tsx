@@ -3,6 +3,11 @@ import React, { memo } from "react";
 import styles from "./SeriesPoint.module.scss";
 
 export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
+  /**
+   * Accessible name for this mark. The parent series owns the accessors, so it
+   * builds the name — the point itself stays presentational.
+   */
+  description?: string;
   x: number;
   y: number;
   color?: string;
@@ -24,6 +29,7 @@ export const SeriesPoint = memo(
     hoverRadius = 8,
     className,
     style,
+    description,
     ...props
   }: SeriesPointProps) => {
     if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) {
@@ -53,9 +59,7 @@ export const SeriesPoint = memo(
             (node as any).__data__ = datum;
           }
         }}
-        aria-label={
-          datum ? `Data point: ${JSON.stringify(datum)}` : "Data point"
-        }
+        aria-label={description || "Data point"}
         aria-roledescription="data point"
         className={`${styles.point} ${className || ""}`}
         cx={x}

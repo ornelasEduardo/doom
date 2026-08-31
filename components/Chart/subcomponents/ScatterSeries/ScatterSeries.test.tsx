@@ -12,6 +12,10 @@ vi.spyOn(ChartContextModule, "useChartContext").mockImplementation(
 
 vi.mock("../../utils/hooks", () => ({
   useSeriesRegistration: vi.fn(),
+  // These tests drive the component with a stubbed store, so resolve the
+  // colour straight from the prop rather than through the real store lookup.
+  useSeriesColor: (_store: unknown, _id: string, explicit?: string) =>
+    explicit || "var(--primary)",
 }));
 
 describe("ScatterSeries", () => {

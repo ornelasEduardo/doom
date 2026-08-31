@@ -69,3 +69,6 @@ export function createScales<T>(
 
   return { xScale, yScale, innerWidth, innerHeight };
 }
+
+/** Tick budget shared by the Y axis and the grid, so the two cannot drift. */
+export const yTickCount = (isMobile?: boolean) => (isMobile ? 3 : 5);

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { Cursor, Dim, Markers, Tooltip } from "../behaviors";
 import {
@@ -14,6 +14,21 @@ export const useChartBehaviors = <T>(
   chartContext: ContextValue<T>,
   userBehaviors?: Behavior<T>[],
 ) => {
+  // Consumers pass a fresh array literal every render. Keying off its identity
+  // would tear down and re-append every d3 layer on any unrelated re-render.
+  const behaviorsRef = useRef<Behavior<T>[] | undefined>(userBehaviors);
+  const sameBehaviors =
+    behaviorsRef.current === userBehaviors ||
+    (!!behaviorsRef.current &&
+      !!userBehaviors &&
+      behaviorsRef.current.length === userBehaviors.length &&
+      behaviorsRef.current.every((b, i) => b === userBehaviors[i]));
+
+  if (!sameBehaviors) {
+    behaviorsRef.current = userBehaviors;
+  }
+  const stableBehaviors = behaviorsRef.current;
+
   const status = chartContext.chartStore.useStore((s: any) => s.status);
   const elements = chartContext.chartStore.useStore((s: any) => s.elements);
 
@@ -24,7 +39,7 @@ export const useChartBehaviors = <T>(
     }
 
     // 1. Determine active behaviors
-    let behaviors = userBehaviors;
+    let behaviors = stableBehaviors;
 
     // Default behaviors if none provided
     if (!behaviors) {
@@ -106,7 +121,7 @@ export const useChartBehaviors = <T>(
     };
   }, [
     status,
-    userBehaviors,
+    stableBehaviors,
     chartContext.config.type,
     chartContext.chartStore,
     chartContext.chartStore.getState().processedSeries.length,

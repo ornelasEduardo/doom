@@ -141,4 +141,57 @@ describe("DataHoverSensor (Engine)", () => {
       InteractionChannel.PRIMARY_HOVER,
     );
   });
+
+  it("keeps a touch hover alive outside the plot bounds", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor();
+    const candidate = {
+      data: { id: "p0" },
+      distance: 5,
+      coordinate: { x: 10, y: 10 },
+    };
+
+    // A finger tracking past the plot edge should keep its reading; a mouse
+    // leaving the plot should not. The branch exists so the two differ.
+    const touchEvent = {
+      ...createMockEvent(InputAction.MOVE, candidate),
+      isWithinPlot: false,
+      signal: {
+        action: InputAction.MOVE,
+        type: "pointer",
+        x: 0,
+        y: 0,
+        source: "touch",
+      },
+    } as unknown as EngineEvent;
+
+    sensor(touchEvent, ctx);
+
+    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ data: { id: "p0" } })],
+      }),
+    );
+  });
+
+  it("drops a mouse hover once it leaves the plot bounds", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor();
+    const event = {
+      ...createMockEvent(InputAction.MOVE, {
+        data: { id: "p0" },
+        distance: 5,
+        coordinate: { x: 10, y: 10 },
+      }),
+      isWithinPlot: false,
+    } as unknown as EngineEvent;
+
+    sensor(event, ctx);
+
+    expect(ctx.removeInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+    );
+    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
+  });
 });

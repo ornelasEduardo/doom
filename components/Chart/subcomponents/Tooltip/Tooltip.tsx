@@ -72,6 +72,7 @@ export function Tooltip<T>({
   return (
     <div
       ref={tooltipRef}
+      data-chart-tooltip
       className={styles.tooltipWrapper}
       style={{
         pointerEvents: "none",
@@ -79,7 +80,7 @@ export function Tooltip<T>({
         top: 0,
         left: 0,
         transform: `translate(${layout.x}px, ${layout.y}px)`,
-        zIndex: 10,
+        zIndex: "var(--z-tooltip)",
         opacity: layout.visible ? 1 : 0,
         transition: "opacity 0.1s ease-out",
       }}
@@ -127,7 +128,7 @@ function DefaultTooltipContent<T>({
     <Card
       className={clsx(styles.tooltipCard, variant === "solid" && styles.solid)}
     >
-      <Text className={styles.tooltipLabel} variant="h6">
+      <Text as="p" className={styles.tooltipLabel} variant="h6">
         {xLabel}
       </Text>
 
@@ -150,7 +151,7 @@ function DefaultTooltipContent<T>({
           ))}
         </div>
       ) : (
-        <Text variant="h4">
+        <Text as="p" variant="h4">
           {y ? String(resolveAccessor(y as any)(activeData)) : ""}
         </Text>
       )}
@@ -203,10 +204,12 @@ function TooltipSeriesItem<T>({
           backgroundColor: series.color,
         }}
       />
-      <Text style={{ color: "var(--text-secondary)" }} variant="body">
+      <Text style={{ color: "var(--muted-foreground)" }} variant="body">
         {series.label}:
       </Text>
-      <Text variant="h6">{formattedVal}</Text>
+      <Text as="p" variant="h6">
+        {formattedVal}
+      </Text>
     </div>
   );
 }

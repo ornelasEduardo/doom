@@ -15,7 +15,20 @@ export const getSeriesInitialState = (): SeriesSlice => ({
   processedSeries: [],
 });
 
-const LEGEND_PALETTE = ["#2E93fA", "#66DA26", "#546E7A", "#E91E63", "#FF9800"];
+/**
+ * Categorical palette for series that do not name their own colour.
+ *
+ * Theme tokens rather than fixed hex, so a series palette re-themes with the
+ * rest of the system. Themes own the contrast relationship between these.
+ */
+export const SERIES_PALETTE = [
+  "var(--chart-series-1)",
+  "var(--chart-series-2)",
+  "var(--chart-series-3)",
+  "var(--chart-series-4)",
+  "var(--chart-series-5)",
+  "var(--chart-series-6)",
+];
 
 export const hydrateSeries = (
   props: any,
@@ -27,7 +40,7 @@ export const hydrateSeries = (
   const series: Series = {
     id: props.id || `series-${index}`,
     label: props.label || `Series ${index + 1}`,
-    color: props.color || LEGEND_PALETTE[index % LEGEND_PALETTE.length],
+    color: props.color || SERIES_PALETTE[index % SERIES_PALETTE.length],
     xAccessor: props.x as any,
     yAccessor: props.y as any,
     hideCursor: props.hideCursor,

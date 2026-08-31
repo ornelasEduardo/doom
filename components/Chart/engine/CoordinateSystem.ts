@@ -28,6 +28,8 @@ export interface ChartCoordinates {
  * - Layout offsets (e.g. Headers pushing the plot down)
  */
 export class CoordinateSystem {
+  private containerElement: Element | null = null;
+  private plotElement: Element | null = null;
   private containerRect: DOMRect | null = null;
   private containerStyle: ContainerStyle = {
     borderLeft: 0,
@@ -48,6 +50,9 @@ export class CoordinateSystem {
     plotElement: Element | null = null,
     plotBounds?: PlotBounds,
   ): void {
+    this.containerElement = element;
+    this.plotElement = plotElement;
+
     if (element) {
       this.containerRect = element.getBoundingClientRect();
       const style = window.getComputedStyle(element);
@@ -58,26 +63,7 @@ export class CoordinateSystem {
         paddingTop: parseFloat(style.paddingTop) || 0,
       };
 
-      // Calculate plot offset if plotElement is provided
-      if (plotElement) {
-        const plotRect = plotElement.getBoundingClientRect();
-        this.plotOffset = {
-          x:
-            plotRect.left -
-            this.containerRect.left -
-            this.containerStyle.borderLeft,
-          y:
-            plotRect.top -
-            this.containerRect.top -
-            this.containerStyle.borderTop,
-        };
-      } else {
-        // Fallback to padding
-        this.plotOffset = {
-          x: this.containerStyle.paddingLeft,
-          y: this.containerStyle.paddingTop,
-        };
-      }
+      this.plotOffset = this.measurePlotOffset(this.containerRect);
     } else {
       this.containerRect = null;
       this.containerStyle = {
@@ -99,9 +85,32 @@ export class CoordinateSystem {
    */
   updateBounds(rect: DOMRect, plotBounds?: PlotBounds): void {
     this.containerRect = rect;
+    // Derived from both rects, so it must be re-measured whenever either
+    // changes: a header wrapping or a legend appearing moves the plot within a
+    // container that did not itself resize.
+    this.plotOffset = this.measurePlotOffset(rect);
     if (plotBounds) {
       this.plotBounds = plotBounds;
     }
+  }
+
+  /**
+   * Measure where the plot area starts, relative to the container's padding box.
+   * Falls back to the container's padding when there is no plot element.
+   */
+  private measurePlotOffset(containerRect: DOMRect): { x: number; y: number } {
+    if (!this.plotElement) {
+      return {
+        x: this.containerStyle.paddingLeft,
+        y: this.containerStyle.paddingTop,
+      };
+    }
+
+    const plotRect = this.plotElement.getBoundingClientRect();
+    return {
+      x: plotRect.left - containerRect.left - this.containerStyle.borderLeft,
+      y: plotRect.top - containerRect.top - this.containerStyle.borderTop,
+    };
   }
 
   getContainerRect(): DOMRect | null {
@@ -127,13 +136,21 @@ export class CoordinateSystem {
     clientX: number,
     clientY: number,
   ): { x: number; y: number } | null {
-    if (!this.containerRect) {
+    // Client coordinates are viewport-relative, so a cached rect goes stale on
+    // any scroll or layout shift — and a position-only change fires no
+    // ResizeObserver to invalidate it. Falls back to the last explicitly-set
+    // rect for callers driving the system without an element.
+    const rect = this.containerElement
+      ? this.containerElement.getBoundingClientRect()
+      : this.containerRect;
+
+    if (!rect) {
       return null;
     }
 
     return {
-      x: clientX - this.containerRect.left - this.containerStyle.borderLeft,
-      y: clientY - this.containerRect.top - this.containerStyle.borderTop,
+      x: clientX - rect.left - this.containerStyle.borderLeft,
+      y: clientY - rect.top - this.containerStyle.borderTop,
     };
   }
 

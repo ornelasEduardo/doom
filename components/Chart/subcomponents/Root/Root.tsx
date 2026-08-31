@@ -4,6 +4,7 @@ import clsx from "clsx";
 import React, {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -14,11 +15,12 @@ import { ChartContext } from "../../context";
 import { useChartBehaviors } from "../../hooks/useChartBehaviors";
 import { useEngine } from "../../hooks/useEngine";
 import { SensorManager } from "../../sensors/SensorManager/SensorManager";
-import { EventsProvider } from "../../state/EventContext";
 import {
   createChartStore,
   Store,
+  updateChartAccessors,
   updateChartDimensions,
+  updateChartMargin,
   updateChartState,
 } from "../../state/store/chart.store";
 import {
@@ -32,6 +34,7 @@ import {
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
+import { Announcer } from "../Announcer";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
 import { Grid } from "../Grid/Grid";
@@ -54,27 +57,31 @@ const LEGEND_PALETTE = [
   "var(--error)",
 ];
 
-export type RootProps<T> = Pick<
-  Props<T>,
-  | "data"
-  | "d3Config"
-  | "className"
-  | "style"
-  | "onValueChange"
-  | "variant"
-  | "flat"
-  | "withFrame"
-  | "title"
-  | "subtitle"
-  | "withLegend"
-  | "children"
-  | "type"
-  | "x"
-  | "y"
-  | "render"
-  | "behaviors"
-  | "sensors"
->;
+export type RootProps<T> = Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title" | "children"
+> &
+  Pick<
+    Props<T>,
+    | "data"
+    | "d3Config"
+    | "className"
+    | "style"
+    | "onValueChange"
+    | "variant"
+    | "flat"
+    | "withFrame"
+    | "title"
+    | "subtitle"
+    | "withLegend"
+    | "children"
+    | "type"
+    | "x"
+    | "y"
+    | "render"
+    | "behaviors"
+    | "sensors"
+  >;
 
 /**
  * The internal bridge for managing behaviors and sensors.
@@ -142,6 +149,43 @@ function RootPlot({
  * It initializes the core state (chartStore) and provides the context
  * required by all subcomponents and behaviors.
  */
+/**
+ * A value that changes when an accessor's *behaviour* changes, but not when an
+ * inline arrow is merely re-created on every render.
+ *
+ * Source text catches `d => d.a` becoming `d => d.b`; projecting sample rows
+ * also catches `d => d[field]`, whose source never changes.
+ */
+/** Below this the chart switches to its compact treatment. The `xs` breakpoint. */
+const COMPACT_WIDTH = 480;
+
+const accessorSignature = (accessor: unknown, data: any[]): string => {
+  if (accessor == null) {
+    return "none";
+  }
+  if (typeof accessor !== "function") {
+    return `key:${String(accessor)}`;
+  }
+
+  const fn = accessor as (d: any) => unknown;
+  const rows = data ?? [];
+  const probe = [rows[0], rows[rows.length >> 1], rows[rows.length - 1]];
+
+  let projected = "";
+  for (const row of probe) {
+    if (row === undefined) {
+      continue;
+    }
+    try {
+      projected += `${String(fn(row))}\u0001`;
+    } catch {
+      projected += "err\u0001";
+    }
+  }
+
+  return `fn:${fn.toString()}|${projected}`;
+};
+
 export function Root<T>({
   data,
   d3Config,
@@ -161,14 +205,63 @@ export function Root<T>({
   y,
   behaviors,
   sensors,
+  ...rest
 }: RootProps<T>) {
   const [chartStore] = useState(() =>
     createChartStore({ ...d3Config, type }, x, y),
   );
-  const [isMobile, setIsMobile] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<any>(null);
+  const summaryId = useId();
+
+  // How much room the chart has, not what device it is on: a 320px chart in a
+  // dashboard cell needs the same treatment on a wide monitor as on a phone.
+  // The chart element, not the inner plot area: the plot width varies with
+  // padding and theme, so the threshold would not mean the width a consumer
+  // set.
+  const [chartWidth, setChartWidth] = useState(0);
+  const isMobile = chartWidth > 0 && chartWidth < COMPACT_WIDTH;
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    // Border box: contentRect excludes padding and border, so a chart authored
+    // at 500px would measure ~450 and cross the cutoff unexpectedly.
+    const readWidth = (entry?: ResizeObserverEntry) => {
+      const border = entry?.borderBoxSize?.[0]?.inlineSize;
+      return border ?? element.getBoundingClientRect().width;
+    };
+
+    // Seed synchronously so the first paint does not briefly decide layout
+    // from a width of zero.
+    setChartWidth(readWidth());
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setChartWidth(readWidth(entry));
+      }
+    });
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Tooltip edge detection converts its anchor to absolute coordinates against
+  // this rect. wrapperRef only mounts in the auto-layout branch, so resolve
+  // lazily to whichever element exists.
+  const tooltipBoundsRef = useMemo(
+    () => ({
+      get current() {
+        return wrapperRef.current ?? containerRef.current;
+      },
+    }),
+    [],
+  ) as React.RefObject<HTMLDivElement | null>;
 
   const { engine } = useEngine<T>();
 
@@ -204,6 +297,12 @@ export function Root<T>({
     isMobile,
   ]);
 
+  // The spatial index and the container measurement depend only on the data,
+  // scales, dimensions and registered series. The store also notifies on every
+  // hover, so without this guard each pointer frame rebuilt the whole quadtree
+  // and forced two layout reads — O(n) in the data, 60 times a second.
+  const indexInputsRef = useRef<unknown[] | null>(null);
+
   useEffect(() => {
     return chartStore.subscribe(() => {
       const state = chartStore.getState();
@@ -213,6 +312,17 @@ export function Root<T>({
 
       const { data, scales, dimensions, processedSeries } = state;
       const { x: xScale, y: yScale } = scales;
+
+      const inputs = [data, xScale, yScale, dimensions, processedSeries];
+      const previous = indexInputsRef.current;
+      if (
+        previous &&
+        previous.length === inputs.length &&
+        previous.every((value, i) => value === inputs[i])
+      ) {
+        return;
+      }
+      indexInputsRef.current = inputs;
 
       if (containerRef.current) {
         // In composition mode wrapperRef is null; use the SVG registered by Plot.tsx.
@@ -297,6 +407,48 @@ export function Root<T>({
       dimensions: chartStore.getState().dimensions,
     });
   }, [chartStore, data, type]);
+
+  // The store is built once in a useState initialiser, so a changed x/y prop
+  // has to be pushed in. No dependency array: these are usually inline arrows
+  // with fresh identity every render, so the signature guard converges instead.
+  // margin is a documented override, so a change has to reach the store.
+  // Compared by value: d3Config is almost always an inline literal.
+  const marginSyncRef = useRef<string | null>(null);
+  useEffect(() => {
+    const configured = d3Config?.margin;
+    if (!configured) {
+      return;
+    }
+    const signature = JSON.stringify(configured);
+    if (marginSyncRef.current === signature) {
+      return;
+    }
+    const isFirstRun = marginSyncRef.current === null;
+    marginSyncRef.current = signature;
+    if (isFirstRun) {
+      return;
+    }
+    updateChartMargin(chartStore, configured);
+  });
+
+  const accessorSyncRef = useRef<string | null>(null);
+  useEffect(() => {
+    const signature = `${accessorSignature(x, data)}::${accessorSignature(y, data)}`;
+
+    if (accessorSyncRef.current === signature) {
+      return;
+    }
+
+    const isFirstRun = accessorSyncRef.current === null;
+    accessorSyncRef.current = signature;
+
+    // Mount already seeded the store with these accessors.
+    if (isFirstRun) {
+      return;
+    }
+
+    updateChartAccessors(chartStore, { x, y });
+  });
 
   useEffect(() => {
     return chartStore.subscribe(() => {
@@ -394,6 +546,11 @@ export function Root<T>({
       return;
     }
 
+    // ResizeObserver fires for reasons other than a size change, and every
+    // call here rebuilds the scales and commits React.
+    let lastWidth = -1;
+    let lastHeight = -1;
+
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         let w, h;
@@ -404,21 +561,21 @@ export function Root<T>({
           w = entry.contentRect.width;
           h = entry.contentRect.height;
         }
+
+        if (w === lastWidth && h === lastHeight) {
+          continue;
+        }
+        lastWidth = w;
+        lastHeight = h;
+
         updateChartDimensions(chartStore, w, h);
       }
     });
 
     resizeObserver.observe(wrapperRef.current);
 
-    const checkMobile = () => {
-      setIsMobile(window.matchMedia("(max-width: 600px)").matches);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", checkMobile);
     };
   }, [chartStore]);
 
@@ -440,8 +597,15 @@ export function Root<T>({
       }
 
       const elements = document.elementsFromPoint(clientX, clientY);
+      const container = containerRef.current;
 
       for (const element of elements) {
+        // elementsFromPoint is document-wide, so without this a chart could
+        // report a datum belonging to a neighbouring chart.
+        if (container && !container.contains(element)) {
+          continue;
+        }
+
         const data = (element as unknown as { __data__: unknown }).__data__;
         if (data && !Array.isArray(data)) {
           return { element: element as Element, data: data as T };
@@ -497,61 +661,62 @@ export function Root<T>({
 
   return (
     <ChartContext.Provider value={value as any}>
-      <EventsProvider>
-        <BehaviorManager behaviors={behaviors as any} value={value as any} />
-        <div
-          ref={containerRef}
-          data-chart-container
-          aria-describedby={subtitle ? "chart-subtitle" : undefined}
-          aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
-          className={clsx(
-            styles.chartContainer,
-            variant === "solid" && styles.solid,
-            flat && styles.flat,
-            isMobile && styles.mobile,
-            !withFrame && styles.frameless,
-            className,
-          )}
-          role="region"
-          style={style}
-          tabIndex={0}
-        >
-          <InteractionLayer />
-          <SensorManager sensors={sensors as any} />
+      <BehaviorManager behaviors={behaviors as any} value={value as any} />
+      <div
+        // Spread first: the chart's own role, label and description win.
+        {...rest}
+        ref={containerRef}
+        data-chart-container
+        aria-describedby={summaryId}
+        aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
+        className={clsx(
+          styles.chartContainer,
+          variant === "solid" && styles.solid,
+          flat && styles.flat,
+          isMobile && styles.mobile,
+          !withFrame && styles.frameless,
+          className,
+        )}
+        role="region"
+        style={style}
+        tabIndex={0}
+      >
+        <InteractionLayer />
+        <SensorManager sensors={sensors as any} />
+        <Announcer summaryId={summaryId} />
 
-          {isAutoLayout && (title || subtitle) && (
-            <Header subtitle={subtitle} title={title} />
-          )}
+        {isAutoLayout && (title || subtitle) && (
+          <Header subtitle={subtitle} title={title} />
+        )}
 
-          {isAutoLayout ? (
-            <div
-              ref={wrapperRef}
-              className={styles.responsiveWrapper}
-              style={{ flex: 1, position: "relative" }}
-            >
-              <RootPlot chartStore={chartStore}>
-                {!hasGrid && config.grid !== false && <Grid />}
+        {isAutoLayout ? (
+          <div
+            ref={wrapperRef}
+            className={styles.responsiveWrapper}
+            style={{ flex: 1, position: "relative" }}
+          >
+            <RootPlot chartStore={chartStore}>
+              {!hasGrid && config.grid !== false && <Grid />}
 
-                {!hasCursor && !render && <CursorWrapper mode="line" />}
+              {!hasCursor && !render && <CursorWrapper mode="line" />}
 
-                {children}
+              {children}
 
-                {!hasAxis && config.showAxes !== false && <Axis />}
+              {!hasAxis && config.showAxes !== false && <Axis />}
 
-                {showShorthand && (
-                  <Series render={render} type={type} x={x} y={y} />
-                )}
-              </RootPlot>
-            </div>
-          ) : (
-            children
-          )}
+              {showShorthand && (
+                <Series render={render} type={type} x={x} y={y} />
+              )}
+            </RootPlot>
+          </div>
+        ) : (
+          children
+        )}
 
-          {withLegend && <Legend />}
+        {withLegend && <Legend />}
 
-          <Tooltip containerRef={wrapperRef} />
-        </div>
-      </EventsProvider>
+        <Tooltip containerRef={tooltipBoundsRef} />
+      </div>
     </ChartContext.Provider>
   );
 }

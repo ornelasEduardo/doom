@@ -105,6 +105,16 @@ export class Engine<T = unknown> {
   }
 
   /**
+   * Re-arm a disposed engine so it accepts input again.
+   * React StrictMode (dev) and Suspense/Activity hides tear down and re-run
+   * effects against the same Engine instance, so dispose() must be reversible
+   * for effect setup/cleanup symmetry.
+   */
+  activate(): void {
+    this.disposed = false;
+  }
+
+  /**
    * Clean up all resources.
    */
   dispose(): void {
@@ -113,8 +123,10 @@ export class Engine<T = unknown> {
     }
     this.disposed = true;
 
+    // Scheduled work only. The handler and index are not resources to reclaim
+    // — the engine is per-instance — and clearing them would make activate()
+    // unable to restore a working engine.
     this.scheduler.dispose();
-    this.spatialMap.clear();
   }
 
   // ===========================================================================
@@ -136,10 +148,16 @@ export class Engine<T = unknown> {
     const searchX = signal.x - plotOffset.x;
     const searchY = signal.y - plotOffset.y;
 
-    const candidates = this.spatialMap.find(searchX, searchY, {
-      x: signal.x,
-      y: signal.y,
-    });
+    // Key signals carry no position — createKeySignal reports (0, 0) — so a
+    // hit test there would return whatever sits near the plot origin.
+    // KeyboardSensor resolves its own target from the focused index.
+    const candidates =
+      signal.action === InputAction.KEY
+        ? []
+        : this.spatialMap.find(searchX, searchY, {
+            x: signal.x,
+            y: signal.y,
+          });
 
     const { chartX, chartY, isWithinPlot } =
       this.coords.resolveChartCoordinates(searchX, searchY);

@@ -1,4 +1,5 @@
 import { Accessor, Config } from "../../types";
+import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { createScales } from "../../utils/scales";
 import { createStore, StoreApi } from "./createStore";
@@ -162,6 +163,38 @@ export const updateChartState = <T>(
       nextSeries.set(id, hydrated);
     });
 
+    // A hover points at a specific row, and the pointer has not moved. Re-point
+    // by position rather than dropping: a live chart re-supplies a fresh array
+    // every tick, so clearing would blink the reading out from under the
+    // cursor. Only drop when the row is genuinely gone.
+    let nextInteractions = prev.interactions;
+    const hover = nextInteractions.get(InteractionChannel.PRIMARY_HOVER) as
+      | { targets?: Array<{ dataIndex?: number; data?: unknown }> }
+      | undefined;
+
+    if (data !== prev.data && hover?.targets?.length) {
+      const targets = hover.targets
+        .map((target) => {
+          const index = target.dataIndex;
+          if (index === undefined || index < 0 || index >= data.length) {
+            return null;
+          }
+          return { ...target, data: data[index] };
+        })
+        .filter(Boolean);
+
+      nextInteractions = new Map(nextInteractions);
+      if (targets.length) {
+        nextInteractions.set(InteractionChannel.PRIMARY_HOVER, {
+          ...hover,
+          targets,
+          target: targets[0],
+        });
+      } else {
+        nextInteractions.delete(InteractionChannel.PRIMARY_HOVER);
+      }
+    }
+
     return {
       data,
       type: type || prev.type,
@@ -169,10 +202,64 @@ export const updateChartState = <T>(
       scales: nextScales,
       series: nextSeries, // Update series map
       processedSeries: combineSeries(nextSeries), // Update flattened series
+      interactions: nextInteractions,
       status:
         nextDimensions.width > 0 && nextDimensions.height > 0
           ? "ready"
           : "idle",
+    } as Partial<State>;
+  });
+};
+
+/**
+ * Applies a new baseline margin from d3Config.
+ *
+ * Axis auto-layout adjusts the margin from whatever baseline is in the store,
+ * so this sets the baseline and lets the next measurement re-adjust from it.
+ */
+export const updateChartMargin = (
+  store: Store,
+  margin: Dimensions["margin"],
+) => {
+  store.setState((prev) => {
+    const { innerWidth, innerHeight } = calculateInnerDimensions(
+      prev.dimensions.width,
+      prev.dimensions.height,
+      margin,
+    );
+    const nextDimensions = {
+      ...prev.dimensions,
+      margin,
+      innerWidth,
+      innerHeight,
+    };
+    return {
+      dimensions: nextDimensions,
+      scales: calculateScales(prev.data, nextDimensions, prev),
+    } as Partial<State>;
+  });
+};
+
+/**
+ * Replaces the x/y accessors and re-derives the scales from them.
+ *
+ * Deliberately leaves `dimensions` untouched: Root subscribes to that slice, so
+ * writing a fresh dimensions object here would re-render Root, re-run the sync
+ * effect and loop.
+ */
+export const updateChartAccessors = <T>(
+  store: Store,
+  next: {
+    x?: Accessor<T, string | number>;
+    y?: Accessor<T, number>;
+  },
+) => {
+  store.setState((prev) => {
+    const merged = { ...prev, ...next } as State;
+    return {
+      x: next.x,
+      y: next.y,
+      scales: calculateScales(prev.data, prev.dimensions, merged),
     } as Partial<State>;
   });
 };
@@ -189,8 +276,12 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
     // Store raw configs for future re-hydration
     nextConfigs.set(id, configs);
 
+    // Palette slot follows the series' registration order, not the current
+    // series count — otherwise re-registering an existing series (an effect
+    // re-run) would shift its index and change its colour.
+    const slot = Array.from(nextConfigs.keys()).indexOf(id);
     const hydrated = configs.map((c, i) =>
-      hydrateSeries(c, (state.processedSeries.length || 0) + i, state.data),
+      hydrateSeries(c, slot + i, state.data),
     );
     nextSeries.set(id, hydrated);
 

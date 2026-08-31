@@ -6,7 +6,10 @@ import { Config } from "./config";
 import { RenderFrame } from "./context";
 import { Behavior, Sensor } from "./events";
 
-export interface Props<T = unknown> {
+export interface ChartProps<T = unknown> extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title" | "children"
+> {
   data: T[];
   d3Config?: Config;
   className?: string;
@@ -28,3 +31,10 @@ export interface Props<T = unknown> {
   behaviors?: Behavior[];
   sensors?: Sensor[];
 }
+
+/**
+ * @deprecated Use {@link ChartProps}. `Props` is far too generic a name to
+ * export into a flat package namespace; kept as an alias so existing imports
+ * keep working.
+ */
+export type Props<T = unknown> = ChartProps<T>;

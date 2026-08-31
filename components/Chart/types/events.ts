@@ -79,11 +79,3 @@ export type Sensor<T = unknown> = (
   event: EngineEvent<T>,
   context: SensorContext<T>,
 ) => void;
-
-export interface EventContextValue {
-  on: (type: EventType, listener: EventListener) => void;
-  off: (type: EventType, listener: EventListener) => void;
-  emit: (event: ChartEvent) => void;
-  pointerPosition: Coordinates | null;
-  isWithinPlot: boolean;
-}

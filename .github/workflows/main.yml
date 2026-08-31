@@ -18,6 +18,11 @@ jobs:
     name: Run Tests
     uses: ./.github/workflows/test.yml
 
+  browser-test:
+    name: Run Browser Tests
+    needs: test
+    uses: ./.github/workflows/browser-test.yml
+
   build:
     name: Build Design System
     needs: test

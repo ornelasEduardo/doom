@@ -14,6 +14,5 @@ export interface Config {
   withGradient?: boolean;
   showDots?: boolean;
   hideYAxisDomain?: boolean;
-  animate?: boolean;
   type?: SeriesType;
 }

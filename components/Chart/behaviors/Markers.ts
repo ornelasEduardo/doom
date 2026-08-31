@@ -58,7 +58,12 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
       // Bind data to circles
       const circles = layer
         .selectAll("circle")
-        .data(targets, (d: any) => d.seriesId || Math.random());
+        // Stable key, so the join moves the marker rather than re-creating it.
+        .data(
+          targets,
+          (d: any, i: number) =>
+            `${d?.seriesId ?? "series"}:${d?.dataIndex ?? i}`,
+        );
 
       // Enter
       circles

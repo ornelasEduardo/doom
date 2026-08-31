@@ -9,6 +9,12 @@ Peer dependency: `npm install d3`
 
 ## Props
 
+`ChartProps<T>` extends `React.HTMLAttributes<HTMLDivElement>`, so `id`,
+`data-*`, `aria-*`, `onClick` and the rest land on the chart element. The
+component's own semantics win on conflict.
+
+> `Props` is still exported as a deprecated alias. Prefer `ChartProps`.
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `data` | `T[]` | required | Data array |
@@ -44,7 +50,6 @@ Peer dependency: `npm install d3`
 | `withGradient` | `boolean` | — | Fill area with gradient |
 | `showDots` | `boolean` | — | Show data point dots |
 | `hideYAxisDomain` | `boolean` | — | Hide Y-axis domain line |
-| `animate` | `boolean` | — | Animate on mount |
 | `type` | `SeriesType` | — | Series type override within config |
 
 ## Usage
@@ -58,15 +63,20 @@ Peer dependency: `npm install d3`
   y={(d) => d.revenue}  // Function accessor
   title="Monthly Revenue"
   withLegend
-  d3Config={{ grid: true, withGradient: true, animate: true }}
+  d3Config={{ grid: true, withGradient: true }}
 />
 
 // Composition API — custom layouts
-<Chart.Root data={data} x="label" y="value" d3Config={{ grid: true }}>
+<Chart.Root data={data} type="line" x="label" y="value" d3Config={{ grid: true }}>
   <Chart.Header title="Sales" subtitle="Last 12 months">
     <Chart.Legend />
   </Chart.Header>
-  <Chart.Plot type="area" color="var(--primary)" />
+  <Chart.Plot>
+    <Chart.Grid />
+    <Chart.Cursor />
+    <Chart.Series type="area" x="label" y="value" />
+    <Chart.Axis />
+  </Chart.Plot>
   <Chart.Footer>Custom footer content</Chart.Footer>
 </Chart.Root>
 
@@ -107,7 +117,7 @@ Pure, DOM-independent orchestrator. Converts raw input into processed `EngineEve
 - **InputSignal** — Normalized input format: `{ id, action, source, x, y, timestamp, key?, modifiers? }`
   - Actions: `START`, `MOVE`, `END`, `CANCEL`, `KEY`
   - Sources: `MOUSE`, `TOUCH`, `KEYBOARD`, `REMOTE`
-- **SpatialMap** — Hybrid hit detection: DOM `elementsFromPoint()` broad phase + quadtree fine phase. Configurable `magneticRadius` (default 20px) for snapping.
+- **SpatialMap** — Hybrid hit detection: DOM `elementsFromPoint()` broad phase + quadtree fine phase. Configurable `magneticRadius` (default 40px) for snapping.
 - **CoordinateSystem** — Transforms client → container → plot-relative coordinates.
 - **Scheduler** — Priority-based: `CRITICAL` (sync, for pointer down/up), `VISUAL` (RAF-batched, for moves), `IDLE` (requestIdleCallback). Visual queue coalesces events per pointer ID.
 
@@ -160,9 +170,39 @@ Key operations:
 | `"tooltip-config"` | `InteractionChannel.TOOLTIP_CONFIG` | Tooltip behavior |
 | `"crosshair"` | `InteractionChannel.CROSSHAIR` | Custom crosshair state |
 
+> **Channel payloads are not uniform.** `primary-hover` and `drag` carry
+> `targets`, while `selection` carries `selection` — a plain array of the
+> selected data objects, plus `mode`. Read the channel you are writing a
+> behavior against rather than assuming a shared shape.
+
 ## Series System
 
-Each series type registers itself with the store and gets an automatic interaction strategy:
+Each series type registers itself with the store and gets an automatic interaction strategy.
+
+A `<Chart.Series>` may carry its own `data`, which is used for both rendering and
+hit-testing. Scales are still derived from the root `data`, so a series whose
+values fall outside that domain will render off-plot — give `Chart.Root` a
+dataset that spans the full range.
+
+Series that do not name a `color` are assigned one from the categorical data
+palette in registration order, so sibling series are distinguishable and
+re-theme with the rest of the system:
+
+| Token | Default |
+|-------|---------|
+| `--chart-series-1` | `var(--primary)` |
+| `--chart-series-2` | `var(--accent)` |
+| `--chart-series-3` | `var(--success)` |
+| `--chart-series-4` | `var(--warning)` |
+| `--chart-series-5` | `var(--error)` |
+| `--chart-series-6` | `var(--secondary)` |
+
+These are deliberately separate from the semantic UI tokens: `variant="solid"`
+remaps `--primary` to the axis colour and `--secondary` to near-background, so a
+palette built on those would render two series unreadable. Override
+`--chart-series-*` to brand the palette.
+
+
 
 | Condition | Strategy | Complexity |
 |-----------|----------|------------|
@@ -172,6 +212,45 @@ Each series type registers itself with the store and gets an automatic interacti
 | Fallback | `LinearStrategy` | O(n) scan |
 
 **Key files:** `subcomponents/Series/`, `subcomponents/{LineSeries,BarSeries,ScatterSeries,CustomSeries}/`, `sensors/utils/strategies/`
+
+## Extension API
+
+Everything needed to write a sensor or behavior is exported from the package
+entry. The built-ins are namespaced on `Chart`, because the `Tooltip` behavior
+would otherwise collide with the standalone `Tooltip` component.
+
+```tsx
+import {
+  Chart,
+  InputAction,
+  InputSource,
+  InteractionChannel,
+  type Behavior,
+  type EngineEvent,
+  type Sensor,
+  type SensorContext,
+} from "doom-design-system";
+
+Chart.sensors;    // DataHoverSensor, KeyboardSensor, DragSensor, SelectionSensor
+Chart.behaviors;  // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpdate
+```
+
+`sensors` and `behaviors` **replace** the defaults rather than adding to them,
+so compose from the built-ins when you want a partial override:
+
+```tsx
+const sensors = useMemo(
+  () => [Chart.sensors.DataHoverSensor({ verticalSlice: true }), RangeSensor()],
+  [],
+);
+
+<Chart data={data} x="month" y="revenue" sensors={sensors} />
+```
+
+> **Memoise the array.** Sensors hold their state in a closure, so calling a
+> factory inline — `sensors={[DragSensor()]}` — builds a new sensor on every
+> render and discards any in-progress gesture. A stable sensor in a fresh array
+> literal is fine; the component compares contents, not array identity.
 
 ## Sensors
 

@@ -31,9 +31,25 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
     colorPaletteRef.current = colorPalette;
   }, [colorPalette]);
 
+  // Consumers pass a fresh array literal every render. Keying off its identity
+  // would re-register the whole set each time, discarding the closure state a
+  // sensor like DragSensor holds mid-gesture.
+  const sensorsRef = useRef<Sensor[] | undefined>(sensors);
+  const sameSensors =
+    sensorsRef.current === sensors ||
+    (!!sensorsRef.current &&
+      !!sensors &&
+      sensorsRef.current.length === sensors.length &&
+      sensorsRef.current.every((s, i) => s === sensors[i]));
+
+  if (!sameSensors) {
+    sensorsRef.current = sensors;
+  }
+  const stableSensors = sensorsRef.current;
+
   const activeSensors = useMemo(() => {
-    if (sensors && sensors.length > 0) {
-      return sensors;
+    if (stableSensors && stableSensors.length > 0) {
+      return stableSensors;
     }
 
     const defaults: Sensor[] = [];
@@ -64,7 +80,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       );
     }
     return defaults;
-  }, [sensors, config.type]);
+  }, [stableSensors, config.type]);
 
   useEffect(() => {
     if (status !== "ready" || !data.length || !engine) {

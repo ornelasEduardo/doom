@@ -56,7 +56,10 @@ describe("SpatialMap DOM Hit Testing", () => {
       (document as any).elementsFromPoint = vi.fn();
     }
     vi.spyOn(document, "elementsFromPoint").mockReturnValue([element]);
-    vi.spyOn(container, "contains").mockReturnValue(true);
+    // Put the element genuinely inside the container. Mocking `contains` to
+    // return true disables the only check that stops one chart's SpatialMap
+    // from claiming another chart's DOM nodes.
+    container.appendChild(element);
 
     // 5. Test Find
     const candidates = map.find(100, 100);
@@ -68,6 +71,58 @@ describe("SpatialMap DOM Hit Testing", () => {
     expect(domCandidate).toBeDefined();
     expect(domCandidate!.data).toBe(mockData);
     expect(domCandidate!.seriesId).toBe("series-1");
+  });
+
+  it("should ignore a DOM element belonging to another chart", () => {
+    const map = new SpatialMap({ useDomHitTesting: true });
+    const mockData = { id: 1, value: 100 };
+    map.updateIndex([
+      { x: 100, y: 100, data: mockData, seriesId: "series-1", dataIndex: 0 },
+    ]);
+
+    const ownContainer = document.createElement("div");
+    vi.spyOn(ownContainer, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 500,
+      height: 500,
+      right: 500,
+      bottom: 500,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    } as DOMRect);
+    map.setContainer(ownContainer);
+
+    // A mark rendered by a *different* chart instance, sitting under the same
+    // viewport point. elementsFromPoint is document-wide, so without the
+    // containment check this chart would report a neighbour's data point.
+    const foreignContainer = document.createElement("div");
+    const foreign = document.createElement("div");
+    foreign.setAttribute(CHART_DATA_ATTRS.TYPE, "bar");
+    foreign.setAttribute(CHART_DATA_ATTRS.SERIES_ID, "series-1");
+    foreign.setAttribute(CHART_DATA_ATTRS.INDEX, "0");
+    vi.spyOn(foreign, "getBoundingClientRect").mockReturnValue({
+      left: 90,
+      top: 90,
+      width: 20,
+      height: 20,
+      right: 110,
+      bottom: 110,
+      x: 90,
+      y: 90,
+      toJSON: () => {},
+    } as DOMRect);
+    foreignContainer.appendChild(foreign);
+
+    if (!document.elementsFromPoint) {
+      (document as any).elementsFromPoint = vi.fn();
+    }
+    vi.spyOn(document, "elementsFromPoint").mockReturnValue([foreign]);
+
+    const candidates = map.find(100, 100);
+
+    expect(candidates.some((c) => c.element === foreign)).toBe(false);
   });
 
   it("should ignore DOM element if data is not found in index (Fix for Crash)", () => {

@@ -12,6 +12,8 @@ import {
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
+import { describeDatum } from "../../utils/describe";
+import { useSeriesColor } from "../../utils/hooks";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 import styles from "./LineSeries.module.scss";
 
@@ -72,7 +74,7 @@ const LineSeriesComponent = <T,>({
   );
 
   const gradientId = useId().replace(/:/g, "");
-  const strokeColor = color || "var(--primary)";
+  const strokeColor = useSeriesColor(chartStore, gradientId, color);
 
   useEffect(() => {
     if (!yAccessor) {
@@ -82,7 +84,8 @@ const LineSeriesComponent = <T,>({
       {
         id: gradientId,
         label: label || (config.yAxisLabel ?? "Series"),
-        color: strokeColor,
+        color,
+        data: localData,
         x: xAccessor,
         y: yAccessor,
         hideCursor: hideCursor,
@@ -94,7 +97,7 @@ const LineSeriesComponent = <T,>({
   }, [
     chartStore,
     gradientId,
-    strokeColor,
+    color,
     config.yAxisLabel,
     yAccessor,
     xAccessor,
@@ -228,7 +231,14 @@ const LineSeriesComponent = <T,>({
           const cx = (xScale as any)(xAccessor(d));
           const cy = yScale(yAccessor(d));
           return (
-            <SeriesPoint key={i} color={strokeColor} datum={d} x={cx} y={cy} />
+            <SeriesPoint
+              key={i}
+              color={strokeColor}
+              datum={d}
+              description={describeDatum(d, xAccessor, yAccessor)}
+              x={cx}
+              y={cy}
+            />
           );
         })}
     </g>

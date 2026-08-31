@@ -10,6 +10,7 @@ import { SeriesProps } from "../../types";
 import { D3Selection } from "../../types/selection";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
+import { useSeriesColor } from "../../utils/hooks";
 
 const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
   const { chartStore, config, isMobile, resolveInteraction } =
@@ -29,6 +30,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
 
   const gRef = useRef<SVGGElement>(null);
   const seriesId = useId();
+  const seriesColor = useSeriesColor(chartStore, seriesId, color);
 
   // Register CustomSeries so it appears in the Legend
   useEffect(() => {
@@ -38,12 +40,12 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     registerSeries(chartStore, seriesId, [
       {
         label: effectiveLabel,
-        color: color || "var(--primary)",
+        color,
+        data: localData,
         yAccessor,
         xAccessor,
         hideCursor: true,
         interactionMode: "x",
-        data,
         id: seriesId,
       } as any,
     ]);
@@ -89,7 +91,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         y: scales.y ?? undefined,
       },
       theme: {
-        colors: [color || "var(--primary)"],
+        colors: [seriesColor],
         isMobile,
       },
       config,

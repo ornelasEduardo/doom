@@ -7,6 +7,8 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
     exclude: [
       "**/node_modules/**",
+      // Real-browser lane — run with `npm run test:browser`.
+      "**/*.browser.test.tsx",
       "**/dist/**",
       "tests/**",
       "**/.worktrees/**",
