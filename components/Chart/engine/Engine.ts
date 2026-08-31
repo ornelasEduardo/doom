@@ -105,6 +105,16 @@ export class Engine<T = unknown> {
   }
 
   /**
+   * Re-arm a disposed engine so it accepts input again.
+   * React StrictMode (dev) and Suspense/Activity hides tear down and re-run
+   * effects against the same Engine instance, so dispose() must be reversible
+   * for effect setup/cleanup symmetry.
+   */
+  activate(): void {
+    this.disposed = false;
+  }
+
+  /**
    * Clean up all resources.
    */
   dispose(): void {
