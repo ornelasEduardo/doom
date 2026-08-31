@@ -345,6 +345,31 @@ describe("Chart", () => {
   });
 
   describe("extension API", () => {
+    it("keeps stable sensors registered across re-renders", () => {
+      const sensor: Sensor = vi.fn();
+
+      const { rerender } = render(
+        <Chart data={data} sensors={[sensor]} x={x} y={y} />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const setHandler = vi.spyOn(Engine.prototype, "setHandler");
+
+      // Same sensor, fresh array literal — the ordinary way a consumer writes
+      // this. Keying off array identity tears down and re-registers the whole
+      // sensor set on every parent render, discarding any closure state a
+      // stateful sensor such as DragSensor is holding mid-gesture.
+      rerender(<Chart data={data} sensors={[sensor]} x={x} y={y} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      expect(setHandler).not.toHaveBeenCalled();
+      setHandler.mockRestore();
+    });
+
     it("drives a custom sensor through the real event pipeline", () => {
       const seen: Array<{ action: string; label?: string }> = [];
 
