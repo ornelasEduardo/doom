@@ -242,9 +242,21 @@ export function Root<T>({
       return;
     }
 
+    // Border box, not content box: contentRect excludes the card's padding and
+    // border, so a chart authored at 500px reports about 450 and falls under
+    // the 480 cutoff it was never meant to cross.
+    const readWidth = (entry?: ResizeObserverEntry) => {
+      const border = entry?.borderBoxSize?.[0]?.inlineSize;
+      return border ?? element.getBoundingClientRect().width;
+    };
+
+    // Seed synchronously so the first paint does not briefly decide layout
+    // from a width of zero.
+    setChartWidth(readWidth());
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setChartWidth(entry.contentRect.width);
+        setChartWidth(readWidth(entry));
       }
     });
     observer.observe(element);
