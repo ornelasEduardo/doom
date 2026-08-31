@@ -545,8 +545,17 @@ export function Root<T>({
       }
 
       const elements = document.elementsFromPoint(clientX, clientY);
+      const container = containerRef.current;
 
       for (const element of elements) {
+        // elementsFromPoint is document-wide. Without this, a chart could hand
+        // the consumer a datum belonging to a different chart that happens to
+        // sit under the same point — the same guard SpatialMap.findFromDOM
+        // applies to its own hit testing.
+        if (container && !container.contains(element)) {
+          continue;
+        }
+
         const data = (element as unknown as { __data__: unknown }).__data__;
         if (data && !Array.isArray(data)) {
           return { element: element as Element, data: data as T };

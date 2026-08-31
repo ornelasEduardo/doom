@@ -240,6 +240,49 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("render-prop hit testing", () => {
+    it("ignores elements that belong to another chart", () => {
+      let ctx: any;
+      const { container } = render(
+        <Chart
+          data={data}
+          render={(frame) => {
+            ctx = frame;
+          }}
+          x={x}
+          y={y}
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+      expect(ctx).toBeDefined();
+
+      // A mark rendered by a different chart, sitting under the same point.
+      // elementsFromPoint is document-wide, so without a containment check
+      // this chart hands the consumer a neighbour's datum.
+      const foreign = document.createElement("div");
+      (foreign as any).__data__ = { label: "not-mine", value: 999 };
+      document.body.appendChild(foreign);
+
+      const original = document.elementsFromPoint;
+      (document as any).elementsFromPoint = () => [foreign];
+
+      try {
+        const result = ctx.resolveInteraction({
+          type: "mousemove",
+          clientX: 10,
+          clientY: 10,
+          preventDefault: vi.fn(),
+        });
+        expect(result).toBeNull();
+      } finally {
+        (document as any).elementsFromPoint = original;
+        foreign.remove();
+      }
+    });
+  });
+
   describe("d3Config overrides", () => {
     it("applies a changed margin after mount", () => {
       const { container, rerender } = render(
@@ -914,7 +957,7 @@ describe("Chart", () => {
 
   it("correctly resolves element data and ignores background", () => {
     let capturedCtx: any;
-    render(
+    const { container } = render(
       <Chart
         data={data}
         render={(ctx) => {
@@ -932,6 +975,11 @@ describe("Chart", () => {
 
     const mockElement = document.createElement("div");
     (mockElement as any).__data__ = data[0];
+    // Must live inside this chart: resolveInteraction ignores elements outside
+    // its own container so it cannot report a neighbouring chart's datum.
+    (
+      container.querySelector("[data-chart-container]") as HTMLElement
+    ).appendChild(mockElement);
 
     const originalElementFromPoint = document.elementFromPoint;
     document.elementFromPoint = vi.fn(() => mockElement);
