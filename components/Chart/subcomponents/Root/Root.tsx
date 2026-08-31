@@ -153,18 +153,10 @@ function RootPlot({
  * A value that changes when an accessor's *behaviour* changes, but not when an
  * inline arrow is merely re-created on every render.
  *
- * Source text catches `d => d.a` becoming `d => d.b`. Projecting a few sample
- * rows also catches `d => d[field]`, whose source text never changes. A pair of
- * accessors that agree on every sampled row is treated as unchanged.
+ * Source text catches `d => d.a` becoming `d => d.b`; projecting sample rows
+ * also catches `d => d[field]`, whose source never changes.
  */
-/**
- * Below this the chart switches to its compact treatment.
- *
- * The system's `xs` breakpoint. The previous 600px was a viewport query and is
- * not on the system scale; reusing that number against a container width would
- * have pushed ordinary 500px dashboard charts into the compact layout they did
- * not previously get.
- */
+/** Below this the chart switches to its compact treatment. The `xs` breakpoint. */
 const COMPACT_WIDTH = 480;
 
 const accessorSignature = (accessor: unknown, data: any[]): string => {
@@ -224,15 +216,11 @@ export function Root<T>({
   const lastValueRef = useRef<any>(null);
   const summaryId = useId();
 
-  // Layout decisions here are about how much room the chart has, not what
-  // device it is on: a 320px chart in a dashboard cell needs the same
-  // treatment on a wide monitor as on a phone. Reading window.matchMedia got
-  // that wrong in both directions and added a window listener per chart.
-  // Measured on the chart element itself, not the inner plot area. The plot
-  // width varies with card padding and theme, so comparing against it made the
-  // threshold unpredictable — a chart authored at 500px measured ~450 and
-  // landed on either side of the cutoff depending on font rendering. The outer
-  // width is the number the consumer actually set.
+  // How much room the chart has, not what device it is on: a 320px chart in a
+  // dashboard cell needs the same treatment on a wide monitor as on a phone.
+  // The chart element, not the inner plot area: the plot width varies with
+  // padding and theme, so the threshold would not mean the width a consumer
+  // set.
   const [chartWidth, setChartWidth] = useState(0);
   const isMobile = chartWidth > 0 && chartWidth < COMPACT_WIDTH;
 
@@ -242,9 +230,8 @@ export function Root<T>({
       return;
     }
 
-    // Border box, not content box: contentRect excludes the card's padding and
-    // border, so a chart authored at 500px reports about 450 and falls under
-    // the 480 cutoff it was never meant to cross.
+    // Border box: contentRect excludes padding and border, so a chart authored
+    // at 500px would measure ~450 and cross the cutoff unexpectedly.
     const readWidth = (entry?: ResizeObserverEntry) => {
       const border = entry?.borderBoxSize?.[0]?.inlineSize;
       return border ?? element.getBoundingClientRect().width;
@@ -264,12 +251,9 @@ export function Root<T>({
     return () => observer.disconnect();
   }, []);
 
-  // Tooltip edge detection converts its anchor into absolute coordinates using
-  // this rect. wrapperRef is only attached in the auto-layout branch, so in
-  // composition mode it stayed null and the chart was treated as if it sat at
-  // the viewport origin — the flip then happened at the wrong moment and the
-  // tooltip could run off screen. Resolved lazily so it follows whichever
-  // element actually mounted.
+  // Tooltip edge detection converts its anchor to absolute coordinates against
+  // this rect. wrapperRef only mounts in the auto-layout branch, so resolve
+  // lazily to whichever element exists.
   const tooltipBoundsRef = useMemo(
     () => ({
       get current() {
@@ -424,17 +408,11 @@ export function Root<T>({
     });
   }, [chartStore, data, type]);
 
-  // The store is built once in a useState initialiser, so the accessors it was
-  // seeded with would otherwise stay frozen for the component's whole life and
-  // a changed `x`/`y` prop would silently keep charting the old field.
-  //
-  // No dependency array: `x` and `y` are usually inline arrows with fresh
-  // identity every render, so a dependency array would fire constantly. The
-  // signature guard converges instead — once written, the next render computes
-  // the same signature and this becomes a no-op.
-  // d3Config.margin is documented as an override, so a change to it has to
-  // reach the store — it was previously read once at construction. Compared by
-  // value because d3Config is almost always an inline object literal.
+  // The store is built once in a useState initialiser, so a changed x/y prop
+  // has to be pushed in. No dependency array: these are usually inline arrows
+  // with fresh identity every render, so the signature guard converges instead.
+  // margin is a documented override, so a change has to reach the store.
+  // Compared by value: d3Config is almost always an inline literal.
   const marginSyncRef = useRef<string | null>(null);
   useEffect(() => {
     const configured = d3Config?.margin;
@@ -568,9 +546,8 @@ export function Root<T>({
       return;
     }
 
-    // ResizeObserver fires for reasons other than an actual size change, and
-    // every call rebuilds the scales and commits React. Only act on a real
-    // change.
+    // ResizeObserver fires for reasons other than a size change, and every
+    // call here rebuilds the scales and commits React.
     let lastWidth = -1;
     let lastHeight = -1;
 
@@ -623,10 +600,8 @@ export function Root<T>({
       const container = containerRef.current;
 
       for (const element of elements) {
-        // elementsFromPoint is document-wide. Without this, a chart could hand
-        // the consumer a datum belonging to a different chart that happens to
-        // sit under the same point — the same guard SpatialMap.findFromDOM
-        // applies to its own hit testing.
+        // elementsFromPoint is document-wide, so without this a chart could
+        // report a datum belonging to a neighbouring chart.
         if (container && !container.contains(element)) {
           continue;
         }
@@ -688,9 +663,7 @@ export function Root<T>({
     <ChartContext.Provider value={value as any}>
       <BehaviorManager behaviors={behaviors as any} value={value as any} />
       <div
-        // Spread first so the chart's own semantics win over anything passed
-        // in — a consumer should not be able to clobber the region's label or
-        // its description wiring.
+        // Spread first: the chart's own role, label and description win.
         {...rest}
         ref={containerRef}
         data-chart-container

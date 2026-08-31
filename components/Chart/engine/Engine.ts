@@ -123,10 +123,9 @@ export class Engine<T = unknown> {
     }
     this.disposed = true;
 
-    // Release scheduled work only. The handler and the spatial index are not
-    // resources to reclaim — the engine is per-instance and becomes garbage
-    // with its owner on a real unmount — and dropping them is what made
-    // activate() insufficient after a StrictMode or Offscreen teardown.
+    // Scheduled work only. The handler and index are not resources to reclaim
+    // — the engine is per-instance — and clearing them would make activate()
+    // unable to restore a working engine.
     this.scheduler.dispose();
   }
 
@@ -150,9 +149,8 @@ export class Engine<T = unknown> {
     const searchY = signal.y - plotOffset.y;
 
     // Key signals carry no position — createKeySignal reports (0, 0) — so a
-    // hit test there returns whatever sits near the plot origin and hands
-    // sensors phantom candidates for every keystroke. KeyboardSensor resolves
-    // its own target from the focused index instead.
+    // hit test there would return whatever sits near the plot origin.
+    // KeyboardSensor resolves its own target from the focused index.
     const candidates =
       signal.action === InputAction.KEY
         ? []

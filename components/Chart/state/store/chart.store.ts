@@ -163,16 +163,10 @@ export const updateChartState = <T>(
       nextSeries.set(id, hydrated);
     });
 
-    // A hover points at a specific row. When the data is replaced the pointer
-    // has not moved, but the row it resolved to may be gone — which would
-    // leave the tooltip, markers and onValueChange reporting a datum that no
-    // longer exists.
-    //
-    // Re-point rather than drop. A live chart re-supplies a fresh array on
-    // every tick with new object identities but the same rows, and clearing
-    // outright made the reading blink out from under the cursor. Rows are
-    // matched by position, so the tooltip follows the updated value and is
-    // only dropped when its row genuinely went away.
+    // A hover points at a specific row, and the pointer has not moved. Re-point
+    // by position rather than dropping: a live chart re-supplies a fresh array
+    // every tick, so clearing would blink the reading out from under the
+    // cursor. Only drop when the row is genuinely gone.
     let nextInteractions = prev.interactions;
     const hover = nextInteractions.get(InteractionChannel.PRIMARY_HOVER) as
       | { targets?: Array<{ dataIndex?: number; data?: unknown }> }

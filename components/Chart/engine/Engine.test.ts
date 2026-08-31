@@ -711,12 +711,9 @@ describe("Scheduler IDLE Priority", () => {
     // Not called immediately
     expect(handler).not.toHaveBeenCalled();
 
-    // Poll for the deferred dispatch rather than racing a fixed delay against
-    // requestIdleCallback's own scheduling — the original 100ms sleep was a
-    // coin flip on a loaded machine.
-    //
-    // Note this covers Scheduler's IDLE lane directly. Engine.determinePriority
-    // never returns IDLE today, so nothing reaches it through the Engine.
+    // Poll rather than race a fixed delay against requestIdleCallback.
+    // Covers Scheduler's IDLE lane directly: Engine.determinePriority never
+    // returns IDLE, so nothing reaches it through the Engine.
     const deadline = Date.now() + 2000;
     while (handler.mock.calls.length === 0 && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 10));

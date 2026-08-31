@@ -85,11 +85,9 @@ export class CoordinateSystem {
    */
   updateBounds(rect: DOMRect, plotBounds?: PlotBounds): void {
     this.containerRect = rect;
-    // The plot's offset inside the container is derived from both rects, so it
-    // has to be re-measured whenever either one changes. A layout change can
-    // move the plot within a container that did not itself move or resize —
-    // a header wrapping to two lines, a legend appearing — and leaving the old
-    // offset in place would silently skew every pointer coordinate.
+    // Derived from both rects, so it must be re-measured whenever either
+    // changes: a header wrapping or a legend appearing moves the plot within a
+    // container that did not itself resize.
     this.plotOffset = this.measurePlotOffset(rect);
     if (plotBounds) {
       this.plotBounds = plotBounds;
@@ -138,12 +136,10 @@ export class CoordinateSystem {
     clientX: number,
     clientY: number,
   ): { x: number; y: number } | null {
-    // Read the rect live rather than trusting the cached one. Client
-    // coordinates are viewport-relative, so any scroll or layout shift moves
-    // the container underneath a cached rect — and a position-only change
-    // fires no ResizeObserver, so nothing would invalidate it. Falls back to
-    // the last explicitly-set rect for callers driving the system without an
-    // element (updateBounds).
+    // Client coordinates are viewport-relative, so a cached rect goes stale on
+    // any scroll or layout shift — and a position-only change fires no
+    // ResizeObserver to invalidate it. Falls back to the last explicitly-set
+    // rect for callers driving the system without an element.
     const rect = this.containerElement
       ? this.containerElement.getBoundingClientRect()
       : this.containerRect;

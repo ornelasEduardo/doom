@@ -58,9 +58,7 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
       // Bind data to circles
       const circles = layer
         .selectAll("circle")
-        // Deterministic join key. A Math.random() fallback would make every
-        // datum look new on each frame, tearing the marker down and
-        // re-appending it instead of moving it.
+        // Stable key, so the join moves the marker rather than re-creating it.
         .data(
           targets,
           (d: any, i: number) =>

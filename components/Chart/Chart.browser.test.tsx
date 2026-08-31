@@ -127,7 +127,7 @@ describe("Chart in a real browser", () => {
     expect(tooltipText()).toContain("A");
 
     // Leave first: with no active hover there is nothing to clear, which is
-    // exactly the state that used to latch hit-testing off after a scroll.
+    // the state that latches hit-testing off if the rect is stale.
     await leave(root);
     window.scrollTo(0, 500);
     await frame();
@@ -230,8 +230,7 @@ describe("Chart in a real browser", () => {
   });
 
   it("keeps every categorical label when they all fit", async () => {
-    // Six short categories across 600px fit comfortably. Thinning them to a
-    // fixed budget throws away labels the chart had room to show.
+    // Six short categories across 600px fit comfortably.
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((m, i) => ({
       label: m,
       value: (i + 1) * 10,
@@ -355,9 +354,8 @@ describe("Chart in a real browser", () => {
       />,
     );
 
-    // Assert the premise: 500 is comfortably above the 480 cutoff. Without
-    // this the test could drift to the boundary and start reporting platform
-    // font differences instead of the behaviour it means to pin.
+    // Assert the premise: 500 is comfortably above the 480 cutoff, so this
+    // pins behaviour rather than platform font differences.
     const root = host.querySelector("[data-chart-container]") as HTMLElement;
     expect(Math.round(root.getBoundingClientRect().width)).toBe(500);
 
@@ -366,9 +364,8 @@ describe("Chart in a real browser", () => {
   });
 
   it("adapts to its own width, not the window's", async () => {
-    // A narrow chart in a wide viewport. Reading window.matchMedia says
-    // "desktop" and the chart keeps its full-size tick budget, crowding a
-    // 320px plot — the container is the only meaningful signal here.
+    // A narrow chart in a wide viewport: a window query would call this
+    // "desktop" and crowd a 320px plot with the full tick budget.
     const { host } = await mount(
       <Chart
         d3Config={{ grid: true }}

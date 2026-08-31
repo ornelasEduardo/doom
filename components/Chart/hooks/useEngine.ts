@@ -93,10 +93,8 @@ export function useEngine<T = unknown>(
 
   useEffect(() => {
     // The Engine has one handler slot, and in the Chart it belongs to
-    // SensorManager. Claiming it here when the caller never asked to observe
-    // events would silently overwrite the real handler — whichever effect runs
-    // last wins, which is exactly the kind of ordering that changes between a
-    // fresh mount and an <Activity>/Offscreen re-show.
+    // SensorManager. Claiming it uninvited would make correctness depend on
+    // effect ordering.
     if (!hasOnEvent) {
       return;
     }
@@ -128,9 +126,8 @@ export function useEngine<T = unknown>(
   // =========================================================================
 
   useEffect(() => {
-    // Only manage the index when this hook was actually given data to index.
-    // Clearing otherwise discards whatever another owner put there — in the
-    // Chart that is Root, which builds points from the registered series.
+    // Only manage the index when given data to index; otherwise it belongs to
+    // another owner — in the Chart, to Root.
     if (!data) {
       return;
     }

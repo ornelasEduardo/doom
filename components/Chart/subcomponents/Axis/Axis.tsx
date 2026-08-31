@@ -16,9 +16,8 @@ const LABEL_GAP = 8;
  * How many categories to skip so tick labels stop colliding.
  *
  * Band and point scales ignore d3's tick count, so every category is drawn.
- * Thinning against a fixed budget instead would drop labels a chart had room
- * for — six months across 600px would show three. Measure what is actually
- * rendered and thin only when the text genuinely does not fit.
+ * Measured rather than budgeted: a fixed budget would also thin charts with
+ * room to spare.
  */
 const strideToAvoidOverlap = (
   group: SVGGElement,
@@ -119,12 +118,11 @@ export function Axis() {
       const xBBox = gx.current.getBBox();
       const tickOverflow = xBBox.y + xBBox.height - innerHeight;
 
-      // The x-axis label lives outside gx — it is a sibling <text> offset below
-      // the plot — so the tick group's own box never accounts for it, and the
-      // bottom margin was left too small. The svg is overflow:hidden by spec,
-      // so the shortfall clipped the label's descenders rather than spilling.
+      // The axis label is a sibling <text> below the plot, so gx's box never
+      // covers it. The svg is overflow:hidden, so anything unaccounted for is
+      // clipped rather than spilling visibly.
       // getBBox reports the text's own coordinate space, before the translate
-      // that positions it below the plot, so the offset has to be added back.
+      // that positions it, so the offset has to be added back.
       const labelBox = xLabelRef.current?.getBBox();
       const labelOverflow = labelBox
         ? X_LABEL_OFFSET + labelBox.y + labelBox.height

@@ -47,9 +47,7 @@ export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
  *
  * A series registers with the colour it was given — possibly none — and the
  * store fills the gap from the categorical palette. Reading the resolved value
- * back keeps one source of truth, so the mark, its points and the legend swatch
- * always agree. Falls back to the first palette entry for the render that
- * happens before registration lands.
+ * back keeps the mark, its points and the legend swatch in agreement.
  */
 export const useSeriesColor = (
   chartStore: { useStore: <U>(selector: (s: any) => U) => U },

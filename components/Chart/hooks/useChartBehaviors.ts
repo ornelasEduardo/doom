@@ -14,10 +14,8 @@ export const useChartBehaviors = <T>(
   chartContext: ContextValue<T>,
   userBehaviors?: Behavior<T>[],
 ) => {
-  // Hold the behavior array steady while its contents are unchanged.
-  // Consumers pass a fresh array literal on every render, and keying off array
-  // identity tears down and re-appends every d3 layer on any unrelated
-  // re-render — losing transitions and re-running enter selections.
+  // Consumers pass a fresh array literal every render. Keying off its identity
+  // would tear down and re-append every d3 layer on any unrelated re-render.
   const behaviorsRef = useRef<Behavior<T>[] | undefined>(userBehaviors);
   const sameBehaviors =
     behaviorsRef.current === userBehaviors ||

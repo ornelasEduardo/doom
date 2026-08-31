@@ -53,9 +53,7 @@ export const Dim = <T = unknown>(options: DimOptions<T> = {}): Behavior => {
 
     const { g } = ctx;
 
-    // The store notifies on every pointer frame. Re-querying the plot subtree
-    // and rewriting inline opacity on every element each time is a full DOM
-    // sweep per frame, so skip it unless the active set or the data changed.
+    // The store notifies on every pointer frame, and this is a full DOM sweep.
     let lastKey: string | null = null;
     let lastData: unknown = null;
 

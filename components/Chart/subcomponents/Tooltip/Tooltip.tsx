@@ -80,8 +80,6 @@ export function Tooltip<T>({
         top: 0,
         left: 0,
         transform: `translate(${layout.x}px, ${layout.y}px)`,
-        // --z-tooltip (500), not the literal 10 that put the chart
-        // tooltip below dropdowns, modals and drawers.
         zIndex: "var(--z-tooltip)",
         opacity: layout.visible ? 1 : 0,
         transition: "opacity 0.1s ease-out",

@@ -6,11 +6,8 @@ const formatValue = (value: unknown): string =>
 
 /**
  * A human-readable name for a single datum, built from the chart's own
- * accessors.
- *
- * Marks previously used `JSON.stringify(datum)` as their accessible name, which
- * reads the entire row aloud — internal ids, nested metadata and all. Only the
- * values the chart actually plots belong in the accessible name.
+ * accessors. Only the values the chart plots belong in an accessible name —
+ * not the whole row.
  */
 export const describeDatum = (
   datum: unknown,

@@ -70,10 +70,5 @@ export function createScales<T>(
   return { xScale, yScale, innerWidth, innerHeight };
 }
 
-/**
- * Tick budget shared by the Y axis and the grid.
- *
- * They render from the same scale but were computing counts independently, so
- * on a narrow viewport the grid drew five lines behind a three-tick axis.
- */
+/** Tick budget shared by the Y axis and the grid, so the two cannot drift. */
 export const yTickCount = (isMobile?: boolean) => (isMobile ? 3 : 5);

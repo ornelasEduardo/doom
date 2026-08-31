@@ -116,11 +116,10 @@ describe("drag", () => {
     const [originalData, newValue] = onDragEnd.mock.calls.at(-1)!;
     expect(originalData).toMatchObject({ id: 2 });
 
-    // The value has to come back in the data domain, not in pixels. Measured
-    // at this fixed 600x360 size: dragging point 2 (y = 40) up 60px reports
-    // 57.14. Dropping the scale inversion reports the raw plot coordinate, 80,
-    // so the bounds below separate the two — a looser bound does not, which is
-    // how the first version of this assertion passed against broken code.
+    // The value has to come back in the data domain, not in pixels. At this
+    // fixed 600x360 size, dragging point 2 (y = 40) up 60px reports 57.14;
+    // without the scale inversion it reports the raw plot coordinate, 80. The
+    // bounds separate the two — a looser bound would not.
     const dragged = newValue.y as number;
     const original = (originalData as { y: number }).y;
 

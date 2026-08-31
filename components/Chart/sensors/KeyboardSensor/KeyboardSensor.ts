@@ -49,9 +49,8 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
       const d = data[focusedIndex];
       const { x: xScale, y: yScale } = scales;
 
-      // Accessors live on the store root (createChartStore takes them as
-      // separate params), not on `config` — reading them from `config` yields
-      // undefined and silently collapses every point to (0, 0).
+      // createChartStore takes the accessors as separate params, so they live
+      // on the store root rather than on `config`.
       const xAcc = xAccessor ?? ((v: any) => v[0]);
       const yAcc = yAccessor ?? ((v: any) => v[1]);
 

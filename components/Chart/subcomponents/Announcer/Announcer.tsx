@@ -21,13 +21,10 @@ const describe = (value: unknown) =>
  * aria-hidden SVG, so without this a screen reader gets the region's name and
  * nothing about the data.
  *
- * Renders two things, both visually hidden:
- * - a static summary of the series, referenced by the region's aria-describedby
- * - a live region that reports the focused point as the user moves through the
- *   chart with a pointer or the arrow keys
+ * Renders a hidden summary, referenced by the region's aria-describedby, and a
+ * live region reporting the focused point.
  *
- * It subscribes to the store itself so that hovering re-renders only this
- * component rather than the whole chart.
+ * Subscribes to the store itself so hovering re-renders only this component.
  */
 export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   const { chartStore } = useChartContext();

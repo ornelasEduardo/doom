@@ -727,9 +727,8 @@ describe("Chart", () => {
 
   describe("documented examples", () => {
     it("renders the composition example from chart.md", () => {
-      // Kept in step with skills/doom-design-system/components/chart.md. The
-      // previously documented form passed `type`/`color` to Chart.Plot, which
-      // accepts neither, and rendered an empty plot.
+      // Kept in step with skills/doom-design-system/components/chart.md.
+      // Chart.Plot takes only children, so the series must be explicit.
       const rows = [
         { label: "Jan", value: 10 },
         { label: "Feb", value: 20 },

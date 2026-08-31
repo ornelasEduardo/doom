@@ -78,11 +78,8 @@ export function createStore<T>(initialState: T): StoreApi<T> {
 
   const useStore = <U>(selector: (state: T) => U = (s) => s as any): U => {
     // useSyncExternalStore compares snapshots with Object.is, so a selector
-    // that derives a fresh object each call — `s => ({ a: s.a, b: s.b })` —
-    // looks like a new snapshot on every read and React bails out with
-    // "Maximum update depth exceeded". Cache per call site: reuse the value
-    // while the state is untouched, and keep the previous identity when the
-    // derived result is shallowly equal.
+    // deriving a fresh object each call looks like a new snapshot every read
+    // and React bails out with "Maximum update depth exceeded".
     const selectorRef = useRef(selector);
     selectorRef.current = selector;
     const cache = useRef<{ state: T; value: U } | null>(null);
