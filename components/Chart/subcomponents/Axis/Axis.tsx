@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { useChartContext } from "../../context";
 import { d3 } from "../../utils/d3";
+import { yTickCount } from "../../utils/scales";
 import styles from "./Axis.module.scss";
 
 export function Axis() {
@@ -24,15 +25,22 @@ export function Axis() {
     }
 
     const xAxis = d3.axisBottom(xScale as any);
-    if ("bandwidth" in xScale) {
-      xAxis.ticks(5);
+    const xTickCount = isMobile ? 3 : 5;
+
+    if (typeof (xScale as any).ticks === "function") {
+      xAxis.ticks(xTickCount);
     } else {
-      xAxis.ticks(5);
+      // Band and point scales have no .ticks(), so d3 ignores the count and
+      // draws one label per category — 30 categories meant 30 overlapping
+      // labels. Thin the domain to roughly the same budget instead.
+      const domain = (xScale as any).domain() as (string | number)[];
+      const stride = Math.max(1, Math.ceil(domain.length / xTickCount));
+      xAxis.tickValues(domain.filter((_, i) => i % stride === 0) as any);
     }
 
     d3.select(gx.current).call(xAxis);
 
-    const yAxis = d3.axisLeft(yScale).ticks(isMobile ? 3 : 5);
+    const yAxis = d3.axisLeft(yScale).ticks(yTickCount(isMobile));
     yAxis.tickFormat((d) => {
       const val = typeof d === "number" ? d : d.valueOf();
       if (val === 0) {

@@ -235,6 +235,65 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("axis ticks", () => {
+    it("caps tick labels on a categorical x-axis", () => {
+      const many = Array.from({ length: 30 }, (_, i) => ({
+        label: `Category ${i}`,
+        value: i,
+      }));
+
+      const { container } = render(<Chart data={many} x={x} y={y} />);
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      // d3's axis.ticks() is a no-op on band/point scales, so every category
+      // rendered a label — 30 overlapping strings across the axis.
+      const xLabels = container.querySelectorAll(
+        '[aria-label="X Axis"] .tick text',
+      );
+      expect(xLabels.length).toBeGreaterThan(0);
+      expect(xLabels.length).toBeLessThanOrEqual(8);
+    });
+
+    it("keeps the grid and the y-axis on the same tick budget", () => {
+      // The axis thins to three ticks on a narrow viewport while the grid was
+      // hardcoded to five, so the grid drew lines with no matching axis label.
+      const matchMedia = vi.spyOn(window, "matchMedia").mockImplementation(
+        (query: string) =>
+          ({
+            matches: true,
+            media: query,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            onchange: null,
+            dispatchEvent: vi.fn(),
+          }) as unknown as MediaQueryList,
+      );
+
+      try {
+        const { container } = render(
+          <Chart d3Config={{ grid: true }} data={data} x={x} y={y} />,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+
+        const gridLines = container.querySelectorAll("[data-chart-grid] line");
+        const axisTicks = container.querySelectorAll(
+          '[aria-label="Y Axis"] .tick',
+        );
+
+        expect(axisTicks.length).toBeGreaterThan(0);
+        expect(gridLines.length).toBe(axisTicks.length);
+      } finally {
+        matchMedia.mockRestore();
+      }
+    });
+  });
+
   describe("document structure", () => {
     it("does not inject headings into the page outline while hovering", () => {
       const geometry = stubChartGeometry({ left: 0, top: 0 });
