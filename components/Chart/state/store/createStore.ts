@@ -37,7 +37,12 @@ export function createStore<T>(initialState: T): StoreApi<T> {
   };
 
   const useStore = <U>(selector: (state: T) => U = (s) => s as any): U => {
-    return useSyncExternalStore(subscribe, () => selector(getState()));
+    const getSnapshot = () => selector(getState());
+    // The server snapshot reads the same store: state lives in a per-instance
+    // closure created during render, so there is nothing to hydrate from a
+    // different source. Omitting it makes React throw "Missing
+    // getServerSnapshot" and takes down any server-rendered page.
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   };
 
   return { getState, setState, subscribe, useStore };
