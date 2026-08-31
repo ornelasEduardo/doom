@@ -339,11 +339,43 @@ describe("InteractionLayer", () => {
   // ===========================================================================
 
   describe("Cleanup", () => {
-    it("should remove event listeners on unmount", () => {
-      const removeListenerSpy = vi.spyOn(
-        HTMLElement.prototype,
-        "removeEventListener",
+    it("removes every listener it added, on the element it added them to", () => {
+      const { unmount } = render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
       );
+
+      const container = document.querySelector(
+        "[data-chart-container]",
+      ) as HTMLElement;
+      const removed: string[] = [];
+      vi.spyOn(container, "removeEventListener").mockImplementation(((
+        type: string,
+      ) => {
+        removed.push(type);
+      }) as never);
+
+      unmount();
+
+      // Asserting only that removeEventListener ran at all passes even if the
+      // cleanup returns early, and says nothing about which element it ran on.
+      expect(removed.sort()).toEqual([
+        "keydown",
+        "pointerdown",
+        "pointerleave",
+        "pointermove",
+        "pointerup",
+      ]);
+    });
+
+    it("cancels a pending move frame on unmount", () => {
+      let queued: FrameRequestCallback | null = null;
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        queued = cb;
+        return 7;
+      });
+      const cancel = vi.spyOn(window, "cancelAnimationFrame");
 
       const { unmount } = render(
         <ContainerWrapper>
@@ -351,11 +383,14 @@ describe("InteractionLayer", () => {
         </ContainerWrapper>,
       );
 
+      const container = document.querySelector("[data-chart-container]")!;
+      fireEvent.pointerMove(container, { clientX: 10, clientY: 10 });
+      expect(queued).not.toBeNull();
+
       unmount();
 
-      // Should have removed the pointer event listeners
-      expect(removeListenerSpy).toHaveBeenCalled();
-      removeListenerSpy.mockRestore();
+      // A frame left pending would dispatch into a torn-down chart.
+      expect(cancel).toHaveBeenCalledWith(7);
     });
   });
 });

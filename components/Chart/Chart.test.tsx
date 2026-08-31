@@ -27,10 +27,13 @@ import {
   stubChartGeometry,
 } from "./tests/chart-test-utils";
 
+let resizeCallback: ResizeObserverCallback | null = null;
+
 class MockResizeObserver {
   callback: ResizeObserverCallback;
   constructor(callback: ResizeObserverCallback) {
     this.callback = callback;
+    resizeCallback = callback;
   }
   observe() {
     this.callback(
@@ -570,6 +573,38 @@ describe("Chart", () => {
       } finally {
         geometry.restore();
       }
+    });
+  });
+
+  describe("resize cost", () => {
+    it("ignores a resize that reports the same size", () => {
+      const renders: unknown[] = [];
+      render(
+        <Chart
+          data={data}
+          render={(ctx: any) => renders.push(ctx.scales.x)}
+          x={x}
+          y={y}
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const settled = renders.length;
+      expect(settled).toBeGreaterThan(0);
+
+      // ResizeObserver fires for reasons other than a size change. Rebuilding
+      // the scales and committing React each time is pure waste.
+      act(() => {
+        resizeCallback?.(
+          [{ contentRect: { width: 500, height: 300 } } as ResizeObserverEntry],
+          null as unknown as ResizeObserver,
+        );
+        vi.runAllTimers();
+      });
+
+      expect(renders.length).toBe(settled);
     });
   });
 

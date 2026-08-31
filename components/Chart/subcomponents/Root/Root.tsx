@@ -524,6 +524,12 @@ export function Root<T>({
       return;
     }
 
+    // ResizeObserver fires for reasons other than an actual size change, and
+    // every call rebuilds the scales and commits React. Only act on a real
+    // change.
+    let lastWidth = -1;
+    let lastHeight = -1;
+
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         let w, h;
@@ -534,6 +540,13 @@ export function Root<T>({
           w = entry.contentRect.width;
           h = entry.contentRect.height;
         }
+
+        if (w === lastWidth && h === lastHeight) {
+          continue;
+        }
+        lastWidth = w;
+        lastHeight = h;
+
         updateChartDimensions(chartStore, w, h);
       }
     });
