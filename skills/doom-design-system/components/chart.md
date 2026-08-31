@@ -9,6 +9,12 @@ Peer dependency: `npm install d3`
 
 ## Props
 
+`ChartProps<T>` extends `React.HTMLAttributes<HTMLDivElement>`, so `id`,
+`data-*`, `aria-*`, `onClick` and the rest land on the chart element. The
+component's own semantics win on conflict.
+
+> `Props` is still exported as a deprecated alias. Prefer `ChartProps`.
+
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `data` | `T[]` | required | Data array |

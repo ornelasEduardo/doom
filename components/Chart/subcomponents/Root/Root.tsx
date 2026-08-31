@@ -57,27 +57,31 @@ const LEGEND_PALETTE = [
   "var(--error)",
 ];
 
-export type RootProps<T> = Pick<
-  Props<T>,
-  | "data"
-  | "d3Config"
-  | "className"
-  | "style"
-  | "onValueChange"
-  | "variant"
-  | "flat"
-  | "withFrame"
-  | "title"
-  | "subtitle"
-  | "withLegend"
-  | "children"
-  | "type"
-  | "x"
-  | "y"
-  | "render"
-  | "behaviors"
-  | "sensors"
->;
+export type RootProps<T> = Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "title" | "children"
+> &
+  Pick<
+    Props<T>,
+    | "data"
+    | "d3Config"
+    | "className"
+    | "style"
+    | "onValueChange"
+    | "variant"
+    | "flat"
+    | "withFrame"
+    | "title"
+    | "subtitle"
+    | "withLegend"
+    | "children"
+    | "type"
+    | "x"
+    | "y"
+    | "render"
+    | "behaviors"
+    | "sensors"
+  >;
 
 /**
  * The internal bridge for managing behaviors and sensors.
@@ -201,6 +205,7 @@ export function Root<T>({
   y,
   behaviors,
   sensors,
+  ...rest
 }: RootProps<T>) {
   const [chartStore] = useState(() =>
     createChartStore({ ...d3Config, type }, x, y),
@@ -644,6 +649,10 @@ export function Root<T>({
     <ChartContext.Provider value={value as any}>
       <BehaviorManager behaviors={behaviors as any} value={value as any} />
       <div
+        // Spread first so the chart's own semantics win over anything passed
+        // in — a consumer should not be able to clobber the region's label or
+        // its description wiring.
+        {...rest}
         ref={containerRef}
         data-chart-container
         aria-describedby={summaryId}

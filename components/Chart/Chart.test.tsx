@@ -576,6 +576,40 @@ describe("Chart", () => {
     });
   });
 
+  describe("native attributes", () => {
+    it("forwards standard HTML attributes to the chart element", () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Chart
+          aria-roledescription="revenue chart"
+          data={data}
+          data-testid="revenue"
+          id="revenue-chart"
+          x={x}
+          y={y}
+          onClick={onClick}
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const root = container.querySelector(
+        "[data-chart-container]",
+      ) as HTMLElement;
+
+      // Every sibling component extends the matching HTMLAttributes, so a
+      // consumer reasonably expects id, data-*, aria-* and handlers to land on
+      // the element rather than being silently dropped.
+      expect(root.id).toBe("revenue-chart");
+      expect(root.getAttribute("data-testid")).toBe("revenue");
+      expect(root.getAttribute("aria-roledescription")).toBe("revenue chart");
+
+      root.click();
+      expect(onClick).toHaveBeenCalled();
+    });
+  });
+
   describe("resize cost", () => {
     it("ignores a resize that reports the same size", () => {
       const renders: unknown[] = [];
