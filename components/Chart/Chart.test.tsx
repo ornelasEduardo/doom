@@ -235,6 +235,53 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("stale interaction state", () => {
+    it("clears a hover when the data changes underneath it", () => {
+      const before = [
+        { label: "A", value: 10 },
+        { label: "B", value: 20 },
+      ];
+      const after = [
+        { label: "X", value: 11 },
+        { label: "Y", value: 21 },
+      ];
+      const geometry = stubChartGeometry({ left: 0, top: 0 });
+
+      try {
+        const { container, rerender } = render(
+          <Chart data={before} x={x} y={y} />,
+        );
+        act(() => {
+          vi.runAllTimers();
+        });
+        const root = container.querySelector(
+          "[data-chart-container]",
+        ) as HTMLElement;
+        geometry.attach(root);
+
+        const tooltipText = () =>
+          Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"))
+            .map((h) => h.textContent)
+            .join("|");
+
+        movePointer(root, 60, 150, { pointerType: "mouse" });
+        expect(tooltipText()).toContain("A");
+
+        // The pointer has not moved, but the datum it was pointing at is gone.
+        // Nothing invalidates the interactions map, so the tooltip, markers and
+        // onValueChange keep reporting a row that no longer exists.
+        rerender(<Chart data={after} x={x} y={y} />);
+        act(() => {
+          vi.runAllTimers();
+        });
+
+        expect(tooltipText()).not.toContain("A");
+      } finally {
+        geometry.restore();
+      }
+    });
+  });
+
   describe("per-frame cost", () => {
     it("does not rebuild the spatial index on every pointer move", () => {
       const geometry = stubChartGeometry({ left: 0, top: 0 });

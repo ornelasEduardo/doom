@@ -1,4 +1,5 @@
 import { Accessor, Config } from "../../types";
+import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { createScales } from "../../utils/scales";
 import { createStore, StoreApi } from "./createStore";
@@ -162,6 +163,19 @@ export const updateChartState = <T>(
       nextSeries.set(id, hydrated);
     });
 
+    // A hover points at a specific row. When the data is replaced the pointer
+    // has not moved, but the row it resolved to may be gone — leaving the
+    // tooltip, markers and onValueChange reporting a datum that no longer
+    // exists. Drop it and let the next pointer frame re-resolve.
+    let nextInteractions = prev.interactions;
+    if (
+      data !== prev.data &&
+      nextInteractions.has(InteractionChannel.PRIMARY_HOVER)
+    ) {
+      nextInteractions = new Map(nextInteractions);
+      nextInteractions.delete(InteractionChannel.PRIMARY_HOVER);
+    }
+
     return {
       data,
       type: type || prev.type,
@@ -169,6 +183,7 @@ export const updateChartState = <T>(
       scales: nextScales,
       series: nextSeries, // Update series map
       processedSeries: combineSeries(nextSeries), // Update flattened series
+      interactions: nextInteractions,
       status:
         nextDimensions.width > 0 && nextDimensions.height > 0
           ? "ready"
