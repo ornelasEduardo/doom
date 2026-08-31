@@ -260,4 +260,48 @@ describe("Chart in a real browser", () => {
       expect(boxes[i].left).toBeGreaterThanOrEqual(boxes[i - 1].right - 1);
     }
   });
+
+  it.each([
+    ["shorthand", false],
+    ["composition", true],
+  ])(
+    "keeps the tooltip inside the chart in %s mode",
+    async (_mode, composed) => {
+      const { host, root } = await mount(
+        composed ? (
+          <Chart.Root
+            d3Config={{ showDots: true }}
+            data={data}
+            style={{ width: 600, height: 360 }}
+            type="line"
+            x="label"
+            y="value"
+          >
+            <Chart.Plot>
+              <Chart.Series type="line" x="label" y="value" />
+            </Chart.Plot>
+          </Chart.Root>
+        ) : (
+          chart()
+        ),
+      );
+
+      // The rightmost mark is where edge detection has to flip the tooltip.
+      const marks = host.querySelectorAll("circle");
+      const last = marks[marks.length - 1] ?? marks[0];
+      const r = last.getBoundingClientRect();
+      await hoverAt(root, r.left + r.width / 2, r.top + r.height / 2);
+
+      const tooltip = host.querySelector("[data-chart-tooltip]") as HTMLElement;
+      expect(tooltip?.textContent ?? "").not.toBe("");
+
+      // Edge detection is given the chart as its container. If it falls back to
+      // the viewport, the tooltip only clamps at the window edge and spills out
+      // of the chart's own card.
+      const chartBox = root.getBoundingClientRect();
+      const tipBox = tooltip.getBoundingClientRect();
+      expect(tipBox.right).toBeLessThanOrEqual(chartBox.right + 1);
+      expect(tipBox.left).toBeGreaterThanOrEqual(chartBox.left - 1);
+    },
+  );
 });
