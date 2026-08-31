@@ -10,6 +10,7 @@ import {
 } from "../../state/store/chart.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
+import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
@@ -132,6 +133,7 @@ const ScatterSeriesComponent = <T,>({
             key={i}
             color={strokeColor}
             datum={d}
+            description={describeDatum(d, xAccessor, yAccessor)}
             hoverRadius={radius + 4}
             radius={radius}
             x={cx}

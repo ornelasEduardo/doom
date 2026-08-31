@@ -10,6 +10,7 @@ import {
 } from "../../state/store/chart.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
+import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
 import { createRoundedTopBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
@@ -135,8 +136,8 @@ const BarSeriesComponent = <T,>({
             }}
             aria-label={
               label
-                ? `${label}: ${JSON.stringify(d)}`
-                : `Bar: ${JSON.stringify(d)}`
+                ? `${label}: ${describeDatum(d, xAccessor, yAccessor)}`
+                : describeDatum(d, xAccessor, yAccessor) || "Bar"
             }
             aria-roledescription="bar"
             className={`${styles.bar} chart-bar`}

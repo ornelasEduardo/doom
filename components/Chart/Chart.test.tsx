@@ -235,6 +235,43 @@ describe("Chart", () => {
     expect(scales[scales.length - 1]).not.toBe(beforeRerender);
   });
 
+  describe("mark accessible names", () => {
+    it("names data points by their values, not by dumping the raw datum", () => {
+      const rows = [
+        { label: "Jan", value: 10, internalId: "row-1", _meta: { secret: 1 } },
+        { label: "Feb", value: 20, internalId: "row-2", _meta: { secret: 2 } },
+      ];
+
+      const { container } = render(
+        <Chart
+          d3Config={{ showDots: true }}
+          data={rows}
+          type="line"
+          x="label"
+          y="value"
+        />,
+      );
+      act(() => {
+        vi.runAllTimers();
+      });
+
+      const labelled = Array.from(
+        container.querySelectorAll('[aria-roledescription="data point"]'),
+      ).map((el) => el.getAttribute("aria-label") ?? "");
+
+      expect(labelled.length).toBeGreaterThan(0);
+
+      // JSON.stringify(datum) reads the whole row aloud, including fields the
+      // consumer never intended to expose.
+      for (const name of labelled) {
+        expect(name).not.toContain("{");
+        expect(name).not.toContain("internalId");
+      }
+      expect(labelled.join(" ")).toContain("Jan");
+      expect(labelled.join(" ")).toContain("10");
+    });
+  });
+
   describe("hover marker constancy", () => {
     it("reuses the marker element across frames on the same point", () => {
       const geometry = stubChartGeometry({ left: 0, top: 0 });

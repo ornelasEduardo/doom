@@ -3,6 +3,7 @@ import React from "react";
 import { useChartContext } from "../../context";
 import { resolveAccessor } from "../../types/accessors";
 import { InteractionChannel } from "../../types/interaction";
+import { describeDatum } from "../../utils/describe";
 import styles from "./Announcer.module.scss";
 
 interface AnnouncerProps {
@@ -69,14 +70,10 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, type, config, xAccessor, yAccessor]);
 
-  const active = React.useMemo(() => {
-    const datum = hover?.targets?.[0]?.data;
-    if (datum == null || !getX || !getY) {
-      return "";
-    }
-    return `${describe(getX(datum))}: ${describe(getY(datum))}`;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hover, xAccessor, yAccessor]);
+  const active = React.useMemo(
+    () => describeDatum(hover?.targets?.[0]?.data, xAccessor, yAccessor),
+    [hover, xAccessor, yAccessor],
+  );
 
   return (
     <>

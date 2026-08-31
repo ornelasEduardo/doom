@@ -12,6 +12,7 @@ import {
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
+import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 import styles from "./LineSeries.module.scss";
@@ -230,7 +231,14 @@ const LineSeriesComponent = <T,>({
           const cx = (xScale as any)(xAccessor(d));
           const cy = yScale(yAccessor(d));
           return (
-            <SeriesPoint key={i} color={strokeColor} datum={d} x={cx} y={cy} />
+            <SeriesPoint
+              key={i}
+              color={strokeColor}
+              datum={d}
+              description={describeDatum(d, xAccessor, yAccessor)}
+              x={cx}
+              y={cy}
+            />
           );
         })}
     </g>
