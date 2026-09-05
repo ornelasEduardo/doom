@@ -3,6 +3,13 @@
 @layer doom.components {
   .header {
     padding-right: 0;
+    min-width: 0;
+
+    > * {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
   }
 
   .subtitle {

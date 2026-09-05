@@ -778,7 +778,7 @@ export const CompositionExample: Story = {
                 </Text>
               }
             >
-              <Flex gap={2}>
+              <Flex gap={2} wrap>
                 <Select
                   options={chartTypes}
                   style={{ width: `12ch` }}
@@ -796,7 +796,7 @@ export const CompositionExample: Story = {
               </Flex>
             </Chart.Header>
 
-            <Flex gap={4} style={{ flex: 1 }}>
+            <Stack gap={4} style={{ flex: 1, minHeight: 0 }}>
               <Chart.Plot>
                 <Chart.Cursor />
                 <Chart.Grid />
@@ -816,10 +816,10 @@ export const CompositionExample: Story = {
                     color: chartColor,
                   }))
                 }
-                layout="vertical"
-                style={{ alignSelf: "center" }}
+                layout="horizontal"
+                align="center"
               />
-            </Flex>
+            </Stack>
 
             <Chart.Footer>
               <Slat
