@@ -2,24 +2,62 @@ import "@testing-library/jest-dom";
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider, useToast } from "./Toast";
 
 // Test component to use the hook
 const TestComponent = () => {
-  const { toastSuccess, toastError } = useToast();
+  const { toast, toastSuccess, toastError, toastWarning, toastInfo } =
+    useToast();
   return (
     <div>
       <button onClick={() => toastSuccess("Success Message")}>
         Show Success
       </button>
       <button onClick={() => toastError("Error Message")}>Show Error</button>
+      <button onClick={() => toastWarning("Warning Message")}>
+        Show Warning
+      </button>
+      <button onClick={() => toastInfo("Info Message")}>Show Info</button>
+      <button onClick={() => toast("Default Message")}>Show Default</button>
     </div>
   );
 };
 
 describe("Toast Component", () => {
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it.each([
+    ["Success", "status"],
+    ["Error", "alert"],
+    ["Warning", "status"],
+    ["Info", "status"],
+    ["Default", "status"],
+  ])("exposes %s notifications with the %s role", (type, role) => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: `Show ${type}` }));
+    const notification = screen.getByRole(role);
+    expect(notification).toHaveTextContent(`${type} Message`);
+    expect(
+      notification.parentElement?.closest(
+        '[aria-live], [role="alert"], [role="status"], [role="log"]',
+      ),
+    ).toBeNull();
+    expect(
+      notification.querySelector(
+        '[aria-live], [role="alert"], [role="status"], [role="log"]',
+      ),
+    ).toBeNull();
+  });
   it("should render toasts", () => {
     render(
       <ToastProvider>
@@ -34,7 +72,8 @@ describe("Toast Component", () => {
     expect(screen.getByText("Error Message")).toBeInTheDocument();
   });
 
-  it("should remove toast on close click", () => {
+  it("should remove toast using the accessible close button after its exit animation", () => {
+    vi.useFakeTimers();
     render(
       <ToastProvider>
         <TestComponent />
@@ -42,22 +81,13 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
+    fireEvent.click(screen.getByRole("button", { name: "Close notification" }));
     expect(screen.getByText("Success Message")).toBeInTheDocument();
 
-    // Find close button (it has an X icon)
-    // We can find by role button inside the toast
-    const closeButtons = screen.getAllByRole("button");
-    // The first 2 are from TestComponent, the 3rd should be the close button
-    const closeButton = closeButtons[2];
-
-    fireEvent.click(closeButton);
-
-    // It has a timeout for animation, so we need to wait
-    // But in JSDOM/Vitest we might need fake timers.
-    // For now, let's just check if removeToast was called (which sets
-    // isExiting).
-    // The element might still be there but exiting.
-    // Let's use fake timers.
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.queryByText("Success Message")).not.toBeInTheDocument();
   });
 
   it("should auto remove toast", () => {

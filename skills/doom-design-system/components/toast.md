@@ -48,6 +48,13 @@ function MyComponent() {
 }
 ```
 
+## Accessibility
+
+- Error toasts use `role="alert"` (implicit assertive announcements).
+- Success, warning, and info toasts, including the default `toast()` type, use `role="status"` (implicit polite announcements).
+- Each toast owns its live-region semantics. The shared portal container has no live-region role or `aria-live` attribute, avoiding nested announcement regions.
+- The X button has the accessible name `Close notification` and retains native button keyboard behavior.
+
 ## Notes
 - `ToastProvider` must be an ancestor — `useToast()` throws if used outside it
 - Toasts auto-dismiss after 5 seconds (hardcoded, not configurable)

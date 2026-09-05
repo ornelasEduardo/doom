@@ -97,6 +97,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             {toasts.map((t) => (
               <div
                 key={t.id}
+                role={t.type === "error" ? "alert" : "status"}
                 className={clsx(
                   styles.toast,
                   styles[t.type],
@@ -126,6 +127,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 <span className="font-semibold">{t.message}</span>
                 <button
                   className={styles.closeButton}
+                  aria-label="Close notification"
                   onClick={() => removeToast(t.id)}
                 >
                   <X size={16} strokeWidth={2.5} />
