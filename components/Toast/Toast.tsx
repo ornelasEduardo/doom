@@ -40,21 +40,8 @@ function useAnnouncement() {
   const pending = useRef<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(
-    () => () => {
-      if (timer.current !== null) {
-        clearTimeout(timer.current);
-      }
-      timer.current = null;
-      pending.current = [];
-    },
-    [],
-  );
-
-  const announce = useCallback((nextMessage: string) => {
-    pending.current.push(nextMessage);
-    setMessage("");
-    if (timer.current !== null) {
+  const schedule = useCallback(() => {
+    if (timer.current !== null || pending.current.length === 0) {
       return;
     }
 
@@ -65,6 +52,26 @@ function useAnnouncement() {
       timer.current = null;
     }, 100);
   }, []);
+
+  useEffect(() => {
+    // Effect replay cancels timers but must resume a guarded child's pending mount message.
+    schedule();
+    return () => {
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+      }
+      timer.current = null;
+    };
+  }, [schedule]);
+
+  const announce = useCallback(
+    (nextMessage: string) => {
+      pending.current.push(nextMessage);
+      setMessage("");
+      schedule();
+    },
+    [schedule],
+  );
 
   return [message, announce] as const;
 }

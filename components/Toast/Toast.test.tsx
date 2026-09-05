@@ -1,10 +1,22 @@
 import "@testing-library/jest-dom";
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import React from "react";
+import React, { StrictMode, useEffect, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider, useToast } from "./Toast";
+
+function MountedOnce() {
+  const sent = useRef(false);
+  const { toastInfo } = useToast();
+  useEffect(() => {
+    if (!sent.current) {
+      sent.current = true;
+      toastInfo("Mounted once");
+    }
+  }, [toastInfo]);
+  return null;
+}
 
 // Test component to use the hook
 const TestComponent = () => {
@@ -41,6 +53,38 @@ describe("Toast Component", () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
+  });
+
+  it.each([false, true])(
+    "announces a guarded child mount effect with StrictMode=%s",
+    (strict) => {
+      const content = (
+        <ToastProvider>
+          <MountedOnce />
+        </ToastProvider>
+      );
+      render(strict ? <StrictMode>{content}</StrictMode> : content);
+      const region = screen.getByRole("status");
+      expect(region).toBeEmptyDOMElement();
+      expect(
+        screen.getAllByRole("group", { name: "Mounted once" }),
+      ).toHaveLength(1);
+      act(() => vi.advanceTimersByTime(150));
+      expect(region).toHaveTextContent(/^Mounted once$/);
+      expect(screen.getByRole("status")).toBe(region);
+    },
+  );
+
+  it("cancels the pending announcement timer on real unmount", () => {
+    const { unmount } = render(
+      <ToastProvider>
+        <MountedOnce />
+      </ToastProvider>,
+    );
+    const pendingTimers = vi.getTimerCount();
+    unmount();
+    // The existing automatic dismissal timer is separate from the announcer lifecycle.
+    expect(vi.getTimerCount()).toBe(pendingTimers - 1);
   });
 
   it.each([

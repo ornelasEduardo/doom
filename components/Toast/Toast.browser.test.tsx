@@ -1,11 +1,23 @@
 import "../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import React from "react";
+import React, { StrictMode, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 
 import { ToastProvider, useToast } from "./Toast";
+
+function MountedOnce() {
+  const sent = useRef(false);
+  const { toastInfo } = useToast();
+  useEffect(() => {
+    if (!sent.current) {
+      sent.current = true;
+      toastInfo("Mounted once");
+    }
+  }, [toastInfo]);
+  return null;
+}
 
 function ToastTriggers() {
   const { toast, toastSuccess, toastError, toastWarning, toastInfo } =
@@ -34,6 +46,27 @@ function ToastTriggers() {
 afterEach(cleanup);
 
 describe("Toast in Chromium", () => {
+  it.each([false, true])(
+    "announces a guarded child mount effect with StrictMode=%s",
+    async (strict) => {
+      const content = (
+        <ToastProvider>
+          <MountedOnce />
+        </ToastProvider>
+      );
+      render(strict ? <StrictMode>{content}</StrictMode> : content);
+      const region = page.getByRole("status").element();
+      expect(region.textContent).toBe("");
+      await expect
+        .element(page.getByRole("group", { name: "Mounted once" }))
+        .toBeInTheDocument();
+      await expect
+        .element(region, { timeout: 500 })
+        .toHaveTextContent("Mounted once");
+      expect(page.getByRole("status").element()).toBe(region);
+    },
+  );
+
   it.each([
     ["Success", "status", "Saved"],
     ["Error", "alert", "Failed"],
