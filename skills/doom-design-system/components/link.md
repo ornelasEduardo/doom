@@ -10,7 +10,7 @@ import { Link } from "doom-design-system";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `variant` | `"default" \| "button" \| "subtle"` | `"default"` | Visual style |
-| `isExternal` | `boolean` | — | Opens in new tab; auto-adds `target="_blank"` and `rel="noopener noreferrer"` |
+| `isExternal` | `boolean` | — | Defaults to `target="_blank"`; shows an external-link icon |
 | `disabled` | `boolean` | — | Disabled state |
 | `prefetch` | `boolean` | — | Prefetch on hover |
 
@@ -47,5 +47,8 @@ Extends all standard `<a>` HTML attributes.
 | `subtle` | Low-emphasis link in dense UI or footers |
 
 ## Notes
-- `isExternal` handles all security attributes automatically and auto-renders an `ExternalLink` icon (from Lucide) — do not manually set `rel` or add an icon
+- An explicit `target` overrides the `isExternal` default, including `target="_self"` or an empty target.
+- Whenever the effective target is `_blank` (case-insensitive), Link merges `noopener noreferrer` into `rel`, preserving unrelated tokens and removing duplicate tokens case-insensitively while preserving the first spelling. This also applies when setting `target="_blank"` without `isExternal`.
+- For other targets, `rel` is passed through unchanged.
+- `isExternal` auto-renders an `ExternalLink` icon (from Lucide).
 - `disabled` prevents navigation and sets `aria-disabled`, but does not remove the element from tab order

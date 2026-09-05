@@ -26,6 +26,8 @@ export function Link({
   className,
   onClick,
   onMouseEnter,
+  target,
+  rel,
   ...props
 }: LinkProps) {
   const [shouldPrefetch, setShouldPrefetch] = useState(false);
@@ -62,9 +64,25 @@ export function Link({
     }
   }, [shouldPrefetch, props.href]);
 
-  const externalProps = isExternal
-    ? { target: "_blank", rel: "noopener noreferrer" }
-    : {};
+  const effectiveTarget = target ?? (isExternal ? "_blank" : undefined);
+  let effectiveRel = rel;
+  if (effectiveTarget?.toLowerCase() === "_blank") {
+    const seen = new Set<string>();
+    effectiveRel = [
+      ...(rel?.split(/\s+/).filter(Boolean) ?? []),
+      "noopener",
+      "noreferrer",
+    ]
+      .filter((token) => {
+        const key = token.toLowerCase();
+        if (seen.has(key)) {
+          return false;
+        }
+        seen.add(key);
+        return true;
+      })
+      .join(" ");
+  }
 
   return (
     <a
@@ -75,9 +93,10 @@ export function Link({
         disabled && styles.disabled,
         className,
       )}
+      rel={effectiveRel}
+      target={effectiveTarget}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      {...externalProps}
       {...props}
     >
       {children}
