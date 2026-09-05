@@ -30,10 +30,10 @@ export function Header({
 
   return (
     <Flex
-      align="center"
-      gap={4}
       wrap
+      align="center"
       className={clsx(styles.header, className)}
+      gap={4}
       justify="space-between"
       style={{
         width: "100%",

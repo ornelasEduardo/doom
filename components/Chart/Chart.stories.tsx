@@ -768,7 +768,7 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
-          style={{ height: 400 }}
+          style={{ height: "var(--composition-height, 400px)" }}
           type={chartType}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
@@ -782,7 +782,7 @@ export const CompositionExample: Story = {
                 </Text>
               }
             >
-              <Flex gap={2} wrap>
+              <Flex wrap gap={2}>
                 <Select
                   options={chartTypes}
                   style={{ width: `12ch` }}

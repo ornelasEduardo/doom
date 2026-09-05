@@ -3,18 +3,27 @@ import "../../styles/globals.scss";
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { DesignSystemProvider } from "../../DesignSystemProvider";
 import { Chart } from "./Chart";
 import { CompositionExample } from "./Chart.stories";
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 250));
-afterEach(cleanup);
+afterEach(async () => {
+  cleanup();
+  await page.viewport(1280, 800);
+});
 
-it.each([320, 480, 800])(
-  "fits composition controls and plot in a %ipx container",
-  async (width) => {
+it.each([
+  [320, 1280],
+  [480, 1280],
+  [800, 1280],
+  [320, 320],
+])(
+  "fits composition controls and plot in a %ipx container at a %ipx viewport",
+  async (width, viewportWidth) => {
+    await page.viewport(viewportWidth, 800);
     const Story = CompositionExample.render as React.ComponentType;
     const { container } = render(
       <DesignSystemProvider>
@@ -51,6 +60,18 @@ it.each([320, 480, 800])(
     }
     expect(container.textContent).toContain("Custom X Axis Label");
     expect(container.textContent).toContain("Custom Y Axis Label");
+    const yLabel = Array.from(container.querySelectorAll("svg text")).find(
+      (element) => element.textContent === "Custom Y Axis Label",
+    )!;
+    const controlsBottom = Math.max(
+      ...Array.from(
+        controls,
+        (control) => control.getBoundingClientRect().bottom,
+      ),
+    );
+    expect(yLabel.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      controlsBottom,
+    );
     expect(plot.height).toBeGreaterThan(80);
     expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
   },
@@ -59,7 +80,7 @@ it.each([320, 480, 800])(
 it("stacks header content only when its container cannot fit a row", async () => {
   const { container } = render(
     <div style={{ width: 800 }}>
-      <Chart.Header title="Chart title" subtitle="Chart subtitle">
+      <Chart.Header subtitle="Chart subtitle" title="Chart title">
         <button style={{ width: 220 }}>Chart controls</button>
       </Chart.Header>
     </div>,

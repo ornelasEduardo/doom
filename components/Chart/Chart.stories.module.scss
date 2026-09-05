@@ -9,6 +9,10 @@
   }
 
   @container (max-width: 480px) {
+    .composition > * {
+      --composition-height: 480px;
+    }
+
     .composition .plotAndLegend {
       flex-direction: column;
       --composition-legend-direction: row;
