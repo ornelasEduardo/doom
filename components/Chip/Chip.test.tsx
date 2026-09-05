@@ -1,10 +1,141 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { createEvent, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Chip } from "./Chip";
 
 describe("Chip", () => {
+  it.each(["Enter", " "])(
+    "activates once on %j with a mouse click event",
+    (key) => {
+      const onClick = vi.fn();
+      render(<Chip onClick={onClick}>Activate</Chip>);
+      const chip = screen.getByRole("button");
+      chip.focus();
+      fireEvent.keyDown(chip, { key });
+      fireEvent.keyUp(chip, { key });
+      expect(onClick).toHaveBeenCalledTimes(1);
+      expect(onClick.mock.calls[0][0].type).toBe("click");
+      expect(onClick.mock.calls[0][0].target).toBe(chip);
+    },
+  );
+
+  it("prevents Space scrolling when activating", () => {
+    render(<Chip onClick={() => {}}>Activate</Chip>);
+    const chip = screen.getByRole("button");
+    const event = createEvent.keyDown(chip, { key: " " });
+    fireEvent(chip, event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it.each(["Enter", " "])(
+    "calls onKeyDown before activating with %j",
+    (key) => {
+      const calls: string[] = [];
+      render(
+        <Chip
+          onClick={() => calls.push("click")}
+          onKeyDown={() => calls.push("keydown")}
+        >
+          Activate
+        </Chip>,
+      );
+      fireEvent.keyDown(screen.getByRole("button"), { key });
+      expect(calls).toEqual(["keydown", "click"]);
+    },
+  );
+
+  it.each(["Enter", " "])("honors onKeyDown cancellation for %j", (key) => {
+    const onClick = vi.fn();
+    const onKeyDown = vi.fn((event: React.KeyboardEvent<HTMLDivElement>) =>
+      event.preventDefault(),
+    );
+    render(
+      <Chip onClick={onClick} onKeyDown={onKeyDown}>
+        Cancelled
+      </Chip>,
+    );
+    fireEvent.keyDown(screen.getByRole("button"), { key });
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it.each(["Enter", " "])("does not activate disabled chips with %j", (key) => {
+    const onClick = vi.fn();
+    const onKeyDown = vi.fn();
+    render(
+      <Chip disabled onClick={onClick} onKeyDown={onKeyDown}>
+        Disabled
+      </Chip>,
+    );
+    const chip = screen.getByRole("button");
+    fireEvent.keyDown(chip, { key });
+    expect(chip).not.toHaveAttribute("tabindex");
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["Escape", "ArrowDown", "a"])(
+    "passes through unrelated key %j",
+    (key) => {
+      const onClick = vi.fn();
+      const onKeyDown = vi.fn();
+      render(
+        <Chip onClick={onClick} onKeyDown={onKeyDown}>
+          Other key
+        </Chip>,
+      );
+      const event = createEvent.keyDown(screen.getByRole("button"), { key });
+      fireEvent(screen.getByRole("button"), event);
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+    },
+  );
+
+  it.each(["Enter", " "])(
+    "leaves dismiss button keyboard events alone for %j",
+    (key) => {
+      const onClick = vi.fn();
+      const onDismiss = vi.fn();
+      const onKeyDown = vi.fn();
+      render(
+        <Chip onClick={onClick} onDismiss={onDismiss} onKeyDown={onKeyDown}>
+          Dismissible
+        </Chip>,
+      );
+      const dismiss = screen.getByRole("button", { name: "Dismiss" });
+      const event = createEvent.keyDown(dismiss, { key });
+      fireEvent(dismiss, event);
+      expect(event.defaultPrevented).toBe(false);
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+      // The DOM test environment does not synthesize native button clicks from keys.
+      fireEvent.click(dismiss);
+      expect(onDismiss).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["Enter", " "])(
+    "does not intercept %j on a non-clickable chip",
+    (key) => {
+      const onKeyDown = vi.fn();
+      const ref = React.createRef<HTMLDivElement>();
+      render(
+        <Chip ref={ref} onKeyDown={onKeyDown}>
+          Static
+        </Chip>,
+      );
+      const event = createEvent.keyDown(ref.current!, { key });
+      fireEvent(ref.current!, event);
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(event.defaultPrevented).toBe(false);
+      expect(ref.current).not.toHaveAttribute("role");
+      expect(ref.current).not.toHaveAttribute("tabindex");
+    },
+  );
+
   // ==========================================================================
   // Rendering
   // ==========================================================================
