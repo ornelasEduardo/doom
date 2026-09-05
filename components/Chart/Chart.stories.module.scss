@@ -1,4 +1,16 @@
 @layer doom.components {
+  .domainChart {
+    width: 100%;
+    min-width: 0;
+    height: 420px;
+  }
+
+  .domainComparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: var(--space-6);
+  }
+
   .composition {
     container-type: inline-size;
   }

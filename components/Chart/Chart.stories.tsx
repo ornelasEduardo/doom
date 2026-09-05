@@ -84,6 +84,121 @@ export const LineChart: Story = {
   },
 };
 
+const monthlyCashFlow = [
+  { month: "Jan", netCashFlow: -24 },
+  { month: "Feb", netCashFlow: -12 },
+  { month: "Mar", netCashFlow: 8 },
+  { month: "Apr", netCashFlow: 20 },
+  { month: "May", netCashFlow: -6 },
+  { month: "Jun", netCashFlow: 32 },
+];
+
+export const SignedLineMetric: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Monthly net cash flow crosses zero: negative values mean cash outflow and positive values mean cash inflow. Automatic Y bounds include zero and pad both signed extrema before rounding to readable ticks.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      className={storyStyles.domainChart}
+      d3Config={{
+        grid: true,
+        showDots: true,
+        xAxisLabel: "Month",
+        yAxisLabel: "Net cash flow (USD thousands)",
+      }}
+      data={monthlyCashFlow}
+      type="line"
+      x="month"
+      y="netCashFlow"
+    >
+      <Chart.Header
+        subtitle="USD thousands · negative = outflow · positive = inflow"
+        title="Monthly net cash flow"
+      />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Cursor />
+        <Chart.Series label="Net cash flow (USD thousands)" type="line" />
+        <Chart.Axis />
+      </Chart.Plot>
+    </Chart.Root>
+  ),
+};
+
+const regionalRevenue = [
+  {
+    region: "North",
+    data: [
+      { month: "Jan", revenue: 62 },
+      { month: "Feb", revenue: 74 },
+      { month: "Mar", revenue: 86 },
+      { month: "Apr", revenue: 80 },
+    ],
+  },
+  {
+    region: "South",
+    data: [
+      { month: "Jan", revenue: 12 },
+      { month: "Feb", revenue: 24 },
+      { month: "Mar", revenue: 36 },
+      { month: "Apr", revenue: 30 },
+    ],
+  },
+];
+
+const sharedRevenueDomain = [0, 100] as const;
+
+export const SharedFixedYBounds: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Both regions use the same exact Y bounds of 0–100 USD thousands and equal chart heights. Their identical month-to-month changes have the same visual size, while the 50-thousand-dollar revenue gap stays visible. Independent automatic ranges would exaggerate the smaller region's changes.",
+      },
+    },
+  },
+  render: () => (
+    <div className={storyStyles.domainComparison}>
+      {regionalRevenue.map(({ region, data: revenue }) => (
+        <Chart.Root
+          key={region}
+          className={storyStyles.domainChart}
+          d3Config={{
+            grid: true,
+            showDots: true,
+            xAxisLabel: "Month",
+            yAxisLabel: "Revenue (USD thousands)",
+          }}
+          data={revenue}
+          type="line"
+          x="month"
+          y="revenue"
+          yDomain={sharedRevenueDomain}
+        >
+          <Chart.Header
+            subtitle="USD thousands · fixed Y range: 0–100"
+            title={`${region} region revenue`}
+          />
+          <Chart.Plot>
+            <Chart.Grid />
+            <Chart.Cursor />
+            <Chart.Series
+              label={`${region} revenue (USD thousands)`}
+              type="line"
+            />
+            <Chart.Axis />
+          </Chart.Plot>
+        </Chart.Root>
+      ))}
+    </div>
+  ),
+};
+
 export const AreaChart: Story = {
   args: {
     ...LineChart.args,

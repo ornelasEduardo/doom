@@ -1,5 +1,7 @@
 import { ScaleBand, ScaleLinear, ScalePoint, ScaleTime } from "d3-scale";
 
+import { AxisDomain } from "../types/props";
+import { Scale } from "../types/scales";
 import { d3 } from "./d3";
 
 export type ChartXScale =
@@ -39,7 +41,7 @@ export function createScales<T>(
   if (typeof firstValue === "number") {
     xScale = d3
       .scaleLinear()
-      .domain(d3.extent(xValues as number[]) as [number, number])
+      .domain(numericExtent(xValues as number[]))
       .range([0, innerWidth]);
   } else {
     const uniqueXValues = Array.from(new Set(xValues as string[]));
@@ -63,7 +65,7 @@ export function createScales<T>(
   const yValues = data.map(y);
   const yScale = d3
     .scaleLinear()
-    .domain([0, (d3.max(yValues) || 0) * 1.1])
+    .domain(automaticYDomain(yValues))
     .nice()
     .range([innerHeight, 0]);
 
@@ -72,3 +74,57 @@ export function createScales<T>(
 
 /** Tick budget shared by the Y axis and the grid, so the two cannot drift. */
 export const yTickCount = (isMobile?: boolean) => (isMobile ? 3 : 5);
+
+export function automaticYDomain(values: number[]): [number, number] {
+  const finite = values.filter(Number.isFinite);
+  const min = Math.min(0, d3.min(finite) ?? 0);
+  const max = Math.max(0, d3.max(finite) ?? 0);
+  return [min * 1.1, max * 1.1 || (min < 0 ? 0 : 1)];
+}
+
+function numericExtent(values: number[]): [number, number] {
+  const finite = values.filter(Number.isFinite);
+  const min = d3.min(finite) ?? 0;
+  const max = d3.max(finite) ?? 1;
+  return min === max ? [min - 1, max + 1] : [min, max];
+}
+
+export function resolveDomain(
+  automatic: number[],
+  bounds?: AxisDomain,
+): number[] {
+  if (
+    !bounds ||
+    bounds.some((value) => value !== null && !Number.isFinite(value))
+  ) {
+    return automatic;
+  }
+  const [lower, upper] = bounds;
+  if (lower !== null && upper !== null && lower >= upper) {
+    return automatic;
+  }
+  let min = lower ?? automatic[0];
+  let max = upper ?? automatic[1];
+  if (min >= max) {
+    if (lower !== null) {
+      max = min + Math.max(1, Math.abs(min) * 0.1);
+    } else {
+      min = max - Math.max(1, Math.abs(max) * 0.1);
+    }
+  }
+  return [min, max];
+}
+
+export function hasDomainOverride(
+  scale: Scale | null,
+  bounds?: AxisDomain,
+): boolean {
+  return (
+    !!scale &&
+    "invert" in scale &&
+    !!bounds &&
+    bounds.some((value) => value !== null) &&
+    bounds.every((value) => value === null || Number.isFinite(value)) &&
+    (bounds[0] === null || bounds[1] === null || bounds[0] < bounds[1])
+  );
+}
