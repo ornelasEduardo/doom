@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { userEvent } from "vitest/browser";
 import React from "react";
 import { afterEach, expect, it } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import { Link } from "./Link";
 

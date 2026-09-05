@@ -75,7 +75,9 @@ export function Link({
     ]
       .filter((token) => {
         const key = token.toLowerCase();
-        if (seen.has(key)) return false;
+        if (seen.has(key)) {
+          return false;
+        }
         seen.add(key);
         return true;
       })
@@ -91,10 +93,10 @@ export function Link({
         disabled && styles.disabled,
         className,
       )}
+      rel={effectiveRel}
+      target={effectiveTarget}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
-      target={effectiveTarget}
-      rel={effectiveRel}
       {...props}
     >
       {children}

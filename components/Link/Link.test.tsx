@@ -43,7 +43,7 @@ describe("Link Component", () => {
     "hardens an explicit blank target (isExternal=%s)",
     (isExternal) => {
       render(
-        <Link href="/test" target="_blank" isExternal={isExternal}>
+        <Link href="/test" isExternal={isExternal} target="_blank">
           Blank
         </Link>,
       );
@@ -59,7 +59,7 @@ describe("Link Component", () => {
     "preserves explicit target %j over the external default",
     (target) => {
       render(
-        <Link href="/test" isExternal target={target}>
+        <Link isExternal href="/test" target={target}>
           Override
         </Link>,
       );
@@ -75,8 +75,8 @@ describe("Link Component", () => {
         <Link
           href="/test"
           isExternal={isExternal}
-          target="_self"
           rel="nofollow author"
+          target="_self"
         >
           Same tab
         </Link>,
@@ -100,7 +100,7 @@ describe("Link Component", () => {
     ],
   ])("merges and deduplicates blank-target rel %j", (rel, expected) => {
     render(
-      <Link href="/test" isExternal rel={rel}>
+      <Link isExternal href="/test" rel={rel}>
         Merged
       </Link>,
     );
@@ -113,8 +113,8 @@ describe("Link Component", () => {
     render(
       <Link
         href="/test"
-        target="_BLANK"
         rel="Author NOOPENER NoReFeRrEr noopener noreferrer"
+        target="_BLANK"
       >
         Mixed case
       </Link>,
@@ -128,7 +128,7 @@ describe("Link Component", () => {
 
   it("adds missing security tokens to an uppercase blank target", () => {
     render(
-      <Link href="/test" target="_BLANK" rel="Author">
+      <Link href="/test" rel="Author" target="_BLANK">
         Uppercase
       </Link>,
     );
