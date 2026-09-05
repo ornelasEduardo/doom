@@ -22,6 +22,7 @@ import {
   Tooltip,
 } from "./behaviors";
 import { Chart } from "./Chart";
+import storyStyles from "./Chart.stories.module.scss";
 import { InputAction } from "./engine";
 import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
 import { DragSensor } from "./sensors/DragSensor/DragSensor";
@@ -754,7 +755,10 @@ export const CompositionExample: Story = {
     ];
 
     return (
-      <div style={{ width: "100%", maxWidth: 800 }}>
+      <div
+        className={storyStyles.composition}
+        style={{ width: "100%", maxWidth: 800 }}
+      >
         <Chart.Root
           d3Config={{
             grid: true,
@@ -796,7 +800,7 @@ export const CompositionExample: Story = {
               </Flex>
             </Chart.Header>
 
-            <Stack gap={4} style={{ flex: 1, minHeight: 0 }}>
+            <Flex className={storyStyles.plotAndLegend} gap={4}>
               <Chart.Plot>
                 <Chart.Cursor />
                 <Chart.Grid />
@@ -816,10 +820,14 @@ export const CompositionExample: Story = {
                     color: chartColor,
                   }))
                 }
-                layout="horizontal"
-                align="center"
+                layout="vertical"
+                style={{
+                  alignSelf: "center",
+                  flexDirection:
+                    "var(--composition-legend-direction, column)" as React.CSSProperties["flexDirection"],
+                }}
               />
-            </Stack>
+            </Flex>
 
             <Chart.Footer>
               <Slat

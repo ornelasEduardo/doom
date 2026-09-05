@@ -40,10 +40,17 @@ it.each([320, 480, 800])(
     const legend = Array.from(container.querySelectorAll("span")).find(
       (el) => el.textContent === "Series 1",
     )!;
-    expect(legend.getBoundingClientRect().top).toBeGreaterThanOrEqual(
-      plot.bottom,
-    );
-    expect(plot.width).toBeGreaterThan(width - 80);
+    const legendBox = legend.getBoundingClientRect();
+    if (width === 800) {
+      expect(legendBox.left).toBeGreaterThanOrEqual(plot.right);
+      expect(legendBox.top).toBeLessThan(plot.bottom);
+      expect(plot.width).toBeGreaterThan(600);
+    } else {
+      expect(legendBox.top).toBeGreaterThanOrEqual(plot.bottom);
+      expect(plot.width).toBeGreaterThan(width - 80);
+    }
+    expect(container.textContent).toContain("Custom X Axis Label");
+    expect(container.textContent).toContain("Custom Y Axis Label");
     expect(plot.height).toBeGreaterThan(80);
     expect(root.scrollWidth).toBeLessThanOrEqual(root.clientWidth);
   },

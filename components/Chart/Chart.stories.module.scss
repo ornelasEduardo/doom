@@ -1,0 +1,17 @@
+@layer doom.components {
+  .composition {
+    container-type: inline-size;
+  }
+
+  .composition .plotAndLegend {
+    flex: 1;
+    min-height: 0;
+  }
+
+  @container (max-width: 480px) {
+    .composition .plotAndLegend {
+      flex-direction: column;
+      --composition-legend-direction: row;
+    }
+  }
+}
