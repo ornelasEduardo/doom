@@ -122,9 +122,9 @@ export const SignedLineMetric: Story = {
       />
       <Chart.Plot>
         <Chart.Grid />
-        <Chart.Cursor />
-        <Chart.Series label="Net cash flow (USD thousands)" type="line" />
         <Chart.Axis />
+        <Chart.Series label="Net cash flow (USD thousands)" type="line" />
+        <Chart.Cursor />
       </Chart.Plot>
     </Chart.Root>
   ),
@@ -186,12 +186,12 @@ export const SharedFixedYBounds: Story = {
           />
           <Chart.Plot>
             <Chart.Grid />
-            <Chart.Cursor />
+            <Chart.Axis />
             <Chart.Series
               label={`${region} revenue (USD thousands)`}
               type="line"
             />
-            <Chart.Axis />
+            <Chart.Cursor />
           </Chart.Plot>
         </Chart.Root>
       ))}
