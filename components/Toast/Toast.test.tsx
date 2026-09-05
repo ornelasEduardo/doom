@@ -1,25 +1,176 @@
 import "@testing-library/jest-dom";
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import React, { StrictMode, useEffect, useRef } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider, useToast } from "./Toast";
 
+function MountedOnce() {
+  const sent = useRef(false);
+  const { toastInfo } = useToast();
+  useEffect(() => {
+    if (!sent.current) {
+      sent.current = true;
+      toastInfo("Mounted once");
+    }
+  }, [toastInfo]);
+  return null;
+}
+
 // Test component to use the hook
 const TestComponent = () => {
-  const { toastSuccess, toastError } = useToast();
+  const { toast, toastSuccess, toastError, toastWarning, toastInfo } =
+    useToast();
   return (
     <div>
       <button onClick={() => toastSuccess("Success Message")}>
         Show Success
       </button>
+      <button
+        onClick={() => {
+          for (let index = 0; index < 20; index++) {
+            toastSuccess(`Saved ${index}`);
+          }
+          toastError("Urgent error");
+        }}
+      >
+        Burst
+      </button>
       <button onClick={() => toastError("Error Message")}>Show Error</button>
+      <button onClick={() => toastWarning("Warning Message")}>
+        Show Warning
+      </button>
+      <button onClick={() => toastInfo("Info Message")}>Show Info</button>
+      <button onClick={() => toast("Default Message")}>Show Default</button>
     </div>
   );
 };
 
 describe("Toast Component", () => {
+  beforeEach(() => vi.useFakeTimers());
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it.each([false, true])(
+    "announces a guarded child mount effect with StrictMode=%s",
+    (strict) => {
+      const content = (
+        <ToastProvider>
+          <MountedOnce />
+        </ToastProvider>
+      );
+      render(strict ? <StrictMode>{content}</StrictMode> : content);
+      const region = screen.getByRole("status");
+      expect(region).toBeEmptyDOMElement();
+      expect(
+        screen.getAllByRole("group", { name: "Mounted once" }),
+      ).toHaveLength(1);
+      act(() => vi.advanceTimersByTime(150));
+      expect(region).toHaveTextContent(/^Mounted once$/);
+      expect(screen.getByRole("status")).toBe(region);
+    },
+  );
+
+  it("cancels the pending announcement timer on real unmount", () => {
+    const { unmount } = render(
+      <ToastProvider>
+        <MountedOnce />
+      </ToastProvider>,
+    );
+    const pendingTimers = vi.getTimerCount();
+    unmount();
+    // The existing automatic dismissal timer is separate from the announcer lifecycle.
+    expect(vi.getTimerCount()).toBe(pendingTimers - 1);
+  });
+
+  it.each([
+    ["Success", "status"],
+    ["Error", "alert"],
+    ["Warning", "status"],
+    ["Info", "status"],
+    ["Default", "status"],
+  ])("exposes %s notifications with the %s role", (type, role) => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+
+    const notification = screen.getByRole(role);
+    expect(notification).toBeEmptyDOMElement();
+    fireEvent.click(screen.getByRole("button", { name: `Show ${type}` }));
+    act(() => vi.advanceTimersByTime(100));
+    expect(screen.getByRole(role)).toBe(notification);
+    expect(notification).toHaveTextContent(`${type} Message`);
+    expect(
+      notification.parentElement?.closest(
+        '[aria-live], [role="alert"], [role="status"], [role="log"]',
+      ),
+    ).toBeNull();
+    expect(
+      notification.querySelector(
+        '[aria-live], [role="alert"], [role="status"], [role="log"]',
+      ),
+    ).toBeNull();
+  });
+  it("announces errors promptly despite a burst of polite messages", () => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+    const alert = screen.getByRole("alert");
+    fireEvent.click(screen.getByText("Burst"));
+    act(() => vi.advanceTimersByTime(100));
+    expect(alert).toHaveTextContent(/^Urgent error$/);
+    expect(screen.getByRole("alert")).toBe(alert);
+    expect(screen.getByRole("status")).toHaveTextContent("Saved 19");
+  });
+
+  it.each([
+    ["Success", "status"],
+    ["Error", "alert"],
+  ])(
+    "retains %s text until replacement and clears repeated messages",
+    (type, role) => {
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>,
+      );
+      const region = screen.getByRole(role);
+      fireEvent.click(screen.getByText(`Show ${type}`));
+      act(() => vi.advanceTimersByTime(100));
+      expect(region).toHaveTextContent(`${type} Message`);
+      act(() => vi.advanceTimersByTime(10000));
+      expect(region).toHaveTextContent(`${type} Message`);
+      expect(screen.getByRole(role)).toBe(region);
+      fireEvent.click(screen.getByText(`Show ${type}`));
+      expect(region).toBeEmptyDOMElement();
+      act(() => vi.advanceTimersByTime(100));
+      expect(region).toHaveTextContent(`${type} Message`);
+    },
+  );
+
+  it("replaces polite announcements without reannouncing old content", () => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+    const region = screen.getByRole("status");
+    fireEvent.click(screen.getByText("Show Success"));
+    act(() => vi.advanceTimersByTime(100));
+    fireEvent.click(screen.getByText("Show Info"));
+    expect(region).toBeEmptyDOMElement();
+    act(() => vi.advanceTimersByTime(100));
+    expect(region).toHaveTextContent(/^Info Message$/);
+  });
+
   it("should render toasts", () => {
     render(
       <ToastProvider>
@@ -28,13 +179,18 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Show Error"));
-    expect(screen.getByText("Error Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Error Message" }),
+    ).toBeInTheDocument();
   });
 
-  it("should remove toast on close click", () => {
+  it("should remove toast using the accessible close button after its exit animation", () => {
+    vi.useFakeTimers();
     render(
       <ToastProvider>
         <TestComponent />
@@ -42,22 +198,17 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close notification" }));
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
-    // Find close button (it has an X icon)
-    // We can find by role button inside the toast
-    const closeButtons = screen.getAllByRole("button");
-    // The first 2 are from TestComponent, the 3rd should be the close button
-    const closeButton = closeButtons[2];
-
-    fireEvent.click(closeButton);
-
-    // It has a timeout for animation, so we need to wait
-    // But in JSDOM/Vitest we might need fake timers.
-    // For now, let's just check if removeToast was called (which sets
-    // isExiting).
-    // The element might still be there but exiting.
-    // Let's use fake timers.
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(
+      screen.queryByRole("group", { name: "Success Message" }),
+    ).not.toBeInTheDocument();
   });
 
   it("should auto remove toast", () => {
@@ -69,7 +220,9 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(5500);
@@ -78,7 +231,9 @@ describe("Toast Component", () => {
     // Should be gone
     // Note: removeToast has a 300ms timeout inside too.
     // 5000 + 300 = 5300. 5500 is safe.
-    expect(screen.queryByText("Success Message")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Success Message" }),
+    ).not.toBeInTheDocument();
 
     vi.useRealTimers();
   });

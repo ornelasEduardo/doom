@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -34,10 +35,53 @@ interface ToastContextType {
 // Context
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+function useAnnouncement() {
+  const [message, setMessage] = useState("");
+  const pending = useRef<string[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const schedule = useCallback(() => {
+    if (timer.current !== null || pending.current.length === 0) {
+      return;
+    }
+
+    // A fixed insertion window makes repeated text a new change without delaying bursts.
+    timer.current = setTimeout(() => {
+      setMessage(pending.current.join("\n"));
+      pending.current = [];
+      timer.current = null;
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    // Effect replay cancels timers but must resume a guarded child's pending mount message.
+    schedule();
+    return () => {
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+      }
+      timer.current = null;
+    };
+  }, [schedule]);
+
+  const announce = useCallback(
+    (nextMessage: string) => {
+      pending.current.push(nextMessage);
+      setMessage("");
+      schedule();
+    },
+    [schedule],
+  );
+
+  return [message, announce] as const;
+}
+
 // Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [politeMessage, announcePolite] = useAnnouncement();
+  const [assertiveMessage, announceAssertive] = useAnnouncement();
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,13 +100,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, type: ToastType = "info") => {
       const id = Math.random().toString(36).substring(2, 9);
       setToasts((prev) => [...prev, { id, message, type }]);
+      if (type === "error") {
+        announceAssertive(message);
+      } else {
+        announcePolite(message);
+      }
 
       // Auto remove after 5 seconds
       setTimeout(() => {
         removeToast(id);
       }, 5000);
     },
-    [removeToast],
+    [announceAssertive, announcePolite, removeToast],
   );
 
   const toast = useCallback(
@@ -93,46 +142,57 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {isMounted &&
         createPortal(
-          <div className={styles.container}>
-            {toasts.map((t) => (
-              <div
-                key={t.id}
-                className={clsx(
-                  styles.toast,
-                  styles[t.type],
-                  t.isExiting && styles.exiting,
-                )}
-              >
-                {t.type === "success" && (
-                  <CheckCircle2
-                    color="var(--success)"
-                    size={20}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {t.type === "error" && (
-                  <XCircle color="var(--error)" size={20} strokeWidth={2.5} />
-                )}
-                {t.type === "warning" && (
-                  <AlertTriangle
-                    color="var(--warning)"
-                    size={20}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {t.type === "info" && (
-                  <Info color="var(--primary)" size={20} strokeWidth={2.5} />
-                )}
-                <span className="font-semibold">{t.message}</span>
-                <button
-                  className={styles.closeButton}
-                  onClick={() => removeToast(t.id)}
+          <>
+            <div aria-atomic="true" className={styles.announcer} role="status">
+              {politeMessage}
+            </div>
+            <div aria-atomic="true" className={styles.announcer} role="alert">
+              {assertiveMessage}
+            </div>
+            <div className={styles.container}>
+              {toasts.map((t) => (
+                <div
+                  key={t.id}
+                  aria-label={t.message}
+                  className={clsx(
+                    styles.toast,
+                    styles[t.type],
+                    t.isExiting && styles.exiting,
+                  )}
+                  role="group"
                 >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
-              </div>
-            ))}
-          </div>,
+                  {t.type === "success" && (
+                    <CheckCircle2
+                      color="var(--success)"
+                      size={20}
+                      strokeWidth={2.5}
+                    />
+                  )}
+                  {t.type === "error" && (
+                    <XCircle color="var(--error)" size={20} strokeWidth={2.5} />
+                  )}
+                  {t.type === "warning" && (
+                    <AlertTriangle
+                      color="var(--warning)"
+                      size={20}
+                      strokeWidth={2.5}
+                    />
+                  )}
+                  {t.type === "info" && (
+                    <Info color="var(--primary)" size={20} strokeWidth={2.5} />
+                  )}
+                  <span className="font-semibold">{t.message}</span>
+                  <button
+                    aria-label="Close notification"
+                    className={styles.closeButton}
+                    onClick={() => removeToast(t.id)}
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>,
           document.body,
         )}
     </ToastContext.Provider>

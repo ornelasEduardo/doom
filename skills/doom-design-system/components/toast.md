@@ -48,6 +48,16 @@ function MyComponent() {
 }
 ```
 
+## Accessibility
+
+- The provider mounts empty, visually hidden `status` (polite) and `alert` (assertive) regions before inserting announcement text, following [W3C ARIA22](https://www.w3.org/WAI/WCAG21/Techniques/aria/ARIA22.html).
+- Errors go to the alert region; success, warning, info, and default messages go to the status region. Both regions are atomic and contain only the latest announcement batch.
+- Polite and assertive announcements schedule independently. Each channel clears only when a new message arrives and inserts after a fixed 100ms window; messages arriving within that window are combined in arrival order without extending the delay. Repeated text produces a genuine content change, and old visible toasts are not reannounced.
+- Each region retains its last announcement until replacement. Errors never wait for polite messages.
+- Visible notifications are named groups outside the live regions; their text and close buttons remain accessible without nested or duplicate live-region semantics.
+- Automated unit and Chromium tests verify DOM changes and real-click dismissal. Native screen-reader speech and timing require manual assistive-technology testing.
+- The X button has the accessible name `Close notification` and retains native button keyboard behavior.
+
 ## Notes
 - `ToastProvider` must be an ancestor — `useToast()` throws if used outside it
 - Toasts auto-dismiss after 5 seconds (hardcoded, not configurable)
