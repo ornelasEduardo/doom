@@ -22,6 +22,7 @@ import {
   Tooltip,
 } from "./behaviors";
 import { Chart } from "./Chart";
+import storyStyles from "./Chart.stories.module.scss";
 import { InputAction } from "./engine";
 import { DataHoverSensor } from "./sensors/DataHoverSensor/DataHoverSensor";
 import { DragSensor } from "./sensors/DragSensor/DragSensor";
@@ -754,7 +755,10 @@ export const CompositionExample: Story = {
     ];
 
     return (
-      <div style={{ width: "100%", maxWidth: 800 }}>
+      <div
+        className={storyStyles.composition}
+        style={{ width: "100%", maxWidth: 800 }}
+      >
         <Chart.Root
           d3Config={{
             grid: true,
@@ -764,7 +768,7 @@ export const CompositionExample: Story = {
             showDots: true,
           }}
           data={data}
-          style={{ height: 400 }}
+          style={{ height: "var(--composition-height, 400px)" }}
           type={chartType}
           x={(d: any) => d.label}
           y={(d: any) => d.value}
@@ -778,7 +782,7 @@ export const CompositionExample: Story = {
                 </Text>
               }
             >
-              <Flex gap={2}>
+              <Flex wrap gap={2}>
                 <Select
                   options={chartTypes}
                   style={{ width: `12ch` }}
@@ -796,7 +800,7 @@ export const CompositionExample: Story = {
               </Flex>
             </Chart.Header>
 
-            <Flex gap={4} style={{ flex: 1 }}>
+            <Flex className={storyStyles.plotAndLegend} gap={4}>
               <Chart.Plot>
                 <Chart.Cursor />
                 <Chart.Grid />
@@ -817,7 +821,11 @@ export const CompositionExample: Story = {
                   }))
                 }
                 layout="vertical"
-                style={{ alignSelf: "center" }}
+                style={{
+                  alignSelf: "center",
+                  flexDirection:
+                    "var(--composition-legend-direction, column)" as React.CSSProperties["flexDirection"],
+                }}
               />
             </Flex>
 
