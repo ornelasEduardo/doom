@@ -25,3 +25,30 @@ export function createRoundedTopBarPath(
     Z
   `;
 }
+
+/** A bar's free end faces away from zero; shared stack seams remain square. */
+export function createBarPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  end: "top" | "bottom" | "left" | "right",
+  radius: number,
+): string {
+  if (end === "top") {
+    return createRoundedTopBarPath(x, y, width, height, radius);
+  }
+  if (width <= 0 || height <= 0) {
+    return "";
+  }
+  const r = Math.min(radius, width / 2, height / 2);
+  const tl = end === "left" ? r : 0;
+  const tr = end === "right" ? r : 0;
+  const br = end === "bottom" || end === "right" ? r : 0;
+  const bl = end === "bottom" || end === "left" ? r : 0;
+  return `M ${x + tl},${y} L ${x + width - tr},${y}
+    A ${tr},${tr} 0 0 1 ${x + width},${y + tr} L ${x + width},${y + height - br}
+    A ${br},${br} 0 0 1 ${x + width - br},${y + height} L ${x + bl},${y + height}
+    A ${bl},${bl} 0 0 1 ${x},${y + height - bl} L ${x},${y + tl}
+    A ${tl},${tl} 0 0 1 ${x + tl},${y} Z`;
+}

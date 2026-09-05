@@ -3,6 +3,7 @@ import React from "react";
 import { useChartContext } from "../../context";
 import { resolveAccessor } from "../../types/accessors";
 import { InteractionChannel } from "../../types/interaction";
+import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
 import styles from "./Announcer.module.scss";
 
@@ -38,6 +39,9 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     s.interactions.get(InteractionChannel.PRIMARY_HOVER),
   ) as any;
 
+  const series = chartStore.useStore((s) => s.processedSeries);
+  const horizontal = series[0]?.orientation === "horizontal";
+
   const getX = xAccessor ? resolveAccessor(xAccessor as any) : null;
   const getY = yAccessor ? resolveAccessor(yAccessor as any) : null;
 
@@ -49,6 +53,11 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     const xLabel = config?.xAxisLabel || "X";
     const yLabel = config?.yAxisLabel || "Y";
     const xValues = data.map((d) => getX(d));
+    if (horizontal) {
+      const values = xValues.map(Number).filter(Number.isFinite);
+      const categories = data.map((d) => getY(d));
+      return `${type || "Bar"} chart with ${data.length} data points. ${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}. ${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`;
+    }
     const yValues = data.map((d) => Number(getY(d))).filter(Number.isFinite);
 
     const parts = [
@@ -65,12 +74,17 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     return parts.join(" ");
     // getX/getY are derived from the accessors, which are the real inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, type, config, xAccessor, yAccessor]);
+  }, [data, type, config, xAccessor, yAccessor, horizontal]);
 
-  const active = React.useMemo(
-    () => describeDatum(hover?.targets?.[0]?.data, xAccessor, yAccessor),
-    [hover, xAccessor, yAccessor],
-  );
+  const active = React.useMemo(() => {
+    const target = hover?.targets?.[0];
+    const item = series.find((item) => item.id === target?.seriesId);
+    return describeDatum(
+      target?.data,
+      item ? categoryAccessor(item) : xAccessor,
+      item ? valueAccessor(item) : yAccessor,
+    );
+  }, [hover, xAccessor, yAccessor, series]);
 
   return (
     <>

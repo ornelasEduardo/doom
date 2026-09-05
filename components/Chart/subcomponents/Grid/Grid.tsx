@@ -16,13 +16,34 @@ export function Grid() {
     return null;
   }
 
-  const ticks = yScale.ticks(yTickCount(isMobile));
+  const horizontal = !("ticks" in yScale);
+  const numeric = horizontal ? scales.x : yScale;
+  if (!numeric || !("ticks" in numeric)) {
+    return null;
+  }
+  const ticks = numeric.ticks(yTickCount(isMobile));
 
   return (
     <g data-chart-grid aria-hidden="true" className={styles.grid}>
-      {ticks.map((t: any, i: number) => (
-        <line key={i} x1={0} x2={innerWidth} y1={yScale(t)} y2={yScale(t)} />
-      ))}
+      {ticks.map((t: any, i: number) =>
+        horizontal ? (
+          <line
+            key={i}
+            x1={numeric(t)}
+            x2={numeric(t)}
+            y1={0}
+            y2={dimensions.innerHeight}
+          />
+        ) : (
+          <line
+            key={i}
+            x1={0}
+            x2={innerWidth}
+            y1={numeric(t)}
+            y2={numeric(t)}
+          />
+        ),
+      )}
     </g>
   );
 }

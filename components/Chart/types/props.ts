@@ -26,7 +26,7 @@ export interface ChartProps<T = unknown> extends Omit<
   // For shorthand API - single series defined at root level
   type?: SeriesType;
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
   render?: (frame: RenderFrame<T>) => void;
   behaviors?: Behavior[];
   sensors?: Sensor[];

@@ -1154,3 +1154,146 @@ export const DraggablePucks: Story = {
     );
   },
 };
+
+const resolvedTickets = [
+  { category: "Billing", resolved: 36 },
+  { category: "Account access", resolved: 28 },
+  { category: "Integrations", resolved: 24 },
+];
+
+export const HorizontalBars: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Compare counts across categories with a single horizontal series. A fixed barWidth keeps each bar 24px thick; use auto to fill the category band.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      data={resolvedTickets}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="resolved"
+      y="category"
+    >
+      <Chart.Header
+        subtitle="This week · tickets by category"
+        title="Support tickets resolved"
+      />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth={24}
+          label="Resolved tickets"
+          orientation="horizontal"
+          type="bar"
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};
+
+const channelRevenue = [
+  { month: "Jan", online: 36, retail: 18 },
+  { month: "Feb", online: 28, retail: 22 },
+  { month: "Mar", online: 42, retail: 24 },
+];
+
+export const StackedBars: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Use a shared stackId for additive parts of a total. Online and retail revenue sum to monthly revenue; January totals $54k. The tooltip reports each channel's contribution.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      data={channelRevenue}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="month"
+      y="online"
+    >
+      <Chart.Header
+        subtitle="USD thousands · online + retail = total revenue"
+        title="Monthly revenue by channel"
+      />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth={40}
+          label="Online ($k)"
+          stackId="revenue"
+          type="bar"
+          y="online"
+        />
+        <Chart.Series
+          barWidth={40}
+          label="Retail ($k)"
+          stackId="revenue"
+          type="bar"
+          y="retail"
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};
+
+const inventoryMovement = [
+  { category: "Keyboards", received: 36, shipped: -18 },
+  { category: "Monitors", received: 12, shipped: -20 },
+  { category: "Headsets", received: 24, shipped: -14 },
+];
+
+export const HorizontalStackedBars: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Signed stacks separate positive and negative contributions around zero. Receipts increase inventory; shipments decrease it. Keyboards have a net change of +18 units (36 − 18); the full span is not the net total. Siblings inherit the first explicit horizontal orientation.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      data={inventoryMovement}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="received"
+      y="category"
+    >
+      <Chart.Header
+        subtitle="Units · received adds stock; shipped removes stock"
+        title="Weekly inventory movement"
+      />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth={28}
+          label="Received units"
+          orientation="horizontal"
+          stackId="inventory"
+          type="bar"
+          x="received"
+        />
+        <Chart.Series
+          barWidth={28}
+          label="Shipped units"
+          stackId="inventory"
+          type="bar"
+          x="shipped"
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};

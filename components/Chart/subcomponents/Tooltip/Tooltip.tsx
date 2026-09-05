@@ -9,6 +9,7 @@ import { TooltipOptions } from "../../behaviors/Tooltip";
 import { useChartContext } from "../../context";
 import { resolveAccessor, Series } from "../../types";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
+import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import {
   Reposition,
   TOOLTIP_GAP_X,
@@ -94,8 +95,10 @@ export function Tooltip<T>({
       ) : (
         <DefaultTooltipContent
           activeData={target.data}
+          activeSeriesId={target.seriesId}
           config={config as any}
           series={series}
+          targets={hover.targets}
           variant={variant}
           x={x}
           y={y}
@@ -107,6 +110,8 @@ export function Tooltip<T>({
 
 interface DefaultTooltipContentProps<T> {
   activeData: T;
+  activeSeriesId?: string;
+  targets?: HoverInteraction<T>["targets"];
   series: Series[];
   x?: unknown;
   y?: unknown;
@@ -116,13 +121,20 @@ interface DefaultTooltipContentProps<T> {
 
 function DefaultTooltipContent<T>({
   activeData,
+  activeSeriesId,
+  targets,
   series,
   x,
   y,
   config,
   variant,
 }: DefaultTooltipContentProps<T>) {
-  const xLabel = x ? String(resolveAccessor(x as any)(activeData)) : "Value";
+  const activeSeries = series.find((item) => item.id === activeSeriesId);
+  const category = activeSeries ? categoryAccessor(activeSeries) : x;
+  const categoryValue = category
+    ? resolveAccessor(category as any)(activeData)
+    : undefined;
+  const xLabel = category ? String(categoryValue) : "Value";
 
   return (
     <Card
@@ -140,15 +152,35 @@ function DefaultTooltipContent<T>({
             gap: 4,
           }}
         >
-          {series.map((item, i) => (
-            <TooltipSeriesItem
-              key={i}
-              activeData={activeData}
-              config={config}
-              fallbackY={y}
-              series={item}
-            />
-          ))}
+          {series.map((item, i) => {
+            const accessor = categoryAccessor(item);
+            const candidate = targets?.find(
+              (target) => target.seriesId === item.id,
+            );
+            const datum =
+              item.id === activeSeriesId
+                ? activeData
+                : candidate
+                  ? candidate.data
+                  : accessor && item.data
+                    ? item.data.find(
+                        (row) =>
+                          resolveAccessor(accessor)(row) === categoryValue,
+                      )
+                    : activeData;
+            if (datum === undefined) {
+              return null;
+            }
+            return (
+              <TooltipSeriesItem
+                key={i}
+                activeData={datum}
+                config={config}
+                fallbackY={y}
+                series={item}
+              />
+            );
+          })}
         </div>
       ) : (
         <Text as="p" variant="h4">
@@ -172,7 +204,8 @@ function TooltipSeriesItem<T>({
   fallbackY,
   config,
 }: TooltipSeriesItemProps<T>) {
-  const accessor = series.yAccessor ? resolveAccessor(series.yAccessor) : null;
+  const value = valueAccessor(series);
+  const accessor = value ? resolveAccessor(value) : null;
   const val = accessor
     ? accessor(activeData)
     : fallbackY

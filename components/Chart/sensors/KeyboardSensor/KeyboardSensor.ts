@@ -2,6 +2,7 @@ import { InputAction } from "../../engine";
 import { resolveAccessor } from "../../types/accessors";
 import { Sensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
+import { barGeometry, categoryAccessor } from "../../utils/bars";
 
 /**
  * Professional-grade Keyboard Sensor for A11y.
@@ -22,7 +23,35 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
     const ctx = getChartContext();
     const { chartStore } = ctx;
     const state = chartStore.getState();
-    const { data, scales, x: xAccessor, y: yAccessor } = state;
+    const { scales, x: xAccessor, y: yAccessor } = state;
+    const firstSeries = state.processedSeries?.[0];
+    const entries = (firstSeries?.data ?? state.data).map((datum, index) => ({
+      datum,
+      index,
+      series: firstSeries,
+    }));
+    const firstCategory = firstSeries && categoryAccessor(firstSeries);
+    const seen = new Set(
+      entries.map((entry) =>
+        firstCategory
+          ? resolveAccessor(firstCategory)(entry.datum)
+          : entry.index,
+      ),
+    );
+    for (const series of (state.processedSeries ?? []).slice(1)) {
+      const accessor = categoryAccessor(series);
+      if (!accessor) {
+        continue;
+      }
+      (series.data ?? []).forEach((datum, index) => {
+        const category = resolveAccessor(accessor)(datum);
+        if (!seen.has(category)) {
+          entries.push({ datum, index, series });
+          seen.add(category);
+        }
+      });
+    }
+    const data = entries.map((entry) => entry.datum);
 
     if (!data || data.length === 0 || !scales.x) {
       return;
@@ -30,11 +59,11 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
 
     // Update Focus
     let changed = false;
-    if (signal.key === "ArrowRight") {
+    if (signal.key === "ArrowRight" || signal.key === "ArrowDown") {
       focusedIndex = Math.min(focusedIndex + 1, data.length - 1);
       changed = true;
-    } else if (signal.key === "ArrowLeft") {
-      focusedIndex = Math.max(focusedIndex - 1, 0);
+    } else if (signal.key === "ArrowLeft" || signal.key === "ArrowUp") {
+      focusedIndex = Math.min(Math.max(focusedIndex - 1, 0), data.length - 1);
       changed = true;
       if (focusedIndex < 0) {
         focusedIndex = 0;
@@ -63,37 +92,73 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
       const xPos = (xScale as any)(xVal) || 0;
       const yPos = (yScale as any)(yVal) || 0;
 
-      // Query Engine for targets at this location (Vertical Slice)
-      // We use a small search radius to mimic "nearest" behavior if needed,
-      // but typically we want everything at this X.
-      // The spatial index might be quadtree.
-      // For now, let's use the primary data point we just found as the target
-      // + any others the engine finds nearby.
-
-      // Simplest interaction: Just highlight the data point we navigated to.
-      // If we want multi-series, we should query engine.
-      // const candidates = engine.spatialIndex?.find(xPos, yPos, 10) || [];
-
-      // Construct target manually since we know the data point
       const primaryTarget = {
         type: "data-point",
         data: d,
-        seriesId: "default", // TODO: Multi-series support
+        seriesId: "default",
         dataIndex: focusedIndex,
         coordinate: { x: xPos, y: yPos },
         distance: 0,
       };
 
+      const entry = entries[focusedIndex];
+      const category = entry.series && categoryAccessor(entry.series);
+      const categoryValue = category ? resolveAccessor(category)(d) : undefined;
+      const targets = (state.processedSeries ?? []).flatMap((series) => {
+        const accessor = categoryAccessor(series);
+        const index =
+          series.id === entry.series?.id
+            ? entry.index
+            : accessor
+              ? (series.data ?? []).findIndex(
+                  (row) => resolveAccessor(accessor)(row) === categoryValue,
+                )
+              : -1;
+        if (index < 0 || !xScale || !yScale) {
+          return [];
+        }
+        const datum = series.data![index];
+        const bar =
+          series.type === "bar"
+            ? barGeometry(series, datum, index, xScale, yScale)
+            : null;
+        const x = bar
+          ? bar.x + bar.width / 2
+          : (xScale as (v: unknown) => number)(
+              series.xAccessor
+                ? resolveAccessor(series.xAccessor)(datum)
+                : index,
+            );
+        const y = bar
+          ? bar.y + bar.height / 2
+          : (yScale as (v: unknown) => number)(
+              series.yAccessor
+                ? resolveAccessor(series.yAccessor)(datum)
+                : datum,
+            );
+        return [
+          {
+            ...primaryTarget,
+            data: datum,
+            dataIndex: index,
+            seriesId: series.id,
+            seriesColor: series.color,
+            coordinate: { x, y },
+            suppressMarker: series.type === "bar",
+          },
+        ];
+      });
+      const target = targets[0] ?? primaryTarget;
       upsertInteraction(name, {
         pointer: {
-          x: xPos,
-          y: yPos,
-          containerX: xPos + state.dimensions.margin.left,
-          containerY: yPos + state.dimensions.margin.top,
+          x: target.coordinate.x,
+          y: target.coordinate.y,
+          containerX: target.coordinate.x + state.dimensions.margin.left,
+          containerY: target.coordinate.y + state.dimensions.margin.top,
           isTouch: false,
         },
-        targets: [primaryTarget as any], // Cast to InteractionTarget
-        target: primaryTarget as any,
+        targets: targets.length ? targets : [primaryTarget],
+        target,
       });
     }
   };

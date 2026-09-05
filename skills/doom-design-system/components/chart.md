@@ -180,9 +180,11 @@ Key operations:
 Each series type registers itself with the store and gets an automatic interaction strategy.
 
 A `<Chart.Series>` may carry its own `data`, which is used for both rendering and
-hit-testing. Scales are still derived from the root `data`, so a series whose
-values fall outside that domain will render off-plot — give `Chart.Root` a
-dataset that spans the full range.
+hit-testing. In charts containing only non-bar series, scales derive from root
+`data`; give `Chart.Root` a dataset spanning the full range. Bars derive their
+category domain and signed value totals from registered series data. Mixed
+vertical-bar charts preserve and expand root and registered non-bar domains.
+See [bar orientation, thickness, and stacks](#bar-orientation-thickness-and-stacks).
 
 Series that do not name a `color` are assigned one from the categorical data
 palette in registration order, so sibling series are distinguishable and
@@ -510,3 +512,36 @@ Available in the `render` prop and `CustomSeries`:
 - Behaviors must return a cleanup function that unsubscribes from the store and removes D3 elements
 - Tag custom DOM elements with `chartDataAttrs` constants so the SpatialMap can detect them during hit testing
 - Supports touch interactions, keyboard navigation, and responsive sizing automatically
+
+## Bar orientation, thickness, and stacks
+
+These options belong to `Chart.Series` with `type="bar"`:
+
+| Prop | Type | Default | Behavior |
+|------|------|---------|----------|
+| `orientation` | `"vertical" \| "horizontal"` | Inherited, otherwise vertical | First explicit declaration establishes the orientation. Omitted siblings inherit it. |
+| `barWidth` | `number \| "auto"` | `"auto"` | Thickness in pixels, centered in the category band; automatic thickness fills the band. |
+| `stackId` | `string` | Unstacked | Adds preceding series values for the same category and stack ID. |
+
+Accessors describe physical axes: horizontal bars use numeric `x` and category `y`; vertical bars use category `x` and numeric `y`. Functions and property keys both work.
+
+```tsx
+<Chart.Root data={rows} type="bar" x="actual" y="category">
+  <Chart.Plot>
+    <Chart.Grid />
+    <Chart.Series type="bar" orientation="horizontal" x="actual"
+      label="Actual" stackId="sales" barWidth={28} />
+    <Chart.Series type="bar" x="forecast"
+      label="Forecast" stackId="sales" barWidth={28} />
+    <Chart.Axis />
+  </Chart.Plot>
+</Chart.Root>
+```
+
+Stacks align by category value, including when each series supplies its own reordered or sparse `data`. Positive and negative values accumulate separately from zero. Domains update from fresh totals when data changes or a series is removed. Only outward ends are rounded; internal seams are square. Use equal thicknesses within a stack for aligned edges.
+
+Different stack IDs accumulate independently. They share the category center rather than creating side-by-side groups. Unstacked bars also share that center; different `barWidth` values support overlays such as target versus actual. Zero values have no visible area.
+
+All bars in one chart share an orientation. A later explicitly conflicting series is omitted with a console diagnostic. Use separate charts for different orientations. Mixed line/area/scatter and bar charts are supported with vertical bars and shared compatible axes; root line domains are retained and expanded to include bar totals. Non-bar series on horizontal bar axes are omitted with a console diagnostic; use separate charts.
+
+Default hover and keyboard navigation use each series' own matching category row. Horizontal tooltips and accessible bar labels read category followed by value. Arrow keys navigate categories; Escape clears the focused reading. Live-region DOM tests cover emitted text, not screen-reader behavior.

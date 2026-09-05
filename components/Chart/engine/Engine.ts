@@ -164,7 +164,7 @@ export class Engine<T = unknown> {
 
     const primaryCandidate = candidates[0];
     const sliceCandidates = primaryCandidate
-      ? this.spatialMap.findAllAtX(primaryCandidate.coordinate.x)
+      ? this.spatialMap.findSlice(primaryCandidate)
       : [];
 
     const event: EngineEvent<T> = {

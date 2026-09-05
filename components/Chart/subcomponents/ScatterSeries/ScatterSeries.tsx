@@ -17,7 +17,7 @@ import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 interface ScatterSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
   size?: Accessor<T, number>;
   color?: string;
   label?: string;
@@ -121,7 +121,7 @@ const ScatterSeriesComponent = <T,>({
     <g className="chart-scatter-series">
       {data.map((d, i) => {
         const cx = (xScale as any)(xAccessor(d));
-        const cy = yScale(yAccessor(d));
+        const cy = "ticks" in yScale ? yScale(Number(yAccessor(d))) : 0;
 
         let radius = 6;
         if (rScale && sizeAccessor) {

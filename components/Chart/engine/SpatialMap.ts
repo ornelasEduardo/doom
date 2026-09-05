@@ -41,6 +41,7 @@ export interface IndexedPoint<T = unknown> {
   seriesColor?: string;
   draggable?: boolean;
   suppressMarker?: boolean;
+  sliceAxis?: "x" | "y";
 }
 
 // =============================================================================
@@ -76,6 +77,8 @@ export class SpatialMap<T = unknown> {
   private tree: Quadtree<IndexedPoint<T>> | null = null;
   private points: IndexedPoint<T>[] = [];
   private xBuckets: Map<number, IndexedPoint<T>[]> = new Map();
+  private yBuckets: Map<number, IndexedPoint<T>[]> = new Map();
+  private identities = new Map<string, Map<number, IndexedPoint<T>>>();
   private containerElement: Element | null = null;
   private options: Required<SpatialMapOptions>;
 
@@ -102,6 +105,8 @@ export class SpatialMap<T = unknown> {
    */
   updateIndex(points: IndexedPoint<T>[]): void {
     this.points = points;
+    this.yBuckets.clear();
+    this.identities.clear();
 
     if (points.length === 0) {
       this.tree = null;
@@ -117,9 +122,15 @@ export class SpatialMap<T = unknown> {
     // Build the X-bucket index for O(k) vertical-slice lookups
     this.xBuckets = new Map();
     for (const p of points) {
-      const bucket = this.xBuckets.get(p.x) ?? [];
+      const identities =
+        this.identities.get(p.seriesId) ?? new Map<number, IndexedPoint<T>>();
+      identities.set(p.dataIndex, p);
+      this.identities.set(p.seriesId, identities);
+      const buckets = p.sliceAxis === "y" ? this.yBuckets : this.xBuckets;
+      const coordinate = p.sliceAxis === "y" ? p.y : p.x;
+      const bucket = buckets.get(coordinate) ?? [];
       bucket.push(p);
-      this.xBuckets.set(p.x, bucket);
+      buckets.set(coordinate, bucket);
     }
   }
 
@@ -128,6 +139,8 @@ export class SpatialMap<T = unknown> {
    */
   clear(): void {
     this.points = [];
+    this.yBuckets.clear();
+    this.identities.clear();
     this.tree = null;
     this.xBuckets = new Map();
   }
@@ -151,6 +164,31 @@ export class SpatialMap<T = unknown> {
       seriesColor: p.seriesColor,
       draggable: p.draggable,
       suppressMarker: p.suppressMarker,
+    }));
+  }
+
+  findSlice(candidate: InteractionCandidate<T>): InteractionCandidate<T>[] {
+    const point =
+      candidate.seriesId !== undefined && candidate.dataIndex !== undefined
+        ? this.identities.get(candidate.seriesId)?.get(candidate.dataIndex)
+        : undefined;
+    if (!point) {
+      return this.findAllAtX(candidate.coordinate.x);
+    }
+    const bucket =
+      point.sliceAxis === "y"
+        ? this.yBuckets.get(point.y)
+        : this.xBuckets.get(point.x);
+    return (bucket ?? []).map((p) => ({
+      type: "data-point",
+      data: p.data,
+      seriesId: p.seriesId,
+      dataIndex: p.dataIndex,
+      coordinate: { x: p.x, y: p.y },
+      distance: 0,
+      seriesColor: p.seriesColor,
+      suppressMarker: p.suppressMarker,
+      draggable: p.draggable,
     }));
   }
 
@@ -262,9 +300,7 @@ export class SpatialMap<T = unknown> {
 
     if (indexStr !== null && seriesId) {
       dataIndex = parseInt(indexStr, 10);
-      const point = this.points.find(
-        (p) => p.seriesId === seriesId && p.dataIndex === dataIndex,
-      );
+      const point = this.identities.get(seriesId)?.get(dataIndex);
       if (point) {
         data = point.data;
       }

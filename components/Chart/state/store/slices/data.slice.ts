@@ -5,13 +5,13 @@ export interface DataSlice<T = any> {
   config: Config;
   type: SeriesType;
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
 }
 
 export const getDataInitialState = (
   config: Config,
   x?: Accessor<any, string | number>,
-  y?: Accessor<any, number>,
+  y?: Accessor<any, string | number>,
 ): DataSlice => ({
   data: [],
   config: config,
