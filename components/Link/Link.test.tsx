@@ -33,6 +33,111 @@ describe("Link Component", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("leaves default target and rel unset", () => {
+    render(<Link href="/test">Default</Link>);
+    expect(screen.getByRole("link")).not.toHaveAttribute("target");
+    expect(screen.getByRole("link")).not.toHaveAttribute("rel");
+  });
+
+  it.each([false, true])(
+    "hardens an explicit blank target (isExternal=%s)",
+    (isExternal) => {
+      render(
+        <Link href="/test" target="_blank" isExternal={isExternal}>
+          Blank
+        </Link>,
+      );
+      expect(screen.getByRole("link")).toHaveAttribute("target", "_blank");
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "rel",
+        "noopener noreferrer",
+      );
+    },
+  );
+
+  it.each(["_self", "_parent", "preview", ""])(
+    "preserves explicit target %j over the external default",
+    (target) => {
+      render(
+        <Link href="/test" isExternal target={target}>
+          Override
+        </Link>,
+      );
+      expect(screen.getByRole("link")).toHaveAttribute("target", target);
+      expect(screen.getByRole("link")).not.toHaveAttribute("rel");
+    },
+  );
+
+  it.each([false, true])(
+    "preserves rel for a non-blank target (isExternal=%s)",
+    (isExternal) => {
+      render(
+        <Link
+          href="/test"
+          isExternal={isExternal}
+          target="_self"
+          rel="nofollow author"
+        >
+          Same tab
+        </Link>,
+      );
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "rel",
+        "nofollow author",
+      );
+    },
+  );
+
+  it.each([
+    [undefined, ["noopener", "noreferrer"]],
+    ["", ["noopener", "noreferrer"]],
+    ["nofollow author", ["nofollow", "author", "noopener", "noreferrer"]],
+    ["noopener", ["noopener", "noreferrer"]],
+    ["noreferrer", ["noreferrer", "noopener"]],
+    [
+      "  nofollow\tnoopener\nnoopener noreferrer nofollow  ",
+      ["nofollow", "noopener", "noreferrer"],
+    ],
+  ])("merges and deduplicates blank-target rel %j", (rel, expected) => {
+    render(
+      <Link href="/test" isExternal rel={rel}>
+        Merged
+      </Link>,
+    );
+    const tokens = screen.getByRole("link").getAttribute("rel")?.split(/\s+/);
+    expect(tokens).toHaveLength(expected.length);
+    expect(tokens).toEqual(expect.arrayContaining(expected));
+  });
+
+  it("hardens case-insensitive blank targets without duplicating security tokens", () => {
+    render(
+      <Link
+        href="/test"
+        target="_BLANK"
+        rel="Author NOOPENER NoReFeRrEr noopener noreferrer"
+      >
+        Mixed case
+      </Link>,
+    );
+    expect(screen.getByRole("link")).toHaveAttribute("target", "_BLANK");
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "rel",
+      "Author NOOPENER NoReFeRrEr",
+    );
+  });
+
+  it("adds missing security tokens to an uppercase blank target", () => {
+    render(
+      <Link href="/test" target="_BLANK" rel="Author">
+        Uppercase
+      </Link>,
+    );
+    expect(screen.getByRole("link")).toHaveAttribute(
+      "rel",
+      "Author noopener noreferrer",
+    );
+  });
+
   it("should handle disabled state", () => {
     const handleClick = vi.fn();
     const handleMouseEnter = vi.fn();
