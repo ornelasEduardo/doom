@@ -13,6 +13,16 @@ function ToastTriggers() {
   return (
     <>
       <button onClick={() => toastSuccess("Saved")}>Success</button>
+      <button
+        onClick={() => {
+          for (let index = 0; index < 20; index++) {
+            toastSuccess(`Saved ${index}`);
+          }
+          toastError("Urgent error");
+        }}
+      >
+        Burst
+      </button>
       <button onClick={() => toastError("Failed")}>Error</button>
       <button onClick={() => toastWarning("Check input")}>Warning</button>
       <button onClick={() => toastInfo("Updated")}>Info</button>
@@ -89,6 +99,48 @@ describe("Toast in Chromium", () => {
     } finally {
       observer.disconnect();
     }
+  });
+
+  it.each([
+    ["Success", "status", "Saved"],
+    ["Error", "alert", "Failed"],
+  ] as const)(
+    "retains %s text in the established region without a replacement",
+    async (type, role, message) => {
+      render(
+        <ToastProvider>
+          <ToastTriggers />
+        </ToastProvider>,
+      );
+      const region = page.getByRole(role).element();
+      await page.getByRole("button", { name: type, exact: true }).click();
+      await expect.element(region, { timeout: 500 }).toHaveTextContent(message);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      expect(region.textContent).toBe(message);
+      expect(page.getByRole(role).element()).toBe(region);
+    },
+  );
+
+  it("announces an error promptly through a polite burst and retains both regions", async () => {
+    render(
+      <ToastProvider>
+        <ToastTriggers />
+      </ToastProvider>,
+    );
+    const alert = page.getByRole("alert").element();
+    const status = page.getByRole("status").element();
+    await page.getByRole("button", { name: "Burst", exact: true }).click();
+    await expect
+      .element(alert, { timeout: 500 })
+      .toHaveTextContent("Urgent error");
+    await expect
+      .element(status, { timeout: 500 })
+      .toHaveTextContent("Saved 19");
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    expect(alert.textContent).toBe("Urgent error");
+    expect(status.textContent).toContain("Saved 19");
+    expect(page.getByRole("alert").element()).toBe(alert);
+    expect(page.getByRole("status").element()).toBe(status);
   });
 
   it("dismisses only the selected notification through its named close button", async () => {

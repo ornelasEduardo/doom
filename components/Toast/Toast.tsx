@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -34,31 +35,46 @@ interface ToastContextType {
 // Context
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+function useAnnouncement() {
+  const [message, setMessage] = useState("");
+  const pending = useRef<string[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+      }
+      timer.current = null;
+      pending.current = [];
+    },
+    [],
+  );
+
+  const announce = useCallback((nextMessage: string) => {
+    pending.current.push(nextMessage);
+    setMessage("");
+    if (timer.current !== null) {
+      return;
+    }
+
+    // A fixed insertion window makes repeated text a new change without delaying bursts.
+    timer.current = setTimeout(() => {
+      setMessage(pending.current.join("\n"));
+      pending.current = [];
+      timer.current = null;
+    }, 100);
+  }, []);
+
+  return [message, announce] as const;
+}
+
 // Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const [announcementQueue, setAnnouncementQueue] = useState<Toast[]>([]);
-  const [announcement, setAnnouncement] = useState<Toast | null>(null);
-  const nextAnnouncement = announcementQueue[0];
-
-  useEffect(() => {
-    if (!isMounted || !nextAnnouncement) return;
-
-    // Separate clearing and insertion so identical messages still change the live region.
-    const announceTimer = setTimeout(
-      () => setAnnouncement(nextAnnouncement),
-      100,
-    );
-    const advanceTimer = setTimeout(() => {
-      setAnnouncement(null);
-      setAnnouncementQueue((queue) => queue.slice(1));
-    }, 1000);
-    return () => {
-      clearTimeout(announceTimer);
-      clearTimeout(advanceTimer);
-    };
-  }, [isMounted, nextAnnouncement]);
+  const [politeMessage, announcePolite] = useAnnouncement();
+  const [assertiveMessage, announceAssertive] = useAnnouncement();
 
   useEffect(() => {
     setIsMounted(true);
@@ -77,14 +93,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, type: ToastType = "info") => {
       const id = Math.random().toString(36).substring(2, 9);
       setToasts((prev) => [...prev, { id, message, type }]);
-      setAnnouncementQueue((queue) => [...queue, { id, message, type }]);
+      if (type === "error") {
+        announceAssertive(message);
+      } else {
+        announcePolite(message);
+      }
 
       // Auto remove after 5 seconds
       setTimeout(() => {
         removeToast(id);
       }, 5000);
     },
-    [removeToast],
+    [announceAssertive, announcePolite, removeToast],
   );
 
   const toast = useCallback(
@@ -116,25 +136,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {isMounted &&
         createPortal(
           <>
-            <div role="status" aria-atomic="true" className={styles.announcer}>
-              {announcement && announcement.type !== "error"
-                ? announcement.message
-                : null}
+            <div aria-atomic="true" className={styles.announcer} role="status">
+              {politeMessage}
             </div>
-            <div role="alert" aria-atomic="true" className={styles.announcer}>
-              {announcement?.type === "error" ? announcement.message : null}
+            <div aria-atomic="true" className={styles.announcer} role="alert">
+              {assertiveMessage}
             </div>
             <div className={styles.container}>
               {toasts.map((t) => (
                 <div
                   key={t.id}
-                  role="group"
                   aria-label={t.message}
                   className={clsx(
                     styles.toast,
                     styles[t.type],
                     t.isExiting && styles.exiting,
                   )}
+                  role="group"
                 >
                   {t.type === "success" && (
                     <CheckCircle2
@@ -158,8 +176,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   )}
                   <span className="font-semibold">{t.message}</span>
                   <button
-                    className={styles.closeButton}
                     aria-label="Close notification"
+                    className={styles.closeButton}
                     onClick={() => removeToast(t.id)}
                   >
                     <X size={16} strokeWidth={2.5} />

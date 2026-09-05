@@ -15,6 +15,16 @@ const TestComponent = () => {
       <button onClick={() => toastSuccess("Success Message")}>
         Show Success
       </button>
+      <button
+        onClick={() => {
+          for (let index = 0; index < 20; index++) {
+            toastSuccess(`Saved ${index}`);
+          }
+          toastError("Urgent error");
+        }}
+      >
+        Burst
+      </button>
       <button onClick={() => toastError("Error Message")}>Show Error</button>
       <button onClick={() => toastWarning("Warning Message")}>
         Show Warning
@@ -63,7 +73,46 @@ describe("Toast Component", () => {
       ),
     ).toBeNull();
   });
-  it("clears between repeated messages and announces queued messages without old content", () => {
+  it("announces errors promptly despite a burst of polite messages", () => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+    const alert = screen.getByRole("alert");
+    fireEvent.click(screen.getByText("Burst"));
+    act(() => vi.advanceTimersByTime(100));
+    expect(alert).toHaveTextContent(/^Urgent error$/);
+    expect(screen.getByRole("alert")).toBe(alert);
+    expect(screen.getByRole("status")).toHaveTextContent("Saved 19");
+  });
+
+  it.each([
+    ["Success", "status"],
+    ["Error", "alert"],
+  ])(
+    "retains %s text until replacement and clears repeated messages",
+    (type, role) => {
+      render(
+        <ToastProvider>
+          <TestComponent />
+        </ToastProvider>,
+      );
+      const region = screen.getByRole(role);
+      fireEvent.click(screen.getByText(`Show ${type}`));
+      act(() => vi.advanceTimersByTime(100));
+      expect(region).toHaveTextContent(`${type} Message`);
+      act(() => vi.advanceTimersByTime(10000));
+      expect(region).toHaveTextContent(`${type} Message`);
+      expect(screen.getByRole(role)).toBe(region);
+      fireEvent.click(screen.getByText(`Show ${type}`));
+      expect(region).toBeEmptyDOMElement();
+      act(() => vi.advanceTimersByTime(100));
+      expect(region).toHaveTextContent(`${type} Message`);
+    },
+  );
+
+  it("replaces polite announcements without reannouncing old content", () => {
     render(
       <ToastProvider>
         <TestComponent />
@@ -72,18 +121,10 @@ describe("Toast Component", () => {
     const region = screen.getByRole("status");
     fireEvent.click(screen.getByText("Show Success"));
     act(() => vi.advanceTimersByTime(100));
-    expect(region).toHaveTextContent(/^Success Message$/);
-    fireEvent.click(screen.getByText("Show Success"));
     fireEvent.click(screen.getByText("Show Info"));
-    act(() => vi.advanceTimersByTime(900));
-    expect(region).toBeEmptyDOMElement();
-    act(() => vi.advanceTimersByTime(100));
-    expect(region).toHaveTextContent(/^Success Message$/);
-    act(() => vi.advanceTimersByTime(900));
     expect(region).toBeEmptyDOMElement();
     act(() => vi.advanceTimersByTime(100));
     expect(region).toHaveTextContent(/^Info Message$/);
-    expect(screen.getByRole("status")).toBe(region);
   });
 
   it("should render toasts", () => {
