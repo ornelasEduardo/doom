@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider, useToast } from "./Toast";
 
@@ -26,6 +26,8 @@ const TestComponent = () => {
 };
 
 describe("Toast Component", () => {
+  beforeEach(() => vi.useFakeTimers());
+
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
@@ -44,8 +46,11 @@ describe("Toast Component", () => {
       </ToastProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: `Show ${type}` }));
     const notification = screen.getByRole(role);
+    expect(notification).toBeEmptyDOMElement();
+    fireEvent.click(screen.getByRole("button", { name: `Show ${type}` }));
+    act(() => vi.advanceTimersByTime(100));
+    expect(screen.getByRole(role)).toBe(notification);
     expect(notification).toHaveTextContent(`${type} Message`);
     expect(
       notification.parentElement?.closest(
@@ -58,6 +63,29 @@ describe("Toast Component", () => {
       ),
     ).toBeNull();
   });
+  it("clears between repeated messages and announces queued messages without old content", () => {
+    render(
+      <ToastProvider>
+        <TestComponent />
+      </ToastProvider>,
+    );
+    const region = screen.getByRole("status");
+    fireEvent.click(screen.getByText("Show Success"));
+    act(() => vi.advanceTimersByTime(100));
+    expect(region).toHaveTextContent(/^Success Message$/);
+    fireEvent.click(screen.getByText("Show Success"));
+    fireEvent.click(screen.getByText("Show Info"));
+    act(() => vi.advanceTimersByTime(900));
+    expect(region).toBeEmptyDOMElement();
+    act(() => vi.advanceTimersByTime(100));
+    expect(region).toHaveTextContent(/^Success Message$/);
+    act(() => vi.advanceTimersByTime(900));
+    expect(region).toBeEmptyDOMElement();
+    act(() => vi.advanceTimersByTime(100));
+    expect(region).toHaveTextContent(/^Info Message$/);
+    expect(screen.getByRole("status")).toBe(region);
+  });
+
   it("should render toasts", () => {
     render(
       <ToastProvider>
@@ -66,10 +94,14 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Show Error"));
-    expect(screen.getByText("Error Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Error Message" }),
+    ).toBeInTheDocument();
   });
 
   it("should remove toast using the accessible close button after its exit animation", () => {
@@ -82,12 +114,16 @@ describe("Toast Component", () => {
 
     fireEvent.click(screen.getByText("Show Success"));
     fireEvent.click(screen.getByRole("button", { name: "Close notification" }));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(screen.queryByText("Success Message")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Success Message" }),
+    ).not.toBeInTheDocument();
   });
 
   it("should auto remove toast", () => {
@@ -99,7 +135,9 @@ describe("Toast Component", () => {
     );
 
     fireEvent.click(screen.getByText("Show Success"));
-    expect(screen.getByText("Success Message")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Success Message" }),
+    ).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(5500);
@@ -108,7 +146,9 @@ describe("Toast Component", () => {
     // Should be gone
     // Note: removeToast has a 300ms timeout inside too.
     // 5000 + 300 = 5300. 5500 is safe.
-    expect(screen.queryByText("Success Message")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Success Message" }),
+    ).not.toBeInTheDocument();
 
     vi.useRealTimers();
   });

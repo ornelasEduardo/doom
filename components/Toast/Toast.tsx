@@ -38,6 +38,27 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [announcementQueue, setAnnouncementQueue] = useState<Toast[]>([]);
+  const [announcement, setAnnouncement] = useState<Toast | null>(null);
+  const nextAnnouncement = announcementQueue[0];
+
+  useEffect(() => {
+    if (!isMounted || !nextAnnouncement) return;
+
+    // Separate clearing and insertion so identical messages still change the live region.
+    const announceTimer = setTimeout(
+      () => setAnnouncement(nextAnnouncement),
+      100,
+    );
+    const advanceTimer = setTimeout(() => {
+      setAnnouncement(null);
+      setAnnouncementQueue((queue) => queue.slice(1));
+    }, 1000);
+    return () => {
+      clearTimeout(announceTimer);
+      clearTimeout(advanceTimer);
+    };
+  }, [isMounted, nextAnnouncement]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,6 +77,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, type: ToastType = "info") => {
       const id = Math.random().toString(36).substring(2, 9);
       setToasts((prev) => [...prev, { id, message, type }]);
+      setAnnouncementQueue((queue) => [...queue, { id, message, type }]);
 
       // Auto remove after 5 seconds
       setTimeout(() => {
@@ -93,48 +115,59 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {isMounted &&
         createPortal(
-          <div className={styles.container}>
-            {toasts.map((t) => (
-              <div
-                key={t.id}
-                role={t.type === "error" ? "alert" : "status"}
-                className={clsx(
-                  styles.toast,
-                  styles[t.type],
-                  t.isExiting && styles.exiting,
-                )}
-              >
-                {t.type === "success" && (
-                  <CheckCircle2
-                    color="var(--success)"
-                    size={20}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {t.type === "error" && (
-                  <XCircle color="var(--error)" size={20} strokeWidth={2.5} />
-                )}
-                {t.type === "warning" && (
-                  <AlertTriangle
-                    color="var(--warning)"
-                    size={20}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {t.type === "info" && (
-                  <Info color="var(--primary)" size={20} strokeWidth={2.5} />
-                )}
-                <span className="font-semibold">{t.message}</span>
-                <button
-                  className={styles.closeButton}
-                  aria-label="Close notification"
-                  onClick={() => removeToast(t.id)}
+          <>
+            <div role="status" aria-atomic="true" className={styles.announcer}>
+              {announcement && announcement.type !== "error"
+                ? announcement.message
+                : null}
+            </div>
+            <div role="alert" aria-atomic="true" className={styles.announcer}>
+              {announcement?.type === "error" ? announcement.message : null}
+            </div>
+            <div className={styles.container}>
+              {toasts.map((t) => (
+                <div
+                  key={t.id}
+                  role="group"
+                  aria-label={t.message}
+                  className={clsx(
+                    styles.toast,
+                    styles[t.type],
+                    t.isExiting && styles.exiting,
+                  )}
                 >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
-              </div>
-            ))}
-          </div>,
+                  {t.type === "success" && (
+                    <CheckCircle2
+                      color="var(--success)"
+                      size={20}
+                      strokeWidth={2.5}
+                    />
+                  )}
+                  {t.type === "error" && (
+                    <XCircle color="var(--error)" size={20} strokeWidth={2.5} />
+                  )}
+                  {t.type === "warning" && (
+                    <AlertTriangle
+                      color="var(--warning)"
+                      size={20}
+                      strokeWidth={2.5}
+                    />
+                  )}
+                  {t.type === "info" && (
+                    <Info color="var(--primary)" size={20} strokeWidth={2.5} />
+                  )}
+                  <span className="font-semibold">{t.message}</span>
+                  <button
+                    className={styles.closeButton}
+                    aria-label="Close notification"
+                    onClick={() => removeToast(t.id)}
+                  >
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>,
           document.body,
         )}
     </ToastContext.Provider>

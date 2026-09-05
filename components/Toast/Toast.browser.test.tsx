@@ -39,12 +39,15 @@ describe("Toast in Chromium", () => {
         </ToastProvider>,
       );
 
-      await page.getByRole("button", { name: type, exact: true }).click();
       const notification = page.getByRole(role);
+      const original = notification.element();
+      expect(original.textContent).toBe("");
+      await page.getByRole("button", { name: type, exact: true }).click();
       await expect
         .element(notification, { timeout: 1000 })
         .toHaveTextContent(message);
       const element = notification.element();
+      expect(element).toBe(original);
       expect(
         element.parentElement?.closest(
           '[aria-live], [role="alert"], [role="status"], [role="log"]',
@@ -58,6 +61,36 @@ describe("Toast in Chromium", () => {
     },
   );
 
+  it("makes repeated messages genuine changes in the same established region", async () => {
+    render(
+      <ToastProvider>
+        <ToastTriggers />
+      </ToastProvider>,
+    );
+    const region = page.getByRole("status").element();
+    expect(region.textContent).toBe("");
+    await page.getByRole("button", { name: "Success", exact: true }).click();
+    await expect.element(region, { timeout: 1000 }).toHaveTextContent("Saved");
+    const changes: string[] = [];
+    const observer = new MutationObserver(() =>
+      changes.push(region.textContent ?? ""),
+    );
+    observer.observe(region, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    try {
+      await page.getByRole("button", { name: "Success", exact: true }).click();
+      await expect.poll(() => changes, { timeout: 2000 }).toContain("");
+      await expect.poll(() => changes, { timeout: 2000 }).toContain("Saved");
+      expect(changes.indexOf("")).toBeLessThan(changes.indexOf("Saved"));
+      expect(page.getByRole("status").element()).toBe(region);
+    } finally {
+      observer.disconnect();
+    }
+  });
+
   it("dismisses only the selected notification through its named close button", async () => {
     render(
       <ToastProvider>
@@ -68,13 +101,15 @@ describe("Toast in Chromium", () => {
     await page.getByRole("button", { name: "Success", exact: true }).click();
     await page.getByRole("button", { name: "Error", exact: true }).click();
     await page
-      .getByRole("status")
+      .getByRole("group", { name: "Saved" })
       .getByRole("button", { name: "Close notification" })
       .click({ timeout: 1000 });
 
     await expect
-      .element(page.getByRole("status"), { timeout: 1000 })
+      .element(page.getByRole("group", { name: "Saved" }), { timeout: 1000 })
       .not.toBeInTheDocument();
-    await expect.element(page.getByRole("alert")).toHaveTextContent("Failed");
+    await expect
+      .element(page.getByRole("group", { name: "Failed" }))
+      .toHaveTextContent("Failed");
   });
 });

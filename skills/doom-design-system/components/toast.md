@@ -50,9 +50,11 @@ function MyComponent() {
 
 ## Accessibility
 
-- Error toasts use `role="alert"` (implicit assertive announcements).
-- Success, warning, and info toasts, including the default `toast()` type, use `role="status"` (implicit polite announcements).
-- Each toast owns its live-region semantics. The shared portal container has no live-region role or `aria-live` attribute, avoiding nested announcement regions.
+- The provider mounts empty, visually hidden `status` (polite) and `alert` (assertive) regions before inserting announcement text, following [W3C ARIA22](https://www.w3.org/WAI/WCAG21/Techniques/aria/ARIA22.html).
+- Errors go to the alert region; success, warning, info, and default messages go to the status region. Both regions are atomic and contain only the current message.
+- Messages are queued in arrival order with a one-second interval. Each insertion follows a 100ms empty interval so repeated identical messages produce a genuine content change. Old visible toasts are not reannounced.
+- Visible notifications are named groups outside the live regions; their text and close buttons remain accessible without nested or duplicate live-region semantics.
+- Automated unit and Chromium tests verify DOM changes and real-click dismissal. Native screen-reader speech and timing require manual assistive-technology testing.
 - The X button has the accessible name `Close notification` and retains native button keyboard behavior.
 
 ## Notes
