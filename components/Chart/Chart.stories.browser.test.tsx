@@ -58,3 +58,28 @@ for (const [Story, horizontal, expected] of [
     );
   });
 }
+
+for (const [name, Story] of [
+  ["signed line", composeStories(stories).SignedLineMetric],
+  ["shared fixed bounds", composeStories(stories).SharedFixedYBounds],
+] as const) {
+  it(`paints endpoint dots over the Y axis in the ${name} story`, async () => {
+    const { container } = render(
+      <DesignSystemProvider>
+        <Story />
+      </DesignSystemProvider>,
+    );
+    await expect
+      .poll(() => container.querySelector(".chart-line-series circle"))
+      .toBeTruthy();
+    for (const plot of container.querySelectorAll("[data-chart-plot]")) {
+      const point = plot.querySelector(".chart-line-series circle")!;
+      await expect.poll(() => plot.querySelectorAll(".domain").length).toBe(2);
+      const axis = plot.querySelectorAll(".domain")[1];
+      // SVG paints later siblings on top; axes ignore pointer events, so hit testing cannot detect this occlusion.
+      expect(
+        axis.compareDocumentPosition(point) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+}

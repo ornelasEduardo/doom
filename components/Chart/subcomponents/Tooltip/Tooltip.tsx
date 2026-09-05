@@ -9,12 +9,14 @@ import { TooltipOptions } from "../../behaviors/Tooltip";
 import { useChartContext } from "../../context";
 import { resolveAccessor, Series } from "../../types";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
-import { categoryAccessor, valueAccessor } from "../../utils/bars";
+import { barGeometry, categoryAccessor, valueAccessor } from "../../utils/bars";
+import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
 import {
   Reposition,
   TOOLTIP_GAP_X,
   TOOLTIP_GAP_Y,
 } from "../../utils/Reposition";
+import { hasDomainOverride } from "../../utils/scales";
 import styles from "./Tooltip.module.scss";
 import { TooltipProps } from "./types";
 
@@ -129,6 +131,14 @@ function DefaultTooltipContent<T>({
   config,
   variant,
 }: DefaultTooltipContentProps<T>) {
+  const { chartStore } = useChartContext<T>();
+  const scales = chartStore.useStore((state) => state.scales);
+  const dimensions = chartStore.useStore((state) => state.dimensions);
+  const bounded = chartStore.useStore(
+    (state) =>
+      hasDomainOverride(state.scales.x, state.xDomain) ||
+      hasDomainOverride(state.scales.y, state.yDomain),
+  );
   const activeSeries = series.find((item) => item.id === activeSeriesId);
   const category = activeSeries ? categoryAccessor(activeSeries) : x;
   const categoryValue = category
@@ -170,6 +180,38 @@ function DefaultTooltipContent<T>({
                     : activeData;
             if (datum === undefined) {
               return null;
+            }
+            if (bounded && scales.x && scales.y) {
+              const bar =
+                item.type === "bar"
+                  ? barGeometry(
+                      item,
+                      datum,
+                      item.data?.indexOf(datum) ?? -1,
+                      scales.x,
+                      scales.y,
+                    )
+                  : null;
+              const visible = bar
+                ? !!clipRectToPlot(bar, dimensions)
+                : isPointInPlot(
+                    {
+                      x: (scales.x as (value: unknown) => number)(
+                        item.xAccessor
+                          ? resolveAccessor(item.xAccessor)(datum)
+                          : undefined,
+                      ),
+                      y: (scales.y as (value: unknown) => number)(
+                        item.yAccessor
+                          ? resolveAccessor(item.yAccessor)(datum)
+                          : undefined,
+                      ),
+                    },
+                    dimensions,
+                  );
+              if (!visible) {
+                return null;
+              }
             }
             return (
               <TooltipSeriesItem

@@ -1,15 +1,56 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 import { useChartContext } from "../../context";
 import { SeriesProps } from "../../types";
+import { hasDomainOverride } from "../../utils/scales";
 import { BarSeriesWrapper } from "../BarSeries/BarSeries";
 import { CustomSeries } from "../CustomSeries/CustomSeries";
 import { LineSeriesWrapper } from "../LineSeries/LineSeries";
 import { ScatterSeriesWrapper } from "../ScatterSeries/ScatterSeries";
 
 export function Series<T>(props: SeriesProps<T>) {
+  const { chartStore } = useChartContext<T>();
+  const dimensions = chartStore.useStore((state) => state.dimensions);
+  const clipX = chartStore.useStore((state) =>
+    hasDomainOverride(state.scales.x, state.xDomain),
+  );
+  const clipY = chartStore.useStore((state) =>
+    hasDomainOverride(state.scales.y, state.yDomain),
+  );
+  const clipId = useId().replace(/:/g, "");
+  if (props.render) {
+    return <SeriesContent {...props} />;
+  }
+  const { className, style, ...seriesProps } = props;
+  const content = <SeriesContent {...seriesProps} />;
+  return (
+    <g className={className} style={style}>
+      <defs>
+        {(clipX || clipY) && (
+          <clipPath id={clipId}>
+            <rect
+              height={Math.max(
+                0,
+                clipY ? dimensions.innerHeight : dimensions.height,
+              )}
+              width={Math.max(
+                0,
+                clipX ? dimensions.innerWidth : dimensions.width,
+              )}
+              x={clipX ? 0 : -dimensions.margin.left}
+              y={clipY ? 0 : -dimensions.margin.top}
+            />
+          </clipPath>
+        )}
+      </defs>
+      <g clipPath={clipX || clipY ? `url(#${clipId})` : undefined}>{content}</g>
+    </g>
+  );
+}
+
+function SeriesContent<T>(props: SeriesProps<T>) {
   const context = useChartContext<T>();
 
   // Determine type: prop > context > default "line"

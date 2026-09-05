@@ -31,6 +31,7 @@ export type { EngineEvent, InputSignal, InteractionCandidate } from "./engine";
 export { InputAction, InputSource } from "./engine";
 export type {
   Accessor,
+  AxisDomain,
   ChartProps,
   Config,
   ContextValue,
