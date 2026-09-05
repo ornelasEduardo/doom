@@ -13,6 +13,7 @@ import { Chip } from "doom-design-system";
 | `size` | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"` | Chip size |
 | `onDismiss` | `() => void` | — | Shows X button; called on dismiss |
 | `onClick` | `(e: React.MouseEvent) => void` | — | Makes chip clickable (adds `tabIndex={0}` and keyboard support) |
+| `onKeyDown` | `React.KeyboardEventHandler<HTMLDivElement>` | — | Runs before built-in keyboard activation; `preventDefault()` cancels activation |
 | `disabled` | `boolean` | `false` | Disabled state |
 | `children` | `ReactNode` | required | Chip content |
 
@@ -35,3 +36,7 @@ import { Chip } from "doom-design-system";
 - `onDismiss` adds an X button on the right side of the chip
 - `onClick` makes the entire chip interactive (button behavior)
 - Both `onDismiss` and `onClick` can be provided simultaneously
+- When the clickable chip root is focused, Enter or Space activates `onClick` on keydown with a mouse click event; Space scrolling is prevented
+- Disabled chips do not activate from clicks or keyboard input
+- Keyboard events from the nested dismiss button do not activate the chip or prevent the button’s native behavior; dismiss clicks only call `onDismiss`
+- The root remains a `div`, including its forwarded ref and HTML attribute types

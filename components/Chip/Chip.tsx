@@ -35,6 +35,7 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
       children,
       className,
       onClick,
+      onKeyDown,
       ...props
     },
     ref,
@@ -57,6 +58,21 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
         role={onClick ? "button" : undefined}
         tabIndex={onClick && !disabled ? 0 : undefined}
         onClick={disabled ? undefined : onClick}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (
+            event.defaultPrevented ||
+            disabled ||
+            !isClickable ||
+            event.target !== event.currentTarget
+          ) {
+            return;
+          }
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.currentTarget.click();
+          }
+        }}
         {...props}
       >
         <span className={styles.content}>{children}</span>
