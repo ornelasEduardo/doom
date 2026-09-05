@@ -1,4 +1,6 @@
-"use strict";
+"use client";
+
+import { useEffect } from "react";
 
 import { useChartContext } from "../../context";
 import { SeriesProps } from "../../types";
@@ -12,6 +14,22 @@ export function Series<T>(props: SeriesProps<T>) {
 
   // Determine type: prop > context > default "line"
   const type = props.type || context.type || "line";
+  const horizontalBars = context.chartStore.useStore((state) =>
+    state.processedSeries.some(
+      (series) => series.type === "bar" && series.orientation === "horizontal",
+    ),
+  );
+  const incompatible = horizontalBars && (type !== "bar" || !!props.render);
+  useEffect(() => {
+    if (incompatible) {
+      console.warn(
+        "Chart.Series: non-bar series cannot share horizontal bar axes and are omitted. Use a separate chart.",
+      );
+    }
+  }, [incompatible]);
+  if (incompatible) {
+    return null;
+  }
 
   // If props.render is present, we prefer CustomSeries UNLESS the user explicitly asked for 'bar'/'line' etc?
   // But wait, the previous issue was that <Chart render={} /> defaults to type="line".

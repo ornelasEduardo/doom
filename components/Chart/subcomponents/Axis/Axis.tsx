@@ -87,14 +87,16 @@ export function Axis() {
       }
     }
 
-    const yAxis = d3.axisLeft(yScale).ticks(yTickCount(isMobile));
-    yAxis.tickFormat((d) => {
-      const val = typeof d === "number" ? d : d.valueOf();
-      if (val === 0) {
-        return "0";
-      }
-      return d3.format(".2s")(val).replace("G", "B");
-    });
+    const yAxis = d3.axisLeft(yScale as any).ticks(yTickCount(isMobile));
+    if ("ticks" in yScale) {
+      yAxis.tickFormat((d) => {
+        const val = Number(d);
+        if (val === 0) {
+          return "0";
+        }
+        return d3.format(".2s")(val).replace("G", "B");
+      });
+    }
 
     d3.select(gy.current).call(yAxis);
 

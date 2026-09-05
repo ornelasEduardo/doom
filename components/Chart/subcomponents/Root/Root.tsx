@@ -33,6 +33,7 @@ import {
   Series as SeriesType,
 } from "../../types";
 import { HoverInteraction } from "../../types/interaction";
+import { barGeometry } from "../../utils/bars";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
 import { Announcer } from "../Announcer";
 import { Axis } from "../Axis/Axis";
@@ -360,18 +361,33 @@ export function Root<T>({
                 ? resolveAccessor(y)
                 : null;
 
-            const points = seriesData.map((d: any, i: number) => ({
-              x:
-                (xScale((getX ? getX(d) : i) as any) ?? 0) +
-                dimensions.margin.left,
-              y:
-                (yScale((getY ? getY(d) : d) as any) ?? 0) +
-                dimensions.margin.top,
-              data: d,
-              seriesId: series.id,
-              seriesColor: series.color,
-              dataIndex: i,
-            }));
+            const points = seriesData.map((d: any, i: number) => {
+              const bar =
+                series.type === "bar"
+                  ? barGeometry(series, d, i, xScale, yScale)
+                  : null;
+              return {
+                x:
+                  (bar
+                    ? bar.x + bar.width / 2
+                    : (xScale((getX ? getX(d) : i) as any) ?? 0)) +
+                  dimensions.margin.left,
+                y:
+                  (bar
+                    ? bar.y + bar.height / 2
+                    : (yScale((getY ? getY(d) : d) as any) ?? 0)) +
+                  dimensions.margin.top,
+                data: d,
+                seriesId: series.id,
+                seriesColor: series.color,
+                dataIndex: i,
+                suppressMarker: series.type === "bar",
+                sliceAxis:
+                  series.orientation === "horizontal"
+                    ? ("y" as const)
+                    : ("x" as const),
+              };
+            });
             allPoints.push(...points);
           });
         } else if (data.length > 0) {
@@ -393,9 +409,7 @@ export function Root<T>({
           allPoints.push(...points);
         }
 
-        if (allPoints.length > 0) {
-          engine.updateData(allPoints);
-        }
+        engine.updateData(allPoints);
       }
     });
   }, [chartStore, engine, x, y]);

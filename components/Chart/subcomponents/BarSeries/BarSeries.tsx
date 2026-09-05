@@ -1,4 +1,4 @@
-"use strict";
+"use client";
 
 import React, { useEffect, useId, useMemo } from "react";
 
@@ -10,15 +10,19 @@ import {
 } from "../../state/store/chart.store";
 import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
+import { barGeometry } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
-import { createRoundedTopBarPath } from "../../utils/shapes";
+import { createBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
 
 interface BarSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
+  orientation?: "vertical" | "horizontal";
+  barWidth?: number | "auto";
+  stackId?: string;
   color?: string;
   hideCursor?: boolean;
   label?: string;
@@ -31,13 +35,16 @@ const BarSeriesComponent = <T,>({
   color,
   hideCursor,
   label,
+  orientation,
+  barWidth = "auto",
+  stackId,
 }: BarSeriesProps<T>) => {
   const { chartStore, config, x: contextX, y: contextY } = useChartContext<T>();
 
   const data = chartStore.useStore((s) => localData || s.data);
   const xScale = chartStore.useStore((s) => s.scales.x);
   const yScale = chartStore.useStore((s) => s.scales.y);
-  const innerHeight = chartStore.useStore((s) => s.dimensions.innerHeight);
+  const series = chartStore.useStore((s) => s.processedSeries);
 
   const dimensions = chartStore.useStore((s) => s.dimensions);
 
@@ -57,6 +64,9 @@ const BarSeriesComponent = <T,>({
 
   const gradientId = useId();
   const fillColor = useSeriesColor(chartStore, gradientId, color);
+  const isRegistered = chartStore.useStore(
+    (s) => s.seriesConfigs?.has(gradientId) ?? false,
+  );
 
   useEffect(() => {
     if (!yAccessor) {
@@ -72,11 +82,11 @@ const BarSeriesComponent = <T,>({
         y: yAccessor,
         hideCursor: hideCursor ?? true,
         type: "bar",
+        orientation,
+        barWidth,
+        stackId,
       },
     ]);
-    return () => {
-      unregisterSeries(chartStore, gradientId);
-    };
   }, [
     chartStore,
     gradientId,
@@ -86,7 +96,16 @@ const BarSeriesComponent = <T,>({
     label,
     hideCursor,
     data,
+    localData,
+    orientation,
+    barWidth,
+    stackId,
   ]);
+
+  useEffect(
+    () => () => unregisterSeries(chartStore, gradientId),
+    [chartStore, gradientId],
+  );
 
   if (
     !xScale ||
@@ -104,26 +123,45 @@ const BarSeriesComponent = <T,>({
   return (
     <g className="chart-bar-series">
       {data.map((d, i) => {
-        const xPos = (xScale as any)(xAccessor(d)) ?? 0;
-        const yVal = yScale(yAccessor(d));
-        let w = 10;
-        let offset = 0;
-
-        if ("bandwidth" in xScale && typeof xScale.bandwidth === "function") {
-          w = xScale.bandwidth();
-          if (w === 0 && "step" in xScale) {
-            // Fallback for ScalePoint (bandwidth=0) -> use 80% of step
-            w = (xScale as any).step() * 0.8;
-            offset = w / 2;
-          }
-        } else if ("step" in xScale) {
-          w = (xScale as any).step() * 0.8;
-          offset = w / 2;
+        const registered = series.find((item) => item.id === gradientId);
+        if (isRegistered && !registered) {
+          return null;
         }
-
-        const finalX = xPos - offset;
-
-        const h = innerHeight - yVal;
+        const effectiveOrientation =
+          registered?.orientation ?? orientation ?? "vertical";
+        const geometry = barGeometry(
+          registered ?? {
+            id: gradientId,
+            label: label ?? "Bar Series",
+            color: fillColor,
+            type: "bar",
+            xAccessor,
+            yAccessor,
+            orientation,
+            barWidth,
+          },
+          d,
+          i,
+          xScale,
+          yScale,
+        );
+        if (!geometry) {
+          return null;
+        }
+        const { x: finalX, y: finalY, width: w, height: h } = geometry;
+        const negative =
+          Number(
+            effectiveOrientation === "horizontal" ? xAccessor(d) : yAccessor(d),
+          ) < 0;
+        const end =
+          effectiveOrientation === "horizontal"
+            ? negative
+              ? "left"
+              : "right"
+            : negative
+              ? "bottom"
+              : "top";
+        const radius = registered?.stackEnds?.[i] === false ? 0 : BAR_RADIUS;
 
         return (
           <path
@@ -136,12 +174,20 @@ const BarSeriesComponent = <T,>({
             }}
             aria-label={
               label
-                ? `${label}: ${describeDatum(d, xAccessor, yAccessor)}`
-                : describeDatum(d, xAccessor, yAccessor) || "Bar"
+                ? `${label}: ${describeDatum(d, effectiveOrientation === "horizontal" ? yAccessor : xAccessor, effectiveOrientation === "horizontal" ? xAccessor : yAccessor)}`
+                : describeDatum(
+                    d,
+                    effectiveOrientation === "horizontal"
+                      ? yAccessor
+                      : xAccessor,
+                    effectiveOrientation === "horizontal"
+                      ? xAccessor
+                      : yAccessor,
+                  ) || "Bar"
             }
             aria-roledescription="bar"
             className={`${styles.bar} chart-bar`}
-            d={createRoundedTopBarPath(finalX, yVal, w, h, BAR_RADIUS)}
+            d={createBarPath(finalX, finalY, w, h, end, radius)}
             role="graphics-symbol"
             style={{
               fill: fillColor,

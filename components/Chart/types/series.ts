@@ -14,7 +14,10 @@ export interface SeriesProps<T> {
 
   // Cartesian accessors - string or function
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
+  orientation?: "vertical" | "horizontal";
+  barWidth?: number | "auto";
+  stackId?: string;
 
   // Multivariate encoding
   size?: Accessor<T, number>;
@@ -45,7 +48,12 @@ export interface Series {
   color: string;
   data?: any[];
   xAccessor?: Accessor<any, string | number>;
-  yAccessor?: Accessor<any, number>;
+  yAccessor?: Accessor<any, string | number>;
+  orientation?: "vertical" | "horizontal";
+  barWidth?: number | "auto";
+  stackId?: string;
+  stackRanges?: [number, number][];
+  stackEnds?: boolean[];
   hideCursor?: boolean;
   interactionMode?: "x" | "xy";
   type?: SeriesType | string;

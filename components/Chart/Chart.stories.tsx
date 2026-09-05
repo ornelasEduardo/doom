@@ -1146,3 +1146,103 @@ export const DraggablePucks: Story = {
     );
   },
 };
+
+const signedSales = [
+  { category: "Services", actual: 36, forecast: 18 },
+  { category: "Returns", actual: -12, forecast: -8 },
+  { category: "Licenses", actual: 24, forecast: 14 },
+];
+
+export const HorizontalBars: Story = {
+  render: () => (
+    <Chart.Root
+      data={signedSales}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="actual"
+      y="category"
+    >
+      <Chart.Header title="Actual and forecast" />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth="auto"
+          label="Forecast"
+          orientation="horizontal"
+          type="bar"
+          x="forecast"
+        />
+        <Chart.Series barWidth={24} label="Actual" type="bar" x="actual" />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};
+
+export const StackedBars: Story = {
+  render: () => (
+    <Chart.Root
+      data={signedSales}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="category"
+      y="actual"
+    >
+      <Chart.Header title="Signed sales totals" />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth={40}
+          label="Actual"
+          stackId="sales"
+          type="bar"
+          y="actual"
+        />
+        <Chart.Series
+          barWidth={40}
+          label="Forecast"
+          stackId="sales"
+          type="bar"
+          y="forecast"
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};
+
+export const HorizontalStackedBars: Story = {
+  render: () => (
+    <Chart.Root
+      data={signedSales}
+      style={{ width: "100%", height: 360 }}
+      type="bar"
+      x="actual"
+      y="category"
+    >
+      <Chart.Header title="Signed sales by category" />
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Series
+          barWidth={28}
+          label="Actual"
+          orientation="horizontal"
+          stackId="sales"
+          type="bar"
+          x="actual"
+        />
+        <Chart.Series
+          barWidth={28}
+          label="Forecast"
+          stackId="sales"
+          type="bar"
+          x="forecast"
+        />
+        <Chart.Axis />
+      </Chart.Plot>
+      <Chart.Legend />
+    </Chart.Root>
+  ),
+};

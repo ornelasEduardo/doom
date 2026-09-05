@@ -33,6 +33,7 @@ export interface InteractionTarget<T = any> {
   coordinate: { x: number; y: number };
   // Which series this point belongs to
   seriesId?: string;
+  dataIndex?: number;
   seriesColor?: string;
   suppressMarker?: boolean;
 }

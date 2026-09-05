@@ -20,7 +20,7 @@ import styles from "./LineSeries.module.scss";
 interface LineSeriesProps<T> {
   data?: T[];
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
   color?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -123,14 +123,14 @@ const LineSeriesComponent = <T,>({
     const lineGenerator = d3
       .line<T>()
       .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
-      .y((d) => yScale(yAccessor(d)))
+      .y((d) => ("ticks" in yScale ? yScale(Number(yAccessor(d))) : 0))
       .curve(curve || config.curve || d3.curveLinear);
 
     const areaGenerator = d3
       .area<T>()
       .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
       .y0(innerHeight)
-      .y1((d) => yScale(yAccessor(d)))
+      .y1((d) => ("ticks" in yScale ? yScale(Number(yAccessor(d))) : 0))
       .curve(curve || config.curve || d3.curveLinear);
 
     return {
@@ -229,7 +229,7 @@ const LineSeriesComponent = <T,>({
         xAccessor &&
         data.map((d, i) => {
           const cx = (xScale as any)(xAccessor(d));
-          const cy = yScale(yAccessor(d));
+          const cy = "ticks" in yScale ? yScale(Number(yAccessor(d))) : 0;
           return (
             <SeriesPoint
               key={i}

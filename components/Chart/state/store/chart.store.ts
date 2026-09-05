@@ -1,6 +1,8 @@
 import { Accessor, Config } from "../../types";
 import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
+import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
+import { d3 } from "../../utils/d3";
 import { createScales } from "../../utils/scales";
 import { createStore, StoreApi } from "./createStore";
 import { DataSlice, getDataInitialState } from "./slices/data.slice";
@@ -52,7 +54,7 @@ export type Store = StoreApi<State>;
 export const createChartStore = (
   initialConfig: Config,
   x?: Accessor<any, string | number>,
-  y?: Accessor<any, number>,
+  y?: Accessor<any, string | number>,
 ) => {
   const dimensionsSlice = getDimensionsInitialState(initialConfig);
   const dataSlice = getDataInitialState(initialConfig, x, y);
@@ -114,8 +116,22 @@ export const updateChartDimensions = (
  */
 export const updateChartData = <T>(store: Store, data: T[]) => {
   store.setState((prev) => {
-    const nextScales = calculateScales(data, prev.dimensions, prev);
-    return { data, scales: nextScales };
+    const derived = hydrateConfigs(prev, data);
+    const nextScales = calculateScales(data, prev.dimensions, {
+      ...prev,
+      ...derived,
+    });
+    return {
+      data,
+      ...derived,
+      scales: nextScales,
+      interactions: refreshHover(
+        prev,
+        data,
+        derived.processedSeries,
+        nextScales,
+      ),
+    };
   });
 };
 
@@ -143,65 +159,26 @@ export const updateChartState = <T>(
       innerHeight,
     };
 
-    // Recalculate scales based on new data/type/dimensions
-    const nextScales = calculateScales(
-      data,
-      nextDimensions,
-      { ...prev, type: type || prev.type } as State, // Use new type for calculation
-    );
-
-    // Re-hydrate series with new data
-    // This is critical for real-time updates (e.g. drag interactions)
-    // We must use the stored configs to re-create the series strategies with the fresh data
-    const nextSeries = new Map();
-    const currentConfigs = prev.seriesConfigs || new Map();
-
-    currentConfigs.forEach((configs, id) => {
-      const hydrated = configs.map((c, i) =>
-        hydrateSeries(c, (prev.processedSeries.length || 0) + i, data),
-      );
-      nextSeries.set(id, hydrated);
+    const derived = hydrateConfigs(prev, data);
+    const nextScales = calculateScales(data, nextDimensions, {
+      ...prev,
+      ...derived,
+      type: (type || prev.type) as State["type"],
     });
 
-    // A hover points at a specific row, and the pointer has not moved. Re-point
-    // by position rather than dropping: a live chart re-supplies a fresh array
-    // every tick, so clearing would blink the reading out from under the
-    // cursor. Only drop when the row is genuinely gone.
-    let nextInteractions = prev.interactions;
-    const hover = nextInteractions.get(InteractionChannel.PRIMARY_HOVER) as
-      | { targets?: Array<{ dataIndex?: number; data?: unknown }> }
-      | undefined;
-
-    if (data !== prev.data && hover?.targets?.length) {
-      const targets = hover.targets
-        .map((target) => {
-          const index = target.dataIndex;
-          if (index === undefined || index < 0 || index >= data.length) {
-            return null;
-          }
-          return { ...target, data: data[index] };
-        })
-        .filter(Boolean);
-
-      nextInteractions = new Map(nextInteractions);
-      if (targets.length) {
-        nextInteractions.set(InteractionChannel.PRIMARY_HOVER, {
-          ...hover,
-          targets,
-          target: targets[0],
-        });
-      } else {
-        nextInteractions.delete(InteractionChannel.PRIMARY_HOVER);
-      }
-    }
+    const nextInteractions = refreshHover(
+      prev,
+      data,
+      derived.processedSeries,
+      nextScales,
+    );
 
     return {
       data,
       type: type || prev.type,
       dimensions: nextDimensions,
       scales: nextScales,
-      series: nextSeries, // Update series map
-      processedSeries: combineSeries(nextSeries), // Update flattened series
+      ...derived,
       interactions: nextInteractions,
       status:
         nextDimensions.width > 0 && nextDimensions.height > 0
@@ -251,7 +228,7 @@ export const updateChartAccessors = <T>(
   store: Store,
   next: {
     x?: Accessor<T, string | number>;
-    y?: Accessor<T, number>;
+    y?: Accessor<T, string | number>;
   },
 ) => {
   store.setState((prev) => {
@@ -284,11 +261,38 @@ export const registerSeries = (store: Store, id: string, configs: any[]) => {
       hydrateSeries(c, slot + i, state.data),
     );
     nextSeries.set(id, hydrated);
+    const firstBar = combineSeries(nextSeries).find(
+      (series) => series.type === "bar" && series.orientation !== undefined,
+    );
+    if (
+      firstBar &&
+      combineSeries(nextSeries).some(
+        (series) =>
+          series.type === "bar" &&
+          series.orientation !== undefined &&
+          series.orientation !== firstBar.orientation,
+      )
+    ) {
+      console.warn(
+        "Chart.Series: incompatible bar orientation; all bars must share an orientation. The later series is omitted.",
+      );
+    }
 
+    const processedSeries = stackSeries(combineSeries(nextSeries));
+    const scales = [...state.processedSeries, ...processedSeries].some(
+      (series) => series.type === "bar",
+    )
+      ? calculateScales(state.data, state.dimensions, {
+          ...state,
+          processedSeries,
+        })
+      : state.scales;
     return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries,
+      scales,
+      interactions: refreshHover(state, state.data, processedSeries, scales),
     };
   });
 };
@@ -304,10 +308,21 @@ export const unregisterSeries = (store: Store, id: string) => {
     nextSeries.delete(id);
     nextConfigs.delete(id);
 
+    const processedSeries = stackSeries(combineSeries(nextSeries));
+    const scales = [...state.processedSeries, ...processedSeries].some(
+      (series) => series.type === "bar",
+    )
+      ? calculateScales(state.data, state.dimensions, {
+          ...state,
+          processedSeries,
+        })
+      : state.scales;
     return {
       series: nextSeries,
       seriesConfigs: nextConfigs,
-      processedSeries: combineSeries(nextSeries),
+      processedSeries,
+      scales,
+      interactions: refreshHover(state, state.data, processedSeries, scales),
     };
   });
 };
@@ -336,7 +351,166 @@ export const removeInteraction = (store: Store, name: string) => {
 
 // --- Internal Utilities ---
 
+const refreshHover = (
+  state: State,
+  data: unknown[],
+  series: State["processedSeries"],
+  scales: State["scales"],
+) => {
+  const hover = state.interactions.get(InteractionChannel.PRIMARY_HOVER) as
+    | import("../../types").HoverInteraction
+    | undefined;
+  if (!hover?.targets?.length) {
+    return state.interactions;
+  }
+  const targets = hover.targets.flatMap((target) => {
+    const item = series.find((item) => item.id === target.seriesId);
+    const wasRegistered = state.processedSeries.some(
+      (item) => item.id === target.seriesId,
+    );
+    if (
+      wasRegistered &&
+      !item &&
+      state.processedSeries.find((item) => item.id === target.seriesId)
+        ?.type === "bar"
+    ) {
+      return [];
+    }
+    const rows = item?.data ?? data;
+    const index = target.dataIndex;
+    if (index === undefined || index < 0 || index >= rows.length) {
+      return [];
+    }
+    const datum = rows[index];
+    const bar =
+      item?.type === "bar" && scales.x && scales.y
+        ? barGeometry(item, datum, index, scales.x, scales.y)
+        : null;
+    return [
+      {
+        ...target,
+        data: datum,
+        ...(bar
+          ? {
+              coordinate: {
+                x: bar.x + bar.width / 2 + state.dimensions.margin.left,
+                y: bar.y + bar.height / 2 + state.dimensions.margin.top,
+              },
+            }
+          : {}),
+      },
+    ];
+  });
+  const interactions = new Map(state.interactions);
+  if (targets.length) {
+    interactions.set(InteractionChannel.PRIMARY_HOVER, {
+      ...hover,
+      targets,
+      target: targets[0],
+    });
+  } else {
+    interactions.delete(InteractionChannel.PRIMARY_HOVER);
+  }
+  return interactions;
+};
+
+const hydrateConfigs = (state: State, data: unknown[]) => {
+  const series = new Map<string, import("../../types").Series[]>();
+  let slot = 0;
+  state.seriesConfigs.forEach((configs, id) => {
+    series.set(
+      id,
+      configs.map((config) => hydrateSeries(config, slot++, data)),
+    );
+  });
+  return { series, processedSeries: stackSeries(combineSeries(series)) };
+};
+
 const calculateScales = (data: any[], dims: Dimensions, state: State) => {
+  const bars = state.processedSeries.filter((series) => series.type === "bar");
+  if (bars.length && dims.width > 0 && dims.height > 0) {
+    const horizontal = bars[0].orientation === "horizontal";
+    const compatible = bars.filter(
+      (series) => (series.orientation === "horizontal") === horizontal,
+    );
+    const categories = compatible.flatMap((series) => {
+      const accessor = categoryAccessor(series);
+      return accessor ? (series.data ?? []).map(resolveAccessor(accessor)) : [];
+    });
+    const totals = compatible.flatMap(
+      (series) => series.stackRanges?.flat() ?? [],
+    );
+    const min = Math.min(0, d3.min(totals) ?? 0);
+    const max = Math.max(0, d3.max(totals) ?? 0);
+    const numeric = d3
+      .scaleLinear()
+      .domain([min * 1.1, max * 1.1 || (min === 0 ? 1 : 0)])
+      .nice()
+      .range(horizontal ? [0, dims.innerWidth] : [dims.innerHeight, 0]);
+    if (
+      !horizontal &&
+      (state.type !== "bar" ||
+        state.processedSeries.some((series) => series.type !== "bar")) &&
+      data.length &&
+      state.x &&
+      state.y
+    ) {
+      const base = createScales(
+        data,
+        dims.width,
+        dims.height,
+        dims.margin,
+        resolveAccessor(state.x),
+        (datum) => Number(resolveAccessor(state.y!)(datum)),
+        state.type,
+      );
+      const otherSeries = state.processedSeries.filter(
+        (series) => series.type !== "bar",
+      );
+      const extraValues = otherSeries
+        .flatMap((series) =>
+          series.yAccessor
+            ? (series.data ?? []).map((datum) =>
+                Number(resolveAccessor(series.yAccessor!)(datum)),
+              )
+            : [],
+        )
+        .filter(Number.isFinite);
+      const bounds = base.yScale.domain();
+      base.yScale
+        .domain([
+          Math.min(bounds[0], min * 1.1, d3.min(extraValues) ?? 0),
+          Math.max(bounds[1], max * 1.1, d3.max(extraValues) ?? 0),
+        ])
+        .nice();
+      const extras = otherSeries.flatMap((series) =>
+        series.xAccessor
+          ? (series.data ?? []).map(resolveAccessor(series.xAccessor))
+          : [],
+      );
+      if (!("ticks" in base.xScale)) {
+        base.xScale.domain(
+          Array.from(
+            new Set([...base.xScale.domain(), ...categories, ...extras]),
+          ) as string[],
+        );
+      } else {
+        const values = [...base.xScale.domain(), ...categories, ...extras]
+          .map(Number)
+          .filter(Number.isFinite);
+        base.xScale.domain([d3.min(values) ?? 0, d3.max(values) ?? 1]);
+      }
+      return { x: base.xScale, y: base.yScale };
+    }
+    const category = d3
+      .scaleBand<string | number>()
+      .domain(categories)
+      .range(horizontal ? [0, dims.innerHeight] : [0, dims.innerWidth])
+      .padding(0.1);
+    return horizontal
+      ? { x: numeric, y: category }
+      : { x: category, y: numeric };
+  }
   if (
     !data?.length ||
     dims.width <= 0 ||
@@ -353,7 +527,7 @@ const calculateScales = (data: any[], dims: Dimensions, state: State) => {
     dims.height,
     dims.margin,
     resolveAccessor(state.x),
-    resolveAccessor(state.y),
+    (datum) => Number(resolveAccessor(state.y!)(datum)),
     state.type as any,
   );
 

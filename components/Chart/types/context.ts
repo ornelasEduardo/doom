@@ -52,7 +52,7 @@ export interface ContextValue<T = unknown> {
   type?: SeriesType;
   render?: (context: SeriesContext<T>) => void;
   x?: Accessor<T, string | number>;
-  y?: Accessor<T, number>;
+  y?: Accessor<T, string | number>;
 }
 
 /**
