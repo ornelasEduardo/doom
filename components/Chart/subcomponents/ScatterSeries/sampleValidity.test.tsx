@@ -97,7 +97,11 @@ describe.each(["scatter", "bubble", "vertical bar", "horizontal bar"] as const)(
                   stackId="values"
                 />
               ) : (
-                <ScatterSeries size={mode === "bubble" ? "size" : undefined} />
+                <ScatterSeries<Row>
+                  size={
+                    mode === "bubble" ? (row) => row.size as number : undefined
+                  }
+                />
               )}
             </svg>
           </ChartContext.Provider>,
