@@ -4,12 +4,13 @@ import * as d3Scale from "d3-scale";
 import * as d3Shape from "d3-shape";
 import { Info } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
-import { expect, userEvent, waitFor } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
+import { Checkbox } from "../Checkbox/Checkbox";
 import { Chip } from "../Chip/Chip";
 import { Flex, Stack } from "../Layout/Layout";
 import { Select } from "../Select/Select";
@@ -101,7 +102,79 @@ const data = [
   { label: "Jun", value: 45 },
 ];
 
+function LineChartExample(args: React.ComponentProps<typeof Chart>) {
+  const [showMissing, setShowMissing] = useState(false);
+  const missingData = data.map((datum, index) => ({
+    ...datum,
+    value: index === 2 ? null : index === 3 ? 0 : datum.value,
+  }));
+  return (
+    <Stack gap={3} style={{ width: "100%" }}>
+      <Checkbox
+        checked={showMissing}
+        label="Show missing data"
+        onChange={(event) => setShowMissing(event.target.checked)}
+      />
+      {showMissing && (
+        <Text variant="body">
+          March has no reading, so the line has a gap. April is a measured zero
+          and remains available to inspect.
+        </Text>
+      )}
+      <Chart {...args} data={showMissing ? missingData : args.data} />
+    </Stack>
+  );
+}
+
 export const LineChart: Story = {
+  render: (args) => <LineChartExample {...args} />,
+  tags: ["interaction"],
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    await step(
+      "Missing March forms a gap while April remains a valid zero",
+      async () => {
+        const toggle = canvas.getByRole("checkbox", {
+          name: "Show missing data",
+        });
+        await userEvent.click(toggle);
+        await waitFor(() => {
+          expect(
+            canvasElement.querySelectorAll(".chart-line-series circle"),
+          ).toHaveLength(5);
+          const path = canvasElement.querySelector(".chart-line-series path")!;
+          expect(path.getAttribute("d")?.match(/M/g)).toHaveLength(2);
+          expect(
+            canvas.queryByRole("graphics-symbol", { name: /^Mar:/ }),
+          ).toBeNull();
+          expect(
+            canvas.queryByRole("graphics-symbol", { name: "Apr: 0" }),
+          ).not.toBeNull();
+        });
+        const chart = canvasElement.querySelector<HTMLElement>(
+          "[data-chart-container]",
+        )!;
+        chart.focus();
+        await userEvent.keyboard(
+          "{Escape}{ArrowRight}{ArrowRight}{ArrowRight}",
+        );
+        await waitFor(() => {
+          const tooltip = canvasElement.querySelector("[data-chart-tooltip]")!;
+          expect(tooltip).toHaveTextContent("Apr");
+          expect(
+            within(tooltip as HTMLElement).getByText("0", { exact: true }),
+          ).toBeInTheDocument();
+        });
+        await userEvent.keyboard("{Escape}");
+        await userEvent.click(toggle);
+        await waitFor(() =>
+          expect(
+            canvasElement.querySelectorAll(".chart-line-series circle"),
+          ).toHaveLength(6),
+        );
+      },
+    );
+  },
   args: {
     data,
     x: (d: any) => d.label,
