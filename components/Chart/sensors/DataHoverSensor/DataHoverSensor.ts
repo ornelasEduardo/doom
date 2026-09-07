@@ -50,14 +50,16 @@ export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
 
     if (
       signal.action !== InputAction.MOVE &&
-      signal.action !== InputAction.CANCEL
+      signal.action !== InputAction.CANCEL &&
+      !(signal.source === "touch" && signal.action === InputAction.START)
     ) {
       return;
     }
 
     if (
       signal.action === InputAction.CANCEL ||
-      (!isWithinPlot && signal.source !== "touch")
+      (!isWithinPlot &&
+        (signal.source !== "touch" || signal.action === InputAction.START))
     ) {
       removeInteraction(name);
       return;

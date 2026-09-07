@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { EngineEvent, InputAction } from "../../engine";
+import { EngineEvent, InputAction, InputSource } from "../../engine";
 import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DataHoverSensor } from "./DataHoverSensor";
@@ -193,5 +193,65 @@ describe("DataHoverSensor (Engine)", () => {
       InteractionChannel.PRIMARY_HOVER,
     );
     expect(ctx.upsertInteraction).not.toHaveBeenCalled();
+  });
+});
+
+describe("touch inspection", () => {
+  it("inspects a vertical slice on touch start and retains it on release", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor({ verticalSlice: true });
+    const candidates = [
+      {
+        type: "data-point" as const,
+        data: { value: 10 },
+        seriesId: "a",
+        coordinate: { x: 10, y: 10 },
+        distance: 0,
+      },
+      {
+        type: "data-point" as const,
+        data: { value: 20 },
+        seriesId: "b",
+        coordinate: { x: 10, y: 20 },
+        distance: 10,
+      },
+    ];
+    const event = createMockEvent(InputAction.START, candidates[0]);
+    event.signal.source = InputSource.TOUCH;
+    event.sliceCandidates = candidates;
+    sensor(event, ctx);
+    sensor(
+      { ...event, signal: { ...event.signal, action: InputAction.END } },
+      ctx,
+    );
+    expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toMatchObject({
+      pointer: { isTouch: true },
+      targets: candidates,
+    });
+    sensor(
+      { ...event, signal: { ...event.signal, action: InputAction.CANCEL } },
+      ctx,
+    );
+    expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
+  });
+
+  it("dismisses a reading when touching outside the plot", () => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor();
+    const event = createMockEvent(InputAction.MOVE, { data: { value: 10 } });
+    sensor(event, ctx);
+    sensor(
+      {
+        ...event,
+        isWithinPlot: false,
+        signal: {
+          ...event.signal,
+          source: InputSource.TOUCH,
+          action: InputAction.START,
+        },
+      },
+      ctx,
+    );
+    expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
   });
 });

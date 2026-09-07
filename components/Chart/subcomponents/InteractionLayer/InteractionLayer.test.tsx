@@ -250,6 +250,60 @@ describe("InteractionLayer", () => {
   // ===========================================================================
 
   describe("Throttling", () => {
+    it("forwards pointercancel immediately and discards a queued move", () => {
+      let queued: FrameRequestCallback = () => {};
+      vi.mocked(window.requestAnimationFrame).mockImplementation((callback) => {
+        queued = callback;
+        return 7;
+      });
+      render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
+      );
+      const container = document.querySelector("[data-chart-container]")!;
+      fireEvent.pointerMove(container, { pointerType: "touch" });
+      fireEvent.pointerCancel(container, { pointerType: "touch" });
+      expect(mockCreateSignal).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "pointercancel" }),
+        "CANCEL",
+      );
+      expect(window.cancelAnimationFrame).toHaveBeenCalledWith(7);
+      queued(0);
+      expect(mockEngineInput).toHaveBeenCalledTimes(1);
+    });
+
+    it("dismisses on an outside touch without cancelling an inside touch", () => {
+      render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
+      );
+      const container = document.querySelector("[data-chart-container]")!;
+      fireEvent.pointerDown(container, { pointerType: "touch" });
+      fireEvent.pointerDown(document.body, { pointerType: "touch" });
+      expect(mockCreateSignal.mock.calls.map((call) => call[1])).toEqual([
+        "START",
+        "CANCEL",
+      ]);
+    });
+
+    it("retains touch inspection across the automatic leave after release", () => {
+      render(
+        <ContainerWrapper>
+          <InteractionLayer />
+        </ContainerWrapper>,
+      );
+      const container = document.querySelector("[data-chart-container]")!;
+      fireEvent.pointerDown(container, { pointerType: "touch" });
+      fireEvent.pointerUp(container, { pointerType: "touch" });
+      fireEvent.pointerLeave(container, { pointerType: "touch" });
+      expect(mockCreateSignal.mock.calls.map((call) => call[1])).toEqual([
+        "START",
+        "END",
+      ]);
+    });
+
     it("coalesces pointermove events into one engine input per frame", () => {
       // Hold the frame instead of running it, so we can observe what is queued.
       let frameCallback: FrameRequestCallback | null = null;
@@ -362,6 +416,7 @@ describe("InteractionLayer", () => {
       // cleanup returns early, and says nothing about which element it ran on.
       expect(removed.sort()).toEqual([
         "keydown",
+        "pointercancel",
         "pointerdown",
         "pointerleave",
         "pointermove",
