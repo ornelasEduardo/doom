@@ -1,9 +1,15 @@
 import { render } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { useChartContext } from "../../context";
 import type { Config, ContextValue } from "../../types";
 import { Root } from "./Root";
+
+beforeEach(() => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(600);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+});
+afterEach(() => vi.restoreAllMocks());
 
 const rows = [
   { x: 0, y: 10 },
