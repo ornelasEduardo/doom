@@ -120,6 +120,19 @@ export class CoordinateSystem {
     };
   }
 
+  resolveContainerCoordinates(
+    chartX: number,
+    chartY: number,
+  ): { x: number; y: number } {
+    const rect =
+      this.containerElement?.getBoundingClientRect() ?? this.containerRect;
+    const offset = rect ? this.measurePlotOffset(rect) : this.plotOffset;
+    return {
+      x: chartX + (this.plotBounds?.x ?? 0) + offset.x,
+      y: chartY + (this.plotBounds?.y ?? 0) + offset.y,
+    };
+  }
+
   getContainerRect(): DOMRect | null {
     return this.containerRect;
   }

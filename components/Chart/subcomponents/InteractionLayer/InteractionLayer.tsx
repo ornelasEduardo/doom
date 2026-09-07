@@ -107,6 +107,9 @@ export const InteractionLayer: React.FC = () => {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== container) {
+        return;
+      }
       if (
         [
           "ArrowLeft",
@@ -121,7 +124,9 @@ export const InteractionLayer: React.FC = () => {
       ) {
         // Create and send keyboard signal
         const signal = engine.createKeySignal(e);
-        engine.input(signal);
+        if (engine.input(signal)) {
+          e.preventDefault();
+        }
       }
     };
 

@@ -137,11 +137,12 @@ export class Engine<T = unknown> {
    * Process an InputSignal.
    * This is the main entry point for all user interactions.
    *
+   * @returns Whether a sensor synchronously acknowledged a KEY signal.
    * @param signal - The normalized input signal
    */
-  input(signal: InputSignal): void {
+  input(signal: InputSignal): boolean {
     if (this.disposed) {
-      return;
+      return false;
     }
 
     if (signal.action === InputAction.CANCEL) {
@@ -185,6 +186,7 @@ export class Engine<T = unknown> {
 
     const priority = this.determinePriority(signal.action);
     this.scheduler.schedule(priority, event);
+    return signal.action === InputAction.KEY && event.handled === true;
   }
 
   /**
@@ -293,6 +295,13 @@ export class Engine<T = unknown> {
   /**
    * Get the current container bounds.
    */
+  resolveContainerCoordinates(
+    chartX: number,
+    chartY: number,
+  ): { x: number; y: number } {
+    return this.coords.resolveContainerCoordinates(chartX, chartY);
+  }
+
   getContainerRect(): DOMRect | null {
     return this.coords.getContainerRect();
   }

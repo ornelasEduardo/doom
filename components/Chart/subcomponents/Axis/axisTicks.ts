@@ -66,13 +66,15 @@ export function renderAxisTicks(
   let values = selection.values;
   axis.ticks(count);
   axis.tickValues(values);
-  const format = options?.tickFormat ?? defaultTickFormat;
+  const format =
+    options?.tickFormat ?? options?.valueFormat ?? defaultTickFormat;
   if (format) {
-    axis.tickFormat(format);
+    const indices = new Map(values.map((value, index) => [value, index]));
+    axis.tickFormat((value) => format(value, indices.get(value)!));
   }
   d3.select(group).call(axis);
 
-  if (options?.tickFormat || maxTicks !== undefined) {
+  if (options?.tickFormat || options?.valueFormat || maxTicks !== undefined) {
     // Numeric Y domains often run bottom-to-top. Measure in visual order,
     // but retain domain order for D3 and index-sensitive formatters.
     while (values.length > 1) {
