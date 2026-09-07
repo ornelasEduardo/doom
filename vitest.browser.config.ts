@@ -1,6 +1,8 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
+import { moveChartPointer } from "./tests/browser/Chart/coordinateCommands";
+
 /**
  * Real-browser lane.
  *
@@ -16,6 +18,15 @@ export default defineConfig({
       enabled: true,
       provider: playwright(),
       headless: true,
+      commands: {
+        moveChartPointer,
+        async setReducedMotion(
+          { page },
+          preference: "reduce" | "no-preference",
+        ) {
+          await page.emulateMedia({ reducedMotion: preference });
+        },
+      },
       screenshotFailures: false,
       // A desktop viewport by default: the runner's own window is narrow
       // enough to read as mobile, which would mask any container-vs-viewport

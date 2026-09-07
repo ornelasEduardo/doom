@@ -1,3 +1,5 @@
+import { getElementScale } from "../utils/elementScale";
+
 export interface ContainerStyle {
   borderLeft: number;
   borderTop: number;
@@ -24,7 +26,7 @@ export interface ChartCoordinates {
  * Handles the complexity of mapping screen coordinates (ClientX/Y)
  * to Chart coordinates (PlotX/Y), accounting for:
  * - Container position (getBoundingClientRect)
- * - CSS Borders and Padding
+ * - CSS scaling, borders and padding
  * - Layout offsets (e.g. Headers pushing the plot down)
  */
 export class CoordinateSystem {
@@ -107,9 +109,27 @@ export class CoordinateSystem {
     }
 
     const plotRect = this.plotElement.getBoundingClientRect();
+    const scale = getElementScale(this.containerElement, containerRect);
     return {
-      x: plotRect.left - containerRect.left - this.containerStyle.borderLeft,
-      y: plotRect.top - containerRect.top - this.containerStyle.borderTop,
+      x:
+        (plotRect.left - containerRect.left) / scale.x -
+        this.containerStyle.borderLeft,
+      y:
+        (plotRect.top - containerRect.top) / scale.y -
+        this.containerStyle.borderTop,
+    };
+  }
+
+  resolveContainerCoordinates(
+    chartX: number,
+    chartY: number,
+  ): { x: number; y: number } {
+    const rect =
+      this.containerElement?.getBoundingClientRect() ?? this.containerRect;
+    const offset = rect ? this.measurePlotOffset(rect) : this.plotOffset;
+    return {
+      x: chartX + (this.plotBounds?.x ?? 0) + offset.x,
+      y: chartY + (this.plotBounds?.y ?? 0) + offset.y,
     };
   }
 
@@ -148,9 +168,13 @@ export class CoordinateSystem {
       return null;
     }
 
+    const scale = getElementScale(this.containerElement, rect);
+    this.containerRect = rect;
+    this.plotOffset = this.measurePlotOffset(rect);
+
     return {
-      x: clientX - rect.left - this.containerStyle.borderLeft,
-      y: clientY - rect.top - this.containerStyle.borderTop,
+      x: (clientX - rect.left) / scale.x - this.containerStyle.borderLeft,
+      y: (clientY - rect.top) / scale.y - this.containerStyle.borderTop,
     };
   }
 

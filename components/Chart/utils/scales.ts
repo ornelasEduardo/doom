@@ -4,6 +4,7 @@ import type { AxisValue } from "../types/accessors";
 import { AxisDomain } from "../types/props";
 import { Scale } from "../types/scales";
 import { d3 } from "./d3";
+import { isSampleValue, numericSample } from "./sampleValidity";
 
 export type ChartXScale =
   | ScaleLinear<number, number>
@@ -33,10 +34,12 @@ export function createScales<T>(
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
-  const xValues = data.map(x);
+  const xValues = data
+    .flatMap((datum) => (datum == null ? [] : [x(datum)]))
+    .filter(isSampleValue);
   let xScale: ChartXScale;
 
-  // Check first value type to determine scale type
+  // Missing samples must not decide whether the axis is numeric.
   const firstValue = xValues[0];
 
   if (typeof firstValue === "number") {
@@ -63,7 +66,10 @@ export function createScales<T>(
       .padding(0.1);
   }
 
-  const yValues = data.map(y);
+  const yValues = data.flatMap((datum) => {
+    const value = datum == null ? undefined : numericSample(y(datum));
+    return value === undefined ? [] : [value];
+  });
   const yScale = d3
     .scaleLinear()
     .domain(automaticYDomain(yValues))

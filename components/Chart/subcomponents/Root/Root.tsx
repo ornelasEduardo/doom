@@ -23,6 +23,7 @@ import {
   updateChartMargin,
   updateChartState,
 } from "../../state/store/chart.store";
+import { getDimensionsInitialState } from "../../state/store/slices/dimensions.slice";
 import {
   Behavior,
   Config,
@@ -36,6 +37,7 @@ import { HoverInteraction } from "../../types/interaction";
 import { barGeometry } from "../../utils/bars";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import { samplePosition } from "../../utils/sampleValidity";
 import { hasDomainOverride } from "../../utils/scales";
 import { Announcer } from "../Announcer";
 import { Axis } from "../Axis/Axis";
@@ -368,6 +370,16 @@ export function Root<T>({
                 : null;
 
             const points = seriesData.flatMap((d: any, i: number) => {
+              const sample = samplePosition(
+                d,
+                getX ?? (() => i),
+                getY ?? ((datum) => datum),
+                xScale,
+                yScale,
+              );
+              if (!sample) {
+                return [];
+              }
               const geometry =
                 series.type === "bar"
                   ? barGeometry(series, d, i, xScale, yScale)
@@ -379,27 +391,18 @@ export function Root<T>({
                 geometry && bounded
                   ? clipRectToPlot(geometry, dimensions)
                   : geometry;
-              if (geometry && !bar) {
+              if (series.type === "bar" && !bar) {
                 return [];
               }
-              const position = {
-                x: bar
-                  ? bar.x + bar.width / 2
-                  : (xScale((getX ? getX(d) : i) as any) ?? NaN),
-                y: bar
-                  ? bar.y + bar.height / 2
-                  : (yScale((getY ? getY(d) : d) as any) ?? NaN),
-              };
+              const position = bar
+                ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
+                : sample;
               if (bounded && !isPointInPlot(position, dimensions)) {
                 return [];
               }
               return {
-                x:
-                  (Number.isFinite(position.x) ? position.x : 0) +
-                  dimensions.margin.left,
-                y:
-                  (Number.isFinite(position.y) ? position.y : 0) +
-                  dimensions.margin.top,
+                x: position.x + dimensions.margin.left,
+                y: position.y + dimensions.margin.top,
                 data: d,
                 seriesId: series.id,
                 seriesColor: series.color,
@@ -419,18 +422,28 @@ export function Root<T>({
           const getX = x ? resolveAccessor(x) : null;
           const getY = y ? resolveAccessor(y) : null;
 
-          const points = data.map((d: any, i: number) => ({
-            x:
-              (xScale((getX ? getX(d) : i) as any) ?? 0) +
-              dimensions.margin.left,
-            y:
-              (yScale((getY ? getY(d) : d) as any) ?? 0) +
-              dimensions.margin.top,
-            data: d,
-            seriesId: "default",
-            seriesColor: null,
-            dataIndex: i,
-          }));
+          const points = data.flatMap((d: any, i: number) => {
+            const position = samplePosition(
+              d,
+              getX ?? (() => i),
+              getY ?? ((datum) => datum),
+              xScale,
+              yScale,
+            );
+            if (!position) {
+              return [];
+            }
+            return [
+              {
+                x: position.x + dimensions.margin.left,
+                y: position.y + dimensions.margin.top,
+                data: d,
+                seriesId: "default",
+                seriesColor: null,
+                dataIndex: i,
+              },
+            ];
+          });
           for (const point of points) {
             if (
               !(
@@ -475,10 +488,14 @@ export function Root<T>({
   const marginSyncRef = useRef<string | null>(null);
   useEffect(() => {
     const configured = d3Config?.margin;
-    if (!configured) {
-      return;
-    }
-    const signature = JSON.stringify(configured);
+    const signature = configured
+      ? JSON.stringify([
+          configured.top,
+          configured.right,
+          configured.bottom,
+          configured.left,
+        ])
+      : "default";
     if (marginSyncRef.current === signature) {
       return;
     }
@@ -487,7 +504,12 @@ export function Root<T>({
     if (isFirstRun) {
       return;
     }
-    updateChartMargin(chartStore, configured);
+    updateChartMargin(
+      chartStore,
+      configured ??
+        getDimensionsInitialState({ showAxes: d3Config?.showAxes }).dimensions
+          .margin,
+    );
   });
 
   const accessorSyncRef = useRef<string | null>(null);

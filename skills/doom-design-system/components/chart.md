@@ -31,7 +31,7 @@ component's own semantics win on conflict.
 | `flat` | `boolean` | `false` | Remove shadow |
 | `d3Config` | `Config` | — | D3 configuration options |
 | `render` | `(frame: RenderFrame<T>) => void` | — | Custom D3 render function |
-| `sensors` | `Sensor[]` | — | Custom sensors (replaces defaults) |
+| `sensors` | `Sensor[]` | — | Custom sensors (replaces pointer defaults; baseline keyboard navigation is always retained) |
 | `behaviors` | `Behavior[]` | — | Custom behaviors (replaces defaults) |
 | `onValueChange` | `(data: T \| null) => void` | — | Callback when hovered value changes |
 | `style` | `CSSProperties` | — | Inline styles |
@@ -56,8 +56,16 @@ component's own semantics win on conflict.
 | `type` | `SeriesType` | — | Series type override within config |
 
 Numeric timestamps use the existing linear scale, not calendar-aligned time ticks.
-`axes.x.tickFormat` and `axes.y.tickFormat` change labels only, not scale values
-or tooltip data. Both accept `(value: string | number, index: number) => string`.
+`axes.x.valueFormat` and `axes.y.valueFormat` accept
+`(value: string | number) => string` for axis labels and selected-value
+announcements, including values between ticks. Scale values and tooltip data
+are unchanged. Use these for dates, currencies, and other value-based labels.
+
+`tickFormat(value, index)` overrides tick labels using the index in the axis
+candidate list, before collision removal. Selected values that are tick
+candidates reuse that same index, regardless of series row order. Without
+`valueFormat`, off-tick readings retain their raw value rather than inventing a
+tick index. When both callbacks exist, `valueFormat` controls announcements.
 Each axis accepts `maxTicks`: positive values are floored, invalid values ignored,
 and labels may be thinned further to fit. Unconfigured axes keep their defaults.
 Existing `xAxisLabel`, `yAxisLabel`, and domain props remain unchanged.
@@ -65,8 +73,8 @@ Existing `xAxisLabel`, `yAxisLabel`, and domain props remain unchanged.
 ```tsx
 d3Config={{
   axes: {
-    x: { tickFormat: value => dateFormat.format(Number(value)), maxTicks: 6 },
-    y: { tickFormat: value => currencyFormat.format(Number(value)), maxTicks: 5 },
+    x: { valueFormat: value => dateFormat.format(Number(value)), maxTicks: 6 },
+    y: { valueFormat: value => currencyFormat.format(Number(value)), maxTicks: 5 },
   },
 }}
 ```
@@ -111,6 +119,14 @@ d3Config={{
   }}
 />
 ```
+
+Missing or nonfinite axis samples form gaps in line and area series and are
+omitted from scatter, bubble, and bar marks and interaction targets. Zero is a
+valid sample; a zero-valued bar retains its normal invisible geometry. Sparse
+arrays and absent rows are skipped safely, and hover/keyboard targets keep the
+original datum indices. For scatter with `size`, an invalid optional size uses
+the default point radius and does not affect the size range; size zero remains
+valid.
 
 ## Axis domains
 
@@ -319,10 +335,13 @@ Chart.behaviors;  // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpda
 
 The default tooltip displays the sensor's selected targets. Use
 `Chart.sensors.DataHoverSensor({ verticalSlice: false })` for a single-point
-tooltip, and retain `Chart.sensors.KeyboardSensor()` for keyboard interaction.
+tooltip. Baseline keyboard navigation is always retained.
 
-`sensors` and `behaviors` **replace** the defaults rather than adding to them,
-so compose from the built-ins when you want a partial override:
+`sensors` replaces pointer defaults; SensorManager always retains baseline
+keyboard navigation and announcements. Supplied KeyboardSensors may add custom
+channels. Multiple KeyboardSensors handling the same channel process each input
+once, including a supplied default-channel KeyboardSensor and the baseline.
+`behaviors` replaces the default behaviors, so include the built-ins you need:
 
 ```tsx
 const sensors = useMemo(
@@ -430,7 +449,7 @@ export const RangeSensor = (options: RangeSensorOptions = {}): Sensor => {
 };
 ```
 
-Register by passing to `sensors` prop (replaces all defaults — include `DataHoverSensor` if you still want hover):
+Register by passing to `sensors` prop (replaces pointer defaults — include `DataHoverSensor` if you still want hover):
 
 ```tsx
 <Chart
@@ -590,7 +609,7 @@ Available in the `render` prop and `CustomSeries`:
 
 - D3 is a peer dependency — install separately
 - Accessors accept both string keys (`x="month"`) and functions (`x={(d) => d.month}`)
-- Passing `sensors` or `behaviors` replaces all defaults — include built-in ones you want to keep
+- Passing `sensors` replaces pointer defaults while preserving baseline keyboard navigation; `behaviors` replaces default behaviors.
 - Sensors write to the store via `upsertInteraction`; behaviors read via `subscribe` + `getInteraction`
 - Custom sensors use closure state (not React state) since they run outside React's lifecycle
 - Behaviors must return a cleanup function that unsubscribes from the store and removes D3 elements

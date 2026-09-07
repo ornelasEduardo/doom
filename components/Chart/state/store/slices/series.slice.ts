@@ -3,9 +3,28 @@ import { LinearStrategy } from "../../../sensors/utils/strategies/LinearStrategy
 import { QuadtreeStrategy } from "../../../sensors/utils/strategies/QuadtreeStrategy/index";
 import { Series } from "../../../types";
 
+export interface SeriesRegistration extends Partial<
+  Pick<
+    Series,
+    | "id"
+    | "label"
+    | "color"
+    | "data"
+    | "hideCursor"
+    | "interactionMode"
+    | "type"
+    | "orientation"
+    | "barWidth"
+    | "stackId"
+  >
+> {
+  x?: Series["xAccessor"];
+  y?: Series["yAccessor"];
+}
+
 export interface SeriesSlice {
   series: Map<string, Series[]>;
-  seriesConfigs: Map<string, any[]>;
+  seriesConfigs: Map<string, SeriesRegistration[]>;
   processedSeries: Series[];
 }
 
@@ -31,9 +50,9 @@ export const SERIES_PALETTE = [
 ];
 
 export const hydrateSeries = (
-  props: any,
+  props: SeriesRegistration,
   index: number,
-  defaultData: any[],
+  defaultData: unknown[],
 ): Series => {
   const data = props.data || defaultData;
 
@@ -41,8 +60,8 @@ export const hydrateSeries = (
     id: props.id || `series-${index}`,
     label: props.label || `Series ${index + 1}`,
     color: props.color || SERIES_PALETTE[index % SERIES_PALETTE.length],
-    xAccessor: props.x as any,
-    yAccessor: props.y as any,
+    xAccessor: props.x,
+    yAccessor: props.y,
     hideCursor: props.hideCursor,
     interactionMode: props.interactionMode,
     type: props.type,

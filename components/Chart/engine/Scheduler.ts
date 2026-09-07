@@ -143,14 +143,18 @@ export class Scheduler<T = unknown> {
   }
 
   /**
-   * Cancel all pending tasks and clean up.
+   * Discard queued tasks while keeping the scheduler ready for new input.
    */
-  dispose(): void {
+  cancelPending(): void {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
     this.visualQueue = [];
     this.idleQueue = [];
+  }
+
+  dispose(): void {
+    this.cancelPending();
   }
 }

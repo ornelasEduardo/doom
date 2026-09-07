@@ -7,6 +7,7 @@
 
 import { Quadtree, quadtree } from "d3-quadtree";
 
+import { getElementScale } from "../utils/elementScale";
 import { CandidateType, InteractionCandidate } from "./types";
 
 // =============================================================================
@@ -241,8 +242,12 @@ export class SpatialMap<T = unknown> {
     }
 
     const rect = this.containerElement.getBoundingClientRect();
-    const viewportX = rect.left + x;
-    const viewportY = rect.top + y;
+    const scale = getElementScale(this.containerElement, rect);
+    const style = getComputedStyle(this.containerElement);
+    const viewportX =
+      rect.left + (x + (parseFloat(style.borderLeftWidth) || 0)) * scale.x;
+    const viewportY =
+      rect.top + (y + (parseFloat(style.borderTopWidth) || 0)) * scale.y;
 
     const elements = document.elementsFromPoint(viewportX, viewportY);
     const candidates: InteractionCandidate<T>[] = [];
@@ -287,8 +292,14 @@ export class SpatialMap<T = unknown> {
       return null;
     }
 
-    const elementCenterX = rect.left + rect.width / 2 - containerRect.left;
-    const elementCenterY = rect.top + rect.height / 2 - containerRect.top;
+    const scale = getElementScale(this.containerElement, containerRect);
+    const style = getComputedStyle(this.containerElement!);
+    const elementCenterX =
+      (rect.left + rect.width / 2 - containerRect.left) / scale.x -
+      (parseFloat(style.borderLeftWidth) || 0);
+    const elementCenterY =
+      (rect.top + rect.height / 2 - containerRect.top) / scale.y -
+      (parseFloat(style.borderTopWidth) || 0);
 
     const distance = Math.hypot(
       pointerX - elementCenterX,
