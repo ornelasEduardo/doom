@@ -1068,10 +1068,6 @@ const actualRevenue: RevenueObservation[] = revenuePlan.map((datum, day) => ({
 const dailyRevenue = [...actualRevenue, ...revenuePlan].sort(
   (a, b) => a.date - b.date,
 );
-const revenueSensors = [
-  Chart.sensors.DataHoverSensor({ verticalSlice: false }),
-  Chart.sensors.KeyboardSensor(),
-];
 const revenueBehaviors = [
   Chart.behaviors.Tooltip<RevenueObservation | RevenueObservation[]>({
     render: (reading) => (
@@ -1101,7 +1097,7 @@ export const MultiSeries: Story = {
     docs: {
       description: {
         story:
-          "Compare actual daily revenue with plan in the same USD units over 40 days. d3Config.axes formats numeric UTC timestamps and currency ticks while limiting label density. Each series supplies its own data and tooltip metadata. Single-target pointer hover shows only the selected series; keyboard navigation, cursor, and markers are retained explicitly because custom sensors and behaviors replace the defaults.",
+          "Compare actual daily revenue with plan in the same USD units over 40 days. d3Config.axes formats numeric UTC timestamps and currency ticks while limiting label density. Each series supplies its own data and tooltip metadata. Default hover shows actual revenue and plan together for the same date. The custom tooltip formats both readings, while cursor and markers remain active.",
       },
     },
   },
@@ -1126,13 +1122,12 @@ export const MultiSeries: Story = {
         },
       }}
       data={dailyRevenue}
-      sensors={revenueSensors}
       type="line"
       x="date"
       y="revenue"
     >
       <Chart.Header
-        subtitle="Jan 1 – Feb 9, 2026 · daily totals · hover a line to inspect revenue"
+        subtitle="Jan 1 – Feb 9, 2026 · daily totals · hover to compare actual revenue and plan"
         title="Daily revenue against plan"
       >
         <Chart.Legend layout="horizontal" />
@@ -1173,33 +1168,31 @@ export const MultiSeries: Story = {
         });
       },
     );
-    await step("Each line reports its own dated revenue reading", async () => {
-      const points = canvasElement.querySelectorAll(
-        ".chart-line-series circle",
-      );
-      for (const [index, expected] of [
-        [2, "Actual revenue: $5,100"],
-        [42, "Plan: $4,200"],
-      ] as const) {
-        const point = points[index];
-        const rect = point.getBoundingClientRect();
-        await userEvent.pointer({
-          target: point,
-          coords: {
-            clientX: rect.left + rect.width / 2,
-            clientY: rect.top + rect.height / 2,
-          },
-        });
-        await waitFor(() => {
-          const tooltip = canvasElement.querySelector("[data-chart-tooltip]");
-          expect(tooltip).toHaveTextContent("Jan 3 · UTC");
-          expect(tooltip).toHaveTextContent(expected);
-          expect(tooltip).not.toHaveTextContent(
-            index === 2 ? "Plan:" : "Actual revenue:",
-          );
-        });
-      }
-    });
+    await step(
+      "Hovering either line reports both revenue readings for that date",
+      async () => {
+        const points = canvasElement.querySelectorAll(
+          ".chart-line-series circle",
+        );
+        for (const index of [2, 42]) {
+          const point = points[index];
+          const rect = point.getBoundingClientRect();
+          await userEvent.pointer({
+            target: point,
+            coords: {
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+            },
+          });
+          await waitFor(() => {
+            const tooltip = canvasElement.querySelector("[data-chart-tooltip]");
+            expect(tooltip).toHaveTextContent("Jan 3 · UTC");
+            expect(tooltip).toHaveTextContent("Actual revenue: $5,100");
+            expect(tooltip).toHaveTextContent("Plan: $4,200");
+          });
+        }
+      },
+    );
   },
 };
 
