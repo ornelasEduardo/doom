@@ -9,15 +9,19 @@
  * These also drive the extension API from the package entry, which is how a
  * consumer would wire a custom sensor.
  */
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
-import { InteractionChannel, type Sensor, type SensorContext } from "./index";
+import { Chart } from "../../../components/Chart/Chart";
+import {
+  InteractionChannel,
+  type Sensor,
+  type SensorContext,
+} from "../../../components/Chart/index";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 const rows = Array.from({ length: 6 }, (_, i) => ({
   id: i,

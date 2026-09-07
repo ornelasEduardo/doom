@@ -265,6 +265,15 @@ Tree-shakeable utilities exposed via subpath exports. Each lib ships independent
 
 ---
 
+## Test ownership
+
+Keep focused unit tests beside source. Put real-browser component regressions
+in `tests/browser/<Component>/` and built-package import checks in `tests/package/`.
+Tests of a published story's behavior belong in its `play` function, using
+`storybook/test` and named steps. Avoid duplicating the same assertions across
+story plays and browser fixtures. See the repository's `TESTING.md` for commands
+and CI execution.
+
 ## Common Commands
 
 | Action    | Command              |

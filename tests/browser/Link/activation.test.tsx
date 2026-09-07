@@ -3,7 +3,7 @@ import React from "react";
 import { afterEach, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { Link } from "./Link";
+import { Link } from "../../../components/Link/Link";
 
 afterEach(cleanup);
 

@@ -1,13 +1,13 @@
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
-import { CompositionExample } from "./Chart.stories";
+import { Chart } from "../../../components/Chart/Chart";
+import { CompositionExample } from "../../../components/Chart/Chart.stories";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 250));
 afterEach(async () => {

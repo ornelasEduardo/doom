@@ -97,3 +97,8 @@ This library requires the following peer dependencies:
 ## Architecture
 
 This system uses **CSS Modules** (`.module.scss`) for component styling, ensuring styles are locally scoped and avoid collisions. It uses **SASS** for mixins and shared logic at build time. All styles are compiled to standard CSS during the build, making it extremely fast and lightweight.
+
+## Testing
+
+See [TESTING.md](TESTING.md) for the unit, browser, Storybook interaction, and
+built-package suites, including local and CI commands.
