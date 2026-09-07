@@ -53,7 +53,7 @@ it.each([false, true])(
     };
     const sensor = KeyboardSensor();
     for (const index of [2, 4, 4]) {
-      sensor(event, context);
+      sensor({ ...event, signal: { ...event.signal } }, context);
       const hover = store
         .getState()
         .interactions.get(InteractionChannel.PRIMARY_HOVER) as HoverInteraction;
