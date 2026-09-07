@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 
 import { ChartContext } from "../../context";
@@ -53,3 +53,57 @@ it("announces an empty chart when every row is absent", () => {
   );
   expect(container.querySelector("#summary")?.textContent).toBe("Empty chart.");
 });
+
+const summaryCases = [
+  [[10, null, 20, undefined, NaN, Infinity, -Infinity], "from 10 to 20"],
+  [[0, null, 20], "from 0 to 20"],
+  [[undefined, NaN, Infinity, -Infinity], null],
+  [[null, undefined], null],
+] as const;
+
+it.each(
+  [false, true].flatMap((horizontal) =>
+    summaryCases.map(([values, range]) => ({ horizontal, values, range })),
+  ),
+)(
+  "uses only valid numeric samples in the summary (horizontal=$horizontal, values=$values)",
+  ({ horizontal, values, range }) => {
+    const chartStore = createChartStore(
+      {},
+      horizontal ? "value" : "category",
+      horizontal ? "category" : "value",
+    );
+    chartStore.setState({
+      processedSeries: horizontal
+        ? [
+            {
+              id: "bar",
+              type: "bar",
+              orientation: "horizontal",
+              label: "Bar",
+              color: "red",
+            },
+          ]
+        : [],
+    });
+    const { container } = render(
+      <ChartContext.Provider value={{ chartStore } as ContextValue}>
+        <Announcer summaryId="summary" />
+      </ChartContext.Provider>,
+    );
+
+    act(() =>
+      chartStore.setState({
+        data: values.map((value, index) => ({ category: `C${index}`, value })),
+      }),
+    );
+    const summary = container.querySelector("#summary")!.textContent!;
+    const axis = horizontal ? "X" : "Y";
+    if (range) {
+      expect(summary).toContain(`${axis} ${range}.`);
+    } else {
+      expect(summary).not.toContain(`${axis} from`);
+    }
+    expect(summary).not.toMatch(/NaN|Infinity/);
+  },
+);

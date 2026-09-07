@@ -5,6 +5,7 @@ import { resolveAccessor } from "../../types/accessors";
 import { InteractionChannel } from "../../types/interaction";
 import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
+import { numericSample } from "../../utils/sampleValidity";
 import styles from "./Announcer.module.scss";
 
 interface AnnouncerProps {
@@ -55,11 +56,24 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     const yLabel = config?.yAxisLabel || "Y";
     const xValues = rows.map((d) => getX(d));
     if (horizontal) {
-      const values = xValues.map(Number).filter(Number.isFinite);
+      const values = xValues
+        .map(numericSample)
+        .filter((value) => value !== undefined);
       const categories = rows.map((d) => getY(d));
-      return `${type || "Bar"} chart with ${rows.length} data points. ${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}. ${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`;
+      const parts = [`${type || "Bar"} chart with ${rows.length} data points.`];
+      if (values.length) {
+        parts.push(
+          `${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}.`,
+        );
+      }
+      parts.push(
+        `${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`,
+      );
+      return parts.join(" ");
     }
-    const yValues = rows.map((d) => Number(getY(d))).filter(Number.isFinite);
+    const yValues = rows
+      .map((d) => numericSample(getY(d)))
+      .filter((value) => value !== undefined);
 
     const parts = [
       `${type || "Line"} chart with ${rows.length} data points.`,

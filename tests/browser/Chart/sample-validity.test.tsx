@@ -260,3 +260,58 @@ it("clears an active hover when its sample becomes invalid, and restores interac
   await hoverMark(container.querySelector(".chart-line-series circle")!, store);
   await expect.poll(() => hover(store)?.targets[0].data.y).toBe(0);
 });
+
+const summaryCases = [
+  [[10, null, 20, undefined, NaN, Infinity, -Infinity], "from 10 to 20"],
+  [[0, null, 20], "from 0 to 20"],
+  [[undefined, NaN, Infinity, -Infinity], null],
+  [[null, undefined], null],
+] as const;
+
+it.each(
+  [false, true].flatMap((horizontal) =>
+    summaryCases.map(([values, range]) => ({ horizontal, values, range })),
+  ),
+)(
+  "describes only valid numeric samples accessibly (horizontal=$horizontal, values=$values)",
+  async ({ horizontal, values, range }) => {
+    const renderSummary = (values: readonly (number | null | undefined)[]) => (
+      <DesignSystemProvider>
+        <Chart.Root
+          data={values.map((value, index) => ({
+            category: `C${index}`,
+            value,
+          }))}
+          style={{ width: 600, height: 360 }}
+          title="Sample summary"
+          type={horizontal ? "bar" : "line"}
+          x={horizontal ? "value" : "category"}
+          y={horizontal ? "category" : "value"}
+        >
+          <Chart.Plot>
+            <Chart.Series
+              orientation={horizontal ? "horizontal" : undefined}
+              type={horizontal ? "bar" : "line"}
+            />
+          </Chart.Plot>
+        </Chart.Root>
+      </DesignSystemProvider>
+    );
+    const { container, rerender } = render(renderSummary([10, null, 20]));
+
+    rerender(renderSummary(values));
+    const region = container.querySelector(
+      '[aria-label="Chart: Sample summary"]',
+    )!;
+    const summary = () =>
+      document.getElementById(region.getAttribute("aria-describedby")!)!
+        .textContent!;
+    const axis = horizontal ? "X" : "Y";
+    if (range) {
+      await expect.poll(summary).toContain(`${axis} ${range}.`);
+    } else {
+      await expect.poll(summary).not.toContain(`${axis} from`);
+    }
+    expect(summary()).not.toMatch(/NaN|Infinity/);
+  },
+);
