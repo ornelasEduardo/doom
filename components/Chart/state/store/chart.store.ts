@@ -1,9 +1,14 @@
-import { Accessor, Config } from "../../types";
+import { Accessor, AxisDomain, Config } from "../../types";
 import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
 import { d3 } from "../../utils/d3";
-import { createScales } from "../../utils/scales";
+import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import {
+  createScales,
+  hasDomainOverride,
+  resolveDomain,
+} from "../../utils/scales";
 import { createStore, StoreApi } from "./createStore";
 import { DataSlice, getDataInitialState } from "./slices/data.slice";
 import {
@@ -41,7 +46,10 @@ export interface State<T = any>
     DataSlice<T>,
     SeriesSlice,
     InteractionsSlice,
-    ScalesSlice {}
+    ScalesSlice {
+  xDomain?: AxisDomain;
+  yDomain?: AxisDomain;
+}
 
 /**
  * The Store type for the Chart system.
@@ -106,6 +114,12 @@ export const updateChartDimensions = (
       status: width > 0 && height > 0 ? "ready" : "idle",
       dimensions: nextDimensions,
       scales: nextScales,
+      interactions: refreshHover(
+        { ...prev, dimensions: nextDimensions },
+        prev.data,
+        prev.processedSeries,
+        nextScales,
+      ),
     };
   });
 };
@@ -140,10 +154,16 @@ export const updateChartData = <T>(store: Store, data: T[]) => {
  */
 export const updateChartState = <T>(
   store: Store,
-  props: { data: T[]; type?: string; dimensions: Dimensions },
+  props: {
+    data: T[];
+    type?: string;
+    dimensions: Dimensions;
+    xDomain?: AxisDomain;
+    yDomain?: AxisDomain;
+  },
 ) => {
   store.setState((prev) => {
-    const { data, type, dimensions } = props;
+    const { data, type, dimensions, xDomain, yDomain } = props;
     const { margin } = dimensions;
 
     // Recalculate inner dimensions based on new outer dimensions
@@ -164,10 +184,12 @@ export const updateChartState = <T>(
       ...prev,
       ...derived,
       type: (type || prev.type) as State["type"],
+      xDomain,
+      yDomain,
     });
 
     const nextInteractions = refreshHover(
-      prev,
+      { ...prev, dimensions: nextDimensions, xDomain, yDomain },
       data,
       derived.processedSeries,
       nextScales,
@@ -176,6 +198,8 @@ export const updateChartState = <T>(
     return {
       data,
       type: type || prev.type,
+      xDomain,
+      yDomain,
       dimensions: nextDimensions,
       scales: nextScales,
       ...derived,
@@ -210,9 +234,16 @@ export const updateChartMargin = (
       innerWidth,
       innerHeight,
     };
+    const nextScales = calculateScales(prev.data, nextDimensions, prev);
     return {
       dimensions: nextDimensions,
-      scales: calculateScales(prev.data, nextDimensions, prev),
+      scales: nextScales,
+      interactions: refreshHover(
+        { ...prev, dimensions: nextDimensions },
+        prev.data,
+        prev.processedSeries,
+        nextScales,
+      ),
     } as Partial<State>;
   });
 };
@@ -363,6 +394,9 @@ const refreshHover = (
   if (!hover?.targets?.length) {
     return state.interactions;
   }
+  const bounded =
+    hasDomainOverride(scales.x, state.xDomain) ||
+    hasDomainOverride(scales.y, state.yDomain);
   const targets = hover.targets.flatMap((target) => {
     const item = series.find((item) => item.id === target.seriesId);
     const wasRegistered = state.processedSeries.some(
@@ -382,22 +416,40 @@ const refreshHover = (
       return [];
     }
     const datum = rows[index];
-    const bar =
+    const geometry =
       item?.type === "bar" && scales.x && scales.y
         ? barGeometry(item, datum, index, scales.x, scales.y)
         : null;
+    const bar =
+      geometry && bounded
+        ? clipRectToPlot(geometry, state.dimensions)
+        : geometry;
+    if (!scales.x || !scales.y || (item?.type === "bar" && !bar)) {
+      return [];
+    }
+    const xAccessor = item ? item.xAccessor : state.x;
+    const yAccessor = item ? item.yAccessor : state.y;
+    const coordinate = bar
+      ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
+      : {
+          x: (scales.x as (value: unknown) => number)(
+            xAccessor ? resolveAccessor(xAccessor)(datum) : index,
+          ),
+          y: (scales.y as (value: unknown) => number)(
+            yAccessor ? resolveAccessor(yAccessor)(datum) : datum,
+          ),
+        };
+    if (bounded && !isPointInPlot(coordinate, state.dimensions)) {
+      return [];
+    }
     return [
       {
         ...target,
         data: datum,
-        ...(bar
-          ? {
-              coordinate: {
-                x: bar.x + bar.width / 2 + state.dimensions.margin.left,
-                y: bar.y + bar.height / 2 + state.dimensions.margin.top,
-              },
-            }
-          : {}),
+        coordinate: {
+          x: coordinate.x + state.dimensions.margin.left,
+          y: coordinate.y + state.dimensions.margin.top,
+        },
       },
     ];
   });
@@ -427,6 +479,21 @@ const hydrateConfigs = (state: State, data: unknown[]) => {
 };
 
 const calculateScales = (data: any[], dims: Dimensions, state: State) => {
+  const scales = deriveScales(data, dims, state);
+  if (scales.x && "invert" in scales.x) {
+    scales.x.domain(
+      resolveDomain(scales.x.domain() as number[], state.xDomain),
+    );
+  }
+  if (scales.y && "invert" in scales.y) {
+    scales.y.domain(
+      resolveDomain(scales.y.domain() as number[], state.yDomain),
+    );
+  }
+  return scales;
+};
+
+const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
   const bars = state.processedSeries.filter((series) => series.type === "bar");
   if (bars.length && dims.width > 0 && dims.height > 0) {
     const horizontal = bars[0].orientation === "horizontal";

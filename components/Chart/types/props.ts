@@ -6,12 +6,17 @@ import { Config } from "./config";
 import { RenderFrame } from "./context";
 import { Behavior, Sensor } from "./events";
 
+/** Numeric data bounds; null derives that end automatically. */
+export type AxisDomain = readonly [number | null, number | null];
+
 export interface ChartProps<T = unknown> extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "title" | "children"
 > {
   data: T[];
   d3Config?: Config;
+  xDomain?: AxisDomain;
+  yDomain?: AxisDomain;
   className?: string;
   style?: React.CSSProperties;
   onValueChange?: (data: T | null) => void;

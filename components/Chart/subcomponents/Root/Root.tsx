@@ -35,6 +35,8 @@ import {
 import { HoverInteraction } from "../../types/interaction";
 import { barGeometry } from "../../utils/bars";
 import { hasChildOfTypeDeep } from "../../utils/componentDetection";
+import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import { hasDomainOverride } from "../../utils/scales";
 import { Announcer } from "../Announcer";
 import { Axis } from "../Axis/Axis";
 import { CursorWrapper } from "../Cursor/Cursor";
@@ -66,6 +68,8 @@ export type RootProps<T> = Omit<
     Props<T>,
     | "data"
     | "d3Config"
+    | "xDomain"
+    | "yDomain"
     | "className"
     | "style"
     | "onValueChange"
@@ -190,6 +194,8 @@ const accessorSignature = (accessor: unknown, data: any[]): string => {
 export function Root<T>({
   data,
   d3Config,
+  xDomain,
+  yDomain,
   className,
   style,
   onValueChange,
@@ -361,21 +367,38 @@ export function Root<T>({
                 ? resolveAccessor(y)
                 : null;
 
-            const points = seriesData.map((d: any, i: number) => {
-              const bar =
+            const points = seriesData.flatMap((d: any, i: number) => {
+              const geometry =
                 series.type === "bar"
                   ? barGeometry(series, d, i, xScale, yScale)
                   : null;
+              const bounded =
+                hasDomainOverride(xScale, state.xDomain) ||
+                hasDomainOverride(yScale, state.yDomain);
+              const bar =
+                geometry && bounded
+                  ? clipRectToPlot(geometry, dimensions)
+                  : geometry;
+              if (geometry && !bar) {
+                return [];
+              }
+              const position = {
+                x: bar
+                  ? bar.x + bar.width / 2
+                  : (xScale((getX ? getX(d) : i) as any) ?? NaN),
+                y: bar
+                  ? bar.y + bar.height / 2
+                  : (yScale((getY ? getY(d) : d) as any) ?? NaN),
+              };
+              if (bounded && !isPointInPlot(position, dimensions)) {
+                return [];
+              }
               return {
                 x:
-                  (bar
-                    ? bar.x + bar.width / 2
-                    : (xScale((getX ? getX(d) : i) as any) ?? 0)) +
+                  (Number.isFinite(position.x) ? position.x : 0) +
                   dimensions.margin.left,
                 y:
-                  (bar
-                    ? bar.y + bar.height / 2
-                    : (yScale((getY ? getY(d) : d) as any) ?? 0)) +
+                  (Number.isFinite(position.y) ? position.y : 0) +
                   dimensions.margin.top,
                 data: d,
                 seriesId: series.id,
@@ -388,7 +411,9 @@ export function Root<T>({
                     : ("x" as const),
               };
             });
-            allPoints.push(...points);
+            for (const point of points) {
+              allPoints.push(point);
+            }
           });
         } else if (data.length > 0) {
           const getX = x ? resolveAccessor(x) : null;
@@ -406,7 +431,23 @@ export function Root<T>({
             seriesColor: null,
             dataIndex: i,
           }));
-          allPoints.push(...points);
+          for (const point of points) {
+            if (
+              !(
+                hasDomainOverride(xScale, state.xDomain) ||
+                hasDomainOverride(yScale, state.yDomain)
+              ) ||
+              isPointInPlot(
+                {
+                  x: point.x - dimensions.margin.left,
+                  y: point.y - dimensions.margin.top,
+                },
+                dimensions,
+              )
+            ) {
+              allPoints.push(point);
+            }
+          }
         }
 
         engine.updateData(allPoints);
@@ -414,13 +455,17 @@ export function Root<T>({
     });
   }, [chartStore, engine, x, y]);
 
+  const [xMin, xMax] = xDomain ?? [];
+  const [yMin, yMax] = yDomain ?? [];
   useEffect(() => {
     updateChartState(chartStore, {
       data,
       type,
+      xDomain: xMin === undefined ? undefined : [xMin, xMax ?? null],
+      yDomain: yMin === undefined ? undefined : [yMin, yMax ?? null],
       dimensions: chartStore.getState().dimensions,
     });
-  }, [chartStore, data, type]);
+  }, [chartStore, data, type, xMin, xMax, yMin, yMax]);
 
   // The store is built once in a useState initialiser, so a changed x/y prop
   // has to be pushed in. No dependency array: these are usually inline arrows

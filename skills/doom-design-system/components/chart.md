@@ -20,6 +20,8 @@ component's own semantics win on conflict.
 | `data` | `T[]` | required | Data array |
 | `x` | `keyof T \| (d: T) => string \| number` | required | X-axis accessor (string key or function) |
 | `y` | `keyof T \| (d: T) => number` | required | Y-axis accessor (string key or function) |
+| `xDomain` | `readonly [number \| null, number \| null]` | automatic | Numeric X bounds; `null` keeps that end automatic. Ignored for categorical X. |
+| `yDomain` | `readonly [number \| null, number \| null]` | automatic | Numeric Y bounds; `null` keeps that end automatic. Ignored for categorical Y. |
 | `type` | `"line" \| "area" \| "bar" \| "scatter"` | — | Chart type (shorthand API) |
 | `title` | `string \| ReactNode` | — | Chart title |
 | `subtitle` | `string` | — | Chart subtitle |
@@ -92,6 +94,66 @@ component's own semantics win on conflict.
   }}
 />
 ```
+
+## Axis domains
+
+`xDomain` and `yDomain` are top-level props on both `Chart` and `Chart.Root`,
+not fields in `d3Config`. Each accepts a readonly `[lower, upper]` tuple.
+An omitted prop or `[null, null]` uses automatic bounds. Each numeric endpoint
+is exact: padding and D3 `nice()` do not move an explicit endpoint. A `null`
+endpoint retains the corresponding automatic bound.
+
+```tsx
+// Reuse the same bounds and chart height for an honest regional comparison.
+const revenueDomain = [0, 100] as const;
+
+<Chart data={north} type="line" x="month" y="revenue"
+  yDomain={revenueDomain} title="North revenue (USD thousands)" />
+<Chart data={south} type="line" x="month" y="revenue"
+  yDomain={revenueDomain} title="South revenue (USD thousands)" />
+
+// Fix only the upper bound; calculate the lower bound automatically.
+<Chart.Root data={readings} type="line" x="hour" y="temperature"
+  xDomain={[0, 24]} yDomain={[null, 40]}>
+  <Chart.Plot>
+    <Chart.Series label="Temperature (°C)" type="line" />
+    <Chart.Axis />
+  </Chart.Plot>
+</Chart.Root>
+```
+
+- A tuple containing a nonfinite number (`NaN` or either infinity), or two
+  explicit bounds that are reversed or equal, is ignored in its entirety.
+  That axis falls back to its automatic domain.
+- If a one-sided override would leave the domain descending or collapsed,
+  the automatic end extends outward by `max(1, abs(explicitEndpoint) * 0.1)`.
+  For example, automatic `[0, 5]` with `[20, null]` becomes `[20, 22]`.
+  The explicit end stays exact, even when it excludes all data.
+- Categorical axes ignore overrides. For vertical bars, use `yDomain` for
+  values; for horizontal bars, use `xDomain` for values.
+
+Without overrides, numeric Y bounds include zero, pad negative and positive
+extrema outward by 10%, then apply D3 `nice()` for readable ticks. A negative
+line metric can therefore cross zero without losing its negative values.
+The empty-data scale utility starts with `[0, 1]` and applies `nice()`;
+an empty chart currently creates no scales.
+
+For charts containing only non-bar series, automatic bounds come from root
+`data` and accessors. A series' own data does not expand those bounds: give
+the root a dataset spanning all series, or set explicit bounds covering them.
+Bar bounds account for registered series and signed stack totals; mixed
+vertical-bar charts also retain and expand existing root and non-bar domains.
+Overrides apply after these automatic domains are calculated.
+
+With a valid numeric domain override, built-in series rendering is clipped
+along that axis. Marks on unaffected axes retain their normal appearance.
+Points whose centers fall outside the plot are excluded from interactions,
+including hover and keyboard navigation. Partially visible bars remain
+interactable; their tooltip values describe the original data, not just the
+visible portion. Custom rendering is responsible for its own clipping.
+
+See the **Signed Line Metric** and **Shared Fixed Y Bounds** stories for signed
+cash flow and two regions compared with equal heights and the same exact range.
 
 ## Architecture
 
@@ -181,7 +243,8 @@ Each series type registers itself with the store and gets an automatic interacti
 
 A `<Chart.Series>` may carry its own `data`, which is used for both rendering and
 hit-testing. In charts containing only non-bar series, scales derive from root
-`data`; give `Chart.Root` a dataset spanning the full range. Bars derive their
+`data`; give `Chart.Root` a dataset spanning the full range or explicit
+`xDomain` / `yDomain` bounds covering the series. Bars derive their
 category domain and signed value totals from registered series data. Mixed
 vertical-bar charts preserve and expand root and registered non-bar domains.
 See [bar orientation, thickness, and stacks](#bar-orientation-thickness-and-stacks).
