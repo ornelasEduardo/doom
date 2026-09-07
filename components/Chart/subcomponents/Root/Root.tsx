@@ -23,6 +23,7 @@ import {
   updateChartMargin,
   updateChartState,
 } from "../../state/store/chart.store";
+import { getDimensionsInitialState } from "../../state/store/slices/dimensions.slice";
 import {
   Behavior,
   Config,
@@ -487,10 +488,14 @@ export function Root<T>({
   const marginSyncRef = useRef<string | null>(null);
   useEffect(() => {
     const configured = d3Config?.margin;
-    if (!configured) {
-      return;
-    }
-    const signature = JSON.stringify(configured);
+    const signature = configured
+      ? JSON.stringify([
+          configured.top,
+          configured.right,
+          configured.bottom,
+          configured.left,
+        ])
+      : "default";
     if (marginSyncRef.current === signature) {
       return;
     }
@@ -499,7 +504,12 @@ export function Root<T>({
     if (isFirstRun) {
       return;
     }
-    updateChartMargin(chartStore, configured);
+    updateChartMargin(
+      chartStore,
+      configured ??
+        getDimensionsInitialState({ showAxes: d3Config?.showAxes }).dimensions
+          .margin,
+    );
   });
 
   const accessorSyncRef = useRef<string | null>(null);
