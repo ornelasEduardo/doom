@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
 import {
   removeInteraction,
@@ -23,14 +23,20 @@ interface SensorManagerProps<T> {
   value: ContextValue<T>;
 }
 
-export const SensorManager = <T,>({ sensors, value }: SensorManagerProps<T>) => {
+export const SensorManager = <T,>({
+  sensors,
+  value,
+}: SensorManagerProps<T>) => {
   const { chartStore, config, engine } = value;
 
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
 
   const contextRef = useRef(value);
-  contextRef.current = value;
+  useLayoutEffect(() => {
+    // Registered sensors must never observe context from an uncommitted render.
+    contextRef.current = value;
+  });
 
   // Consumers pass a fresh array literal every render. Keying off its identity
   // would re-register the whole set each time, discarding the closure state a
