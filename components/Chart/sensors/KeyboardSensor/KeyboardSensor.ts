@@ -1,10 +1,13 @@
-import { InputAction } from "../../engine";
+import { EngineEvent, InputAction } from "../../engine";
 import { resolveAccessor } from "../../types/accessors";
 import { Sensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
 import { hasDomainOverride } from "../../utils/scales";
+
+// One input may reach supplied and baseline navigators for the same channel.
+const handledChannels = new WeakMap<EngineEvent, Set<string>>();
 
 /**
  * Professional-grade Keyboard Sensor for A11y.
@@ -19,6 +22,10 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
 
     // Only handle KEY actions
     if (signal.action !== InputAction.KEY || !signal.key) {
+      return;
+    }
+
+    if (handledChannels.get(event)?.has(name)) {
       return;
     }
 
@@ -192,5 +199,9 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
       targets,
       target,
     });
+    const channels = handledChannels.get(event) ?? new Set<string>();
+    channels.add(name);
+    handledChannels.set(event, channels);
+    event.handled = true;
   };
 };

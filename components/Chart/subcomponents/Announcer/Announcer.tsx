@@ -7,6 +7,8 @@ import { resolveAccessor } from "../../types/accessors";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
+import { yTickCount } from "../../utils/scales";
+import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Announcer.module.scss";
 
 interface AnnouncerProps {
@@ -30,7 +32,7 @@ const describe = (value: unknown) =>
  * Subscribes to the store itself so hovering re-renders only this component.
  */
 export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
-  const { chartStore } = useChartContext();
+  const { chartStore, isMobile } = useChartContext();
 
   const data = chartStore.useStore((s) => s.data);
   const type = chartStore.useStore((s) => s.type);
@@ -42,6 +44,8 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   ) as HoverInteraction | undefined;
 
   const series = chartStore.useStore((s) => s.processedSeries);
+  const scales = chartStore.useStore((s) => s.scales);
+  const dimensions = chartStore.useStore((s) => s.dimensions);
   const horizontal = series[0]?.orientation === "horizontal";
 
   const getX = xAccessor ? resolveAccessor(xAccessor) : null;
@@ -79,6 +83,21 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   }, [data, type, config, xAccessor, yAccessor, horizontal]);
 
   const active = React.useMemo(() => {
+    const candidates = (axis: "x" | "y") => {
+      const scale = scales[axis];
+      return scale
+        ? getAxisTicks(
+            scale as {
+              domain: () => (string | number)[];
+              ticks?: (count: number) => (string | number)[];
+            },
+            axis === "x" ? dimensions.innerWidth : dimensions.innerHeight,
+            config.axes?.[axis]?.maxTicks,
+            axis === "x" ? (isMobile ? 3 : 5) : yTickCount(isMobile),
+          ).values
+        : [];
+    };
+    const ticks = { x: candidates("x"), y: candidates("y") };
     return (hover?.targets ?? [])
       .map((target) => {
         const item = series.find((item) => item.id === target.seriesId);
@@ -87,10 +106,16 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
           accessor
             ? (datum: unknown) => {
                 const value = resolveAccessor(accessor)(datum);
-                const format = config.axes?.[axis]?.tickFormat;
-                return format &&
-                  (typeof value === "string" || typeof value === "number")
-                  ? format(value, target.dataIndex ?? 0)
+                if (typeof value !== "string" && typeof value !== "number") {
+                  return value;
+                }
+                const options = config.axes?.[axis];
+                if (options?.valueFormat) {
+                  return options.valueFormat(value);
+                }
+                const index = ticks[axis].indexOf(value);
+                return options?.tickFormat && index >= 0
+                  ? options.tickFormat(value, index)
                   : value;
               }
             : undefined;
@@ -109,7 +134,16 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
       })
       .filter(Boolean)
       .join(". ");
-  }, [hover, xAccessor, yAccessor, series, config]);
+  }, [
+    hover,
+    xAccessor,
+    yAccessor,
+    series,
+    config,
+    scales,
+    dimensions,
+    isMobile,
+  ]);
 
   return (
     <>

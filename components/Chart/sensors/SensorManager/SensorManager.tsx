@@ -49,7 +49,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
 
   const activeSensors = useMemo(() => {
     if (stableSensors && stableSensors.length > 0) {
-      return stableSensors;
+      return [...stableSensors, KeyboardSensor()];
     }
 
     const defaults: Sensor[] = [];
@@ -65,13 +65,6 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
           verticalSlice: isVerticalSliceType,
         }),
       );
-
-      // A11y: Always include keyboard sensor for line/bar/scatter
-      defaults.push(
-        KeyboardSensor({
-          name: InteractionChannel.PRIMARY_HOVER,
-        }),
-      );
     } else {
       defaults.push(
         DataHoverSensor({
@@ -79,6 +72,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
         }),
       );
     }
+    defaults.push(KeyboardSensor());
     return defaults;
   }, [stableSensors, config.type]);
 

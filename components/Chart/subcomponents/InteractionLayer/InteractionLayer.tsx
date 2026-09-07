@@ -85,9 +85,6 @@ export const InteractionLayer: React.FC = () => {
       if (e.target !== container) {
         return;
       }
-      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
-        e.preventDefault();
-      }
       if (
         [
           "ArrowLeft",
@@ -102,7 +99,9 @@ export const InteractionLayer: React.FC = () => {
       ) {
         // Create and send keyboard signal
         const signal = engine.createKeySignal(e);
-        engine.input(signal);
+        if (engine.input(signal)) {
+          e.preventDefault();
+        }
       }
     };
 

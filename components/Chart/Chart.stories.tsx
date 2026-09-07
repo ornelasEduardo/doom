@@ -1112,11 +1112,11 @@ export const MultiSeries: Story = {
         yAxisLabel: "Daily revenue (USD)",
         axes: {
           x: {
-            tickFormat: (value) => revenueDateFormat.format(Number(value)),
+            valueFormat: (value) => revenueDateFormat.format(Number(value)),
             maxTicks: 6,
           },
           y: {
-            tickFormat: (value) => revenueUsdFormat.format(Number(value)),
+            valueFormat: (value) => revenueUsdFormat.format(Number(value)),
             maxTicks: 5,
           },
         },

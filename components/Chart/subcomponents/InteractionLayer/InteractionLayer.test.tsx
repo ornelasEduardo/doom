@@ -249,6 +249,7 @@ describe("InteractionLayer", () => {
     it.each(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"])(
       "cancels page scrolling for %s on the chart root",
       (key) => {
+        mockEngineInput.mockReturnValueOnce(true);
         render(
           <ContainerWrapper>
             <InteractionLayer />

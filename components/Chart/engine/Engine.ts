@@ -137,11 +137,13 @@ export class Engine<T = unknown> {
    * Process an InputSignal.
    * This is the main entry point for all user interactions.
    *
+   * @returns Whether a sensor synchronously acknowledged a KEY signal.
+   * Queued pointer input is not a native-default cancellation request.
    * @param signal - The normalized input signal
    */
-  input(signal: InputSignal): void {
+  input(signal: InputSignal): boolean {
     if (this.disposed) {
-      return;
+      return false;
     }
 
     const plotOffset = this.coords.getPlotOffset();
@@ -179,6 +181,7 @@ export class Engine<T = unknown> {
 
     const priority = this.determinePriority(signal.action);
     this.scheduler.schedule(priority, event);
+    return signal.action === InputAction.KEY && event.handled === true;
   }
 
   /**

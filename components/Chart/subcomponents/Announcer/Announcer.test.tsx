@@ -6,11 +6,13 @@ import { ChartContext } from "../../context";
 import {
   createChartStore,
   removeInteraction,
+  State,
   upsertInteraction,
 } from "../../state/store/chart.store";
 import { Config, Series } from "../../types";
 import { ContextValue } from "../../types/context";
 import { InteractionChannel, InteractionTarget } from "../../types/interaction";
+import { d3 } from "../../utils/d3";
 import { Announcer } from "./Announcer";
 
 afterEach(cleanup);
@@ -19,9 +21,10 @@ const mount = (
   series: Series[],
   targets: InteractionTarget[],
   config: Config = {},
+  state: Partial<State> = {},
 ) => {
   const chartStore = createChartStore(config, "category", "value");
-  chartStore.setState({ processedSeries: series });
+  chartStore.setState({ processedSeries: series, ...state });
   upsertInteraction(chartStore, InteractionChannel.PRIMARY_HOVER, { targets });
   render(
     <ChartContext.Provider value={{ chartStore } as ContextValue}>
@@ -73,14 +76,14 @@ describe("Announcer selected slice", () => {
       {
         axes: {
           x: {
-            tickFormat: (value) =>
+            valueFormat: (value) =>
               new Date(Number(value)).toLocaleDateString("en-US", {
                 month: "long",
                 year: "numeric",
                 timeZone: "UTC",
               }),
           },
-          y: { tickFormat: (value) => `$${value}` },
+          y: { valueFormat: (value) => `$${value}` },
         },
       },
     );
@@ -118,14 +121,52 @@ describe("Announcer selected slice", () => {
       [target("bars", { category: "North", value: 30 })],
       {
         axes: {
-          x: { tickFormat: (value) => `$${value}` },
-          y: { tickFormat: (value) => `${value} region` },
+          x: { valueFormat: (value) => `$${value}` },
+          y: { valueFormat: (value) => `${value} region` },
         },
       },
     );
     expect(screen.getByRole("status").textContent).toContain(
       "Revenue: North region: $30",
     );
+  });
+
+  it("uses the axis candidate index for shuffled series sharing a category", () => {
+    mount(
+      series,
+      [
+        target("actual", { date: 1, actual: 12 }),
+        target("plan", { period: 1, planned: 18 }, 1),
+      ],
+      {
+        axes: {
+          x: { tickFormat: (_, index) => ["January", "February"][index] },
+        },
+      },
+      {
+        scales: {
+          x: d3.scaleBand<string | number>().domain([1, 2]).range([0, 500]),
+          y: null,
+        },
+      },
+    );
+    expect(screen.getByRole("status").textContent).toBe(
+      "Actual: January: 12. Plan: January: 18",
+    );
+  });
+
+  it("does not invent a tick index for an off-tick value", () => {
+    mount(
+      series,
+      [target("actual", { date: 1.25, actual: 12 }, 1)],
+      {
+        axes: { x: { tickFormat: (_, index) => `Tick ${index}` } },
+      },
+      {
+        scales: { x: d3.scaleLinear().domain([0, 2]).range([0, 500]), y: null },
+      },
+    );
+    expect(screen.getByRole("status").textContent).toBe("Actual: 1.25: 12");
   });
 
   it("retains unlabelled root-accessor and Date descriptions without a formatter", () => {
