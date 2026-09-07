@@ -57,13 +57,12 @@ describe("synchronous keyboard handling", () => {
         margin: { top: 20, bottom: 20, left: 20, right: 20 },
       },
     });
+    const value = { chartStore, engine, config: {} } as ContextValue;
     const { unmount } = render(
-      <ChartContext.Provider
-        value={{ chartStore, engine, config: {} } as ContextValue}
-      >
+      <ChartContext.Provider value={value}>
         <div data-chart-container tabIndex={0}>
           <InteractionLayer />
-          <SensorManager sensors={sensors} />
+          <SensorManager {...{ sensors, value }} />
           <input aria-label="nested" />
         </div>
       </ChartContext.Provider>,

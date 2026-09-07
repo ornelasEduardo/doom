@@ -6,7 +6,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
-import { Sensor } from "../../../components/Chart/types/events";
+import { EngineEvent } from "../../../components/Chart/engine";
+import { SensorContext } from "../../../components/Chart/types/events";
 import { HoverInteraction } from "../../../components/Chart/types/interaction";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
@@ -123,7 +124,10 @@ describe("Chart keyboard accessibility in native browsers", () => {
     "retains one baseline navigator with %s sensors",
     async (mode) => {
       let customIndex: number | undefined;
-      const observeCustom: Sensor = (_event, context) => {
+      const observeCustom = <T,>(
+        _event: EngineEvent<T>,
+        context: SensorContext<T>,
+      ) => {
         customIndex = (
           context.getInteraction("custom") as HoverInteraction | null
         )?.target?.dataIndex;
