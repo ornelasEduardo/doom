@@ -1,13 +1,13 @@
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
-import { useChartContext } from "./context";
-import type { Store } from "./state/store/chart.store";
+import { Chart } from "../../../components/Chart/Chart";
+import { useChartContext } from "../../../components/Chart/context";
+import type { Store } from "../../../components/Chart/state/store/chart.store";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 type Domain = readonly [number | null, number | null];
 const rows = [

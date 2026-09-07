@@ -4,6 +4,7 @@ import * as d3Scale from "d3-scale";
 import * as d3Shape from "d3-shape";
 import { Info } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import { expect, userEvent, waitFor } from "storybook/test";
 
 import { palette } from "../../styles/palettes";
 import { Badge } from "../Badge/Badge";
@@ -51,6 +52,46 @@ export default meta;
 
 type Story = StoryObj<typeof Chart>;
 
+const checkEndpointLayers: NonNullable<Story["play"]> = async ({
+  canvasElement,
+  step,
+}) => {
+  await step("Endpoint dots paint above the axes", async () => {
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector(".chart-line-series circle"),
+      ).not.toBeNull(),
+    );
+    for (const plot of canvasElement.querySelectorAll("[data-chart-plot]")) {
+      await waitFor(() =>
+        expect(plot.querySelectorAll(".domain")).toHaveLength(2),
+      );
+      const point = plot.querySelector(".chart-line-series circle")!;
+      const axis = plot.querySelectorAll(".domain")[1];
+      // Axes ignore pointer events, so hit testing cannot detect SVG paint-order occlusion.
+      await expect(
+        axis.compareDocumentPosition(point) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+};
+
+async function hoverFirstBar(canvasElement: HTMLElement, count: number) {
+  await waitFor(() =>
+    expect(canvasElement.querySelectorAll(".chart-bar")).toHaveLength(count),
+  );
+  const bars = canvasElement.querySelectorAll<SVGPathElement>(".chart-bar");
+  await waitFor(() =>
+    expect(bars[0].getBoundingClientRect().width).toBeGreaterThan(0),
+  );
+  const box = bars[0].getBoundingClientRect();
+  await userEvent.pointer({
+    target: bars[0],
+    coords: { clientX: box.x + box.width / 2, clientY: box.y + box.height / 2 },
+  });
+  return bars;
+}
+
 const data = [
   { label: "Jan", value: 10 },
   { label: "Feb", value: 25 },
@@ -94,6 +135,8 @@ const monthlyCashFlow = [
 ];
 
 export const SignedLineMetric: Story = {
+  tags: ["interaction"],
+  play: checkEndpointLayers,
   parameters: {
     docs: {
       description: {
@@ -154,6 +197,8 @@ const regionalRevenue = [
 const sharedRevenueDomain = [0, 100] as const;
 
 export const SharedFixedYBounds: Story = {
+  tags: ["interaction"],
+  play: checkEndpointLayers,
   parameters: {
     docs: {
       description: {
@@ -1277,6 +1322,18 @@ const resolvedTickets = [
 ];
 
 export const HorizontalBars: Story = {
+  tags: ["interaction"],
+  play: async ({ canvasElement, step }) => {
+    await step("One bar per category reports the resolved count", async () => {
+      await hoverFirstBar(canvasElement, 3);
+      await waitFor(() =>
+        expect(
+          canvasElement.querySelector("[data-chart-tooltip]"),
+        ).toHaveTextContent("Resolved tickets:36"),
+      );
+      await expect(canvasElement).toHaveTextContent("Billing");
+    });
+  },
   parameters: {
     docs: {
       description: {
@@ -1319,6 +1376,26 @@ const channelRevenue = [
 ];
 
 export const StackedBars: Story = {
+  tags: ["interaction"],
+  play: async ({ canvasElement, step }) => {
+    await step(
+      "Revenue contributions join without overlap and match the tooltip",
+      async () => {
+        const bars = await hoverFirstBar(canvasElement, 6);
+        await waitFor(() =>
+          expect(
+            canvasElement.querySelector("[data-chart-tooltip]"),
+          ).toHaveTextContent("Online ($k):36"),
+        );
+        await expect(
+          canvasElement.querySelector("[data-chart-tooltip]"),
+        ).toHaveTextContent("Retail ($k):18");
+        await expect(bars[0].getBoundingClientRect().top).toBeCloseTo(
+          bars[3].getBoundingClientRect().bottom,
+        );
+      },
+    );
+  },
   parameters: {
     docs: {
       description: {
@@ -1369,6 +1446,26 @@ const inventoryMovement = [
 ];
 
 export const HorizontalStackedBars: Story = {
+  tags: ["interaction"],
+  play: async ({ canvasElement, step }) => {
+    await step(
+      "Signed inventory contributions meet at zero and match the tooltip",
+      async () => {
+        const bars = await hoverFirstBar(canvasElement, 6);
+        await waitFor(() =>
+          expect(
+            canvasElement.querySelector("[data-chart-tooltip]"),
+          ).toHaveTextContent("Received units:36"),
+        );
+        await expect(
+          canvasElement.querySelector("[data-chart-tooltip]"),
+        ).toHaveTextContent("Shipped units:-18");
+        await expect(bars[0].getBoundingClientRect().left).toBeCloseTo(
+          bars[3].getBoundingClientRect().right,
+        );
+      },
+    );
+  },
   parameters: {
     docs: {
       description: {

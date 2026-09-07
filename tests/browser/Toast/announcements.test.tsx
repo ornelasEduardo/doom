@@ -1,11 +1,11 @@
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
 import React, { StrictMode, useEffect, useRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 
-import { ToastProvider, useToast } from "./Toast";
+import { ToastProvider, useToast } from "../../../components/Toast/Toast";
 
 function MountedOnce() {
   const sent = useRef(false);

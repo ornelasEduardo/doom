@@ -5,14 +5,14 @@
  * page and whether the component holds up on real data volumes. Both need real
  * layout to answer honestly.
  */
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
+import { Chart } from "../../../components/Chart/Chart";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 const frame = () =>
   new Promise<void>((resolve) =>

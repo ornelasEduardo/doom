@@ -3,7 +3,7 @@ import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { Chip } from "./Chip";
+import { Chip } from "../../../components/Chip/Chip";
 
 afterEach(cleanup);
 

@@ -1,11 +1,11 @@
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
+import { Chart } from "../../../components/Chart/Chart";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 afterEach(cleanup);
 const settle = () => new Promise((r) => setTimeout(r, 200));

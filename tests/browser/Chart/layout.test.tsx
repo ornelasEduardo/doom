@@ -7,14 +7,14 @@
  * rect this work began with. It also never resolves CSS custom properties, so
  * anything asserting a computed colour has to run here.
  */
-import "../../styles/globals.scss";
+import "../../../styles/globals.scss";
 
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { DesignSystemProvider } from "../../DesignSystemProvider";
-import { Chart } from "./Chart";
+import { Chart } from "../../../components/Chart/Chart";
+import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 const data = [
   { label: "A", value: 10 },
