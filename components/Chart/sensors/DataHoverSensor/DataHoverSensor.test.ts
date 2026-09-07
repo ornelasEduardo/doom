@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { EngineEvent, InputAction } from "../../engine";
+import { EngineEvent, InputAction, InputSource } from "../../engine";
 import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DataHoverSensor } from "./DataHoverSensor";
@@ -40,13 +40,20 @@ const createMockEvent = (
   action: InputAction,
   candidate?: any,
 ): EngineEvent => ({
-  signal: { action, type: "pointer", x: 0, y: 0, source: "mouse" },
+  signal: {
+    action,
+    x: 0,
+    y: 0,
+    source: InputSource.MOUSE,
+    id: 1,
+    timestamp: 0,
+    userId: "local",
+  },
   primaryCandidate: candidate || null,
   candidates: candidate ? [candidate] : [],
   sliceCandidates: [],
   chartX: 0,
   chartY: 0,
-  isTouch: false,
   isWithinPlot: true,
 });
 

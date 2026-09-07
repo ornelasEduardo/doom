@@ -337,8 +337,9 @@ describe("Chart axis domains in a real browser", () => {
       expect((horizontal ? scales.y : scales.x)!.domain()).toEqual(["A", "B"]);
       const bars = container.querySelectorAll<SVGPathElement>(".chart-bar");
       expect(bars).toHaveLength(2);
+      // Domain ratios and seams concern fill geometry, excluding stroke.
       const [negative, positive] = Array.from(bars, (bar) =>
-        bar.getBoundingClientRect(),
+        DOMRect.fromRect(bar.getBBox()),
       );
       expect(horizontal ? negative.right : negative.top).toBeCloseTo(
         horizontal ? positive.left : positive.bottom,
@@ -349,12 +350,13 @@ describe("Chart axis domains in a real browser", () => {
       ).toBeCloseTo(1.5);
       await userEvent.hover(bars[0]);
       await expect.poll(() => tooltip(container)).toContain(":-8");
+      const positiveClient = bars[1].getBoundingClientRect();
       // The positive bar's original center (value 6) lies beyond the upper
       // bound 2.5. Its visible truncated portion must remain interactive.
       expect(
         document.elementsFromPoint(
-          positive.x + positive.width / 2,
-          positive.y + positive.height / 2,
+          positiveClient.x + positiveClient.width / 2,
+          positiveClient.y + positiveClient.height / 2,
         ),
       ).not.toContain(bars[1]);
       // Aim at value 1.25, halfway through the visible [0, 2.5] portion;

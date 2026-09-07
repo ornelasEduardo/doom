@@ -22,6 +22,7 @@ export default [
       "dist/**",
       "build/**",
       "coverage/**",
+      ".cache/**",
       ".next/**",
       "storybook-static/**",
       "node_modules/**",
