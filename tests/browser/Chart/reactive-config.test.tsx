@@ -36,13 +36,13 @@ it.each(["configuration", "responsive width"])(
     const example = (width: number, label: string) => (
       <DesignSystemProvider>
         <Chart
+          behaviors={[behavior]}
+          d3Config={{ yAxisLabel: label }}
           data={rows}
+          style={{ width, height: 360 }}
+          type="line"
           x="x"
           y="y"
-          type="line"
-          behaviors={[behavior]}
-          style={{ width, height: 360 }}
-          d3Config={{ yAxisLabel: label }}
         >
           <Chart.Plot>
             <Chart.Series />
@@ -85,12 +85,12 @@ it.each([true, false])(
     const example = (margin?: Config["margin"]) => (
       <DesignSystemProvider>
         <Chart
+          d3Config={{ showAxes, margin }}
           data={rows}
+          style={{ width: 700, height: 360 }}
+          type="line"
           x="x"
           y="y"
-          type="line"
-          style={{ width: 700, height: 360 }}
-          d3Config={{ showAxes, margin }}
         >
           <Chart.Plot>
             <Chart.Series />
@@ -138,12 +138,12 @@ it("restores axis-free SVG margins after removing an initial override", async ()
   const example = (margin?: Config["margin"]) => (
     <DesignSystemProvider>
       <Chart
+        d3Config={{ showAxes: false, margin }}
         data={rows}
+        style={{ width: 700, height: 360 }}
+        type="line"
         x="x"
         y="y"
-        type="line"
-        style={{ width: 700, height: 360 }}
-        d3Config={{ showAxes: false, margin }}
       >
         <Chart.Plot>
           <Chart.Series />

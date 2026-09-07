@@ -20,11 +20,11 @@ it.each([true, false])(
     }
     const example = (margin?: Config["margin"]) => (
       <Root
+        d3Config={{ width: 600, height: 300, showAxes, margin }}
         data={rows}
+        type="line"
         x="x"
         y="y"
-        type="line"
-        d3Config={{ width: 600, height: 300, showAxes, margin }}
       >
         <Capture />
       </Root>
@@ -57,7 +57,7 @@ it("restores current axes defaults when an initial override is removed", () => {
     return null;
   }
   const example = (config: Config) => (
-    <Root data={rows} d3Config={config}>
+    <Root d3Config={config} data={rows}>
       <Capture />
     </Root>
   );
