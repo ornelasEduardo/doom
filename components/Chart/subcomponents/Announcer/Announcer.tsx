@@ -46,22 +46,23 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   const getY = yAccessor ? resolveAccessor(yAccessor as any) : null;
 
   const summary = React.useMemo(() => {
-    if (!data?.length || !getX || !getY) {
+    const rows = data?.filter((datum) => datum != null);
+    if (!rows?.length || !getX || !getY) {
       return "Empty chart.";
     }
 
     const xLabel = config?.xAxisLabel || "X";
     const yLabel = config?.yAxisLabel || "Y";
-    const xValues = data.map((d) => getX(d));
+    const xValues = rows.map((d) => getX(d));
     if (horizontal) {
       const values = xValues.map(Number).filter(Number.isFinite);
-      const categories = data.map((d) => getY(d));
-      return `${type || "Bar"} chart with ${data.length} data points. ${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}. ${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`;
+      const categories = rows.map((d) => getY(d));
+      return `${type || "Bar"} chart with ${rows.length} data points. ${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}. ${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`;
     }
-    const yValues = data.map((d) => Number(getY(d))).filter(Number.isFinite);
+    const yValues = rows.map((d) => Number(getY(d))).filter(Number.isFinite);
 
     const parts = [
-      `${type || "Line"} chart with ${data.length} data points.`,
+      `${type || "Line"} chart with ${rows.length} data points.`,
       `${xLabel} from ${describe(xValues[0])} to ${describe(xValues[xValues.length - 1])}.`,
     ];
 

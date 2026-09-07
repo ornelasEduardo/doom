@@ -4,6 +4,7 @@ import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
 import { d3 } from "../../utils/d3";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import { samplePosition } from "../../utils/sampleValidity";
 import {
   createScales,
   hasDomainOverride,
@@ -416,29 +417,35 @@ const refreshHover = (
       return [];
     }
     const datum = rows[index];
+    if (!scales.x || !scales.y) {
+      return [];
+    }
+    const xAccessor = item ? item.xAccessor : state.x;
+    const yAccessor = item ? item.yAccessor : state.y;
+    const sample = samplePosition(
+      datum,
+      xAccessor ? resolveAccessor(xAccessor) : () => index,
+      yAccessor ? resolveAccessor(yAccessor) : (value) => value,
+      scales.x,
+      scales.y,
+    );
+    if (!sample) {
+      return [];
+    }
     const geometry =
-      item?.type === "bar" && scales.x && scales.y
+      item?.type === "bar"
         ? barGeometry(item, datum, index, scales.x, scales.y)
         : null;
     const bar =
       geometry && bounded
         ? clipRectToPlot(geometry, state.dimensions)
         : geometry;
-    if (!scales.x || !scales.y || (item?.type === "bar" && !bar)) {
+    if (item?.type === "bar" && !bar) {
       return [];
     }
-    const xAccessor = item ? item.xAccessor : state.x;
-    const yAccessor = item ? item.yAccessor : state.y;
     const coordinate = bar
       ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
-      : {
-          x: (scales.x as (value: unknown) => number)(
-            xAccessor ? resolveAccessor(xAccessor)(datum) : index,
-          ),
-          y: (scales.y as (value: unknown) => number)(
-            yAccessor ? resolveAccessor(yAccessor)(datum) : datum,
-          ),
-        };
+      : sample;
     if (bounded && !isPointInPlot(coordinate, state.dimensions)) {
       return [];
     }

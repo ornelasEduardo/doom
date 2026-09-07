@@ -4,6 +4,7 @@ import { Sensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import { samplePosition } from "../../utils/sampleValidity";
 import { hasDomainOverride } from "../../utils/scales";
 
 /**
@@ -27,11 +28,17 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
     const state = chartStore.getState();
     const { scales, x: xAccessor, y: yAccessor } = state;
     const firstSeries = state.processedSeries?.[0];
-    const entries = (firstSeries?.data ?? state.data).map((datum, index) => ({
-      datum,
-      index,
-      series: firstSeries,
-    }));
+    const entries = (firstSeries?.data ?? state.data).flatMap((datum, index) =>
+      datum == null
+        ? []
+        : [
+            {
+              datum,
+              index,
+              series: firstSeries,
+            },
+          ],
+    );
     const firstCategory = firstSeries && categoryAccessor(firstSeries);
     const seen = new Set(
       entries.map((entry) =>
@@ -46,6 +53,9 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
         continue;
       }
       (series.data ?? []).forEach((datum, index) => {
+        if (datum == null) {
+          return;
+        }
         const category = resolveAccessor(accessor)(datum);
         if (!seen.has(category)) {
           entries.push({ datum, index, series });
@@ -79,6 +89,9 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
         if (accessor) {
           const getCategory = resolveAccessor(accessor);
           (series.data ?? []).forEach((datum, index) => {
+            if (datum == null) {
+              return;
+            }
             const value = getCategory(datum);
             // Match findIndex's first occurrence and strict equality for NaN.
             if (!Number.isNaN(value) && !indices.has(value)) {
@@ -94,19 +107,19 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
     const slices = entries
       .map((entry) => {
         const d = entry.datum;
+        const primaryPosition = samplePosition(
+          d,
+          xAccessor ? resolveAccessor(xAccessor) : (datum) => datum[0],
+          yAccessor ? resolveAccessor(yAccessor) : (datum) => datum[1],
+          xScale,
+          yScale,
+        );
         const primaryTarget = {
           type: "data-point",
           data: d,
           seriesId: "default",
           dataIndex: entry.index,
-          coordinate: {
-            x: (xScale as (v: unknown) => number)(
-              xAccessor ? resolveAccessor(xAccessor)(d) : d[0],
-            ),
-            y: (yScale as (v: unknown) => number)(
-              yAccessor ? resolveAccessor(yAccessor)(d) : d[1],
-            ),
-          },
+          coordinate: primaryPosition ?? { x: NaN, y: NaN },
           distance: 0,
         };
         const category = entry.series && categoryAccessor(entry.series);
@@ -122,6 +135,18 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
             return [];
           }
           const datum = series.data![index];
+          const sample = samplePosition(
+            datum,
+            series.xAccessor ? resolveAccessor(series.xAccessor) : () => index,
+            series.yAccessor
+              ? resolveAccessor(series.yAccessor)
+              : (value) => value,
+            xScale,
+            yScale,
+          );
+          if (!sample) {
+            return [];
+          }
           const geometry =
             series.type === "bar"
               ? barGeometry(series, datum, index, xScale, yScale)
@@ -133,20 +158,8 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
           if (series.type === "bar" && !bar) {
             return [];
           }
-          const x = bar
-            ? bar.x + bar.width / 2
-            : (xScale as (v: unknown) => number)(
-                series.xAccessor
-                  ? resolveAccessor(series.xAccessor)(datum)
-                  : index,
-              );
-          const y = bar
-            ? bar.y + bar.height / 2
-            : (yScale as (v: unknown) => number)(
-                series.yAccessor
-                  ? resolveAccessor(series.yAccessor)(datum)
-                  : datum,
-              );
+          const x = bar ? bar.x + bar.width / 2 : sample.x;
+          const y = bar ? bar.y + bar.height / 2 : sample.y;
           if (bounded && !isPointInPlot({ x, y }, state.dimensions)) {
             return [];
           }
@@ -164,8 +177,8 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
         });
         return targets.length || entry.series
           ? targets
-          : !bounded ||
-              isPointInPlot(primaryTarget.coordinate, state.dimensions)
+          : primaryPosition &&
+              (!bounded || isPointInPlot(primaryPosition, state.dimensions))
             ? [primaryTarget]
             : [];
       })
