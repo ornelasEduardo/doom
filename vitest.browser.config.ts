@@ -19,6 +19,14 @@ export default defineConfig({
       commands: { moveChartPointer },
       provider: playwright(),
       headless: true,
+      commands: {
+        async setReducedMotion(
+          { page },
+          preference: "reduce" | "no-preference",
+        ) {
+          await page.emulateMedia({ reducedMotion: preference });
+        },
+      },
       screenshotFailures: false,
       // A desktop viewport by default: the runner's own window is narrow
       // enough to read as mobile, which would mask any container-vs-viewport
