@@ -1,6 +1,6 @@
 import { InputAction } from "../../engine";
 import { resolveAccessor } from "../../types/accessors";
-import { Sensor } from "../../types/events";
+import { GenericSensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
@@ -10,7 +10,7 @@ import { hasDomainOverride } from "../../utils/scales";
  * Professional-grade Keyboard Sensor for A11y.
  * Allows navigating data points using ArrowKeys.
  */
-export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
+export const KeyboardSensor = (options: { name?: string } = {}): GenericSensor => {
   const { name = InteractionChannel.PRIMARY_HOVER } = options;
   let focusedIndex = -1;
 

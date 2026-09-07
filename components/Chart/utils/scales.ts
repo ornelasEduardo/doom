@@ -1,5 +1,6 @@
 import { ScaleBand, ScaleLinear, ScalePoint, ScaleTime } from "d3-scale";
 
+import type { AxisValue } from "../types/accessors";
 import { AxisDomain } from "../types/props";
 import { Scale } from "../types/scales";
 import { d3 } from "./d3";
@@ -20,7 +21,7 @@ export function createScales<T>(
   width: number,
   height: number,
   margin: { top: number; right: number; bottom: number; left: number },
-  x: (d: T) => string | number,
+  x: (d: T) => AxisValue,
   y: (d: T) => number,
   type?: "line" | "area" | "bar" | "scatter",
 ): {

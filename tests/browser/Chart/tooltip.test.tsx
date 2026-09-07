@@ -33,7 +33,7 @@ function Example({
   bars = false,
   custom = false,
 }: {
-  sensors?: Sensor[];
+  sensors?: Sensor<(typeof actual)[number]>[];
   horizontal?: boolean;
   bars?: boolean;
   custom?: boolean;
@@ -166,8 +166,8 @@ function transformTargets(
   transform: (
     targets: HoverInteraction["targets"],
   ) => HoverInteraction["targets"],
-  sensor: Sensor = Chart.sensors.DataHoverSensor({ verticalSlice: true }),
-): Sensor {
+  sensor: Sensor<(typeof actual)[number]> = Chart.sensors.DataHoverSensor({ verticalSlice: true }),
+): Sensor<(typeof actual)[number]> {
   return (event, context) =>
     sensor(event, {
       ...context,

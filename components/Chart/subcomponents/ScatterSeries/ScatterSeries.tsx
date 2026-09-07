@@ -8,7 +8,7 @@ import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/chart.store";
-import { Accessor } from "../../types";
+import { Accessor, AxisValue } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
@@ -16,8 +16,8 @@ import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
 interface ScatterSeriesProps<T> {
   data?: T[];
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   size?: Accessor<T, number>;
   color?: string;
   label?: string;

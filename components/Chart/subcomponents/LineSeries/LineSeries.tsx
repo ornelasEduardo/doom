@@ -9,7 +9,7 @@ import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/chart.store";
-import { Accessor } from "../../types";
+import { Accessor, AxisValue } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 import { describeDatum } from "../../utils/describe";
@@ -19,8 +19,8 @@ import styles from "./LineSeries.module.scss";
 
 interface LineSeriesProps<T> {
   data?: T[];
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   color?: string;
   className?: string;
   style?: React.CSSProperties;

@@ -1,6 +1,6 @@
 import { Engine } from "../engine";
 import { Store } from "../state/store/chart.store";
-import { Accessor, Config, SeriesType } from "./index";
+import { Accessor, AxisValue, Config, SeriesType } from "./index";
 import { XScale, YScale } from "./scales";
 import { D3Selection } from "./selection";
 
@@ -28,7 +28,7 @@ export interface RenderFrame<T = unknown> {
  * Internal components use this via the useChartContext hook.
  */
 export interface ContextValue<T = unknown> {
-  chartStore: Store;
+  chartStore: Store<T>;
   engine: Engine<T>; // Shared engine instance
   config: Config;
   isMobile: boolean;
@@ -51,8 +51,8 @@ export interface ContextValue<T = unknown> {
 
   type?: SeriesType;
   render?: (context: SeriesContext<T>) => void;
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
 }
 
 /**
@@ -73,5 +73,5 @@ export interface SeriesContext<T> extends RenderFrame<T> {
   colors: string[];
   styles: Record<string, string>;
   isMobile: boolean;
-  chartStore: Store;
+  chartStore: Store<T>;
 }

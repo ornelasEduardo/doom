@@ -79,3 +79,6 @@ export type Sensor<T = unknown> = (
   event: EngineEvent<T>,
   context: SensorContext<T>,
 ) => void;
+
+/** Built-in sensors can operate on the datum type chosen by each chart. */
+export type GenericSensor = <T>(...args: Parameters<Sensor<T>>) => void;

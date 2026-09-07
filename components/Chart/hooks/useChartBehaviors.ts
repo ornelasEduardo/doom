@@ -62,7 +62,7 @@ export const useChartBehaviors = <T>(
             Markers({
               on: InteractionChannel.PRIMARY_HOVER,
               radius: 8,
-            }) as Behavior<T>,
+            }),
           );
           break;
         case "bar":
@@ -72,7 +72,7 @@ export const useChartBehaviors = <T>(
               on: InteractionChannel.PRIMARY_HOVER,
               selector:
                 ".chart-bar-series .chart-bar, .chart-scatter-series circle",
-            }) as Behavior<T>,
+            }),
           );
           break;
         default:
@@ -96,7 +96,7 @@ export const useChartBehaviors = <T>(
           ({
             ...chartContext,
             g: gSelection,
-          }) as any,
+          }),
         getInteraction: (name: string) => {
           return (
             chartContext.chartStore.getState().interactions.get(name) || null

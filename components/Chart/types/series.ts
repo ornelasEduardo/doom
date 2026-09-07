@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Accessor } from "./accessors";
+import { Accessor, AxisValue } from "./accessors";
 import { SeriesType } from "./common";
 import { RenderFrame } from "./context";
 
@@ -13,8 +13,8 @@ export interface SeriesProps<T> {
   type?: SeriesType;
 
   // Cartesian accessors - string or function
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   orientation?: "vertical" | "horizontal";
   barWidth?: number | "auto";
   stackId?: string;
@@ -47,8 +47,8 @@ export interface Series {
   label: string;
   color: string;
   data?: any[];
-  xAccessor?: Accessor<any, string | number>;
-  yAccessor?: Accessor<any, string | number>;
+  xAccessor?: Accessor<any, AxisValue>;
+  yAccessor?: Accessor<any, AxisValue>;
   orientation?: "vertical" | "horizontal";
   barWidth?: number | "auto";
   stackId?: string;
