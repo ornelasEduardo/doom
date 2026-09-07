@@ -30,7 +30,7 @@ it("anchors keyboard cursors and tooltips to the selected point through layout c
         const line = chart
           .querySelector('line[class*="cursorLine"]')!
           .getBoundingClientRect();
-        return Math.abs(line.x - (point.x + point.width / 2));
+        return Math.abs(line.x + line.width / 2 - (point.x + point.width / 2));
       })
       .toBeLessThan(1);
     await expect
