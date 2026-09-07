@@ -305,3 +305,44 @@ describe("SpatialMap DOM Hit Testing", () => {
     expect(domCandidate).toBeUndefined();
   });
 });
+
+it("maps scaled padding-box coordinates to DOM hits and local distances", () => {
+  const map = new SpatialMap();
+  const container = document.createElement("div");
+  container.style.cssText = "border-left: 4px solid; border-top: 6px solid";
+  document.body.append(container);
+  Object.defineProperties(container, {
+    offsetWidth: { value: 800 },
+    offsetHeight: { value: 400 },
+  });
+  vi.spyOn(container, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(100, 200, 600, 200),
+  );
+  const mark = document.createElement("div");
+  mark.setAttribute(CHART_DATA_ATTRS.TYPE, "bar");
+  mark.setAttribute(CHART_DATA_ATTRS.SERIES_ID, "actual");
+  mark.setAttribute(CHART_DATA_ATTRS.INDEX, "0");
+  container.append(mark);
+  vi.spyOn(mark, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(250, 240, 30, 20),
+  );
+  const hitTest = vi
+    .spyOn(document, "elementsFromPoint")
+    .mockImplementation((x, y) =>
+      x >= 250 && x <= 280 && y >= 240 && y <= 260 ? [mark] : [],
+    );
+  const data = { value: 50 };
+  map.setContainer(container);
+  map.updateIndex([
+    { x: 1000, y: 1000, seriesId: "actual", dataIndex: 0, data },
+  ]);
+  try {
+    const candidate = map.find(0, 0, { x: 216, y: 94 })[0];
+    expect(candidate?.data).toBe(data);
+    expect(candidate?.coordinate).toEqual({ x: 216, y: 94 });
+    expect(candidate?.distance).toBe(0);
+  } finally {
+    hitTest.mockRestore();
+    container.remove();
+  }
+});
