@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { EngineEvent, InputAction, InputSource } from "../../engine";
+import { Engine, EngineEvent, InputAction, InputSource } from "../../engine";
 import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DataHoverSensor } from "./DataHoverSensor";
@@ -254,4 +254,65 @@ describe("touch inspection", () => {
     );
     expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
   });
+});
+
+describe("engine-queued touch cancellation", () => {
+  it.each([1, 2])(
+    "does not restore a queued reading after cancellation by pointer %i",
+    (cancelId) => {
+      vi.useFakeTimers();
+      const ctx = createMockContext();
+      const sensor = DataHoverSensor();
+      const actions: InputAction[] = [];
+      const engine = new Engine({
+        onEvent: (event) => {
+          actions.push(event.signal.action);
+          sensor(event, ctx);
+        },
+      });
+      engine.updateBounds(new DOMRect(0, 0, 200, 200), {
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 200,
+      });
+      engine.updateData([
+        { x: 50, y: 50, data: { value: 10 }, seriesId: "a", dataIndex: 0 },
+      ]);
+      const signal = {
+        id: 1,
+        source: InputSource.TOUCH,
+        action: InputAction.START,
+        x: 50,
+        y: 50,
+        timestamp: 0,
+        userId: "local",
+      };
+      try {
+        engine.input(signal);
+        expect(
+          ctx.getInteraction(InteractionChannel.PRIMARY_HOVER),
+        ).not.toBeNull();
+        engine.input({ ...signal, action: InputAction.MOVE });
+        engine.input({ ...signal, id: cancelId, action: InputAction.CANCEL });
+        vi.runAllTimers();
+        expect(actions).toEqual([InputAction.START, InputAction.CANCEL]);
+        expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
+
+        engine.input({ ...signal, action: InputAction.START });
+        engine.input({ ...signal, action: InputAction.MOVE });
+        vi.runAllTimers();
+        expect(
+          ctx.getInteraction(InteractionChannel.PRIMARY_HOVER),
+        ).not.toBeNull();
+        expect(actions.slice(-2)).toEqual([
+          InputAction.START,
+          InputAction.MOVE,
+        ]);
+      } finally {
+        engine.dispose();
+        vi.useRealTimers();
+      }
+    },
+  );
 });

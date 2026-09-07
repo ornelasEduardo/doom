@@ -6,6 +6,12 @@ import { afterEach, expect, it } from "vitest";
 import { cdp } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
+import { useChartContext } from "../../../components/Chart/context";
+import {
+  Engine,
+  InputAction,
+  type InputSignal,
+} from "../../../components/Chart/engine";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 const rows = [
@@ -43,6 +49,11 @@ const centre = (element: Element) => {
   return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
 };
 const mount = async () => {
+  let engine: Engine | null = null;
+  const CaptureEngine = () => {
+    engine = useChartContext().engine;
+    return null;
+  };
   await cdp().send("Emulation.setTouchEmulationEnabled", { enabled: true });
   const result = render(
     <DesignSystemProvider>
@@ -54,6 +65,7 @@ const mount = async () => {
           x="month"
           y="actual"
         >
+          <CaptureEngine />
           <Chart.Plot>
             <Chart.Series showDots label="Actual" type="line" y="actual" />
             <Chart.Series showDots label="Forecast" type="line" y="forecast" />
@@ -70,7 +82,7 @@ const mount = async () => {
   const root = result.container.querySelector("[data-chart-container]")!;
   const live = root.querySelector('[aria-live="polite"]')!;
   const point = centre(root.querySelectorAll("circle")[1]);
-  return { ...result, root, live, point };
+  return { ...result, root, live, point, engine: engine! };
 };
 afterEach(async () => {
   if (touching) {
@@ -128,3 +140,58 @@ it("native vertical swiping scrolls the page and clears inspection", async () =>
   expect(cancelled).toBe(true);
   await expect.poll(() => live.textContent).toBe("");
 });
+
+it.each(["pointercancel", "outside touch"] as const)(
+  "does not revive an engine-queued reading after native %s",
+  async (dismissal) => {
+    const { container, root, live, point, engine } = await mount();
+    let start: InputSignal | null = null;
+    root.addEventListener(
+      "pointerdown",
+      (event) => {
+        start = engine.createSignal(event as PointerEvent, InputAction.START);
+      },
+      { once: true },
+    );
+    await touch("touchStart", point);
+    if (dismissal === "outside touch") {
+      await touch("touchEnd");
+    }
+    await expect.poll(() => live.textContent).toContain("Feb");
+    expect(start).not.toBeNull();
+    let queued = false;
+    const eventType =
+      dismissal === "pointercancel" ? "pointercancel" : "pointerdown";
+    // Queue a real engine MOVE immediately before native dismissal reaches the
+    // layer, deterministically reproducing work that passed its first RAF.
+    const queueMove = (event: PointerEvent) => {
+      expect(event.isTrusted).toBe(true);
+      expect(event.pointerType).toBe("touch");
+      if (dismissal === "outside touch") {
+        expect(event.pointerId).not.toBe(start!.id);
+      } else {
+        expect(event.pointerId).toBe(start!.id);
+      }
+      engine.input({ ...start!, action: InputAction.MOVE });
+      queued = true;
+    };
+    window.addEventListener(eventType, queueMove, {
+      capture: true,
+      once: true,
+    });
+    try {
+      if (dismissal === "pointercancel") {
+        await touch("touchCancel");
+      } else {
+        await tap(centre(container.querySelector("button")!));
+      }
+      expect(queued).toBe(true);
+      await expect.poll(() => live.textContent).toBe("");
+      await expect
+        .poll(() => root.querySelector("[data-chart-tooltip]"))
+        .toBeNull();
+    } finally {
+      window.removeEventListener(eventType, queueMove, true);
+    }
+  },
+);
