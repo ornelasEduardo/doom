@@ -200,6 +200,7 @@ export const SharedFixedYBounds: Story = {
   tags: ["interaction"],
   play: checkEndpointLayers,
   parameters: {
+    a11y: { test: "error" },
     docs: {
       description: {
         story:
@@ -220,6 +221,7 @@ export const SharedFixedYBounds: Story = {
             yAxisLabel: "Revenue (USD thousands)",
           }}
           data={revenue}
+          title={`${region} region revenue`}
           type="line"
           x="month"
           y="revenue"
@@ -659,6 +661,7 @@ export const Flat: Story = {
 };
 
 export const IntegratedChart: Story = {
+  parameters: { a11y: { test: "error" } },
   args: {
     ...LineChart.args,
     title: null,
@@ -725,16 +728,14 @@ export const IntegratedChart: Story = {
         <Stack gap={4} style={{ padding: "0 20px 20px" }}>
           <Stack gap={2}>
             {[
-              { label: "Incoming", value: "+$4,200", color: "var(--success)" },
+              { label: "Incoming", value: "+$4,200" },
               {
                 label: "Outgoing",
                 value: "-$1,150",
-                color: "var(--error)",
               },
               {
                 label: "Investments",
                 value: "+$850",
-                color: "var(--success)",
               },
             ].map((item) => (
               <Slat
@@ -743,7 +744,6 @@ export const IntegratedChart: Story = {
                   <Text
                     style={{
                       fontWeight: 600,
-                      color: item.color,
                     }}
                     variant="body"
                   >
