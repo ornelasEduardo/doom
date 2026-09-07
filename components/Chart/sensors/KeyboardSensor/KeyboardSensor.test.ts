@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { EngineEvent, InputAction } from "../../engine";
+import { EngineEvent, InputAction, InputSource } from "../../engine";
 import {
   createChartStore,
   registerSeries,
@@ -64,13 +64,22 @@ const createMockContext = (overrides: Partial<State> = {}): SensorContext => {
 };
 
 const createMockEvent = (action: InputAction, key?: string): EngineEvent => ({
-  signal: { action, type: "keyboard", key, source: "keyboard" },
-  primaryCandidate: null,
+  signal: {
+    action,
+    key,
+    source: InputSource.KEYBOARD,
+    x: 0,
+    y: 0,
+    id: 1,
+    timestamp: 0,
+    userId: "local",
+  },
+  primaryCandidate: undefined,
   candidates: [],
   sliceCandidates: [],
   chartX: 0,
   chartY: 0,
-  isTouch: false,
+  isWithinPlot: true,
 });
 
 // =============================================================================
@@ -235,6 +244,8 @@ describe("KeyboardSensor plot domains", () => {
       processedSeries: [
         {
           id: "first",
+          label: "first",
+          color: "red",
           type: "line",
           xAccessor: "x",
           yAccessor: "y",
@@ -245,6 +256,8 @@ describe("KeyboardSensor plot domains", () => {
         },
         {
           id: "later",
+          label: "later",
+          color: "red",
           type: "line",
           xAccessor: "x",
           yAccessor: "y",
@@ -284,6 +297,8 @@ describe("KeyboardSensor plot domains", () => {
         processedSeries: [
           {
             id: "bars",
+            label: "bars",
+            color: "red",
             type: "bar",
             orientation,
             xAccessor: "x",
@@ -531,8 +546,24 @@ describe("KeyboardSensor category lookup cost", () => {
         y: d3.scaleLinear().domain([0, 10]).range([100, 0]),
       },
       processedSeries: [
-        { id: "first", type: "line", xAccessor, yAccessor: "y", data },
-        { id: "second", type: "line", xAccessor, yAccessor: "y", data },
+        {
+          id: "first",
+          label: "first",
+          color: "red",
+          type: "line",
+          xAccessor,
+          yAccessor: "y",
+          data,
+        },
+        {
+          id: "second",
+          label: "second",
+          color: "red",
+          type: "line",
+          xAccessor,
+          yAccessor: "y",
+          data,
+        },
       ],
     });
     KeyboardSensor()(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);

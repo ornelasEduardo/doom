@@ -58,7 +58,8 @@ for (const horizontal of [false, true]) {
     await settle();
     const bars = () =>
       Array.from(container.querySelectorAll<SVGPathElement>(".chart-bar"));
-    const [a, b, b2, a2] = bars().map((el) => el.getBoundingClientRect());
+    // Compare fill geometry: Firefox client bounds include the painted stroke.
+    const [a, b, b2, a2] = bars().map((el) => DOMRect.fromRect(el.getBBox()));
     for (const box of [a, b, b2, a2]) {
       expect(horizontal ? box.height : box.width).toBeCloseTo(24);
       expect(horizontal ? box.width : box.height).toBeGreaterThan(5);
@@ -271,9 +272,11 @@ it("inherits the first explicit horizontal orientation for an omitted sibling", 
     </Chart.Root>,
   );
   await settle();
-  const bars = Array.from(container.querySelectorAll(".chart-bar"));
+  const bars = Array.from(
+    container.querySelectorAll<SVGPathElement>(".chart-bar"),
+  );
   expect(bars).toHaveLength(4);
-  const [a, , , a2] = bars.map((el) => el.getBoundingClientRect());
+  const [a, , , a2] = bars.map((el) => DOMRect.fromRect(el.getBBox()));
   expect(a.right).toBeCloseTo(a2.left);
   expect(a.height).toBeCloseTo(24);
   await userEvent.hover(bars[3]);

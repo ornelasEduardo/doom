@@ -64,8 +64,9 @@ describe("useEngine - Lifecycle", () => {
 
 describe("useEngine - Data Sync", () => {
   it("should sync data to spatial index when data changes", async () => {
+    const initialData: typeof mockData = [];
     const { result, rerender } = renderHook(({ data }) => useEngine({ data }), {
-      initialProps: { data: [] },
+      initialProps: { data: initialData },
     });
 
     // Update with new data

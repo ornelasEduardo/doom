@@ -295,7 +295,7 @@ describe("SpatialMap", () => {
 
 describe("Engine", () => {
   let engine: Engine;
-  let handler: ReturnType<typeof vi.fn>;
+  let handler: ReturnType<typeof vi.fn<(event: EngineEvent) => void>>;
 
   beforeEach(() => {
     handler = vi.fn();
@@ -383,7 +383,7 @@ describe("Engine", () => {
 
       const event = localHandler.mock.calls[0][0] as EngineEvent;
       expect(event.candidates.length).toBe(2);
-      expect(event.primaryCandidate.dataIndex).toBe(3);
+      expect(event.primaryCandidate?.dataIndex).toBe(3);
 
       localEngine.dispose();
     });

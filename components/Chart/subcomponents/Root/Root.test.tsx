@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useChartContext } from "../../context";
+import type { Store } from "../../state/store/chart.store";
 import { Root } from "./Root";
 import styles from "./Root.module.scss";
 
@@ -111,4 +113,40 @@ describe("Root", () => {
     );
     expect(container.firstChild).toHaveStyle({ backgroundColor: "red" });
   });
+});
+
+it("seeds plot dimensions from layout before ResizeObserver delivers", () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe = vi.fn();
+      disconnect = vi.fn();
+    },
+  );
+  const width = vi
+    .spyOn(HTMLElement.prototype, "clientWidth", "get")
+    .mockReturnValue(500);
+  const height = vi
+    .spyOn(HTMLElement.prototype, "clientHeight", "get")
+    .mockReturnValue(300);
+  let store: Store | undefined;
+  function Capture() {
+    store = useChartContext().chartStore;
+    return null;
+  }
+  try {
+    const { unmount } = render(
+      <Root data={[{ x: 0, y: 1 }]} x="x" y="y">
+        <Capture />
+      </Root>,
+    );
+    expect(store?.getState().dimensions).toMatchObject({
+      width: 500,
+      height: 300,
+    });
+    unmount();
+  } finally {
+    width.mockRestore();
+    height.mockRestore();
+  }
 });

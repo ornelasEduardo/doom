@@ -4,7 +4,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import { EngineEvent, InputAction } from "../../engine";
+import { EngineEvent, InputAction, InputSource } from "../../engine";
 import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DragSensor } from "./DragSensor";
@@ -52,13 +52,20 @@ const createMockEvent = (
   candidate?: any,
   coords = { x: 0, y: 0 },
 ): EngineEvent => ({
-  signal: { action, type: "pointer", ...coords, source: "mouse" },
+  signal: {
+    action,
+    ...coords,
+    source: InputSource.MOUSE,
+    id: 1,
+    timestamp: 0,
+    userId: "local",
+  },
   primaryCandidate: candidate || null,
   candidates: candidate ? [candidate] : [],
   sliceCandidates: [],
   chartX: coords.x,
   chartY: coords.y,
-  isTouch: false,
+  isWithinPlot: true,
 });
 
 // =============================================================================

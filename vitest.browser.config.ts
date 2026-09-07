@@ -12,10 +12,15 @@ import { moveChartPointer } from "./tests/browser/Chart/coordinateCommands";
  * resolve. These tests cover exactly what that environment cannot see.
  */
 export default defineConfig({
+  cacheDir: ".cache/vitest.browser",
   test: {
     include: ["tests/browser/**/*.test.tsx"],
     browser: {
       enabled: true,
+      api: {
+        port: Number(process.env.BROWSER_TEST_PORT || 63315),
+        strictPort: true,
+      },
       provider: playwright(),
       headless: true,
       commands: {

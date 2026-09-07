@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { State } from "../../state/store/chart.store";
 import { d3 } from "../../utils/d3";
 import { findClosestTargets } from "./search";
 
@@ -7,7 +8,7 @@ describe("findClosestTargets - Interaction Radius", () => {
   const xScale = d3.scaleLinear().domain([0, 100]).range([0, 100]);
   const yScale = d3.scaleLinear().domain([0, 100]).range([100, 0]);
 
-  const mockState: Partial<ChartState> = {
+  const mockState: Partial<State> = {
     processedSeries: [
       {
         id: "s1",

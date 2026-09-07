@@ -1,73 +1,48 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { ChartContext, ChartContextValue } from "../../context";
+import { ChartContext } from "../../context";
+import { Engine } from "../../engine";
+import {
+  createChartStore,
+  updateChartDimensions,
+  updateChartState,
+} from "../../state/store/chart.store";
+import type { ContextValue } from "../../types/context";
 import { Legend } from "./Legend";
 
-const mockContext: ChartContextValue<unknown> = {
+const config = {
+  margin: { top: 20, right: 20, bottom: 30, left: 40 },
+  showAxes: true,
+  grid: false,
+  showDots: false,
+};
+const chartStore = createChartStore(config);
+updateChartDimensions(chartStore, 500, 300);
+updateChartState(chartStore, {
+  dimensions: chartStore.getState().dimensions,
   data: [],
-  width: 500,
-  height: 300,
+});
+chartStore.setState({
+  processedSeries: [
+    { id: "series-a", label: "Series A", color: "red" },
+    { id: "series-b", label: "Series B", color: "blue" },
+  ],
+});
+const mockContext: ContextValue = {
+  chartStore,
+  engine: new Engine(),
+  config,
   isMobile: false,
-  config: {
-    margin: { top: 20, right: 20, bottom: 30, left: 40 },
-    showAxes: true,
-    grid: false,
-    showDots: false,
-  },
   colorPalette: ["var(--primary)", "var(--secondary)"],
   styles: {},
-  resolveInteraction: vi.fn(),
+  resolveInteraction: () => null,
   type: "line",
-  seriesStore: {
-    getState: () => ({
-      series: new Map(),
-      processedSeries: [
-        { id: "series-a", label: "Series A", color: "red" },
-        { id: "series-b", label: "Series B", color: "blue" },
-      ],
-    }),
-    setState: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-    useStore: (selector: any) =>
-      selector({
-        series: new Map(),
-        processedSeries: [
-          { id: "series-a", label: "Series A", color: "red" },
-          { id: "series-b", label: "Series B", color: "blue" },
-        ],
-      }),
-  },
-  chartStore: {
-    getState: () => ({
-      series: new Map(),
-      processedSeries: [
-        { id: "series-a", label: "Series A", color: "red" },
-        { id: "series-b", label: "Series B", color: "blue" },
-      ],
-      interactions: new Map(),
-      scales: { x: null, y: null },
-      dimensions: { width: 500, height: 300 },
-    }),
-    setState: vi.fn(),
-    subscribe: vi.fn(() => vi.fn()),
-    useStore: (selector: any) =>
-      selector({
-        series: new Map(),
-        processedSeries: [
-          { id: "series-a", label: "Series A", color: "red" },
-          { id: "series-b", label: "Series B", color: "blue" },
-        ],
-        interactions: new Map(),
-        scales: { x: null, y: null },
-        dimensions: { width: 500, height: 300 },
-      }),
-  } as any,
 };
 
 const renderWithContext = (
   ui: React.ReactNode,
-  context: ChartContextValue<unknown> = mockContext,
+  context: ContextValue = mockContext,
 ) => {
   return render(
     <ChartContext.Provider value={context}>{ui}</ChartContext.Provider>,
@@ -97,19 +72,9 @@ describe("Legend", () => {
   });
 
   it("returns null when no items", () => {
-    const emptyContext = {
+    const emptyContext: ContextValue = {
       ...mockContext,
-      legendItems: [],
-      seriesStore: {
-        ...mockContext.seriesStore,
-        useStore: (selector: any) =>
-          selector({ series: new Map(), processedSeries: [] }),
-      },
-      chartStore: {
-        ...mockContext.chartStore,
-        useStore: (selector: any) =>
-          selector({ series: new Map(), processedSeries: [] }),
-      },
+      chartStore: createChartStore(config),
     };
     const { container } = renderWithContext(<Legend />, emptyContext);
     expect(container.firstChild).toBeNull();
