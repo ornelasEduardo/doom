@@ -1,9 +1,9 @@
 import {
+  type Accessor,
+  type Behavior,
   Chart,
   type ChartProps,
   type Sensor,
-  type Behavior,
-  type Accessor,
   type SeriesProps,
 } from "doom-design-system";
 
@@ -35,11 +35,11 @@ const props: ChartProps<Row> = {
 <Chart.Root {...props} />;
 <Chart
   data={rows}
+  sensors={[sensor]}
   x={(row) => row.category}
   y={(row) => row.value}
-  sensors={[sensor]}
 />;
-<Chart.Root data={rows} x="category" y="value" sensors={[sensor]} />;
+<Chart.Root data={rows} sensors={[sensor]} x="category" y="value" />;
 const key: Accessor<Row, number> = "value";
 const fn: Accessor<Row, number> = (row) => row.value;
 // @ts-expect-error Object-valued keys are not Cartesian coordinates.
@@ -67,7 +67,7 @@ const wrongBehaviorProps: ChartProps<Row> = {
 // @ts-expect-error JSX inference must not widen the datum to accept an incompatible sensor.
 <Chart data={rows} sensors={[wrongSensor]} />;
 // @ts-expect-error Root must reject incompatible behaviors too.
-<Chart.Root data={rows} behaviors={[wrongBehavior]} />;
+<Chart.Root behaviors={[wrongBehavior]} data={rows} />;
 const composed: ChartProps<Row> = {
   data: rows,
   sensors: [
@@ -90,13 +90,13 @@ const seriesObject: SeriesProps<Row> = { x: "object" };
 
 const checkedSensor: Sensor<Row> = (event, context) => {
   // @ts-expect-error Candidate data retains Row, not an untyped datum.
-  event.primaryCandidate?.data?.other;
+  void event.primaryCandidate?.data?.other;
   // @ts-expect-error Store data retains Row inside a sensor.
-  context.getChartContext().chartStore.getState().data[0].other;
+  void context.getChartContext().chartStore.getState().data[0].other;
 };
 const checkedBehavior: Behavior<Row> = (context) => {
   // @ts-expect-error Store data retains Row inside a behavior.
-  context.getChartContext().chartStore.getState().data[0].other;
+  void context.getChartContext().chartStore.getState().data[0].other;
 };
 
 const observer: Sensor<Row> = () => {};
@@ -104,8 +104,8 @@ const sensorDefaults = [
   Chart.sensors.DataHoverSensor(),
   Chart.sensors.KeyboardSensor(),
 ];
-<Chart data={rows} x="category" y="value" sensors={sensorDefaults} />;
-<Chart data={rows} x="category" y="value" sensors={[observer]} />;
+<Chart data={rows} sensors={sensorDefaults} x="category" y="value" />;
+<Chart data={rows} sensors={[observer]} x="category" y="value" />;
 <Chart.Root data={rows} x="category" y="value">
   <Chart.Plot>
     <Chart.Series x="category" y="value" />

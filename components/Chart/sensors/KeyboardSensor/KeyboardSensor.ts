@@ -10,7 +10,9 @@ import { hasDomainOverride } from "../../utils/scales";
  * Professional-grade Keyboard Sensor for A11y.
  * Allows navigating data points using ArrowKeys.
  */
-export const KeyboardSensor = (options: { name?: string } = {}): GenericSensor => {
+export const KeyboardSensor = (
+  options: { name?: string } = {},
+): GenericSensor => {
   const { name = InteractionChannel.PRIMARY_HOVER } = options;
   let focusedIndex = -1;
 

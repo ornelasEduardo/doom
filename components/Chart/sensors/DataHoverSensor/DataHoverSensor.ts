@@ -31,7 +31,9 @@ export interface HoverSensorOptions {
  * The DataHoverSensor detects pointer movements over the chart plot
  * and identifies the closest data targets.
  */
-export const DataHoverSensor = (options: HoverSensorOptions = {}): GenericSensor => {
+export const DataHoverSensor = (
+  options: HoverSensorOptions = {},
+): GenericSensor => {
   const {
     name = InteractionChannel.PRIMARY_HOVER,
     exactHit = false,

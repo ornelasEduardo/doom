@@ -5,8 +5,8 @@ import { afterEach, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import {
-  Chart,
   type Behavior,
+  Chart,
   type Sensor,
 } from "../../../components/Chart/Chart";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
@@ -45,26 +45,26 @@ it.each([false, true])(
     const { container } = render(
       <DesignSystemProvider>
         <Component
-          data={rows}
-          type="line"
-          x="category"
-          y="value"
-          style={{ width: 650, height: 400 }}
-          d3Config={{ showDots: true }}
-          sensors={[
-            Chart.sensors.DataHoverSensor({ verticalSlice: true }),
-            Chart.sensors.KeyboardSensor(),
-            sensor,
-          ]}
           behaviors={[
             Chart.behaviors.Tooltip(),
             Chart.behaviors.Cursor(),
             behavior,
           ]}
+          d3Config={{ showDots: true }}
+          data={rows}
+          sensors={[
+            Chart.sensors.DataHoverSensor({ verticalSlice: true }),
+            Chart.sensors.KeyboardSensor(),
+            sensor,
+          ]}
+          style={{ width: 650, height: 400 }}
+          type="line"
+          x="category"
+          y="value"
         >
           <Chart.Plot>
-            <Chart.Series data={rows} type="line" label="Actual" />
-            <Chart.Series data={forecast} type="line" label="Forecast" />
+            <Chart.Series data={rows} label="Actual" type="line" />
+            <Chart.Series data={forecast} label="Forecast" type="line" />
           </Chart.Plot>
         </Component>
       </DesignSystemProvider>,
@@ -113,12 +113,12 @@ it("excludes nullable accessor categories from the browser bar domain", async ()
   render(
     <DesignSystemProvider>
       <Chart
+        behaviors={[inspect]}
         data={samples}
+        style={{ width: 650, height: 400 }}
         type="bar"
         x={(row) => row.category}
         y="value"
-        style={{ width: 650, height: 400 }}
-        behaviors={[inspect]}
       />
     </DesignSystemProvider>,
   );

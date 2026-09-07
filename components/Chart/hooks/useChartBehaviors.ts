@@ -92,11 +92,10 @@ export const useChartBehaviors = <T>(
 
     const cleanups = behaviors.map((behavior) => {
       return behavior({
-        getChartContext: () =>
-          ({
-            ...chartContext,
-            g: gSelection,
-          }),
+        getChartContext: () => ({
+          ...chartContext,
+          g: gSelection,
+        }),
         getInteraction: (name: string) => {
           return (
             chartContext.chartStore.getState().interactions.get(name) || null
