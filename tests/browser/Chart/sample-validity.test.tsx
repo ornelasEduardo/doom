@@ -1,8 +1,8 @@
 import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { commands, page, userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
 import { useChartContext } from "../../../components/Chart/context";
@@ -14,6 +14,7 @@ import {
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 
 type Row = { x: number | null; y: number | null | undefined };
+beforeEach(() => page.viewport(1200, 700));
 afterEach(cleanup);
 function Capture({ save }: { save: (store: Store) => void }) {
   save(useChartContext().chartStore);
@@ -23,23 +24,24 @@ const hover = (store: Store) =>
   store.getState().interactions.get(InteractionChannel.PRIMARY_HOVER) as
     | HoverInteraction<Row>
     | undefined;
-// Aim one pixel inside the plot; rounded pointer coordinates can fall outside
-// a fractional SVG endpoint even when Playwright targets the circle center.
-const hoverMark = (mark: Element, store: Store) =>
-  userEvent.hover(mark, {
-    position: {
-      x:
-        Number(mark.getAttribute("cx")) <
-        store.getState().dimensions.innerWidth / 2
-          ? 6
-          : 4,
-      y:
-        Number(mark.getAttribute("cy")) <
-        store.getState().dimensions.innerHeight / 2
-          ? 6
-          : 4,
-    },
-  });
+// Stay inside the plot while accounting for browser-specific SVG stroke bounds.
+const hoverMark = (mark: Element, store: Store) => {
+  const box = mark.getBoundingClientRect();
+  return commands.moveChartPointer(
+    box.left +
+      box.width / 2 +
+      (Number(mark.getAttribute("cx")) <
+      store.getState().dimensions.innerWidth / 2
+        ? 1
+        : -1),
+    box.top +
+      box.height / 2 +
+      (Number(mark.getAttribute("cy")) <
+      store.getState().dimensions.innerHeight / 2
+        ? 1
+        : -1),
+  );
+};
 const sparse: Row[] = new Array(5);
 sparse[1] = { x: 1, y: 10 };
 sparse[3] = { x: 3, y: 0 };
@@ -133,7 +135,7 @@ function example(
   );
 }
 
-describe.each(["line", "area"] as const)("%s validity in Chromium", (type) => {
+describe.each(["line", "area"] as const)("%s sample validity", (type) => {
   it.each(cases)(
     "renders %s gaps and limits hover/keyboard to original valid indices",
     async (_, data, indices, segments) => {
