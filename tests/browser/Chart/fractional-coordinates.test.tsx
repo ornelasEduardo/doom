@@ -3,7 +3,7 @@ import "../../../styles/globals.scss";
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, expect, it } from "vitest";
-import { commands, page } from "vitest/browser";
+import { commands, page, server } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
 import {
@@ -20,11 +20,12 @@ it.each([
   ["border-box", 0.75],
   ["content-box", 0.75],
 ] as const)(
-  "keeps native pointer boundaries exact for fractional %s at scale %s",
+  "maps delivered native pointers across fractional %s boundaries at scale %s",
   async (boxSizing, scale) => {
     // Fit the runner window without its preview transform.
     await page.viewport(1200, 700);
     let latest: EngineEvent | undefined;
+    let native: { x: number; y: number } | undefined;
     const observe = (event: EngineEvent) => {
       if (event.signal.action === InputAction.MOVE) {
         latest = event;
@@ -52,6 +53,9 @@ it.each([
             type="line"
             x="x"
             y="y"
+            onPointerMove={(event) => {
+              native = { x: event.clientX, y: event.clientY };
+            }}
           >
             <Chart.Plot>
               <Chart.Series type="line" />
@@ -71,28 +75,79 @@ it.each([
     const width = Number(plot.getAttribute("width"));
     const height = Number(plot.getAttribute("height"));
     const rect = plot.getBoundingClientRect();
-    const hover = async (x: number, y: number) => {
+    const rootRect = container
+      .querySelector("[data-chart-container]")!
+      .getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    const borderWidth = boxSizing === "border-box" ? 600.25 : 631.75;
+    const borderHeight = boxSizing === "border-box" ? 300.25 : 323.75;
+    const hover = async (clientX: number, clientY: number) => {
       latest = undefined;
-      await commands.moveChartPointer(
-        rect.left + x * scale,
-        rect.top + y * scale,
-      );
+      native = undefined;
+      await commands.moveChartPointer(clientX, clientY);
       await expect.poll(() => latest).toBeDefined();
+      expect(native).toBeDefined();
+      // Firefox/WebKit deliver integer client coordinates; Firefox also
+      // quantizes transformed bounds. Assert the delivered event, not the request.
+      const expectedX =
+        ((native!.x - svgRect.left) * borderWidth) / rootRect.width - 40;
+      const expectedY =
+        ((native!.y - svgRect.top) * borderHeight) / rootRect.height - 20;
+      // Only allow floating-point operation-order noise, far below a layout pixel.
+      expect(latest!.chartX).toBeCloseTo(expectedX, 12);
+      expect(latest!.chartY).toBeCloseTo(expectedY, 12);
+      expect(latest!.isWithinPlot).toBe(
+        expectedX >= 0 &&
+          expectedX <= width &&
+          expectedY >= 0 &&
+          expectedY <= height,
+      );
+      if (server.browser === "chromium") {
+        expect(native).toEqual({ x: clientX, y: clientY });
+      }
     };
-    await hover(0, height / 2);
-    expect(latest?.chartX).toBe(0);
-    expect(latest?.isWithinPlot).toBe(true);
-    await hover(width / 2, 0);
-    expect(latest?.chartY).toBe(0);
-    expect(latest?.isWithinPlot).toBe(true);
-    await hover(width, height / 2);
-    expect(latest?.chartX).toBe(width);
-    expect(latest?.isWithinPlot).toBe(true);
-    await hover(width / 2, height);
-    expect(latest?.chartY).toBe(height);
-    expect(latest?.isWithinPlot).toBe(true);
-    await hover(-0.125, height / 2);
-    expect(latest?.chartX).toBe(-0.125);
-    expect(latest?.isWithinPlot).toBe(false);
+    const centerX = Math.floor(rect.left + rect.width / 2);
+    const centerY = Math.floor(rect.top + rect.height / 2);
+    await hover(rect.left, centerY);
+    if (server.browser === "chromium") {
+      expect(latest?.chartX).toBe(0);
+      expect(latest?.isWithinPlot).toBe(true);
+    }
+    await hover(centerX, rect.top);
+    if (server.browser === "chromium") {
+      expect(latest?.chartY).toBe(0);
+      expect(latest?.isWithinPlot).toBe(true);
+    }
+    await hover(rect.right, centerY);
+    if (server.browser === "chromium") {
+      expect(latest?.chartX).toBe(width);
+      expect(latest?.isWithinPlot).toBe(true);
+    }
+    await hover(centerX, rect.bottom);
+    if (server.browser === "chromium") {
+      expect(latest?.chartY).toBe(height);
+      expect(latest?.isWithinPlot).toBe(true);
+    }
+    if (server.browser === "chromium") {
+      await hover(rect.left - 0.125 * scale, centerY);
+      expect(latest?.chartX).toBe(-0.125);
+      expect(latest?.isWithinPlot).toBe(false);
+    }
+
+    // Integer requests immediately either side of every edge remain distinct
+    // even in engines whose native mouse events discard subpixels.
+    for (const [x, y, inside] of [
+      [Math.ceil(rect.left) + 1, centerY, true],
+      [Math.floor(rect.left) - 1, centerY, false],
+      [Math.floor(rect.right) - 1, centerY, true],
+      [Math.ceil(rect.right) + 1, centerY, false],
+      [centerX, Math.ceil(rect.top) + 1, true],
+      [centerX, Math.floor(rect.top) - 1, false],
+      [centerX, Math.floor(rect.bottom) - 1, true],
+      [centerX, Math.ceil(rect.bottom) + 1, false],
+    ] as const) {
+      await hover(x, y);
+      expect(latest?.isWithinPlot).toBe(inside);
+    }
   },
 );
