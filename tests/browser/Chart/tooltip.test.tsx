@@ -166,7 +166,9 @@ function transformTargets(
   transform: (
     targets: HoverInteraction["targets"],
   ) => HoverInteraction["targets"],
-  sensor: Sensor<(typeof actual)[number]> = Chart.sensors.DataHoverSensor({ verticalSlice: true }),
+  sensor: Sensor<(typeof actual)[number]> = Chart.sensors.DataHoverSensor({
+    verticalSlice: true,
+  }),
 ): Sensor<(typeof actual)[number]> {
   return (event, context) =>
     sensor(event, {
