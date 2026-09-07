@@ -1,4 +1,4 @@
-import { Accessor, AxisDomain, Config } from "../../types";
+import { Accessor, AxisDomain, AxisValue, Config } from "../../types";
 import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
@@ -60,24 +60,24 @@ export interface State<T = any>
 /**
  * The Store type for the Chart system.
  */
-export type Store = StoreApi<State>;
+export type Store<T = any> = StoreApi<State<T>>;
 
 /**
  * Creates a unified Chart Store using the Slice Pattern.
  */
-export const createChartStore = (
+export const createChartStore = <T = any>(
   initialConfig: Config,
-  x?: Accessor<any, string | number>,
-  y?: Accessor<any, string | number>,
+  x?: Accessor<T, AxisValue>,
+  y?: Accessor<T, AxisValue>,
 ) => {
   const dimensionsSlice = getDimensionsInitialState(initialConfig);
-  const dataSlice = getDataInitialState(initialConfig, x, y);
+  const dataSlice = getDataInitialState<T>(initialConfig, x, y);
   const seriesSlice = getSeriesInitialState();
   const interactionSlice = getInteractionsInitialState();
   const lifecycleSlice = getLifecycleInitialState();
   const scalesSlice = getScalesInitialState();
 
-  return createStore<State>({
+  return createStore<State<T>>({
     ...lifecycleSlice,
     ...dimensionsSlice,
     ...dataSlice,
@@ -264,8 +264,8 @@ export const updateChartMargin = (
 export const updateChartAccessors = <T>(
   store: Store,
   next: {
-    x?: Accessor<T, string | number>;
-    y?: Accessor<T, string | number>;
+    x?: Accessor<T, AxisValue>;
+    y?: Accessor<T, AxisValue>;
   },
 ) => {
   store.setState((prev) => {

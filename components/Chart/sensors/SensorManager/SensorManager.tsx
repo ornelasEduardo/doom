@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
-import { useChartContext } from "../../context";
 import {
   removeInteraction,
   upsertInteraction,
 } from "../../state/store/chart.store";
 import { ContextValue } from "../../types";
-import { Sensor } from "../../types/events";
+import { Sensor, SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { DataHoverSensor } from "../DataHoverSensor/DataHoverSensor";
 import { KeyboardSensor } from "../KeyboardSensor";
@@ -19,22 +18,30 @@ import { KeyboardSensor } from "../KeyboardSensor";
  * based on chart type if none are provided, and bridges normalized events
  * to the interaction store.
  */
-export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
-  const { chartStore, config, colorPalette, engine } = useChartContext();
+interface SensorManagerProps<T> {
+  sensors?: Sensor<T>[];
+  value: ContextValue<T>;
+}
+
+export const SensorManager = <T,>({
+  sensors,
+  value,
+}: SensorManagerProps<T>) => {
+  const { chartStore, config, engine } = value;
 
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
 
-  // Use a ref to access the latest colorPalette without triggering re-instantiation
-  const colorPaletteRef = useRef(colorPalette);
-  useEffect(() => {
-    colorPaletteRef.current = colorPalette;
-  }, [colorPalette]);
+  const contextRef = useRef(value);
+  useLayoutEffect(() => {
+    // Registered sensors must never observe context from an uncommitted render.
+    contextRef.current = value;
+  });
 
   // Consumers pass a fresh array literal every render. Keying off its identity
   // would re-register the whole set each time, discarding the closure state a
   // sensor like DragSensor holds mid-gesture.
-  const sensorsRef = useRef<Sensor[] | undefined>(sensors);
+  const sensorsRef = useRef<Sensor<T>[] | undefined>(sensors);
   const sameSensors =
     sensorsRef.current === sensors ||
     (!!sensorsRef.current &&
@@ -52,7 +59,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       return [...stableSensors, KeyboardSensor()];
     }
 
-    const defaults: Sensor[] = [];
+    const defaults: Sensor<T>[] = [];
     const type = config.type || "line";
 
     if (["line", "area", "bar", "scatter", "bubble"].includes(type as string)) {
@@ -81,22 +88,12 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
       return;
     }
 
-    const sensorContext = {
-      getChartContext: () => {
-        const state = chartStore.getState();
-        return {
-          ...state,
-          xScale: state.scales.x,
-          yScale: state.scales.y,
-          colorPalette: colorPaletteRef.current || [],
-          chartStore,
-          engine,
-        } as unknown as ContextValue<any>;
-      },
+    const sensorContext: SensorContext<T> = {
+      getChartContext: () => contextRef.current,
       getInteraction: (name: string) => {
         return chartStore.getState().interactions.get(name) || null;
       },
-      upsertInteraction: (name: string, value: any) => {
+      upsertInteraction: (name, value) => {
         upsertInteraction(chartStore, name, value);
       },
       removeInteraction: (name: string) => {

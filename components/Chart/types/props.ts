@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Accessor } from "./accessors";
+import { Accessor, AxisValue } from "./accessors";
 import { SeriesType } from "./common";
 import { Config } from "./config";
 import { RenderFrame } from "./context";
@@ -30,11 +30,11 @@ export interface ChartProps<T = unknown> extends Omit<
 
   // For shorthand API - single series defined at root level
   type?: SeriesType;
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   render?: (frame: RenderFrame<T>) => void;
-  behaviors?: Behavior[];
-  sensors?: Sensor[];
+  behaviors?: Behavior<NoInfer<T>>[];
+  sensors?: Sensor<NoInfer<T>>[];
 }
 
 /**

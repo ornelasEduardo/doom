@@ -217,7 +217,7 @@ export function Root<T>({
   ...rest
 }: RootProps<T>) {
   const [chartStore] = useState(() =>
-    createChartStore({ ...d3Config, type }, x, y),
+    createChartStore<T>({ ...d3Config, type }, x, y),
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -714,8 +714,8 @@ export function Root<T>({
       colorPalette: LEGEND_PALETTE,
       seriesStore: chartStore as any,
       interactionStore: chartStore as any,
-      x: x ? (x as any) : undefined,
-      y: y ? (y as any) : undefined,
+      x,
+      y,
       variant,
     }),
     [
@@ -763,7 +763,7 @@ export function Root<T>({
         tabIndex={0}
       >
         <InteractionLayer />
-        <SensorManager sensors={sensors as any} />
+        <SensorManager sensors={sensors} value={value} />
         <Announcer summaryId={summaryId} />
 
         {isAutoLayout && (title || subtitle) && (

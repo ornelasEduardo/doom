@@ -1,6 +1,6 @@
 import { EngineEvent, InputAction } from "../../engine";
 import { resolveAccessor } from "../../types/accessors";
-import { Sensor } from "../../types/events";
+import { GenericSensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
@@ -14,7 +14,9 @@ const handledChannels = new WeakMap<EngineEvent, Set<string>>();
  * Professional-grade Keyboard Sensor for A11y.
  * Allows navigating data points using ArrowKeys.
  */
-export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
+export const KeyboardSensor = (
+  options: { name?: string } = {},
+): GenericSensor => {
   const { name = InteractionChannel.PRIMARY_HOVER } = options;
   let focusedIndex = -1;
 

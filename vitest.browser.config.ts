@@ -16,10 +16,10 @@ export default defineConfig({
     include: ["tests/browser/**/*.test.tsx"],
     browser: {
       enabled: true,
-      commands: { moveChartPointer },
       provider: playwright(),
       headless: true,
       commands: {
+        moveChartPointer,
         async setReducedMotion(
           { page },
           preference: "reduce" | "no-preference",

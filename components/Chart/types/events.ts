@@ -79,3 +79,5 @@ export type Sensor<T = unknown> = (
   event: EngineEvent<T>,
   context: SensorContext<T>,
 ) => void;
+
+export type GenericSensor = <T>(...args: Parameters<Sensor<T>>) => void;

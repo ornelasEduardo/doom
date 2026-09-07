@@ -799,7 +799,7 @@ describe("Chart", () => {
     });
 
     it("keeps stable sensors registered across re-renders", () => {
-      const sensor: Sensor = vi.fn();
+      const sensor: Sensor<(typeof data)[number]> = vi.fn();
 
       const { rerender } = render(
         <Chart data={data} sensors={[sensor]} x={x} y={y} />,
@@ -826,10 +826,10 @@ describe("Chart", () => {
     it("drives a custom sensor through the real event pipeline", () => {
       const seen: Array<{ action: string; label?: string }> = [];
 
-      const RecordingSensor: Sensor = (event, ctx) => {
+      const RecordingSensor: Sensor<(typeof data)[number]> = (event, ctx) => {
         seen.push({
           action: String(event.signal.action),
-          label: (event.primaryCandidate?.data as any)?.label,
+          label: event.primaryCandidate?.data?.label,
         });
         if (
           event.signal.action === InputAction.MOVE &&
