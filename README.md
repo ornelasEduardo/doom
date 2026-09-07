@@ -100,5 +100,15 @@ This system uses **CSS Modules** (`.module.scss`) for component styling, ensurin
 
 ## Testing
 
-See [TESTING.md](TESTING.md) for the unit, browser, Storybook interaction, and
-built-package suites, including local and CI commands.
+| Suite | Location | Command |
+| --- | --- | --- |
+| Unit | Beside source | `npm test` |
+| Browser regressions | `tests/browser/<Component>/` | `npm run test:browser` |
+| Story interactions | Story `play` functions | `npm run test:storybook` |
+| Package imports | `tests/package/` | `npm run build && npm run test:package` |
+
+Storybook tests target the running server on port 6006. Add `-- --includeTags interaction`
+to run only interaction examples. Install Chromium with `npx playwright install chromium`.
+CI uses `npm run build-storybook && npm run test:storybook:ci`; set
+`STORYBOOK_TEST_PORT=6010` locally if 6006 is occupied. `test:integration` remains
+an alias for `test:package`.
