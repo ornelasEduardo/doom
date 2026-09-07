@@ -1,8 +1,10 @@
+"use client";
+
 import React from "react";
 
 import { useChartContext } from "../../context";
 import { resolveAccessor } from "../../types/accessors";
-import { InteractionChannel } from "../../types/interaction";
+import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
 import styles from "./Announcer.module.scss";
@@ -30,20 +32,20 @@ const describe = (value: unknown) =>
 export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   const { chartStore } = useChartContext();
 
-  const data = chartStore.useStore((s: any) => s.data) as any[];
-  const type = chartStore.useStore((s: any) => s.type) as string;
-  const config = chartStore.useStore((s: any) => s.config) as any;
-  const xAccessor = chartStore.useStore((s: any) => s.x);
-  const yAccessor = chartStore.useStore((s: any) => s.y);
-  const hover = chartStore.useStore((s: any) =>
+  const data = chartStore.useStore((s) => s.data);
+  const type = chartStore.useStore((s) => s.type);
+  const config = chartStore.useStore((s) => s.config);
+  const xAccessor = chartStore.useStore((s) => s.x);
+  const yAccessor = chartStore.useStore((s) => s.y);
+  const hover = chartStore.useStore((s) =>
     s.interactions.get(InteractionChannel.PRIMARY_HOVER),
-  ) as any;
+  ) as HoverInteraction | undefined;
 
   const series = chartStore.useStore((s) => s.processedSeries);
   const horizontal = series[0]?.orientation === "horizontal";
 
-  const getX = xAccessor ? resolveAccessor(xAccessor as any) : null;
-  const getY = yAccessor ? resolveAccessor(yAccessor as any) : null;
+  const getX = xAccessor ? resolveAccessor(xAccessor) : null;
+  const getY = yAccessor ? resolveAccessor(yAccessor) : null;
 
   const summary = React.useMemo(() => {
     if (!data?.length || !getX || !getY) {
@@ -77,14 +79,37 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   }, [data, type, config, xAccessor, yAccessor, horizontal]);
 
   const active = React.useMemo(() => {
-    const target = hover?.targets?.[0];
-    const item = series.find((item) => item.id === target?.seriesId);
-    return describeDatum(
-      target?.data,
-      item ? categoryAccessor(item) : xAccessor,
-      item ? valueAccessor(item) : yAccessor,
-    );
-  }, [hover, xAccessor, yAccessor, series]);
+    return (hover?.targets ?? [])
+      .map((target) => {
+        const item = series.find((item) => item.id === target.seriesId);
+        const horizontal = item?.orientation === "horizontal";
+        const formatted = (accessor: typeof xAccessor, axis: "x" | "y") =>
+          accessor
+            ? (datum: unknown) => {
+                const value = resolveAccessor(accessor)(datum);
+                const format = config.axes?.[axis]?.tickFormat;
+                return format &&
+                  (typeof value === "string" || typeof value === "number")
+                  ? format(value, target.dataIndex ?? 0)
+                  : value;
+              }
+            : undefined;
+        const reading = describeDatum(
+          target.data,
+          formatted(
+            item ? categoryAccessor(item) : xAccessor,
+            horizontal ? "y" : "x",
+          ),
+          formatted(
+            item ? valueAccessor(item) : yAccessor,
+            horizontal ? "x" : "y",
+          ),
+        );
+        return reading && item?.label ? `${item.label}: ${reading}` : reading;
+      })
+      .filter(Boolean)
+      .join(". ");
+  }, [hover, xAccessor, yAccessor, series, config]);
 
   return (
     <>

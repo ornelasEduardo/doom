@@ -82,6 +82,12 @@ export const InteractionLayer: React.FC = () => {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== container) {
+        return;
+      }
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        e.preventDefault();
+      }
       if (
         [
           "ArrowLeft",

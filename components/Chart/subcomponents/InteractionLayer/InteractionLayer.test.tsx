@@ -245,6 +245,53 @@ describe("InteractionLayer", () => {
     });
   });
 
+  describe("keyboard default actions", () => {
+    it.each(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"])(
+      "cancels page scrolling for %s on the chart root",
+      (key) => {
+        render(
+          <ContainerWrapper>
+            <InteractionLayer />
+          </ContainerWrapper>,
+        );
+        const root = document.querySelector("[data-chart-container]")!;
+        expect(fireEvent.keyDown(root, { key, cancelable: true })).toBe(false);
+      },
+    );
+
+    it.each(["Tab", "Home", "End", "a", "Enter", " "])(
+      "preserves the default action of %s",
+      (key) => {
+        render(
+          <ContainerWrapper>
+            <InteractionLayer />
+          </ContainerWrapper>,
+        );
+        const root = document.querySelector("[data-chart-container]")!;
+        expect(fireEvent.keyDown(root, { key, cancelable: true })).toBe(true);
+      },
+    );
+
+    it.each(["ArrowDown", "ArrowLeft", "Enter", " ", "Escape"])(
+      "leaves nested controls' %s events to the control",
+      (key) => {
+        render(
+          <ContainerWrapper>
+            <InteractionLayer />
+            <input aria-label="Notes" />
+          </ContainerWrapper>,
+        );
+        expect(
+          fireEvent.keyDown(screen.getByRole("textbox"), {
+            key,
+            cancelable: true,
+          }),
+        ).toBe(true);
+        expect(mockEngineInput).not.toHaveBeenCalled();
+      },
+    );
+  });
+
   // ===========================================================================
   // THROTTLING TESTS
   // ===========================================================================
