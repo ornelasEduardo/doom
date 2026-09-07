@@ -31,6 +31,7 @@ import {
   combineSeries,
   getSeriesInitialState,
   hydrateSeries,
+  SeriesRegistration,
   SeriesSlice,
 } from "./slices/series.slice";
 
@@ -276,7 +277,11 @@ export const updateChartAccessors = <T>(
  * Registers a series id and its configurations.
  * Often called by the `<Series />` component or sub-series layers.
  */
-export const registerSeries = (store: Store, id: string, configs: any[]) => {
+export const registerSeries = (
+  store: Store,
+  id: string,
+  configs: SeriesRegistration[],
+) => {
   store.setState((state) => {
     const nextSeries = new Map(state.series);
     const nextConfigs = new Map(state.seriesConfigs); // Clone configs map

@@ -42,12 +42,12 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         label: effectiveLabel,
         color,
         data: localData,
-        yAccessor,
-        xAccessor,
+        y: yAccessor,
+        x: xAccessor,
         hideCursor: true,
         interactionMode: "x",
         id: seriesId,
-      } as any,
+      },
     ]);
 
     return () => {
