@@ -138,7 +138,6 @@ export class Engine<T = unknown> {
    * This is the main entry point for all user interactions.
    *
    * @returns Whether a sensor synchronously acknowledged a KEY signal.
-   * Queued pointer input is not a native-default cancellation request.
    * @param signal - The normalized input signal
    */
   input(signal: InputSignal): boolean {
