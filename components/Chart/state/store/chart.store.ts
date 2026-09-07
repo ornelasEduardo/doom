@@ -4,7 +4,11 @@ import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
 import { d3 } from "../../utils/d3";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
-import { samplePosition } from "../../utils/sampleValidity";
+import {
+  isSampleValue,
+  numericSample,
+  samplePosition,
+} from "../../utils/sampleValidity";
 import {
   createScales,
   hasDomainOverride,
@@ -509,7 +513,13 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
     );
     const categories = compatible.flatMap((series) => {
       const accessor = categoryAccessor(series);
-      return accessor ? (series.data ?? []).map(resolveAccessor(accessor)) : [];
+      return accessor
+        ? (series.data ?? [])
+            .flatMap((datum) =>
+              datum == null ? [] : [resolveAccessor(accessor)(datum)],
+            )
+            .filter(isSampleValue)
+        : [];
     });
     const totals = compatible.flatMap(
       (series) => series.stackRanges?.flat() ?? [],
@@ -544,12 +554,14 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
       const extraValues = otherSeries
         .flatMap((series) =>
           series.yAccessor
-            ? (series.data ?? []).map((datum) =>
-                Number(resolveAccessor(series.yAccessor!)(datum)),
+            ? (series.data ?? []).flatMap((datum) =>
+                datum == null
+                  ? []
+                  : [numericSample(resolveAccessor(series.yAccessor!)(datum))],
               )
             : [],
         )
-        .filter(Number.isFinite);
+        .filter((value): value is number => value !== undefined);
       const bounds = base.yScale.domain();
       base.yScale
         .domain([
@@ -559,7 +571,13 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
         .nice();
       const extras = otherSeries.flatMap((series) =>
         series.xAccessor
-          ? (series.data ?? []).map(resolveAccessor(series.xAccessor))
+          ? (series.data ?? [])
+              .flatMap((datum) =>
+                datum == null
+                  ? []
+                  : [resolveAccessor(series.xAccessor!)(datum)],
+              )
+              .filter(isSampleValue)
           : [],
       );
       if (!("ticks" in base.xScale)) {

@@ -1,6 +1,7 @@
 import { Scale } from "../types/scales";
 import { Series } from "../types/series";
 import { resolveAccessor } from "./accessors";
+import { isSampleValue, numericSample } from "./sampleValidity";
 
 export const categoryAccessor = (series: Series) =>
   series.orientation === "horizontal" ? series.yAccessor : series.xAccessor;
@@ -40,12 +41,18 @@ export function stackSeries(series: Series[]): Series[] {
     const getCategory = resolveAccessor(category);
     const getValue = resolveAccessor(value);
     const stackRanges = (item.data ?? []).map((datum): [number, number] => {
-      const v = Number(getValue(datum));
+      if (datum == null) {
+        return [0, 0];
+      }
+      const v = numericSample(getValue(datum));
       const categoryKey = getCategory(datum);
+      if (v === undefined || !isSampleValue(categoryKey)) {
+        return [0, 0];
+      }
       const total = totals.get(categoryKey) ?? [0, 0];
       const sign = v < 0 ? 0 : 1;
       const start = item.stackId === undefined ? 0 : total[sign];
-      const end = start + (Number.isFinite(v) ? v : 0);
+      const end = start + v;
       total[sign] = end;
       totals.set(categoryKey, total);
       return [start, end];
@@ -64,7 +71,11 @@ export function stackSeries(series: Series[]): Series[] {
       if (item.stackId === undefined) {
         return true;
       }
-      const total = totals?.get(resolveAccessor(category)(item.data![index]));
+      const datum = item.data?.[index];
+      if (datum == null) {
+        return false;
+      }
+      const total = totals?.get(resolveAccessor(category)(datum));
       return start !== end && end === total?.[end < start ? 0 : 1];
     });
     return { ...item, stackEnds };
@@ -81,7 +92,11 @@ export function barGeometry(
   const horizontal = series.orientation === "horizontal";
   const category = categoryAccessor(series);
   const value = valueAccessor(series);
-  if (!category || !value) {
+  if (datum == null || !category || !value) {
+    return null;
+  }
+  const numericValue = numericSample(resolveAccessor(value)(datum));
+  if (numericValue === undefined) {
     return null;
   }
   const categoryScale = horizontal ? y : x;
@@ -90,6 +105,9 @@ export function barGeometry(
     return null;
   }
   const categoryValue = resolveAccessor(category)(datum);
+  if (!isSampleValue(categoryValue)) {
+    return null;
+  }
   // Scale unions have different input domains; category values are validated by the scale.
   const position = (categoryScale as (value: unknown) => number)(categoryValue);
   const bandwidth =
@@ -101,12 +119,12 @@ export function barGeometry(
       ? Math.max(0, series.barWidth)
       : automatic;
   const categoryStart = position + bandwidth / 2 - thickness / 2;
-  const range = series.stackRanges?.[index] ?? [
-    0,
-    Number(resolveAccessor(value)(datum)),
-  ];
+  const range = series.stackRanges?.[index] ?? [0, numericValue];
   const start = (valueScale as (value: number) => number)(range[0]);
   const end = (valueScale as (value: number) => number)(range[1]);
+  if (![categoryStart, thickness, start, end].every(Number.isFinite)) {
+    return null;
+  }
   return horizontal
     ? {
         x: Math.min(start, end),
