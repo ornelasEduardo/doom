@@ -36,8 +36,16 @@
       --chart-series-2: var(--solid-success);
       --chart-series-3: var(--solid-warning);
       --chart-series-4: var(--solid-error);
-      --chart-series-5: color-mix(in srgb, var(--solid-fg) 65%, var(--solid-bg));
-      --chart-series-6: color-mix(in srgb, var(--solid-fg) 40%, var(--solid-bg));
+      --chart-series-5: color-mix(
+        in srgb,
+        var(--solid-fg) 65%,
+        var(--solid-bg)
+      );
+      --chart-series-6: color-mix(
+        in srgb,
+        var(--solid-fg) 40%,
+        var(--solid-bg)
+      );
 
       :global(.tick) text {
         fill: var(--solid-fg);
@@ -60,5 +68,14 @@
     min-height: 0;
     position: relative;
     overflow: visible;
+  }
+}
+
+@layer doom.components {
+  @media (prefers-reduced-motion: reduce) {
+    .chartContainer :global([data-chart-plot]) * {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 }
