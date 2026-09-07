@@ -12,6 +12,7 @@ import { Accessor } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
+import { numericSample, samplePosition } from "../../utils/sampleValidity";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 
 interface ScatterSeriesProps<T> {
@@ -63,9 +64,14 @@ const ScatterSeriesComponent = <T,>({
     if (!data.length || !sizeAccessor) {
       return null;
     }
-    const maxVal = Math.max(
-      ...data.map((d) => (sizeAccessor(d) as number) || 0),
-    );
+    const sizes = data.flatMap((datum) => {
+      if (datum == null) {
+        return [];
+      }
+      const size = numericSample(sizeAccessor(datum));
+      return size === undefined || size < 0 ? [] : [size];
+    });
+    const maxVal = Math.max(0, ...sizes);
     // Use sqrt scale for circular area sizing (area ~ value)
     return (val: number) => {
       const normalized = Math.sqrt(val) / Math.sqrt(maxVal || 1);
@@ -120,12 +126,23 @@ const ScatterSeriesComponent = <T,>({
   return (
     <g className="chart-scatter-series">
       {data.map((d, i) => {
-        const cx = (xScale as any)(xAccessor(d));
-        const cy = "ticks" in yScale ? yScale(Number(yAccessor(d))) : 0;
+        const position = samplePosition(
+          d,
+          xAccessor,
+          yAccessor,
+          xScale,
+          yScale,
+        );
+        if (!position) {
+          return null;
+        }
 
         let radius = 6;
         if (rScale && sizeAccessor) {
-          radius = rScale(sizeAccessor(d));
+          const size = numericSample(sizeAccessor(d));
+          if (size !== undefined && size >= 0) {
+            radius = rScale(size);
+          }
         }
 
         return (
@@ -136,8 +153,8 @@ const ScatterSeriesComponent = <T,>({
             description={describeDatum(d, xAccessor, yAccessor)}
             hoverRadius={radius + 4}
             radius={radius}
-            x={cx}
-            y={cy}
+            x={position.x}
+            y={position.y}
             {...{
               [CHART_DATA_ATTRS.TYPE]: "scatter",
               [CHART_DATA_ATTRS.SERIES_ID]: seriesId,
