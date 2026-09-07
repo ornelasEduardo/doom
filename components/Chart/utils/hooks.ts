@@ -3,7 +3,7 @@ import { useEffect, useId } from "react";
 import { useChartContext } from "../context";
 import { registerSeries, unregisterSeries } from "../state/store/chart.store";
 import { SERIES_PALETTE } from "../state/store/slices/series.slice";
-import { Accessor } from "./accessors";
+import { Accessor, resolveAccessor } from "./accessors";
 
 interface RegistrationProps<T> {
   label?: string;
@@ -22,7 +22,7 @@ export function useSeriesRegistration<T>(props: RegistrationProps<T>) {
       {
         label: props.label || "Series",
         color: props.color,
-        y: props.y,
+        y: props.y === undefined ? undefined : resolveAccessor(props.y),
         hideCursor: props.hideCursor,
       },
     ]);
