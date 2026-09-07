@@ -96,3 +96,57 @@ describe("viewport to chart coordinates", () => {
     expect(coords.resolvePointerCoordinates(50, 80)).toEqual({ x: 40, y: 60 });
   });
 });
+
+it.each([
+  ["border-box", 1],
+  ["content-box", 1],
+  ["border-box", 0.75],
+  ["content-box", 0.75],
+] as const)(
+  "preserves exact fractional plot boundaries with %s at scale %s",
+  (boxSizing, scale) => {
+    const container = document.createElement("div");
+    container.style.cssText = `box-sizing: ${boxSizing}; width: ${boxSizing === "border-box" ? 600.25 : 568.75}px; height: ${boxSizing === "border-box" ? 300.25 : 276.75}px; padding: 8.25px 12.25px; border: 3px solid; border-right-width: 4px; border-bottom-width: 4px`;
+    document.body.append(container);
+    Object.defineProperties(container, {
+      offsetWidth: { value: 600 },
+      offsetHeight: { value: 300 },
+    });
+    vi.spyOn(container, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(100, 200, 600.25 * scale, 300.25 * scale),
+    );
+    const coords = new CoordinateSystem();
+    coords.setContainer(container, null, {
+      x: 40,
+      y: 20,
+      width: 500,
+      height: 200,
+    });
+    const resolve = (x: number, y: number) => {
+      const point = coords.resolvePointerCoordinates(
+        100 + x * scale,
+        200 + y * scale,
+      )!;
+      const offset = coords.getPlotOffset();
+      return coords.resolveChartCoordinates(
+        point.x - offset.x,
+        point.y - offset.y,
+      );
+    };
+    expect(resolve(55.25, 31.25)).toEqual({
+      chartX: 0,
+      chartY: 0,
+      isWithinPlot: true,
+    });
+    expect(resolve(555.25, 231.25)).toEqual({
+      chartX: 500,
+      chartY: 200,
+      isWithinPlot: true,
+    });
+    expect(resolve(55.125, 31.25)).toEqual({
+      chartX: -0.125,
+      chartY: 0,
+      isWithinPlot: false,
+    });
+  },
+);
