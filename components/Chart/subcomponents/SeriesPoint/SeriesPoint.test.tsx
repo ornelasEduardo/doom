@@ -36,3 +36,25 @@ describe("SeriesPoint", () => {
     expect(container.querySelector("circle")).toBeNull();
   });
 });
+
+it("keeps datum on the node for hit testing without serializing a DOM attribute", () => {
+  const datum = { value: 42 };
+  const { container, rerender } = render(
+    <svg>
+      <SeriesPoint data-testid="mark" datum={datum} x={10} y={20} />
+    </svg>,
+  );
+  const circle = container.querySelector("circle") as SVGCircleElement & {
+    __data__?: unknown;
+  };
+  expect(circle).not.toHaveAttribute("datum");
+  expect(circle.__data__).toBe(datum);
+  expect(circle).toHaveAttribute("data-testid", "mark");
+  const next = { value: 73 };
+  rerender(
+    <svg>
+      <SeriesPoint datum={next} x={10} y={20} />
+    </svg>,
+  );
+  expect(circle.__data__).toBe(next);
+});

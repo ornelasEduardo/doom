@@ -1,49 +1,15 @@
 "use strict";
 
+import type { AxisScale } from "d3-axis";
 import { useEffect, useRef } from "react";
 
 import { useChartContext } from "../../context";
 import { d3 } from "../../utils/d3";
 import { yTickCount } from "../../utils/scales";
 import styles from "./Axis.module.scss";
+import { renderAxisTicks } from "./axisTicks";
 
 const X_LABEL_OFFSET = 40;
-
-/** Minimum clear space between neighbouring tick labels. */
-const LABEL_GAP = 8;
-
-/**
- * How many categories to skip so tick labels stop colliding.
- *
- * Band and point scales ignore d3's tick count, so every category is drawn.
- * Measured rather than budgeted: a fixed budget would also thin charts with
- * room to spare.
- */
-const strideToAvoidOverlap = (
-  group: SVGGElement,
-  categories: number,
-  innerWidth: number,
-): number => {
-  if (categories < 2 || innerWidth <= 0) {
-    return 1;
-  }
-
-  let widest = 0;
-  group.querySelectorAll<SVGTextElement>(".tick text").forEach((label) => {
-    try {
-      widest = Math.max(widest, label.getBBox().width);
-    } catch {
-      // Not laid out (no layout engine): fall through to keeping every label.
-    }
-  });
-
-  if (widest === 0) {
-    return 1;
-  }
-
-  const step = innerWidth / categories;
-  return Math.max(1, Math.ceil((widest + LABEL_GAP) / step));
-};
 
 export function Axis() {
   const { chartStore, config, requestLayoutAdjustment, isMobile } =
@@ -63,42 +29,27 @@ export function Axis() {
       return;
     }
 
-    const xAxis = d3.axisBottom(xScale as any);
-    const isContinuousX = typeof (xScale as any).ticks === "function";
-
-    if (isContinuousX) {
-      xAxis.ticks(isMobile ? 3 : 5);
-    }
-
-    d3.select(gx.current).call(xAxis);
-
-    if (!isContinuousX) {
-      // Draw every category first, then thin only if they actually collide.
-      const domain = (xScale as any).domain() as (string | number)[];
-      const stride = strideToAvoidOverlap(
-        gx.current,
-        domain.length,
-        innerWidth,
-      );
-
-      if (stride > 1) {
-        xAxis.tickValues(domain.filter((_, i) => i % stride === 0) as any);
-        d3.select(gx.current).call(xAxis);
-      }
-    }
-
-    const yAxis = d3.axisLeft(yScale as any).ticks(yTickCount(isMobile));
-    if ("ticks" in yScale) {
-      yAxis.tickFormat((d) => {
-        const val = Number(d);
-        if (val === 0) {
-          return "0";
-        }
-        return d3.format(".2s")(val).replace("G", "B");
-      });
-    }
-
-    d3.select(gy.current).call(yAxis);
+    const xAxis = d3.axisBottom(xScale as AxisScale<string | number>);
+    const yAxis = d3.axisLeft(yScale as AxisScale<string | number>);
+    renderAxisTicks(gx.current, xAxis, {
+      direction: "x",
+      length: innerWidth,
+      options: config.axes?.x,
+      defaultTickCount: isMobile ? 3 : 5,
+    });
+    renderAxisTicks(gy.current, yAxis, {
+      direction: "y",
+      length: innerHeight,
+      options: config.axes?.y,
+      defaultTickCount: yTickCount(isMobile),
+      defaultTickFormat:
+        "ticks" in yScale
+          ? (value) => {
+              const val = Number(value);
+              return val === 0 ? "0" : d3.format(".2s")(val).replace("G", "B");
+            }
+          : undefined,
+    });
 
     d3.select(gy.current)
       .selectAll("text")
@@ -143,9 +94,14 @@ export function Axis() {
     config.hideYAxisDomain,
     config.yAxisLabel,
     config.xAxisLabel,
+    config.axes?.x?.tickFormat,
+    config.axes?.x?.maxTicks,
+    config.axes?.y?.tickFormat,
+    config.axes?.y?.maxTicks,
     isMobile,
     requestLayoutAdjustment,
     innerHeight,
+    innerWidth,
   ]);
 
   if (!xScale || !yScale) {

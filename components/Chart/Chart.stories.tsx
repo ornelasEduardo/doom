@@ -1035,56 +1035,163 @@ export const StringAccessors: Story = {
   },
 };
 
-/**
- * Multi-series charts allow multiple data visualizations on a single chart.
- * Each series can have its own y-accessor, color, and label.
- */
+interface RevenueObservation {
+  date: number;
+  revenue: number;
+  series: "Actual revenue" | "Plan";
+}
+
+const revenueDateFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+const revenueUsdFormat = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+const revenuePlan: RevenueObservation[] = Array.from(
+  { length: 40 },
+  (_, day) => ({
+    date: Date.UTC(2026, 0, 1 + day),
+    revenue: 4000 + day * 100,
+    series: "Plan",
+  }),
+);
+const actualRevenue: RevenueObservation[] = revenuePlan.map((datum, day) => ({
+  ...datum,
+  revenue: datum.revenue + [-600, -200, 900, 400, 1200, -800, -1000][day % 7],
+  series: "Actual revenue",
+}));
+// Root data spans both series so automatic bounds include every observation.
+const dailyRevenue = [...actualRevenue, ...revenuePlan].sort(
+  (a, b) => a.date - b.date,
+);
+const revenueBehaviors = [
+  Chart.behaviors.Tooltip<RevenueObservation | RevenueObservation[]>({
+    render: (reading) => (
+      <Card>
+        <Stack gap={2}>
+          {(Array.isArray(reading) ? reading : [reading]).map((datum) => (
+            <Stack key={datum.series} gap={1}>
+              <Text variant="h6">
+                {revenueDateFormat.format(datum.date)} · UTC
+              </Text>
+              <Text>
+                {datum.series}: {revenueUsdFormat.format(datum.revenue)}
+              </Text>
+            </Stack>
+          ))}
+        </Stack>
+      </Card>
+    ),
+  }),
+  Chart.behaviors.Cursor(),
+  Chart.behaviors.Markers(),
+];
+
 export const MultiSeries: Story = {
-  render: () => {
-    // Generate some intricate data
-    const data = [
-      { month: "Jan", revenue: 15000, users: 1200, expenses: 8000 },
-      { month: "Feb", revenue: 28000, users: 1800, expenses: 12000 },
-      { month: "Mar", revenue: 22000, users: 1500, expenses: 10000 },
-      { month: "Apr", revenue: 35000, users: 2200, expenses: 15000 },
-      { month: "May", revenue: 42000, users: 2800, expenses: 18000 },
-      { month: "Jun", revenue: 38000, users: 2500, expenses: 16000 },
-    ];
-
-    return (
-      <Chart.Root
-        d3Config={{ grid: true, showDots: true }}
-        data={data}
-        style={{ width: "100%", maxWidth: 800, height: 400 }}
-        type="line"
-        x="month"
-        y="revenue"
+  tags: ["interaction"],
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Compare actual daily revenue with plan in the same USD units over 40 days. d3Config.axes formats numeric UTC timestamps and currency ticks while limiting label density. Each series supplies its own data and tooltip metadata. Default hover shows actual revenue and plan together for the same date. The custom tooltip formats both readings, while cursor and markers remain active.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      behaviors={revenueBehaviors}
+      className={storyStyles.domainChart}
+      d3Config={{
+        grid: true,
+        showDots: true,
+        xAxisLabel: "Date (UTC)",
+        yAxisLabel: "Daily revenue (USD)",
+        axes: {
+          x: {
+            tickFormat: (value) => revenueDateFormat.format(Number(value)),
+            maxTicks: 6,
+          },
+          y: {
+            tickFormat: (value) => revenueUsdFormat.format(Number(value)),
+            maxTicks: 5,
+          },
+        },
+      }}
+      data={dailyRevenue}
+      type="line"
+      x="date"
+      y="revenue"
+    >
+      <Chart.Header
+        subtitle="Jan 1 – Feb 9, 2026 · daily totals · hover to compare actual revenue and plan"
+        title="Daily revenue against plan"
       >
-        <Chart.Header title="Multi-Series Line Chart">
-          <Chart.Legend layout="horizontal" />
-        </Chart.Header>
-
-        {/* With layout="custom", we must explicitly define the plot and its layers */}
-        <Chart.Plot>
-          <Chart.Grid />
-          <Chart.Cursor />
-          <Chart.Series
-            color="var(--primary)"
-            label="Revenue"
-            type="line"
-            x="month"
-            y="revenue"
-          />
-          <Chart.Series
-            color="var(--secondary)"
-            label="Expenses"
-            type="line"
-            x="month"
-            y="expenses"
-          />
-          <Chart.Axis />
-        </Chart.Plot>
-      </Chart.Root>
+        <Chart.Legend layout="horizontal" />
+      </Chart.Header>
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Axis />
+        <Chart.Series data={actualRevenue} label="Actual revenue" type="line" />
+        <Chart.Series data={revenuePlan} label="Plan" type="line" />
+        <Chart.Cursor />
+      </Chart.Plot>
+    </Chart.Root>
+  ),
+  play: async ({ canvasElement, step }) => {
+    await step(
+      "Daily observations have readable date and currency axes",
+      async () => {
+        await waitFor(() => {
+          const dates = canvasElement.querySelectorAll(
+            '[aria-label="X Axis"] .tick text',
+          );
+          const amounts = canvasElement.querySelectorAll(
+            '[aria-label="Y Axis"] .tick text',
+          );
+          expect(dates.length).toBeGreaterThan(1);
+          expect(dates.length).toBeLessThanOrEqual(6);
+          for (const label of dates) {
+            expect(label.textContent).toMatch(/^(Jan|Feb) \d{1,2}$/);
+          }
+          expect(amounts.length).toBeGreaterThan(1);
+          expect(amounts.length).toBeLessThanOrEqual(5);
+          for (const label of amounts) {
+            expect(label.textContent).toMatch(/^\$[\d,]+$/);
+          }
+          expect(
+            canvasElement.querySelectorAll(".chart-line-series circle"),
+          ).toHaveLength(80);
+        });
+      },
+    );
+    await step(
+      "Hovering either line reports both revenue readings for that date",
+      async () => {
+        const points = canvasElement.querySelectorAll(
+          ".chart-line-series circle",
+        );
+        for (const index of [2, 42]) {
+          const point = points[index];
+          const rect = point.getBoundingClientRect();
+          await userEvent.pointer({
+            target: point,
+            coords: {
+              clientX: rect.left + rect.width / 2,
+              clientY: rect.top + rect.height / 2,
+            },
+          });
+          await waitFor(() => {
+            const tooltip = canvasElement.querySelector("[data-chart-tooltip]");
+            expect(tooltip).toHaveTextContent("Jan 3 · UTC");
+            expect(tooltip).toHaveTextContent("Actual revenue: $5,100");
+            expect(tooltip).toHaveTextContent("Plan: $4,200");
+          });
+        }
+      },
     );
   },
 };

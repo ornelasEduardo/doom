@@ -47,12 +47,29 @@ component's own semantics win on conflict.
 | `curve` | `d3Shape.CurveFactory` | — | D3 curve factory (e.g. `curveMonotoneX`) |
 | `showAxes` | `boolean` | `true` | Show X/Y axes |
 | `xAxisLabel` | `string` | — | X-axis label text |
+| `axes` | `{ x?: AxisOptions; y?: AxisOptions }` | — | Per-axis tick formatting and label limits using the same options for either axis. |
 | `yAxisLabel` | `string` | — | Y-axis label text |
 | `grid` | `boolean` | — | Show grid lines |
 | `withGradient` | `boolean` | — | Fill area with gradient |
 | `showDots` | `boolean` | — | Show data point dots |
 | `hideYAxisDomain` | `boolean` | — | Hide Y-axis domain line |
 | `type` | `SeriesType` | — | Series type override within config |
+
+Numeric timestamps use the existing linear scale, not calendar-aligned time ticks.
+`axes.x.tickFormat` and `axes.y.tickFormat` change labels only, not scale values
+or tooltip data. Both accept `(value: string | number, index: number) => string`.
+Each axis accepts `maxTicks`: positive values are floored, invalid values ignored,
+and labels may be thinned further to fit. Unconfigured axes keep their defaults.
+Existing `xAxisLabel`, `yAxisLabel`, and domain props remain unchanged.
+
+```tsx
+d3Config={{
+  axes: {
+    x: { tickFormat: value => dateFormat.format(Number(value)), maxTicks: 6 },
+    y: { tickFormat: value => currencyFormat.format(Number(value)), maxTicks: 5 },
+  },
+}}
+```
 
 ## Usage
 
@@ -299,6 +316,10 @@ import {
 Chart.sensors;    // DataHoverSensor, KeyboardSensor, DragSensor, SelectionSensor
 Chart.behaviors;  // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpdate
 ```
+
+The default tooltip displays the sensor's selected targets. Use
+`Chart.sensors.DataHoverSensor({ verticalSlice: false })` for a single-point
+tooltip, and retain `Chart.sensors.KeyboardSensor()` for keyboard interaction.
 
 `sensors` and `behaviors` **replace** the defaults rather than adding to them,
 so compose from the built-ins when you want a partial override:

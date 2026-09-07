@@ -32,6 +32,7 @@ export { InputAction, InputSource } from "./engine";
 export type {
   Accessor,
   AxisDomain,
+  AxisOptions,
   ChartProps,
   Config,
   ContextValue,
