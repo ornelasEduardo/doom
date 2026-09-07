@@ -90,6 +90,7 @@ export const SensorManager = ({ sensors }: { sensors?: Sensor[] }) => {
           yScale: state.scales.y,
           colorPalette: colorPaletteRef.current || [],
           chartStore,
+          engine,
         } as unknown as ContextValue<any>;
       },
       getInteraction: (name: string) => {

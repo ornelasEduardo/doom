@@ -289,6 +289,13 @@ export class Engine<T = unknown> {
   /**
    * Get the current container bounds.
    */
+  resolveContainerCoordinates(
+    chartX: number,
+    chartY: number,
+  ): { x: number; y: number } {
+    return this.coords.resolveContainerCoordinates(chartX, chartY);
+  }
+
   getContainerRect(): DOMRect | null {
     return this.coords.getContainerRect();
   }

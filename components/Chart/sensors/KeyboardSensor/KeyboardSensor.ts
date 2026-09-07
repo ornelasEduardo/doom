@@ -186,14 +186,26 @@ export const KeyboardSensor = (options: { name?: string } = {}): Sensor => {
     focusedIndex = forward
       ? Math.min(focusedIndex + 1, slices.length - 1)
       : Math.min(Math.max(focusedIndex - 1, 0), slices.length - 1);
-    const targets = slices[focusedIndex];
+    const point = slices[focusedIndex][0].coordinate;
+    const { margin } = state.dimensions;
+    // Targets use SVG coordinates; the pointer remains relative to the inner plot.
+    const targets = slices[focusedIndex].map((target) => ({
+      ...target,
+      coordinate: {
+        x: target.coordinate.x + margin.left,
+        y: target.coordinate.y + margin.top,
+      },
+    }));
     const target = targets[0];
+    const containerPoint =
+      ctx.engine?.resolveContainerCoordinates(point.x, point.y) ??
+      target.coordinate;
     upsertInteraction(name, {
       pointer: {
-        x: target.coordinate.x,
-        y: target.coordinate.y,
-        containerX: target.coordinate.x + state.dimensions.margin.left,
-        containerY: target.coordinate.y + state.dimensions.margin.top,
+        x: point.x,
+        y: point.y,
+        containerX: containerPoint.x,
+        containerY: containerPoint.y,
         isTouch: false,
       },
       targets,
