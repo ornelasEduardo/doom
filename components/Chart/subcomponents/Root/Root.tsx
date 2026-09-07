@@ -600,16 +600,20 @@ export function Root<T>({
     };
   }, [d3Config, type]);
 
-  useEffect(() => {
-    if (!wrapperRef.current) {
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
       return;
     }
 
+    // Seed the first paint without waiting for a ResizeObserver delivery.
+    // client dimensions stay in layout pixels even under a CSS transform.
+    let lastWidth = wrapper.clientWidth;
+    let lastHeight = wrapper.clientHeight;
+    updateChartDimensions(chartStore, lastWidth, lastHeight);
+
     // ResizeObserver fires for reasons other than a size change, and every
     // call here rebuilds the scales and commits React.
-    let lastWidth = -1;
-    let lastHeight = -1;
-
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         let w, h;
@@ -631,7 +635,7 @@ export function Root<T>({
       }
     });
 
-    resizeObserver.observe(wrapperRef.current);
+    resizeObserver.observe(wrapper);
 
     return () => {
       resizeObserver.disconnect();

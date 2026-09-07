@@ -1,7 +1,7 @@
 import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
@@ -412,4 +412,65 @@ it("keeps series identity stable when adding and removing axis bounds", async ()
   rerender(<Example save={save} />);
   await settle();
   expect(store.getState().processedSeries[0].id).toBe(id);
+});
+
+it("renders measured geometry before the initial resize notification and still follows resizing", async () => {
+  const NativeResizeObserver = globalThis.ResizeObserver;
+  const pending: (() => void)[] = [];
+  let defer = true;
+  vi.stubGlobal(
+    "ResizeObserver",
+    class extends NativeResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        super((entries, observer) => {
+          if (defer) {
+            pending.push(() => callback(entries, observer));
+          } else {
+            callback(entries, observer);
+          }
+        });
+      }
+    },
+  );
+  const example = (width = 600) => (
+    <DesignSystemProvider>
+      <Chart
+        d3Config={{ showDots: true }}
+        data={rows}
+        style={{ width, height: 360 }}
+        type="line"
+        x="x"
+        y="y"
+      />
+    </DesignSystemProvider>
+  );
+  try {
+    const { container, rerender, unmount } = render(example());
+    const svg = container.querySelector<SVGSVGElement>("[data-chart-plot]")!;
+    // Initial paint must not depend on the browser scheduling ResizeObserver.
+    expect(svg.viewBox.baseVal.width).toBeGreaterThan(0);
+    expect(svg.viewBox.baseVal.height).toBeGreaterThan(0);
+    expect(points(container)).toHaveLength(4);
+    expect(
+      container.querySelectorAll('[aria-label="X Axis"] .tick').length,
+    ).toBeGreaterThan(0);
+    await userEvent.hover(points(container)[1]);
+    await expect.poll(() => tooltip(container)).toContain(":-3");
+
+    await expect.poll(() => pending.length).toBeGreaterThan(0);
+    defer = false;
+    pending.splice(0).forEach((deliver) => deliver());
+    const initialWidth = svg.viewBox.baseVal.width;
+    rerender(example(400));
+    await expect
+      .poll(() => svg.viewBox.baseVal.width)
+      .toBeLessThan(initialWidth);
+    expect(points(container)).toHaveLength(4);
+    await userEvent.hover(points(container)[2]);
+    await expect.poll(() => tooltip(container)).toContain(":4");
+    unmount();
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
 });
