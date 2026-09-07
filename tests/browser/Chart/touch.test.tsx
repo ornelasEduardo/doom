@@ -22,12 +22,16 @@ const touch = async (
   type: "touchStart" | "touchMove" | "touchEnd" | "touchCancel",
   point?: { x: number; y: number },
 ) => {
-  if (type === "touchStart") touching = true;
+  if (type === "touchStart") {
+    touching = true;
+  }
   await cdp().send("Input.dispatchTouchEvent", {
     type,
     touchPoints: point ? [{ ...point, id: 1 }] : [],
   });
-  if (type === "touchEnd" || type === "touchCancel") touching = false;
+  if (type === "touchEnd" || type === "touchCancel") {
+    touching = false;
+  }
   await frame();
 };
 const tap = async (point: { x: number; y: number }) => {
@@ -45,14 +49,14 @@ const mount = async () => {
       <div style={{ minHeight: 1800 }}>
         <Chart.Root
           data={rows}
+          style={{ width: 600, height: 360 }}
           type="line"
           x="month"
           y="actual"
-          style={{ width: 600, height: 360 }}
         >
           <Chart.Plot>
-            <Chart.Series type="line" y="actual" label="Actual" showDots />
-            <Chart.Series type="line" y="forecast" label="Forecast" showDots />
+            <Chart.Series showDots label="Actual" type="line" y="actual" />
+            <Chart.Series showDots label="Forecast" type="line" y="forecast" />
           </Chart.Plot>
         </Chart.Root>
         <button>Outside chart</button>
@@ -69,7 +73,9 @@ const mount = async () => {
   return { ...result, root, live, point };
 };
 afterEach(async () => {
-  if (touching) await touch("touchCancel");
+  if (touching) {
+    await touch("touchCancel");
+  }
   await cdp().send("Emulation.setTouchEmulationEnabled", { enabled: false });
   cleanup();
   window.scrollTo(0, 0);
