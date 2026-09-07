@@ -8,7 +8,7 @@ import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/chart.store";
-import { Accessor } from "../../types";
+import { Accessor, AxisValue } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
@@ -18,8 +18,8 @@ import styles from "./BarSeries.module.scss";
 
 interface BarSeriesProps<T> {
   data?: T[];
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   orientation?: "vertical" | "horizontal";
   barWidth?: number | "auto";
   stackId?: string;

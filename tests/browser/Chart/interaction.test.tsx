@@ -138,8 +138,8 @@ describe("selection", () => {
   it("selects a point and toggles it off on a second press", async () => {
     // Observe through SensorContext rather than the render prop — this is the
     // API a consumer actually has, and it exercises the extension surface.
-    let ctx: SensorContext | null = null;
-    const observe: Sensor = (_event, sensorContext) => {
+    let ctx: SensorContext<(typeof rows)[number]> | null = null;
+    const observe: Sensor<(typeof rows)[number]> = (_event, sensorContext) => {
       ctx = sensorContext;
     };
 

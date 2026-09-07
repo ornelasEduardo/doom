@@ -1,10 +1,15 @@
+"use client";
+
 import React from "react";
 
 import { useChartContext } from "../../context";
 import { resolveAccessor } from "../../types/accessors";
-import { InteractionChannel } from "../../types/interaction";
+import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import { categoryAccessor, valueAccessor } from "../../utils/bars";
 import { describeDatum } from "../../utils/describe";
+import { numericSample } from "../../utils/sampleValidity";
+import { yTickCount } from "../../utils/scales";
+import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Announcer.module.scss";
 
 interface AnnouncerProps {
@@ -28,40 +33,56 @@ const describe = (value: unknown) =>
  * Subscribes to the store itself so hovering re-renders only this component.
  */
 export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
-  const { chartStore } = useChartContext();
+  const { chartStore, isMobile } = useChartContext();
 
-  const data = chartStore.useStore((s: any) => s.data) as any[];
-  const type = chartStore.useStore((s: any) => s.type) as string;
-  const config = chartStore.useStore((s: any) => s.config) as any;
-  const xAccessor = chartStore.useStore((s: any) => s.x);
-  const yAccessor = chartStore.useStore((s: any) => s.y);
-  const hover = chartStore.useStore((s: any) =>
+  const data = chartStore.useStore((s) => s.data);
+  const type = chartStore.useStore((s) => s.type);
+  const config = chartStore.useStore((s) => s.config);
+  const xAccessor = chartStore.useStore((s) => s.x);
+  const yAccessor = chartStore.useStore((s) => s.y);
+  const hover = chartStore.useStore((s) =>
     s.interactions.get(InteractionChannel.PRIMARY_HOVER),
-  ) as any;
+  ) as HoverInteraction | undefined;
 
   const series = chartStore.useStore((s) => s.processedSeries);
+  const scales = chartStore.useStore((s) => s.scales);
+  const dimensions = chartStore.useStore((s) => s.dimensions);
   const horizontal = series[0]?.orientation === "horizontal";
 
-  const getX = xAccessor ? resolveAccessor(xAccessor as any) : null;
-  const getY = yAccessor ? resolveAccessor(yAccessor as any) : null;
+  const getX = xAccessor ? resolveAccessor(xAccessor) : null;
+  const getY = yAccessor ? resolveAccessor(yAccessor) : null;
 
   const summary = React.useMemo(() => {
-    if (!data?.length || !getX || !getY) {
+    const rows = data?.filter((datum) => datum != null);
+    if (!rows?.length || !getX || !getY) {
       return "Empty chart.";
     }
 
     const xLabel = config?.xAxisLabel || "X";
     const yLabel = config?.yAxisLabel || "Y";
-    const xValues = data.map((d) => getX(d));
+    const xValues = rows.map((d) => getX(d));
     if (horizontal) {
-      const values = xValues.map(Number).filter(Number.isFinite);
-      const categories = data.map((d) => getY(d));
-      return `${type || "Bar"} chart with ${data.length} data points. ${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}. ${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`;
+      const values = xValues
+        .map(numericSample)
+        .filter((value) => value !== undefined);
+      const categories = rows.map((d) => getY(d));
+      const parts = [`${type || "Bar"} chart with ${rows.length} data points.`];
+      if (values.length) {
+        parts.push(
+          `${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}.`,
+        );
+      }
+      parts.push(
+        `${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`,
+      );
+      return parts.join(" ");
     }
-    const yValues = data.map((d) => Number(getY(d))).filter(Number.isFinite);
+    const yValues = rows
+      .map((d) => numericSample(getY(d)))
+      .filter((value) => value !== undefined);
 
     const parts = [
-      `${type || "Line"} chart with ${data.length} data points.`,
+      `${type || "Line"} chart with ${rows.length} data points.`,
       `${xLabel} from ${describe(xValues[0])} to ${describe(xValues[xValues.length - 1])}.`,
     ];
 
@@ -77,14 +98,67 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   }, [data, type, config, xAccessor, yAccessor, horizontal]);
 
   const active = React.useMemo(() => {
-    const target = hover?.targets?.[0];
-    const item = series.find((item) => item.id === target?.seriesId);
-    return describeDatum(
-      target?.data,
-      item ? categoryAccessor(item) : xAccessor,
-      item ? valueAccessor(item) : yAccessor,
-    );
-  }, [hover, xAccessor, yAccessor, series]);
+    const candidates = (axis: "x" | "y") => {
+      const scale = scales[axis];
+      return scale
+        ? getAxisTicks(
+            scale as {
+              domain: () => (string | number)[];
+              ticks?: (count: number) => (string | number)[];
+            },
+            axis === "x" ? dimensions.innerWidth : dimensions.innerHeight,
+            config.axes?.[axis]?.maxTicks,
+            axis === "x" ? (isMobile ? 3 : 5) : yTickCount(isMobile),
+          ).values
+        : [];
+    };
+    const ticks = { x: candidates("x"), y: candidates("y") };
+    return (hover?.targets ?? [])
+      .map((target) => {
+        const item = series.find((item) => item.id === target.seriesId);
+        const horizontal = item?.orientation === "horizontal";
+        const formatted = (accessor: typeof xAccessor, axis: "x" | "y") =>
+          accessor
+            ? (datum: unknown) => {
+                const value = resolveAccessor(accessor)(datum);
+                if (typeof value !== "string" && typeof value !== "number") {
+                  return value;
+                }
+                const options = config.axes?.[axis];
+                if (options?.valueFormat) {
+                  return options.valueFormat(value);
+                }
+                const index = ticks[axis].indexOf(value);
+                return options?.tickFormat && index >= 0
+                  ? options.tickFormat(value, index)
+                  : value;
+              }
+            : undefined;
+        const reading = describeDatum(
+          target.data,
+          formatted(
+            item ? categoryAccessor(item) : xAccessor,
+            horizontal ? "y" : "x",
+          ),
+          formatted(
+            item ? valueAccessor(item) : yAccessor,
+            horizontal ? "x" : "y",
+          ),
+        );
+        return reading && item?.label ? `${item.label}: ${reading}` : reading;
+      })
+      .filter(Boolean)
+      .join(". ");
+  }, [
+    hover,
+    xAccessor,
+    yAccessor,
+    series,
+    config,
+    scales,
+    dimensions,
+    isMobile,
+  ]);
 
   return (
     <>

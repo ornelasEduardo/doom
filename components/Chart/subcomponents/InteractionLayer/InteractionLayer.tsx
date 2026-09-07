@@ -32,6 +32,14 @@ export const InteractionLayer: React.FC = () => {
       return;
     }
 
+    const clearPendingMove = () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+      frameRef.current = null;
+      lastEventRef.current = null;
+    };
+
     // 2. Define the throttled processor
     const processEvent = () => {
       const event = lastEventRef.current;
@@ -55,18 +63,21 @@ export const InteractionLayer: React.FC = () => {
 
     // 3. Define the listener (Throttler)
     const onPointerEvent = (e: PointerEvent) => {
+      // Touch emits pointerleave on release even though its reading should remain.
+      if (e.type === "pointerleave" && e.pointerType === "touch") {
+        return;
+      }
+
       // CRITICAL: Do NOT throttle state-change events (down, up, leave).
       // These need immediate processing for proper drag/click handling.
       if (
         e.type === "pointerdown" ||
         e.type === "pointerup" ||
-        e.type === "pointerleave"
+        e.type === "pointerleave" ||
+        e.type === "pointercancel"
       ) {
         // Cancel any pending frame to avoid processing stale events
-        if (frameRef.current) {
-          cancelAnimationFrame(frameRef.current);
-          frameRef.current = null;
-        }
+        clearPendingMove();
 
         // Force synchronous processing
         lastEventRef.current = e;
@@ -81,7 +92,24 @@ export const InteractionLayer: React.FC = () => {
       }
     };
 
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      if (
+        event.pointerType !== "touch" ||
+        event.composedPath().includes(container)
+      ) {
+        return;
+      }
+      clearPendingMove();
+      const signal = engine.createSignal(event, InputAction.CANCEL);
+      if (signal) {
+        engine.input(signal);
+      }
+    };
+
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target !== container) {
+        return;
+      }
       if (
         [
           "ArrowLeft",
@@ -96,15 +124,27 @@ export const InteractionLayer: React.FC = () => {
       ) {
         // Create and send keyboard signal
         const signal = engine.createKeySignal(e);
-        engine.input(signal);
+        if (engine.input(signal)) {
+          e.preventDefault();
+        }
       }
     };
 
     // 4. Attach Listeners
-    container.addEventListener("pointermove", onPointerEvent);
-    container.addEventListener("pointerdown", onPointerEvent);
+    container.addEventListener("pointermove", onPointerEvent, {
+      passive: true,
+    });
+    container.addEventListener("pointerdown", onPointerEvent, {
+      passive: true,
+    });
     container.addEventListener("pointerup", onPointerEvent);
     container.addEventListener("pointerleave", onPointerEvent);
+    container.addEventListener("pointercancel", onPointerEvent);
+    container.ownerDocument.addEventListener(
+      "pointerdown",
+      onOutsidePointerDown,
+      { capture: true, passive: true },
+    );
     container.addEventListener("keydown", onKeyDown);
 
     return () => {
@@ -112,10 +152,14 @@ export const InteractionLayer: React.FC = () => {
       container.removeEventListener("pointerdown", onPointerEvent);
       container.removeEventListener("pointerup", onPointerEvent);
       container.removeEventListener("pointerleave", onPointerEvent);
+      container.removeEventListener("pointercancel", onPointerEvent);
+      container.ownerDocument.removeEventListener(
+        "pointerdown",
+        onOutsidePointerDown,
+        true,
+      );
       container.removeEventListener("keydown", onKeyDown);
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
+      clearPendingMove();
     };
   }, [engine, chartStore]);
 
@@ -141,6 +185,7 @@ function getInputAction(nativeType: string): InputAction {
       return InputAction.START;
     case "pointerup":
       return InputAction.END;
+    case "pointercancel":
     case "pointerleave":
       return InputAction.CANCEL;
     default:

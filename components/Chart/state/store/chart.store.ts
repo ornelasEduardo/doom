@@ -1,9 +1,14 @@
-import { Accessor, AxisDomain, Config } from "../../types";
+import { Accessor, AxisDomain, AxisValue, Config } from "../../types";
 import { InteractionChannel } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
 import { d3 } from "../../utils/d3";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
+import {
+  isSampleValue,
+  numericSample,
+  samplePosition,
+} from "../../utils/sampleValidity";
 import {
   createScales,
   hasDomainOverride,
@@ -31,6 +36,7 @@ import {
   combineSeries,
   getSeriesInitialState,
   hydrateSeries,
+  SeriesRegistration,
   SeriesSlice,
 } from "./slices/series.slice";
 
@@ -54,24 +60,24 @@ export interface State<T = any>
 /**
  * The Store type for the Chart system.
  */
-export type Store = StoreApi<State>;
+export type Store<T = any> = StoreApi<State<T>>;
 
 /**
  * Creates a unified Chart Store using the Slice Pattern.
  */
-export const createChartStore = (
+export const createChartStore = <T = any>(
   initialConfig: Config,
-  x?: Accessor<any, string | number>,
-  y?: Accessor<any, string | number>,
+  x?: Accessor<T, AxisValue>,
+  y?: Accessor<T, AxisValue>,
 ) => {
   const dimensionsSlice = getDimensionsInitialState(initialConfig);
-  const dataSlice = getDataInitialState(initialConfig, x, y);
+  const dataSlice = getDataInitialState<T>(initialConfig, x, y);
   const seriesSlice = getSeriesInitialState();
   const interactionSlice = getInteractionsInitialState();
   const lifecycleSlice = getLifecycleInitialState();
   const scalesSlice = getScalesInitialState();
 
-  return createStore<State>({
+  return createStore<State<T>>({
     ...lifecycleSlice,
     ...dimensionsSlice,
     ...dataSlice,
@@ -258,8 +264,8 @@ export const updateChartMargin = (
 export const updateChartAccessors = <T>(
   store: Store,
   next: {
-    x?: Accessor<T, string | number>;
-    y?: Accessor<T, string | number>;
+    x?: Accessor<T, AxisValue>;
+    y?: Accessor<T, AxisValue>;
   },
 ) => {
   store.setState((prev) => {
@@ -276,7 +282,11 @@ export const updateChartAccessors = <T>(
  * Registers a series id and its configurations.
  * Often called by the `<Series />` component or sub-series layers.
  */
-export const registerSeries = (store: Store, id: string, configs: any[]) => {
+export const registerSeries = (
+  store: Store,
+  id: string,
+  configs: SeriesRegistration[],
+) => {
   store.setState((state) => {
     const nextSeries = new Map(state.series);
     const nextConfigs = new Map(state.seriesConfigs); // Clone configs map
@@ -416,29 +426,35 @@ const refreshHover = (
       return [];
     }
     const datum = rows[index];
+    if (!scales.x || !scales.y) {
+      return [];
+    }
+    const xAccessor = item ? item.xAccessor : state.x;
+    const yAccessor = item ? item.yAccessor : state.y;
+    const sample = samplePosition(
+      datum,
+      xAccessor ? resolveAccessor(xAccessor) : () => index,
+      yAccessor ? resolveAccessor(yAccessor) : (value) => value,
+      scales.x,
+      scales.y,
+    );
+    if (!sample) {
+      return [];
+    }
     const geometry =
-      item?.type === "bar" && scales.x && scales.y
+      item?.type === "bar"
         ? barGeometry(item, datum, index, scales.x, scales.y)
         : null;
     const bar =
       geometry && bounded
         ? clipRectToPlot(geometry, state.dimensions)
         : geometry;
-    if (!scales.x || !scales.y || (item?.type === "bar" && !bar)) {
+    if (item?.type === "bar" && !bar) {
       return [];
     }
-    const xAccessor = item ? item.xAccessor : state.x;
-    const yAccessor = item ? item.yAccessor : state.y;
     const coordinate = bar
       ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
-      : {
-          x: (scales.x as (value: unknown) => number)(
-            xAccessor ? resolveAccessor(xAccessor)(datum) : index,
-          ),
-          y: (scales.y as (value: unknown) => number)(
-            yAccessor ? resolveAccessor(yAccessor)(datum) : datum,
-          ),
-        };
+      : sample;
     if (bounded && !isPointInPlot(coordinate, state.dimensions)) {
       return [];
     }
@@ -502,7 +518,13 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
     );
     const categories = compatible.flatMap((series) => {
       const accessor = categoryAccessor(series);
-      return accessor ? (series.data ?? []).map(resolveAccessor(accessor)) : [];
+      return accessor
+        ? (series.data ?? [])
+            .flatMap((datum) =>
+              datum == null ? [] : [resolveAccessor(accessor)(datum)],
+            )
+            .filter(isSampleValue)
+        : [];
     });
     const totals = compatible.flatMap(
       (series) => series.stackRanges?.flat() ?? [],
@@ -537,12 +559,14 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
       const extraValues = otherSeries
         .flatMap((series) =>
           series.yAccessor
-            ? (series.data ?? []).map((datum) =>
-                Number(resolveAccessor(series.yAccessor!)(datum)),
+            ? (series.data ?? []).flatMap((datum) =>
+                datum == null
+                  ? []
+                  : [numericSample(resolveAccessor(series.yAccessor!)(datum))],
               )
             : [],
         )
-        .filter(Number.isFinite);
+        .filter((value): value is number => value !== undefined);
       const bounds = base.yScale.domain();
       base.yScale
         .domain([
@@ -552,7 +576,13 @@ const deriveScales = (data: State["data"], dims: Dimensions, state: State) => {
         .nice();
       const extras = otherSeries.flatMap((series) =>
         series.xAccessor
-          ? (series.data ?? []).map(resolveAccessor(series.xAccessor))
+          ? (series.data ?? [])
+              .flatMap((datum) =>
+                datum == null
+                  ? []
+                  : [resolveAccessor(series.xAccessor!)(datum)],
+              )
+              .filter(isSampleValue)
           : [],
       );
       if (!("ticks" in base.xScale)) {

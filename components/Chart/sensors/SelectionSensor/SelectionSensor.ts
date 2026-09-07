@@ -1,12 +1,14 @@
 import { InputAction } from "../../engine";
-import { Sensor } from "../../types/events";
+import { GenericSensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 
 /**
  * Professional-grade Selection Sensor.
  * Coordinates with Engine to choose data points on click/start.
  */
-export const SelectionSensor = (options: { name?: string } = {}): Sensor => {
+export const SelectionSensor = (
+  options: { name?: string } = {},
+): GenericSensor => {
   const { name = InteractionChannel.SELECTION } = options;
 
   return (

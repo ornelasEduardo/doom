@@ -10,7 +10,8 @@ import { CustomSeries } from "../CustomSeries/CustomSeries";
 import { LineSeriesWrapper } from "../LineSeries/LineSeries";
 import { ScatterSeriesWrapper } from "../ScatterSeries/ScatterSeries";
 
-export function Series<T>(props: SeriesProps<T>) {
+// JSX children cannot infer the parent datum; pass data or a type argument to constrain keys.
+export function Series<T = never>(props: SeriesProps<T>) {
   const { chartStore } = useChartContext<T>();
   const dimensions = chartStore.useStore((state) => state.dimensions);
   const clipX = chartStore.useStore((state) =>

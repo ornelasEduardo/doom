@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { Cursor, Dim, Markers, Tooltip } from "../behaviors";
 import {
@@ -14,6 +14,11 @@ export const useChartBehaviors = <T>(
   chartContext: ContextValue<T>,
   userBehaviors?: Behavior<T>[],
 ) => {
+  const contextRef = useRef(chartContext);
+  useLayoutEffect(() => {
+    contextRef.current = chartContext;
+  });
+
   // Consumers pass a fresh array literal every render. Keying off its identity
   // would tear down and re-append every d3 layer on any unrelated re-render.
   const behaviorsRef = useRef<Behavior<T>[] | undefined>(userBehaviors);
@@ -62,7 +67,7 @@ export const useChartBehaviors = <T>(
             Markers({
               on: InteractionChannel.PRIMARY_HOVER,
               radius: 8,
-            }) as Behavior<T>,
+            }),
           );
           break;
         case "bar":
@@ -72,7 +77,7 @@ export const useChartBehaviors = <T>(
               on: InteractionChannel.PRIMARY_HOVER,
               selector:
                 ".chart-bar-series .chart-bar, .chart-scatter-series circle",
-            }) as Behavior<T>,
+            }),
           );
           break;
         default:
@@ -92,11 +97,10 @@ export const useChartBehaviors = <T>(
 
     const cleanups = behaviors.map((behavior) => {
       return behavior({
-        getChartContext: () =>
-          ({
-            ...chartContext,
-            g: gSelection,
-          }) as any,
+        getChartContext: () => ({
+          ...contextRef.current,
+          g: gSelection,
+        }),
         getInteraction: (name: string) => {
           return (
             chartContext.chartStore.getState().interactions.get(name) || null

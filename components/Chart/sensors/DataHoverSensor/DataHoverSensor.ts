@@ -1,5 +1,5 @@
 import { InputAction } from "../../engine";
-import { Sensor } from "../../types/events";
+import { GenericSensor } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 
 export interface HoverSensorOptions {
@@ -31,7 +31,9 @@ export interface HoverSensorOptions {
  * The DataHoverSensor detects pointer movements over the chart plot
  * and identifies the closest data targets.
  */
-export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
+export const DataHoverSensor = (
+  options: HoverSensorOptions = {},
+): GenericSensor => {
   const {
     name = InteractionChannel.PRIMARY_HOVER,
     exactHit = false,
@@ -50,14 +52,16 @@ export const DataHoverSensor = (options: HoverSensorOptions = {}): Sensor => {
 
     if (
       signal.action !== InputAction.MOVE &&
-      signal.action !== InputAction.CANCEL
+      signal.action !== InputAction.CANCEL &&
+      !(signal.source === "touch" && signal.action === InputAction.START)
     ) {
       return;
     }
 
     if (
       signal.action === InputAction.CANCEL ||
-      (!isWithinPlot && signal.source !== "touch")
+      (!isWithinPlot &&
+        (signal.source !== "touch" || signal.action === InputAction.START))
     ) {
       removeInteraction(name);
       return;

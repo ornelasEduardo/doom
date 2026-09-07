@@ -9,18 +9,19 @@ import {
   registerSeries,
   unregisterSeries,
 } from "../../state/store/chart.store";
-import { Accessor } from "../../types";
+import { Accessor, AxisValue } from "../../types";
 import { resolveAccessor } from "../../utils/accessors";
 import { d3 } from "../../utils/d3";
 import { describeDatum } from "../../utils/describe";
 import { useSeriesColor } from "../../utils/hooks";
+import { samplePosition } from "../../utils/sampleValidity";
 import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 import styles from "./LineSeries.module.scss";
 
 interface LineSeriesProps<T> {
   data?: T[];
-  x?: Accessor<T, string | number>;
-  y?: Accessor<T, string | number>;
+  x?: Accessor<T, AxisValue>;
+  y?: Accessor<T, AxisValue>;
   color?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -120,22 +121,28 @@ const LineSeriesComponent = <T,>({
       return null;
     }
 
+    const positions = Array.from(data, (datum) =>
+      samplePosition(datum, xAccessor, yAccessor, xScale, yScale),
+    );
+    type Position = { x: number; y: number } | null;
     const lineGenerator = d3
-      .line<T>()
-      .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
-      .y((d) => ("ticks" in yScale ? yScale(Number(yAccessor(d))) : 0))
+      .line<Position>()
+      .defined((point) => point !== null)
+      .x((point) => point!.x)
+      .y((point) => point!.y)
       .curve(curve || config.curve || d3.curveLinear);
 
     const areaGenerator = d3
-      .area<T>()
-      .x((d) => (xScale as any)(xAccessor(d)) ?? 0)
+      .area<Position>()
+      .defined((point) => point !== null)
+      .x((point) => point!.x)
       .y0(innerHeight)
-      .y1((d) => ("ticks" in yScale ? yScale(Number(yAccessor(d))) : 0))
+      .y1((point) => point!.y)
       .curve(curve || config.curve || d3.curveLinear);
 
     return {
-      line: lineGenerator(data),
-      area: areaGenerator(data),
+      line: lineGenerator(positions),
+      area: areaGenerator(positions),
     };
   }, [
     xScale,
@@ -147,6 +154,7 @@ const LineSeriesComponent = <T,>({
     config.curve,
     dimensions.width,
     dimensions.height,
+    innerHeight,
   ]);
 
   if (render && xScale && yScale) {
@@ -228,16 +236,24 @@ const LineSeriesComponent = <T,>({
         yAccessor &&
         xAccessor &&
         data.map((d, i) => {
-          const cx = (xScale as any)(xAccessor(d));
-          const cy = "ticks" in yScale ? yScale(Number(yAccessor(d))) : 0;
+          const position = samplePosition(
+            d,
+            xAccessor,
+            yAccessor,
+            xScale,
+            yScale,
+          );
+          if (!position) {
+            return null;
+          }
           return (
             <SeriesPoint
               key={i}
               color={strokeColor}
               datum={d}
               description={describeDatum(d, xAccessor, yAccessor)}
-              x={cx}
-              y={cy}
+              x={position.x}
+              y={position.y}
             />
           );
         })}

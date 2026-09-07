@@ -317,7 +317,9 @@ it("reaches categories present only in a later series with keyboard input", asyn
   await expect
     .poll(() => container.querySelector("[data-chart-tooltip]")?.textContent)
     .toContain("Second:30");
-  expect(container.querySelector('[role="status"]')?.textContent).toBe("C: 30");
+  expect(container.querySelector('[role="status"]')?.textContent).toBe(
+    "Second: C: 30",
+  );
 });
 
 it("diagnoses and omits non-bar series on horizontal bar axes", async () => {

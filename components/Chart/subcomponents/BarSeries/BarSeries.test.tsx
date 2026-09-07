@@ -3,6 +3,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
+import { d3 } from "../../utils/d3";
 import { BarSeriesWrapper } from "./BarSeries";
 
 // Mock the context hook
@@ -47,7 +48,10 @@ describe("BarSeries", () => {
         series: new Map(),
         processedSeries: [],
         interactions: new Map(),
-        scales: { x: (val: any) => val, y: (val: any) => val },
+        scales: {
+          x: d3.scaleBand().domain(["A", "B", "C"]).range([0, 440]),
+          y: d3.scaleLinear().domain([0, 20]).range([250, 0]),
+        },
         dimensions: {
           width: 500,
           height: 300,
@@ -68,7 +72,10 @@ describe("BarSeries", () => {
           series: new Map(),
           processedSeries: [],
           interactions: new Map(),
-          scales: { x: (val: any) => val, y: (val: any) => val },
+          scales: {
+            x: d3.scaleBand().domain(["A", "B", "C"]).range([0, 440]),
+            y: d3.scaleLinear().domain([0, 20]).range([250, 0]),
+          },
           dimensions: {
             width: 500,
             height: 300,
@@ -114,7 +121,10 @@ describe("BarSeries", () => {
             series: new Map(),
             processedSeries: [],
             interactions: new Map(),
-            scales: { x: (val: any) => val, y: (val: any) => val },
+            scales: {
+              x: d3.scaleBand().domain(["A", "B", "C"]).range([0, 440]),
+              y: d3.scaleLinear().domain([0, 20]).range([250, 0]),
+            },
             dimensions: {
               width: 300,
               height: 200,
@@ -146,7 +156,10 @@ describe("BarSeries", () => {
             series: new Map(),
             processedSeries: [],
             interactions: new Map(),
-            scales: { x: (val: any) => val, y: (val: any) => val },
+            scales: {
+              x: d3.scaleBand().domain(["A", "B", "C"]).range([0, 440]),
+              y: d3.scaleLinear().domain([0, 20]).range([250, 0]),
+            },
             dimensions: {
               width: 0,
               height: 0,

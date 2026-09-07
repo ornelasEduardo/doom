@@ -134,6 +134,9 @@ export interface InteractionCandidate<T = unknown> {
  * It combines the raw input with the spatial query results.
  */
 export interface EngineEvent<T = unknown> {
+  /** Set true synchronously after handling a KEY signal to cancel its native default. */
+  handled?: boolean;
+
   /** The normalized input that triggered this event */
   signal: InputSignal;
 
