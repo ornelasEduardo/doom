@@ -1,6 +1,8 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
+import { moveChartPointer } from "./tests/browser/Chart/coordinateCommands";
+
 /**
  * Real-browser lane.
  *
@@ -14,6 +16,7 @@ export default defineConfig({
     include: ["tests/browser/**/*.test.tsx"],
     browser: {
       enabled: true,
+      commands: { moveChartPointer },
       provider: playwright(),
       headless: true,
       screenshotFailures: false,

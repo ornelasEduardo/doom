@@ -120,6 +120,14 @@ d3Config={{
 />
 ```
 
+Missing or nonfinite axis samples form gaps in line and area series and are
+omitted from scatter, bubble, and bar marks and interaction targets. Zero is a
+valid sample; a zero-valued bar retains its normal invisible geometry. Sparse
+arrays and absent rows are skipped safely, and hover/keyboard targets keep the
+original datum indices. For scatter with `size`, an invalid optional size uses
+the default point radius and does not affect the size range; size zero remains
+valid.
+
 ## Axis domains
 
 `xDomain` and `yDomain` are top-level props on both `Chart` and `Chart.Root`,

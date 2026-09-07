@@ -145,6 +145,12 @@ export class Engine<T = unknown> {
       return false;
     }
 
+    if (signal.action === InputAction.CANCEL) {
+      // Cancellation clears chart interactions, even when an outside touch has
+      // a different pointer ID from the work already queued for this chart.
+      this.scheduler.cancelPending();
+    }
+
     const plotOffset = this.coords.getPlotOffset();
     const searchX = signal.x - plotOffset.x;
     const searchY = signal.y - plotOffset.y;
