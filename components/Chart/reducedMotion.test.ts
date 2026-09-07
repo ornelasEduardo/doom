@@ -12,7 +12,12 @@ it("ships reduced-motion rules scoped to chart plots", () => {
       return;
     }
     media.walkDecls("transition", (declaration) => {
-      if (declaration.value === "none" && declaration.parent?.type === "rule") {
+      if (
+        declaration.value === "none" &&
+        declaration.parent &&
+        "selector" in declaration.parent &&
+        typeof declaration.parent.selector === "string"
+      ) {
         selectors.push(declaration.parent.selector);
       }
     });
