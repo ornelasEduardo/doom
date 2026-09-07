@@ -59,6 +59,7 @@ const mount = async () => {
     <DesignSystemProvider>
       <div style={{ minHeight: 1800 }}>
         <Chart.Root
+          d3Config={{ showDots: true }}
           data={rows}
           style={{ width: 600, height: 360 }}
           type="line"
@@ -67,8 +68,8 @@ const mount = async () => {
         >
           <CaptureEngine />
           <Chart.Plot>
-            <Chart.Series showDots label="Actual" type="line" y="actual" />
-            <Chart.Series showDots label="Forecast" type="line" y="forecast" />
+            <Chart.Series label="Actual" type="line" y="actual" />
+            <Chart.Series label="Forecast" type="line" y="forecast" />
           </Chart.Plot>
         </Chart.Root>
         <button>Outside chart</button>
