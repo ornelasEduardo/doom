@@ -145,6 +145,11 @@ function DefaultTooltipContent<T>({
     ? resolveAccessor(category as any)(activeData)
     : undefined;
   const xLabel = category ? String(categoryValue) : "Value";
+  // Built-in sensors already select the complete target set. Only legacy
+  // interactions without any series IDs need category-based reconstruction.
+  const hasIdentifiedTargets = targets?.some(
+    (target) => target.seriesId !== undefined,
+  );
 
   return (
     <Card
@@ -167,6 +172,9 @@ function DefaultTooltipContent<T>({
             const candidate = targets?.find(
               (target) => target.seriesId === item.id,
             );
+            if (hasIdentifiedTargets && !candidate) {
+              return null;
+            }
             const datum =
               item.id === activeSeriesId
                 ? activeData

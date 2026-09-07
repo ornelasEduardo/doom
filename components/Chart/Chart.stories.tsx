@@ -173,6 +173,152 @@ export const SignedLineMetric: Story = {
   ),
 };
 
+const dailySignups = Array.from({ length: 40 }, (_, day) => ({
+  date: Date.UTC(2026, 0, 1 + day),
+  signups: 24 + Math.floor(day / 7) * 5 + [8, 12, 6, 15, 9, 2, 0][day % 7],
+}));
+const signupDateFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+const signupBehaviors = [
+  Chart.behaviors.Tooltip<(typeof dailySignups)[number]>({
+    render: (datum) =>
+      `${signupDateFormat.format(datum.date)}: ${datum.signups} signups`,
+  }),
+  Chart.behaviors.Cursor(),
+  Chart.behaviors.Markers(),
+];
+
+export const DailySignups: Story = {
+  tags: ["interaction"],
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Forty daily observations retain their numeric timestamps and spacing. xTickFormat formats labels in UTC; xMaxTicks caps labels without aggregating or dropping data. Numeric ticks use the existing linear scale, not calendar-aligned time intervals.",
+      },
+    },
+  },
+  render: () => (
+    <Chart
+      behaviors={signupBehaviors}
+      className={storyStyles.domainChart}
+      d3Config={{
+        showDots: true,
+        xAxisLabel: "Date (UTC)",
+        yAxisLabel: "Signups",
+        xTickFormat: (value) => signupDateFormat.format(Number(value)),
+        xMaxTicks: 6,
+      }}
+      data={dailySignups}
+      subtitle="Jan 1 – Feb 9, 2026 · daily totals · UTC"
+      title="Daily signups"
+      type="line"
+      x="date"
+      y="signups"
+    />
+  ),
+  play: async ({ canvasElement, step }) => {
+    await step(
+      "Date labels stay concise while all daily observations remain",
+      async () => {
+        await waitFor(() => {
+          const labels = canvasElement.querySelectorAll(
+            '[aria-label="X Axis"] .tick text',
+          );
+          expect(labels.length).toBeGreaterThan(1);
+          expect(labels.length).toBeLessThanOrEqual(6);
+          for (const label of labels) {
+            expect(label.textContent).toMatch(/^(Jan|Feb) \d{1,2}$/);
+          }
+          expect(
+            canvasElement.querySelectorAll(".chart-line-series circle"),
+          ).toHaveLength(40);
+        });
+      },
+    );
+  },
+};
+
+const revenueAgainstPlan = [
+  { month: "Jan", actual: 42, plan: 45 },
+  { month: "Feb", actual: 47, plan: 50 },
+  { month: "Mar", actual: 61, plan: 55 },
+  { month: "Apr", actual: 54, plan: 60 },
+  { month: "May", actual: 69, plan: 65 },
+];
+const singlePointSensors = [
+  Chart.sensors.DataHoverSensor({ verticalSlice: false }),
+  Chart.sensors.KeyboardSensor(),
+];
+
+export const RevenueAgainstPlan: Story = {
+  tags: ["interaction"],
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Actual revenue and the monthly plan share the same dates. The tooltip describes only the hovered line through Chart.sensors.DataHoverSensor({ verticalSlice: false }); the default cursor and markers remain active. Keyboard navigation is explicitly retained because sensors replaces the defaults.",
+      },
+    },
+  },
+  render: () => (
+    <Chart.Root
+      className={storyStyles.domainChart}
+      d3Config={{ showDots: true, yAxisLabel: "Revenue (USD thousands)" }}
+      data={revenueAgainstPlan}
+      sensors={singlePointSensors}
+      type="line"
+      x="month"
+      y="actual"
+    >
+      <Chart.Header
+        subtitle="USD thousands · hover a line to inspect its value"
+        title="Revenue against plan"
+      >
+        <Chart.Legend layout="horizontal" />
+      </Chart.Header>
+      <Chart.Plot>
+        <Chart.Grid />
+        <Chart.Axis />
+        <Chart.Series label="Actual" type="line" x="month" y="actual" />
+        <Chart.Series label="Plan" type="line" x="month" y="plan" />
+        <Chart.Cursor />
+      </Chart.Plot>
+    </Chart.Root>
+  ),
+  play: async ({ canvasElement, step }) => {
+    await step(
+      "Hovering actual revenue excludes the plan from its tooltip",
+      async () => {
+        await waitFor(() =>
+          expect(
+            canvasElement.querySelectorAll(".chart-line-series circle"),
+          ).toHaveLength(10),
+        );
+        const point = canvasElement.querySelectorAll(
+          ".chart-line-series circle",
+        )[2];
+        const rect = point.getBoundingClientRect();
+        await userEvent.pointer({
+          target: point,
+          coords: {
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+          },
+        });
+        await waitFor(() => {
+          const tooltip = canvasElement.querySelector("[data-chart-tooltip]");
+          expect(tooltip?.textContent).toContain("Actual:61");
+          expect(tooltip?.textContent).not.toContain("Plan");
+        });
+      },
+    );
+  },
+};
+
 const regionalRevenue = [
   {
     region: "North",

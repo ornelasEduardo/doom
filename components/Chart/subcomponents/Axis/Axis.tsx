@@ -45,6 +45,19 @@ const strideToAvoidOverlap = (
   return Math.max(1, Math.ceil((widest + LABEL_GAP) / step));
 };
 
+const limitTicks = <T,>(values: T[], limit: number): T[] => {
+  if (values.length <= limit) {
+    return values;
+  }
+  if (limit === 1) {
+    return values.slice(0, 1);
+  }
+  return Array.from(
+    { length: limit },
+    (_, i) => values[Math.round((i * (values.length - 1)) / (limit - 1))],
+  );
+};
+
 export function Axis() {
   const { chartStore, config, requestLayoutAdjustment, isMobile } =
     useChartContext();
@@ -66,23 +79,73 @@ export function Axis() {
     const xAxis = d3.axisBottom(xScale as any);
     const isContinuousX = typeof (xScale as any).ticks === "function";
 
-    if (isContinuousX) {
-      xAxis.ticks(isMobile ? 3 : 5);
-    }
+    const requestedLimit = config.xMaxTicks;
+    const maxTicks =
+      requestedLimit !== undefined &&
+      Number.isFinite(requestedLimit) &&
+      requestedLimit >= 1
+        ? Math.floor(requestedLimit)
+        : undefined;
+    // Bound generation before D3 allocates ticks; xMaxTicks is an upper limit,
+    // not a request to create more labels than the plot can accommodate.
+    const displayBudget = Math.max(1, Math.floor(innerWidth / LABEL_GAP));
+    const tickCount =
+      maxTicks === undefined
+        ? isMobile
+          ? 3
+          : 5
+        : Math.min(maxTicks, displayBudget);
+    let values = isContinuousX
+      ? (xScale as { ticks: (count: number) => number[] }).ticks(tickCount)
+      : (xScale.domain() as (string | number)[]);
 
+    if (isContinuousX) {
+      xAxis.ticks(tickCount);
+    }
+    if (maxTicks !== undefined) {
+      values = limitTicks(values, Math.min(maxTicks, displayBudget));
+    }
+    xAxis.tickValues(values as any);
+    if (config.xTickFormat) {
+      xAxis.tickFormat((value, index) =>
+        config.xTickFormat!(value as string | number, index),
+      );
+    }
     d3.select(gx.current).call(xAxis);
 
-    if (!isContinuousX) {
-      // Draw every category first, then thin only if they actually collide.
-      const domain = (xScale as any).domain() as (string | number)[];
+    if (config.xTickFormat || maxTicks !== undefined) {
+      // Capping can leave uneven gaps, so use the rendered positions. A
+      // formatter may depend on the tick index; recheck after redrawing.
+      while (values.length > 1) {
+        let right = -Infinity;
+        const labels =
+          gx.current.querySelectorAll<SVGTextElement>(".tick text");
+        const visible = values.filter((_, index) => {
+          const rect = labels[index].getBoundingClientRect();
+          if (rect.width === 0) {
+            return true;
+          }
+          if (rect.left < right + LABEL_GAP) {
+            return false;
+          }
+          right = rect.right;
+          return true;
+        });
+        if (visible.length === values.length) {
+          break;
+        }
+        values = visible;
+        xAxis.tickValues(values as any);
+        d3.select(gx.current).call(xAxis);
+      }
+    } else if (!isContinuousX) {
       const stride = strideToAvoidOverlap(
         gx.current,
-        domain.length,
+        values.length,
         innerWidth,
       );
-
       if (stride > 1) {
-        xAxis.tickValues(domain.filter((_, i) => i % stride === 0) as any);
+        xAxis.tickValues(values.filter((_, i) => i % stride === 0) as any);
         d3.select(gx.current).call(xAxis);
       }
     }
@@ -143,9 +206,12 @@ export function Axis() {
     config.hideYAxisDomain,
     config.yAxisLabel,
     config.xAxisLabel,
+    config.xTickFormat,
+    config.xMaxTicks,
     isMobile,
     requestLayoutAdjustment,
     innerHeight,
+    innerWidth,
   ]);
 
   if (!xScale || !yScale) {

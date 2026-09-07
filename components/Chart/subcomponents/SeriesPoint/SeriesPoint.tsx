@@ -30,6 +30,7 @@ export const SeriesPoint = memo(
     className,
     style,
     description,
+    datum,
     ...props
   }: SeriesPointProps) => {
     if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) {
@@ -48,15 +49,12 @@ export const SeriesPoint = memo(
       ...style,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const datum = (props as any).datum;
-
     return (
       <circle
         ref={(node) => {
           if (node) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (node as any).__data__ = datum;
+            (node as SVGCircleElement & { __data__?: unknown }).__data__ =
+              datum;
           }
         }}
         aria-label={description || "Data point"}

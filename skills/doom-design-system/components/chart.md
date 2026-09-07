@@ -47,12 +47,17 @@ component's own semantics win on conflict.
 | `curve` | `d3Shape.CurveFactory` | — | D3 curve factory (e.g. `curveMonotoneX`) |
 | `showAxes` | `boolean` | `true` | Show X/Y axes |
 | `xAxisLabel` | `string` | — | X-axis label text |
+| `xTickFormat` | `(value: string \| number, index: number) => string` | — | Format X tick labels; numeric timestamps can be formatted with an explicit locale/timezone. |
+| `xMaxTicks` | `number` | — | Maximum X tick count; positive values are floored, invalid values ignored. Labels may be thinned further to fit. |
 | `yAxisLabel` | `string` | — | Y-axis label text |
 | `grid` | `boolean` | — | Show grid lines |
 | `withGradient` | `boolean` | — | Fill area with gradient |
 | `showDots` | `boolean` | — | Show data point dots |
 | `hideYAxisDomain` | `boolean` | — | Hide Y-axis domain line |
 | `type` | `SeriesType` | — | Series type override within config |
+
+Numeric timestamps use the existing linear scale, not calendar-aligned time ticks.
+`xTickFormat` changes labels only; it does not change tooltip data or scale values.
 
 ## Usage
 
@@ -299,6 +304,10 @@ import {
 Chart.sensors;    // DataHoverSensor, KeyboardSensor, DragSensor, SelectionSensor
 Chart.behaviors;  // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpdate
 ```
+
+The default tooltip displays the sensor's selected targets. Use
+`Chart.sensors.DataHoverSensor({ verticalSlice: false })` for a single-point
+tooltip, and retain `Chart.sensors.KeyboardSensor()` for keyboard interaction.
 
 `sensors` and `behaviors` **replace** the defaults rather than adding to them,
 so compose from the built-ins when you want a partial override:

@@ -1122,6 +1122,12 @@ export const componentCatalog: ComponentDescriptor[] = [
         required: true,
         description: "Data key for Y axis",
       },
+      {
+        name: "d3Config",
+        type: "object",
+        description:
+          "Chart configuration, including xMaxTicks to limit X labels. xTickFormat is a React callback and cannot be represented in JSON.",
+      },
       { name: "title", type: "string", description: "Chart title" },
       { name: "subtitle", type: "string", description: "Chart subtitle" },
     ],

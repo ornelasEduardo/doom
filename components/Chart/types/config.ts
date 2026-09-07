@@ -9,6 +9,10 @@ export interface Config {
   curve?: d3Shape.CurveFactory;
   showAxes?: boolean;
   xAxisLabel?: string;
+  /** Format x-axis labels; numeric timestamps remain numeric scale values. */
+  xTickFormat?: (value: string | number, index: number) => string;
+  /** Positive maximum number of x-axis ticks; labels may be thinned further to fit. */
+  xMaxTicks?: number;
   yAxisLabel?: string;
   grid?: boolean;
   withGradient?: boolean;
