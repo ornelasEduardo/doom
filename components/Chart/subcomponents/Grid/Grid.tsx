@@ -2,6 +2,7 @@
 
 import { useChartContext } from "../../context";
 import { yTickCount } from "../../utils/scales";
+import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Grid.module.scss";
 
 export function Grid() {
@@ -21,11 +22,16 @@ export function Grid() {
   if (!numeric || !("ticks" in numeric)) {
     return null;
   }
-  const ticks = numeric.ticks(yTickCount(isMobile));
+  const { values: ticks } = getAxisTicks<number | Date>(
+    numeric,
+    horizontal ? innerWidth : dimensions.innerHeight,
+    (horizontal ? config.axes?.x : config.axes?.y)?.maxTicks,
+    yTickCount(isMobile),
+  );
 
   return (
     <g data-chart-grid aria-hidden="true" className={styles.grid}>
-      {ticks.map((t: any, i: number) =>
+      {ticks.map((t, i) =>
         horizontal ? (
           <line
             key={i}

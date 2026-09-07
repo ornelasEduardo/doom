@@ -47,8 +47,7 @@ component's own semantics win on conflict.
 | `curve` | `d3Shape.CurveFactory` | — | D3 curve factory (e.g. `curveMonotoneX`) |
 | `showAxes` | `boolean` | `true` | Show X/Y axes |
 | `xAxisLabel` | `string` | — | X-axis label text |
-| `xTickFormat` | `(value: string \| number, index: number) => string` | — | Format X tick labels; numeric timestamps can be formatted with an explicit locale/timezone. |
-| `xMaxTicks` | `number` | — | Maximum X tick count; positive values are floored, invalid values ignored. Labels may be thinned further to fit. |
+| `axes` | `{ x?: AxisOptions; y?: AxisOptions }` | — | Per-axis tick formatting and label limits using the same options for either axis. |
 | `yAxisLabel` | `string` | — | Y-axis label text |
 | `grid` | `boolean` | — | Show grid lines |
 | `withGradient` | `boolean` | — | Fill area with gradient |
@@ -57,7 +56,20 @@ component's own semantics win on conflict.
 | `type` | `SeriesType` | — | Series type override within config |
 
 Numeric timestamps use the existing linear scale, not calendar-aligned time ticks.
-`xTickFormat` changes labels only; it does not change tooltip data or scale values.
+`axes.x.tickFormat` and `axes.y.tickFormat` change labels only, not scale values
+or tooltip data. Both accept `(value: string | number, index: number) => string`.
+Each axis accepts `maxTicks`: positive values are floored, invalid values ignored,
+and labels may be thinned further to fit. Unconfigured axes keep their defaults.
+Existing `xAxisLabel`, `yAxisLabel`, and domain props remain unchanged.
+
+```tsx
+d3Config={{
+  axes: {
+    x: { tickFormat: value => dateFormat.format(Number(value)), maxTicks: 6 },
+    y: { tickFormat: value => currencyFormat.format(Number(value)), maxTicks: 5 },
+  },
+}}
+```
 
 ## Usage
 
