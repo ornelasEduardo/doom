@@ -63,14 +63,49 @@ it("anchors keyboard cursors and tooltips to the selected point through layout c
   }
 });
 
-function example(offset: number) {
+it("keeps a stationary keyboard tooltip aligned after data and header changes", async () => {
+  const { container, rerender } = render(example(40));
+  const chart = container.querySelector<HTMLElement>("[data-chart-container]")!;
+  await expect
+    .poll(() => chart.querySelectorAll("circle").length)
+    .toBeGreaterThan(0);
+  chart.focus();
+  await userEvent.keyboard("{ArrowRight}{ArrowRight}");
+  await expect
+    .poll(() => chart.querySelector("[data-chart-tooltip]")?.textContent)
+    .toContain("25");
+  for (const [offset, value] of [
+    [40, 35],
+    [140, 35],
+  ]) {
+    rerender(example(offset, value));
+    await expect
+      .poll(() => chart.querySelector("[data-chart-tooltip]")?.textContent)
+      .toContain(String(value));
+    await expect
+      .poll(() => {
+        const point = chart
+          .querySelectorAll("circle")[1]
+          .getBoundingClientRect();
+        const tip = chart
+          .querySelector("[data-chart-tooltip]")!
+          .getBoundingClientRect();
+        return Math.abs(
+          tip.y + tip.height / 2 - (point.y + point.height / 2 + 8),
+        );
+      })
+      .toBeLessThan(1);
+  }
+});
+
+function example(offset: number, selectedY = 25) {
   return (
     <DesignSystemProvider>
       <Chart.Root
         d3Config={{ showDots: true }}
         data={[
           { x: 0, y: 20 },
-          { x: 1, y: 25 },
+          { x: 1, y: selectedY },
           { x: 2, y: 30 },
         ]}
         style={{ width: 800, height: 600 }}

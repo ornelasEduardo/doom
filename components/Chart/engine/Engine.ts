@@ -1,88 +1,68 @@
-/**
- * Engine
- *
- * The central brain of the Chart interaction system.
- * Receives InputSignals, queries the SpatialIndex, and dispatches to the Scheduler.
- */
-
+import type { InteractionTarget } from "../types/interaction";
 import { CoordinateSystem } from "./CoordinateSystem";
 import { Scheduler, TaskHandler } from "./Scheduler";
-import { IndexedPoint, SpatialMap, SpatialMapOptions } from "./SpatialMap";
 import {
+  GeometryRegistration,
+  IndexedPoint,
+  SpatialMap,
+  SpatialMapOptions,
+} from "./SpatialMap";
+import {
+  EngineCancellation,
   EngineEvent,
   InputAction,
   InputSignal,
   InputSource,
+  type InteractionCandidate,
   TaskPriority,
 } from "./types";
 
-// =============================================================================
-// ENGINE OPTIONS
-// =============================================================================
-
 export interface EngineOptions extends SpatialMapOptions {
-  /**
-   * Called when an engine event is ready for dispatch.
-   * In the full system, this connects to the EventBus.
-   */
   onEvent?: TaskHandler;
 }
 
-// =============================================================================
-// ENGINE CLASS
-// =============================================================================
-
-/**
- * The Engine is the core of the Hyper-Engine architecture.
- *
- * Responsibilities:
- * 1. Receive InputSignals from the InteractionLayer (or remote sources)
- * 2. Normalize coordinates (client -> container)
- * 3. Query the SpatialMap to find candidates
- * 4. Schedule events based on priority
- * 5. Dispatch to sensors via the configured handler
- */
+/** Schedules input, resolves surviving samples, and dispatches to sensors. */
 export class Engine<T = unknown> {
   private spatialMap: SpatialMap<T>;
   private scheduler: Scheduler<T>;
   private coords: CoordinateSystem;
   private disposed = false;
+  private disposing = false;
+  private activeSignals: InputSignal[] = [];
+  private invalidatedSignals = new WeakSet<InputSignal>();
+  private geometrySubscribers = new Set<() => void>();
+  private cancellationSubscribers = new Set<
+    (event: EngineCancellation) => void
+  >();
+  private handler: TaskHandler<T> | null = null;
+  private cancellations = new Set<EngineCancellation>();
 
   constructor(options: EngineOptions = {}) {
     this.spatialMap = new SpatialMap<T>(options);
     this.scheduler = new Scheduler<T>();
     this.coords = new CoordinateSystem();
 
-    if (options.onEvent) {
-      this.scheduler.setHandler(options.onEvent);
-    }
+    this.handler = options.onEvent ?? null;
+    this.scheduler.setHandler((event) => {
+      this.activeSignals.push(event.signal);
+      try {
+        this.resolveEvent(event);
+        this.handler?.(event);
+      } finally {
+        this.activeSignals.pop();
+      }
+    });
   }
 
-  // ===========================================================================
-  // LIFECYCLE
-  // ===========================================================================
-
-  /**
-   * Set the container element and its bounds.
-   * Call this on mount and when the container resizes.
-   */
   setContainer(
     element: Element | null,
     plotElement: Element | null = null,
     plotBounds?: { x: number; y: number; width: number; height: number },
   ): void {
-    if (element) {
-      this.spatialMap.setContainer(element);
-    } else {
-      this.spatialMap.setContainer(null);
-    }
+    this.spatialMap.setContainer(element, plotElement);
     this.coords.setContainer(element, plotElement, plotBounds);
   }
 
-  /**
-   * Update the container bounds without changing the element reference.
-   * Useful for resize handling.
-   */
   updateBounds(
     rect: DOMRect,
     plotBounds?: { x: number; y: number; width: number; height: number },
@@ -90,18 +70,116 @@ export class Engine<T = unknown> {
     this.coords.updateBounds(rect, plotBounds);
   }
 
-  /**
-   * Update the spatial index with new data points.
-   */
   updateData(points: IndexedPoint<T>[]): void {
     this.spatialMap.updateIndex(points);
   }
 
-  /**
-   * Set the event handler.
-   */
+  /** Register extension-owned hit geometry without replacing built-in series. */
+  registerGeometry(points: IndexedPoint<T>[] = []): GeometryRegistration<T> {
+    const registration = this.spatialMap.registerGeometry(points);
+    let active = true;
+    const notify = () => {
+      this.geometrySubscribers.forEach((listener) => {
+        try {
+          listener();
+        } catch (error) {
+          console.error("Chart geometry listener failed", error);
+        }
+      });
+    };
+    notify();
+    return {
+      update: (next) => {
+        if (!active) {
+          return;
+        }
+        registration.update(next);
+        notify();
+      },
+      dispose: () => {
+        if (!active) {
+          return;
+        }
+        active = false;
+        registration.dispose();
+        notify();
+      },
+    };
+  }
+
+  subscribeGeometryChanges(listener: () => void): () => void {
+    this.geometrySubscribers.add(listener);
+    return () => {
+      this.geometrySubscribers.delete(listener);
+    };
+  }
+
+  resolveTarget(
+    target: Pick<
+      InteractionTarget<T>,
+      "seriesId" | "dataIndex" | "geometryOwner"
+    >,
+  ): InteractionTarget<T> | null | undefined {
+    if (target.seriesId === undefined || target.dataIndex === undefined) {
+      return null;
+    }
+    const resolved = this.spatialMap.resolveTarget(
+      target.seriesId,
+      target.dataIndex,
+      target.geometryOwner,
+    );
+    if (resolved === undefined) {
+      return undefined;
+    }
+    return resolved?.data !== undefined
+      ? { ...resolved, data: resolved.data }
+      : null;
+  }
+
+  /** Resolve ordered identities with one lazy DOM fallback scan per batch. */
+  resolveTargets(
+    targets: readonly Pick<
+      InteractionTarget<T>,
+      "seriesId" | "dataIndex" | "geometryOwner"
+    >[],
+  ): (InteractionTarget<T> | null | undefined)[] {
+    return this.spatialMap
+      .resolveTargets(targets)
+      .map((resolved) =>
+        resolved === undefined
+          ? undefined
+          : resolved?.data !== undefined
+            ? { ...resolved, data: resolved.data }
+            : null,
+      );
+  }
+
+  /** Resolve a vertical slice after a sensor chooses its own primary candidate. */
+  resolveSlice(candidate: InteractionCandidate<T>): InteractionCandidate<T>[] {
+    return this.spatialMap.findSlice(candidate);
+  }
+
   setHandler(handler: TaskHandler<T>): void {
-    this.scheduler.setHandler(handler);
+    this.handler = handler;
+  }
+
+  subscribeCancellation(
+    listener: (event: EngineCancellation) => void,
+  ): () => void {
+    this.cancellationSubscribers.add(listener);
+    return () => {
+      this.cancellationSubscribers.delete(listener);
+    };
+  }
+
+  private notifyCancellation(event: EngineCancellation): void {
+    for (const listener of [...this.cancellationSubscribers]) {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error("Cancellation subscriber error:", error);
+      }
+    }
   }
 
   /**
@@ -111,46 +189,147 @@ export class Engine<T = unknown> {
    * for effect setup/cleanup symmetry.
    */
   activate(): void {
-    this.disposed = false;
+    if (!this.disposing) {
+      this.disposed = false;
+    }
   }
 
-  /**
-   * Clean up all resources.
-   */
+  /** True when cancellation or disposal invalidated this signal while it was in flight. */
+  isInputCancelled(signal: InputSignal): boolean {
+    return this.invalidatedSignals.has(signal);
+  }
+
+  private invalidateInput(
+    event: EngineCancellation,
+    except?: InputSignal,
+  ): void {
+    for (const signal of this.activeSignals) {
+      if (
+        signal !== except &&
+        (event.scope === "chart" ||
+          (event.id === signal.id &&
+            event.source === signal.source &&
+            event.userId === signal.userId))
+      ) {
+        this.invalidatedSignals.add(signal);
+      }
+    }
+  }
+
   dispose(): void {
     if (this.disposed) {
       return;
     }
     this.disposed = true;
-
-    // Scheduled work only. The handler and index are not resources to reclaim
-    // — the engine is per-instance — and clearing them would make activate()
-    // unable to restore a working engine.
-    this.scheduler.dispose();
+    this.disposing = true;
+    const cancellation = { scope: "chart" } as const;
+    this.cancellations.add(cancellation);
+    try {
+      this.invalidateInput(cancellation);
+      this.scheduler.dispose();
+      this.notifyCancellation(cancellation);
+    } finally {
+      this.cancellations.delete(cancellation);
+      this.disposing = false;
+    }
   }
-
-  // ===========================================================================
-  // INPUT PROCESSING
-  // ===========================================================================
 
   /**
    * Process an InputSignal.
-   * This is the main entry point for all user interactions.
+   * MOVE is sampled: only the latest arrival per user/source/id survives each
+   * frame. END flushes that sample synchronously; CANCEL discards it. Producers
+   * needing every motion sample (such as drawing) need a separate lossless path.
    *
    * @returns Whether a sensor synchronously acknowledged a KEY signal.
-   * @param signal - The normalized input signal
    */
   input(signal: InputSignal): boolean {
     if (this.disposed) {
       return false;
     }
-
-    if (signal.action === InputAction.CANCEL) {
-      // Cancellation clears chart interactions, even when an outside touch has
-      // a different pointer ID from the work already queued for this chart.
-      this.scheduler.cancelPending();
+    if (this.invalidatedSignals.has(signal)) {
+      if (this.activeSignals.includes(signal)) {
+        return false;
+      }
+      this.invalidatedSignals.delete(signal);
+    }
+    if (this.cancellations.size) {
+      for (const event of this.cancellations) {
+        if (
+          event.scope === "chart" ||
+          (!(
+            signal.action === InputAction.CANCEL &&
+            signal.cancelScope === "chart"
+          ) &&
+            event.id === signal.id &&
+            event.source === signal.source &&
+            event.userId === signal.userId)
+        ) {
+          return false;
+        }
+      }
     }
 
+    if (signal.action === InputAction.CANCEL) {
+      const cancellation: EngineCancellation =
+        signal.cancelScope === "chart"
+          ? { scope: "chart" }
+          : {
+              scope: "stream",
+              userId: signal.userId,
+              source: signal.source,
+              id: signal.id,
+            };
+      // Invalidate before callbacks, and keep this scope closed through dispatch.
+      this.cancellations.add(cancellation);
+      try {
+        this.invalidateInput(cancellation, signal);
+        if (cancellation.scope === "chart") {
+          this.scheduler.cancelPending();
+        } else {
+          this.scheduler.cancelStream(signal);
+        }
+        this.notifyCancellation(cancellation);
+        return this.disposed ? false : this.scheduleInput(signal);
+      } finally {
+        this.cancellations.delete(cancellation);
+      }
+    }
+
+    return this.scheduleInput(signal);
+  }
+
+  private scheduleInput(signal: InputSignal): boolean {
+    // Only surviving samples pay for spatial resolution. The same event object
+    // is hydrated synchronously for critical input, preserving KEY acknowledgement.
+    const event: EngineEvent<T> = {
+      signal,
+      candidates: [],
+      sliceCandidates: [],
+      chartX: 0,
+      chartY: 0,
+      isWithinPlot: false,
+    };
+    // END is already in flight while its final queued MOVE is being delivered.
+    const closing = signal.action === InputAction.END;
+    if (closing) {
+      this.activeSignals.push(signal);
+    }
+    try {
+      this.scheduler.schedule(this.determinePriority(signal.action), event);
+    } finally {
+      if (closing) {
+        this.activeSignals.pop();
+      }
+    }
+    return (
+      signal.action === InputAction.KEY &&
+      event.handled === true &&
+      !this.isInputCancelled(signal)
+    );
+  }
+
+  private resolveEvent(event: EngineEvent<T>): void {
+    const { signal } = event;
     const plotOffset = this.coords.getPlotOffset();
     const searchX = signal.x - plotOffset.x;
     const searchY = signal.y - plotOffset.y;
@@ -174,25 +353,16 @@ export class Engine<T = unknown> {
       ? this.spatialMap.findSlice(primaryCandidate)
       : [];
 
-    const event: EngineEvent<T> = {
-      signal,
+    Object.assign(event, {
       candidates,
       primaryCandidate,
       sliceCandidates,
       chartX,
       chartY,
       isWithinPlot,
-    };
-
-    const priority = this.determinePriority(signal.action);
-    this.scheduler.schedule(priority, event);
-    return signal.action === InputAction.KEY && event.handled === true;
+    });
   }
 
-  /**
-   * Create an InputSignal from a native PointerEvent.
-   * Convenience method for the InteractionLayer.
-   */
   createSignal(
     event: PointerEvent | MouseEvent | TouchEvent,
     action: InputAction,
@@ -219,13 +389,22 @@ export class Engine<T = unknown> {
     let source: InputSource = InputSource.MOUSE;
     if ("pointerType" in event) {
       source =
-        event.pointerType === "touch" ? InputSource.TOUCH : InputSource.MOUSE;
+        event.pointerType === "touch"
+          ? InputSource.TOUCH
+          : event.pointerType === "pen"
+            ? InputSource.PEN
+            : InputSource.MOUSE;
     } else if ("touches" in event) {
       source = InputSource.TOUCH;
     }
 
     return {
       id: "pointerId" in event ? event.pointerId : 0,
+      pointerType: "pointerType" in event ? event.pointerType : undefined,
+      button: "button" in event ? event.button : undefined,
+      buttons: "buttons" in event ? event.buttons : undefined,
+      pressure: "pressure" in event ? event.pressure : undefined,
+      isPrimary: "isPrimary" in event ? event.isPrimary : undefined,
       action,
       source,
       x: resolved.x,
@@ -241,9 +420,6 @@ export class Engine<T = unknown> {
     };
   }
 
-  /**
-   * Create an InputSignal from a KeyboardEvent.
-   */
   createKeySignal(event: KeyboardEvent, userId = "local"): InputSignal {
     return {
       id: 0,
@@ -254,6 +430,9 @@ export class Engine<T = unknown> {
       timestamp: performance.now(),
       userId,
       key: event.key,
+      keyPhase: event.type === "keyup" ? "up" : "down",
+      code: event.code,
+      repeat: event.repeat,
       modifiers: {
         shift: event.shiftKey,
         ctrl: event.ctrlKey,
@@ -263,24 +442,15 @@ export class Engine<T = unknown> {
     };
   }
 
-  // ===========================================================================
-  // INTERNAL HELPERS
-  // ===========================================================================
-
-  /**
-   * Determine the scheduling priority for an action.
-   */
   private determinePriority(action: InputAction): TaskPriority {
     switch (action) {
       case InputAction.START:
       case InputAction.END:
       case InputAction.CANCEL:
       case InputAction.KEY:
-        // These need immediate processing (for preventDefault, state changes)
         return TaskPriority.CRITICAL;
 
       case InputAction.MOVE:
-        // Move events can be batched for performance
         return TaskPriority.VISUAL;
 
       default:
@@ -288,13 +458,6 @@ export class Engine<T = unknown> {
     }
   }
 
-  // ===========================================================================
-  // GETTERS (For Testing/Debugging)
-  // ===========================================================================
-
-  /**
-   * Get the current container bounds.
-   */
   resolveContainerCoordinates(
     chartX: number,
     chartY: number,
@@ -306,9 +469,6 @@ export class Engine<T = unknown> {
     return this.coords.getContainerRect();
   }
 
-  /**
-   * Get the current plot bounds.
-   */
   getPlotBounds(): {
     x: number;
     y: number;
@@ -318,9 +478,6 @@ export class Engine<T = unknown> {
     return this.coords.getPlotBounds();
   }
 
-  /**
-   * Check if the engine has been disposed.
-   */
   isDisposed(): boolean {
     return this.disposed;
   }

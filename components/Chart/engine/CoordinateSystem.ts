@@ -142,6 +142,11 @@ export class CoordinateSystem {
   }
 
   getPlotOffset(): { x: number; y: number } {
+    if (this.containerElement) {
+      this.plotOffset = this.measurePlotOffset(
+        this.containerElement.getBoundingClientRect(),
+      );
+    }
     return this.plotOffset;
   }
 

@@ -1,42 +1,36 @@
-/**
- * Scheduler
- *
- * Manages the execution timing of engine tasks.
- * Critical tasks (pointer down) run synchronously.
- * Visual tasks (hover) are batched to requestAnimationFrame.
- */
-
-import { EngineEvent, ScheduledTask, TaskPriority } from "./types";
+import {
+  EngineEvent,
+  InputAction,
+  InputSignal,
+  ScheduledTask,
+  TaskPriority,
+} from "./types";
 
 export type TaskHandler<T = unknown> = (event: EngineEvent<T>) => void;
 
-/**
- * The Scheduler controls when events are dispatched to sensors.
- * It uses a priority-based system to ensure critical interactions
- * (like drag start) happen immediately, while visual updates
- * (like hover highlights) are batched for performance.
- */
+/** Critical input is synchronous; visual input is sampled once per stream per frame. */
 export class Scheduler<T = unknown> {
-  private visualQueue: ScheduledTask<T>[] = [];
+  private visualQueue = new Map<string, ScheduledTask<T>>();
+  private activeVisualQueue = new Map<string, ScheduledTask<T>>();
+  private closingStreams = new Map<string, ScheduledTask<T>>();
   private idleQueue: ScheduledTask<T>[] = [];
+  private activeIdleQueue: ScheduledTask<T>[] = [];
   private rafId: number | null = null;
   private handler: TaskHandler<T> | null = null;
 
-  /**
-   * Register the handler that will process events.
-   * In the full system, this is the EventBus.dispatch method.
-   */
   setHandler(handler: TaskHandler<T>): void {
     this.handler = handler;
   }
 
-  /**
-   * Schedule a task for execution.
-   *
-   * @param priority - The priority level of the task
-   * @param event - The engine event to dispatch
-   */
   schedule(priority: TaskPriority, event: EngineEvent<T>): void {
+    const key = this.streamKey(event.signal);
+    if (
+      event.signal.action === InputAction.CANCEL ||
+      event.signal.action === InputAction.START
+    ) {
+      this.cancelStream(event.signal);
+    }
+
     const task: ScheduledTask<T> = {
       priority,
       event,
@@ -45,100 +39,119 @@ export class Scheduler<T = unknown> {
 
     switch (priority) {
       case TaskPriority.CRITICAL:
-        // Critical tasks execute immediately (synchronously)
-        this.executeCritical(task);
+        if (event.signal.action === InputAction.END) {
+          const pending =
+            this.visualQueue.get(key) ?? this.activeVisualQueue.get(key);
+          this.visualQueue.delete(key);
+          this.activeVisualQueue.delete(key);
+          this.closingStreams.set(key, task);
+          // Finish the last sampled movement before a sensor ends its gesture.
+          try {
+            if (pending) {
+              this.executeCritical(pending);
+            }
+          } finally {
+            // Cancellation or disposal during MOVE invalidates the closing END.
+            if (this.closingStreams.get(key) === task) {
+              this.closingStreams.delete(key);
+              this.visualQueue.delete(key);
+              this.activeVisualQueue.delete(key);
+              this.executeCritical(task);
+            }
+          }
+        } else {
+          this.executeCritical(task);
+        }
         break;
 
       case TaskPriority.VISUAL:
-        // Visual tasks are batched to the next animation frame
-        this.visualQueue.push(task);
+        this.visualQueue.set(key, task);
         this.scheduleVisualFlush();
         break;
 
       case TaskPriority.IDLE:
-        // Idle tasks are deferred even further
         this.idleQueue.push(task);
         this.scheduleIdleFlush();
         break;
     }
   }
 
-  /**
-   * Execute a critical task immediately.
-   * This is synchronous to allow preventDefault() on the original event.
-   */
   private executeCritical(task: ScheduledTask<T>): void {
     if (this.handler) {
       this.handler(task.event);
     }
   }
 
-  /**
-   * Schedule a flush of the visual queue on the next animation frame.
-   */
   private scheduleVisualFlush(): void {
     if (this.rafId !== null) {
       return;
-    } // Already scheduled
+    }
 
     this.rafId = requestAnimationFrame(() => {
-      this.flushVisualQueue();
+      // Release the frame before callbacks so reentrant input can request another.
       this.rafId = null;
+      this.flushVisualQueue();
     });
   }
 
   /**
-   * Process all queued visual tasks.
-   * Only the most recent event per input ID is processed (coalescing).
+   * Tuple encoding prevents user/source delimiters from aliasing another stream.
    */
-  private flushVisualQueue(): void {
-    if (!this.handler || this.visualQueue.length === 0) {
-      return;
-    }
+  private streamKey(signal: InputSignal): string {
+    return JSON.stringify([signal.userId, signal.source, signal.id]);
+  }
 
-    // Coalesce: Group by input ID, keep only the latest
-    const latestByInputId = new Map<number, ScheduledTask<T>>();
-    for (const task of this.visualQueue) {
-      const existing = latestByInputId.get(task.event.signal.id);
-      if (!existing || task.timestamp > existing.timestamp) {
-        latestByInputId.set(task.event.signal.id, task);
+  cancelStream(signal: InputSignal): void {
+    const key = this.streamKey(signal);
+    this.closingStreams.delete(key);
+    this.visualQueue.delete(key);
+    this.activeVisualQueue.delete(key);
+  }
+
+  private flushVisualQueue(): void {
+    this.activeVisualQueue = this.visualQueue;
+    this.visualQueue = new Map();
+    const errors: unknown[] = [];
+    // Keep the batch addressable: a callback may cancel or end another stream.
+    for (const [key, task] of this.activeVisualQueue) {
+      this.activeVisualQueue.delete(key);
+      try {
+        this.executeCritical(task);
+      } catch (error) {
+        errors.push(error);
       }
     }
-
-    // Clear the queue
-    this.visualQueue = [];
-
-    // Dispatch coalesced events
-    for (const task of Array.from(latestByInputId.values())) {
-      this.handler(task.event);
+    if (errors.length) {
+      throw errors[0];
     }
   }
 
-  /**
-   * Schedule a flush of the idle queue using requestIdleCallback.
-   */
   private scheduleIdleFlush(): void {
     if (typeof requestIdleCallback !== "undefined") {
       requestIdleCallback(() => this.flushIdleQueue());
     } else {
-      // Fallback for browsers without requestIdleCallback
       setTimeout(() => this.flushIdleQueue(), 50);
     }
   }
 
-  /**
-   * Process all queued idle tasks.
-   */
   private flushIdleQueue(): void {
     if (!this.handler || this.idleQueue.length === 0) {
       return;
     }
 
-    const tasks = this.idleQueue;
+    this.activeIdleQueue = this.idleQueue;
     this.idleQueue = [];
-
-    for (const task of tasks) {
-      this.handler(task.event);
+    const errors: unknown[] = [];
+    for (const task of this.activeIdleQueue) {
+      try {
+        this.executeCritical(task);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    this.activeIdleQueue = [];
+    if (errors.length) {
+      throw errors[0];
     }
   }
 
@@ -150,8 +163,11 @@ export class Scheduler<T = unknown> {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
-    this.visualQueue = [];
+    this.visualQueue.clear();
+    this.activeVisualQueue.clear();
+    this.closingStreams.clear();
     this.idleQueue = [];
+    this.activeIdleQueue.length = 0;
   }
 
   dispose(): void {

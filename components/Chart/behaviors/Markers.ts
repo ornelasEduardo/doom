@@ -1,12 +1,17 @@
-import { Behavior } from "../types/events";
-import { InteractionChannel, InteractionTarget } from "../types/interaction";
+import { Behavior, GenericBehavior } from "../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+  InteractionTarget,
+} from "../types/interaction";
 
-export interface MarkersOptions {
+export interface MarkersOptions<T = unknown> {
   /**
    * The interaction channel to listen to.
    * Defaults to `InteractionChannel.PRIMARY_HOVER`.
    */
-  on?: InteractionChannel | string;
+  on?: ChannelReference<HoverInteraction<T>>;
 
   /**
    * The radius of the marker circle in pixels.
@@ -36,7 +41,13 @@ export interface MarkersOptions {
  * @param options - Configuration options for the markers
  * @returns A Behavior function
  */
-export const Markers = (options: MarkersOptions = {}): Behavior => {
+export function Markers(
+  options?: Omit<MarkersOptions, "on"> & { on?: string },
+): GenericBehavior;
+export function Markers<T>(options: MarkersOptions<T>): Behavior<T>;
+export function Markers<T = unknown>(
+  options: MarkersOptions<T> = {},
+): Behavior<T> {
   const { on = InteractionChannel.PRIMARY_HOVER, radius = 4 } = options;
 
   return ({ getChartContext, getInteraction }) => {
@@ -49,20 +60,21 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
     const layer = g.append("g").attr("class", "chart-markers-layer");
 
     const update = () => {
-      const interaction = getInteraction(on) as any;
-      const targets = (interaction?.targets as InteractionTarget[]) || [];
+      const interaction = (
+        typeof on === "string" ? getInteraction(on) : getInteraction(on)
+      ) as HoverInteraction<T> | null;
+      const targets = interaction?.targets || [];
 
       // Retrieve dimensions for margin correction
       const { margin } = ctx.chartStore.getState().dimensions;
 
       // Bind data to circles
       const circles = layer
-        .selectAll("circle")
+        .selectAll<SVGCircleElement, InteractionTarget<T>>("circle")
         // Stable key, so the join moves the marker rather than re-creating it.
         .data(
           targets,
-          (d: any, i: number) =>
-            `${d?.seriesId ?? "series"}:${d?.dataIndex ?? i}`,
+          (d, i) => `${d?.seriesId ?? "series"}:${d?.dataIndex ?? i}`,
         );
 
       // Enter
@@ -91,9 +103,11 @@ export const Markers = (options: MarkersOptions = {}): Behavior => {
       update();
     });
 
+    update();
+
     return () => {
       unsubscribe();
       layer.remove();
     };
   };
-};
+}

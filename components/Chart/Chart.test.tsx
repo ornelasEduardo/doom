@@ -772,7 +772,7 @@ describe("Chart", () => {
     it("keeps stable behaviors attached across re-renders", () => {
       const attach = vi.fn();
       const detach = vi.fn();
-      const behavior: Behavior = () => {
+      const behavior: Behavior<(typeof data)[number]> = () => {
         attach();
         return () => detach();
       };

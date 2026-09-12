@@ -1,5 +1,5 @@
 import { Accessor, AxisDomain, AxisValue, Config } from "../../types";
-import { InteractionChannel } from "../../types/interaction";
+import { HoverInteraction, InteractionTarget } from "../../types/interaction";
 import { resolveAccessor } from "../../utils/accessors";
 import { barGeometry, categoryAccessor, stackSeries } from "../../utils/bars";
 import { d3 } from "../../utils/d3";
@@ -55,6 +55,9 @@ export interface State<T = any>
     ScalesSlice {
   xDomain?: AxisDomain;
   yDomain?: AxisDomain;
+  managedHoverResolver?: (
+    target: InteractionTarget<T>,
+  ) => InteractionTarget<T> | null | undefined;
 }
 
 /**
@@ -120,7 +123,7 @@ export const updateChartDimensions = (
       status: width > 0 && height > 0 ? "ready" : "idle",
       dimensions: nextDimensions,
       scales: nextScales,
-      interactions: refreshHover(
+      ...refreshHover(
         { ...prev, dimensions: nextDimensions },
         prev.data,
         prev.processedSeries,
@@ -145,12 +148,7 @@ export const updateChartData = <T>(store: Store, data: T[]) => {
       data,
       ...derived,
       scales: nextScales,
-      interactions: refreshHover(
-        prev,
-        data,
-        derived.processedSeries,
-        nextScales,
-      ),
+      ...refreshHover(prev, data, derived.processedSeries, nextScales),
     };
   });
 };
@@ -209,7 +207,7 @@ export const updateChartState = <T>(
       dimensions: nextDimensions,
       scales: nextScales,
       ...derived,
-      interactions: nextInteractions,
+      ...nextInteractions,
       status:
         nextDimensions.width > 0 && nextDimensions.height > 0
           ? "ready"
@@ -244,7 +242,7 @@ export const updateChartMargin = (
     return {
       dimensions: nextDimensions,
       scales: nextScales,
-      interactions: refreshHover(
+      ...refreshHover(
         { ...prev, dimensions: nextDimensions },
         prev.data,
         prev.processedSeries,
@@ -333,7 +331,7 @@ export const registerSeries = (
       seriesConfigs: nextConfigs,
       processedSeries,
       scales,
-      interactions: refreshHover(state, state.data, processedSeries, scales),
+      ...refreshHover(state, state.data, processedSeries, scales),
     };
   });
 };
@@ -363,7 +361,7 @@ export const unregisterSeries = (store: Store, id: string) => {
       seriesConfigs: nextConfigs,
       processedSeries,
       scales,
-      interactions: refreshHover(state, state.data, processedSeries, scales),
+      ...refreshHover(state, state.data, processedSeries, scales),
     };
   });
 };
@@ -371,11 +369,17 @@ export const unregisterSeries = (store: Store, id: string) => {
 /**
  * Updates or inserts a named interaction into the store.
  */
-export const upsertInteraction = (store: Store, name: string, payload: any) => {
+export const upsertInteraction = (
+  store: Store,
+  name: string,
+  payload: unknown,
+) => {
   store.setState((state) => {
     const nextInteractions = new Map(state.interactions);
     nextInteractions.set(name, payload);
-    return { interactions: nextInteractions };
+    const managedHoverChannels = new Set(state.managedHoverChannels);
+    managedHoverChannels.delete(name);
+    return { interactions: nextInteractions, managedHoverChannels };
   });
 };
 
@@ -386,100 +390,173 @@ export const removeInteraction = (store: Store, name: string) => {
     }
     const nextInteractions = new Map(state.interactions);
     nextInteractions.delete(name);
-    return { interactions: nextInteractions };
+    const managedHoverChannels = new Set(state.managedHoverChannels);
+    managedHoverChannels.delete(name);
+    return { interactions: nextInteractions, managedHoverChannels };
+  });
+};
+
+export const installManagedHoverResolver = <T>(
+  store: Store<T>,
+  resolver: (
+    target: InteractionTarget<T>,
+  ) => InteractionTarget<T> | null | undefined,
+) => {
+  store.setState({ managedHoverResolver: resolver });
+  return () => {
+    if (store.getState().managedHoverResolver === resolver) {
+      store.setState({ managedHoverResolver: undefined });
+    }
+  };
+};
+
+/** Called after owned geometry publishes, never while new data still has an old index. */
+export const refreshManagedHover = (store: Store) => {
+  store.setState((state) => {
+    const next = refreshHover(
+      state,
+      state.data,
+      state.processedSeries,
+      state.scales,
+      true,
+    );
+    return next.interactions === state.interactions &&
+      next.managedHoverChannels === state.managedHoverChannels
+      ? state
+      : next;
   });
 };
 
 // --- Internal Utilities ---
+
+const sameTarget = (a: InteractionTarget, b: InteractionTarget) => {
+  const keys = Object.keys(a).filter((key) => key !== "coordinate");
+  return (
+    a.coordinate.x === b.coordinate.x &&
+    a.coordinate.y === b.coordinate.y &&
+    keys.length ===
+      Object.keys(b).filter((key) => key !== "coordinate").length &&
+    keys.every((key) => Object.is(Reflect.get(a, key), Reflect.get(b, key)))
+  );
+};
 
 const refreshHover = (
   state: State,
   data: unknown[],
   series: State["processedSeries"],
   scales: State["scales"],
+  resolveGeometry = false,
 ) => {
-  const hover = state.interactions.get(InteractionChannel.PRIMARY_HOVER) as
-    | import("../../types").HoverInteraction
-    | undefined;
-  if (!hover?.targets?.length) {
-    return state.interactions;
-  }
+  let interactions = state.interactions;
+  let managedHoverChannels = state.managedHoverChannels;
+  const keys = managedHoverChannels;
   const bounded =
     hasDomainOverride(scales.x, state.xDomain) ||
     hasDomainOverride(scales.y, state.yDomain);
-  const targets = hover.targets.flatMap((target) => {
-    const item = series.find((item) => item.id === target.seriesId);
-    const wasRegistered = state.processedSeries.some(
-      (item) => item.id === target.seriesId,
-    );
-    if (
-      wasRegistered &&
-      !item &&
-      state.processedSeries.find((item) => item.id === target.seriesId)
-        ?.type === "bar"
-    ) {
-      return [];
+  for (const key of keys) {
+    const hover = interactions.get(key) as HoverInteraction | undefined;
+    if (!hover) {
+      if (managedHoverChannels.has(key)) {
+        managedHoverChannels = new Set(managedHoverChannels);
+        managedHoverChannels.delete(key);
+      }
+      continue;
     }
-    const rows = item?.data ?? data;
-    const index = target.dataIndex;
-    if (index === undefined || index < 0 || index >= rows.length) {
-      return [];
-    }
-    const datum = rows[index];
-    if (!scales.x || !scales.y) {
-      return [];
-    }
-    const xAccessor = item ? item.xAccessor : state.x;
-    const yAccessor = item ? item.yAccessor : state.y;
-    const sample = samplePosition(
-      datum,
-      xAccessor ? resolveAccessor(xAccessor) : () => index,
-      yAccessor ? resolveAccessor(yAccessor) : (value) => value,
-      scales.x,
-      scales.y,
-    );
-    if (!sample) {
-      return [];
-    }
-    const geometry =
-      item?.type === "bar"
-        ? barGeometry(item, datum, index, scales.x, scales.y)
-        : null;
-    const bar =
-      geometry && bounded
-        ? clipRectToPlot(geometry, state.dimensions)
-        : geometry;
-    if (item?.type === "bar" && !bar) {
-      return [];
-    }
-    const coordinate = bar
-      ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
-      : sample;
-    if (bounded && !isPointInPlot(coordinate, state.dimensions)) {
-      return [];
-    }
-    return [
-      {
+    const targets = hover.targets.flatMap((target) => {
+      const item = series.find((item) => item.id === target.seriesId);
+      const wasRegistered = state.processedSeries.some(
+        (item) => item.id === target.seriesId,
+      );
+      if (wasRegistered && !item) {
+        return [];
+      }
+      if (resolveGeometry) {
+        const resolved = state.managedHoverResolver?.(target);
+        if (resolved === null) {
+          return [];
+        }
+        if (resolved !== undefined) {
+          const next = { ...target, ...resolved };
+          return [sameTarget(target, next) ? target : next];
+        }
+      }
+      // CustomSeries publishes authoritative datum and coordinates through its geometry owner.
+      if (item?.type === "custom" || target.geometryOwner !== undefined) {
+        return [target];
+      }
+      const rows = item?.data ?? data;
+      const index = target.dataIndex;
+      if (
+        index === undefined ||
+        index < 0 ||
+        index >= rows.length ||
+        !scales.x ||
+        !scales.y
+      ) {
+        return [];
+      }
+      const datum = rows[index];
+      const xAccessor = item ? item.xAccessor : state.x;
+      const yAccessor = item ? item.yAccessor : state.y;
+      const sample = samplePosition(
+        datum,
+        xAccessor ? resolveAccessor(xAccessor) : () => index,
+        yAccessor ? resolveAccessor(yAccessor) : (value) => value,
+        scales.x,
+        scales.y,
+      );
+      if (!sample) {
+        return [];
+      }
+      const geometry =
+        item?.type === "bar"
+          ? barGeometry(item, datum, index, scales.x, scales.y)
+          : null;
+      const bar =
+        geometry && bounded
+          ? clipRectToPlot(geometry, state.dimensions)
+          : geometry;
+      if (item?.type === "bar" && !bar) {
+        return [];
+      }
+      const coordinate = bar
+        ? { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 }
+        : sample;
+      if (bounded && !isPointInPlot(coordinate, state.dimensions)) {
+        return [];
+      }
+      const next = {
         ...target,
         data: datum,
         coordinate: {
           x: coordinate.x + state.dimensions.margin.left,
           y: coordinate.y + state.dimensions.margin.top,
         },
-      },
-    ];
-  });
-  const interactions = new Map(state.interactions);
-  if (targets.length) {
-    interactions.set(InteractionChannel.PRIMARY_HOVER, {
-      ...hover,
-      targets,
-      target: targets[0],
+      };
+      return [sameTarget(target, next) ? target : next];
     });
-  } else {
-    interactions.delete(InteractionChannel.PRIMARY_HOVER);
+    if (
+      targets.length &&
+      targets.length === hover.targets.length &&
+      targets.every((target, index) => target === hover.targets[index]) &&
+      hover.target === targets[0]
+    ) {
+      continue;
+    }
+    if (interactions === state.interactions) {
+      interactions = new Map(interactions);
+    }
+    if (targets.length) {
+      interactions.set(key, { ...hover, targets, target: targets[0] });
+    } else {
+      interactions.delete(key);
+      if (managedHoverChannels.has(key)) {
+        managedHoverChannels = new Set(managedHoverChannels);
+        managedHoverChannels.delete(key);
+      }
+    }
   }
-  return interactions;
+  return { interactions, managedHoverChannels };
 };
 
 const hydrateConfigs = (state: State, data: unknown[]) => {

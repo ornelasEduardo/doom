@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 
+import { createInteractionAccess } from "../../utils/interactionChannels";
 import {
   createChartStore,
   registerSeries,
@@ -97,13 +98,16 @@ it("keeps hover rows in their own datasets during refresh and drops removed seri
       data: local,
     },
   ]);
-  store.setState({
-    interactions: new Map([
-      [
-        "primary-hover",
-        { targets: [{ seriesId: "b", dataIndex: 0, data: local[0] }] },
-      ],
-    ]),
+  createInteractionAccess(store).upsertHoverInteraction("primary-hover", {
+    pointer: { x: 0, y: 0, containerX: 0, containerY: 0, isTouch: false },
+    targets: [
+      {
+        seriesId: "b",
+        dataIndex: 0,
+        data: local[0],
+        coordinate: { x: 0, y: 0 },
+      },
+    ],
   });
   updateChartState(store, {
     data: [{ category: "A", value: 100 }],

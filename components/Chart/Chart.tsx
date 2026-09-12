@@ -27,8 +27,15 @@ import {
 import { Root } from "./subcomponents/Root/Root";
 import { Props } from "./types";
 
-export type { EngineEvent, InputSignal, InteractionCandidate } from "./engine";
+export type { TooltipContent } from "./behaviors/Tooltip";
+export type {
+  EngineCancellation,
+  EngineEvent,
+  InputSignal,
+  InteractionCandidate,
+} from "./engine";
 export { InputAction, InputSource } from "./engine";
+export type { GeometryRegistration, IndexedPoint } from "./engine/SpatialMap";
 export type {
   Accessor,
   AxisDomain,
@@ -48,10 +55,29 @@ export type {
   Behavior,
   BehaviorContext,
   ChartEvent,
+  GenericBehavior,
+  GenericSensor,
   Sensor,
   SensorContext,
 } from "./types/events";
+export type {
+  ChannelReference,
+  DragInteraction,
+  HoverInteraction,
+  Interaction,
+  InteractionAccess,
+  InteractionChannelHandle,
+  InteractionReader,
+  InteractionTarget,
+  InteractionWriter,
+  SelectionInteraction,
+} from "./types/interaction";
 export { InteractionChannel } from "./types/interaction";
+export type {
+  CustomGeometry,
+  CustomGeometryPoint,
+} from "./utils/customGeometry";
+export { createInteractionChannel } from "./utils/interactionChannels";
 
 function ChartComposed<T>(props: Props<T>) {
   if (props.children) {

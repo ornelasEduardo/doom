@@ -1,25 +1,24 @@
-import { InputAction } from "../../engine";
-import { GenericSensor } from "../../types/events";
-import { InteractionChannel } from "../../types/interaction";
+import { InputAction, InputSignal, InteractionCandidate } from "../../engine";
+import { GenericSensor, Sensor } from "../../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+  InteractionChannelHandle,
+} from "../../types/interaction";
 
-export interface HoverSensorOptions {
+export interface HoverSensorOptions<T = unknown> {
   /**
    * Name for the interaction channel.
    * Defaults to 'primary-hover'.
    */
-  name?: InteractionChannel | string;
+  name?: ChannelReference<HoverInteraction<T>>;
+
+  /** Exact requires a DOM hit; topmost prefers the front DOM hit; nearest minimizes SVG distance. */
+  hitPolicy?: "exact" | "topmost" | "nearest";
 
   /**
-   * When true, only fire when the pointer is directly over a tagged DOM element
-   * (DOM hit-test match). Proximal quadtree candidates that have no backing
-   * element are ignored. Useful for area-fill charts like treemaps where
-   * magnetic snapping across empty gaps is undesirable.
-   * @default false
-   */
-  exactHit?: boolean;
-
-  /**
-   * When true, all series at the primary candidate's X position are included
+   * When true, all series at the selected candidate's slice position are included
    * as targets (vertical-slice behaviour). Useful for multi-series line/bar/area
    * charts where series share the same X domain values.
    * @default false
@@ -31,19 +30,39 @@ export interface HoverSensorOptions {
  * The DataHoverSensor detects pointer movements over the chart plot
  * and identifies the closest data targets.
  */
-export const DataHoverSensor = (
-  options: HoverSensorOptions = {},
-): GenericSensor => {
+export function DataHoverSensor(
+  options?: Omit<HoverSensorOptions, "name"> & { name?: string },
+): GenericSensor;
+export function DataHoverSensor<T>(
+  options: HoverSensorOptions<T> & {
+    name: InteractionChannelHandle<HoverInteraction<T>>;
+  },
+): Sensor<T>;
+export function DataHoverSensor<T>(
+  options: HoverSensorOptions<T> = {},
+): Sensor<T> {
   const {
     name = InteractionChannel.PRIMARY_HOVER,
-    exactHit = false,
     verticalSlice = false,
+    hitPolicy = "topmost",
   } = options;
+  let owner: Pick<InputSignal, "id" | "source" | "userId"> | null = null;
 
-  return (event, { upsertInteraction, removeInteraction }) => {
+  return (
+    event,
+    { upsertHoverInteraction, removeInteraction, getChartContext },
+  ) => {
+    const remove = () => {
+      if (typeof name === "string") {
+        removeInteraction(name);
+      } else {
+        removeInteraction(name);
+      }
+    };
     const {
       signal,
       primaryCandidate,
+      candidates,
       sliceCandidates,
       chartX,
       chartY,
@@ -58,31 +77,51 @@ export const DataHoverSensor = (
       return;
     }
 
-    if (
-      signal.action === InputAction.CANCEL ||
-      (!isWithinPlot &&
-        (signal.source !== "touch" || signal.action === InputAction.START))
-    ) {
-      removeInteraction(name);
+    if (signal.action === InputAction.CANCEL) {
+      if (
+        signal.cancelScope === "chart" ||
+        (owner?.id === signal.id &&
+          owner.source === signal.source &&
+          owner.userId === signal.userId)
+      ) {
+        owner = null;
+        remove();
+      }
       return;
     }
 
-    // When exactHit is true, discard proximal (quadtree-only) candidates that
-    // have no backing DOM element — the pointer is over empty space.
+    owner = { id: signal.id, source: signal.source, userId: signal.userId };
+    if (
+      !isWithinPlot &&
+      (signal.source !== "touch" || signal.action === InputAction.START)
+    ) {
+      remove();
+      return;
+    }
+
+    const eligible = candidates.filter(hasData);
     const candidate =
-      exactHit && primaryCandidate && !primaryCandidate.element
-        ? undefined
-        : primaryCandidate;
+      hitPolicy === "nearest"
+        ? eligible.reduce<(typeof eligible)[number] | undefined>(
+            (nearest, next) =>
+              !nearest || next.distance < nearest.distance ? next : nearest,
+            undefined,
+          )
+        : (eligible.find((next) => next.element) ??
+          (hitPolicy === "exact" ? undefined : eligible[0]));
 
     if (candidate) {
       const isTouch = signal.source === "touch";
 
-      const targets =
-        verticalSlice && sliceCandidates.length > 0
+      const slice = verticalSlice
+        ? candidate === primaryCandidate
           ? sliceCandidates
-          : [candidate as any];
+          : getChartContext().engine.resolveSlice(candidate)
+        : [];
+      const validSlice = slice.filter(hasData);
+      const targets = validSlice.length ? validSlice : [candidate];
 
-      upsertInteraction(name, {
+      const interaction: HoverInteraction<T> = {
         pointer: {
           x: chartX,
           y: chartY,
@@ -91,9 +130,20 @@ export const DataHoverSensor = (
           isTouch,
         },
         targets,
-      });
+      };
+      if (typeof name === "string") {
+        upsertHoverInteraction(name, interaction);
+      } else {
+        upsertHoverInteraction(name, interaction);
+      }
     } else {
-      removeInteraction(name);
+      remove();
     }
   };
-};
+}
+
+function hasData<T>(
+  candidate: InteractionCandidate<T>,
+): candidate is InteractionCandidate<T> & { data: T } {
+  return candidate.data !== undefined;
+}

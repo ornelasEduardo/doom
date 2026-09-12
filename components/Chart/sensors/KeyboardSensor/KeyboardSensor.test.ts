@@ -12,11 +12,11 @@ import {
   updateChartDimensions,
   updateChartMargin,
   updateChartState,
-  upsertInteraction,
 } from "../../state/store/chart.store";
 import { SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
 import { d3 } from "../../utils/d3";
+import { createInteractionAccess } from "../../utils/interactionChannels";
 import { KeyboardSensor } from "./KeyboardSensor";
 
 // =============================================================================
@@ -54,7 +54,7 @@ const createMockContext = (overrides: Partial<State> = {}): SensorContext => {
       },
     })) as any,
     getInteraction: vi.fn((name: string) => interactions.get(name) || null),
-    upsertInteraction: vi.fn((name: string, interaction: unknown) => {
+    upsertHoverInteraction: vi.fn((name: string, interaction: unknown) => {
       interactions.set(name, interaction);
     }),
     removeInteraction: vi.fn((name: string) => {
@@ -87,6 +87,13 @@ const createMockEvent = (action: InputAction, key?: string): EngineEvent => ({
 // =============================================================================
 
 describe("KeyboardSensor (Engine)", () => {
+  it("anchors keyboard readings to the selected target", () => {
+    const context = createMockContext();
+    KeyboardSensor()(createMockEvent(InputAction.KEY, "ArrowRight"), context);
+    expect(
+      context.getInteraction(InteractionChannel.PRIMARY_HOVER),
+    ).toMatchObject({ anchor: "target" });
+  });
   it("should not react to non-KEY actions", () => {
     const ctx = createMockContext();
     const sensor = KeyboardSensor();
@@ -94,7 +101,7 @@ describe("KeyboardSensor (Engine)", () => {
     const event = createMockEvent(InputAction.START);
     sensor(event, ctx);
 
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
+    expect(ctx.upsertHoverInteraction).not.toHaveBeenCalled();
   });
 
   it("should focus first point on ArrowRight if no focus", () => {
@@ -106,7 +113,7 @@ describe("KeyboardSensor (Engine)", () => {
     sensor(event, ctx);
 
     // Initial focus starts at -1, enters at 0
-    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         target: expect.objectContaining({ dataIndex: 0 }),
@@ -124,7 +131,7 @@ describe("KeyboardSensor (Engine)", () => {
     // 2. Focus next (index 1)
     sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenLastCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         target: expect.objectContaining({ dataIndex: 1 }),
@@ -134,7 +141,7 @@ describe("KeyboardSensor (Engine)", () => {
     // 3. Focus prev (index 0)
     sensor(createMockEvent(InputAction.KEY, "ArrowLeft"), ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenLastCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         target: expect.objectContaining({ dataIndex: 0 }),
@@ -167,7 +174,7 @@ describe("KeyboardSensor (Engine)", () => {
     sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
     sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenLastCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         target: expect.objectContaining({
@@ -188,7 +195,7 @@ describe("KeyboardSensor (Engine)", () => {
       sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
     }
 
-    expect(ctx.upsertInteraction).toHaveBeenLastCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenLastCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         target: expect.objectContaining({ dataIndex: 2 }),
@@ -372,9 +379,13 @@ describe("KeyboardSensor plot domains", () => {
       y: d3.scaleLinear().domain([0, 10]).range([100, 0]),
     };
     store.setState({ data: [datum], scales, yDomain: [6, 10] });
-    upsertInteraction(store, InteractionChannel.PRIMARY_HOVER, {
-      targets: [{ data: datum, dataIndex: 0, coordinate: { x: 50, y: 50 } }],
-    });
+    createInteractionAccess(store).upsertHoverInteraction(
+      InteractionChannel.PRIMARY_HOVER,
+      {
+        pointer: { x: 0, y: 0, containerX: 0, containerY: 0, isTouch: false },
+        targets: [{ data: datum, dataIndex: 0, coordinate: { x: 50, y: 50 } }],
+      },
+    );
     scales.y.domain([6, 10]);
     registerSeries(store, "line", [{ type: "line", x: "x", y: "y" }]);
     expect(
@@ -403,13 +414,17 @@ describe("hover refresh on domain updates", () => {
       xDomain: [0, 10],
       yDomain: [0, 10],
     });
-    upsertInteraction(store, InteractionChannel.PRIMARY_HOVER, {
-      targets: data.map((datum, dataIndex) => ({
-        data: datum,
-        dataIndex,
-        coordinate: { x: 0, y: 0 },
-      })),
-    });
+    createInteractionAccess(store).upsertHoverInteraction(
+      InteractionChannel.PRIMARY_HOVER,
+      {
+        pointer: { x: 0, y: 0, containerX: 0, containerY: 0, isTouch: false },
+        targets: data.map((datum, dataIndex) => ({
+          data: datum,
+          dataIndex,
+          coordinate: { x: 0, y: 0 },
+        })),
+      },
+    );
     updateChartState(store, {
       data,
       dimensions,
@@ -441,16 +456,20 @@ describe("hover refresh on domain updates", () => {
     registerSeries(store, "bars", [
       { id: "bars", type: "bar", x: "x", y: "y", barWidth: 20 },
     ]);
-    upsertInteraction(store, InteractionChannel.PRIMARY_HOVER, {
-      targets: [
-        {
-          data: data[0],
-          dataIndex: 0,
-          seriesId: "bars",
-          coordinate: { x: 0, y: 0 },
-        },
-      ],
-    });
+    createInteractionAccess(store).upsertHoverInteraction(
+      InteractionChannel.PRIMARY_HOVER,
+      {
+        pointer: { x: 0, y: 0, containerX: 0, containerY: 0, isTouch: false },
+        targets: [
+          {
+            data: data[0],
+            dataIndex: 0,
+            seriesId: "bars",
+            coordinate: { x: 0, y: 0 },
+          },
+        ],
+      },
+    );
     updateChartState(store, { data, dimensions, yDomain: [5, 10] });
     expect(
       store.getState().interactions.get(InteractionChannel.PRIMARY_HOVER),
@@ -476,11 +495,19 @@ describe("hover refresh on plot resizing", () => {
       xDomain: [0, 10],
       yDomain: [0, 10],
     });
-    upsertInteraction(store, InteractionChannel.PRIMARY_HOVER, {
-      targets: [
-        { data: data[0], dataIndex: 0, coordinate: { x: width * 0.8, y: 50 } },
-      ],
-    });
+    createInteractionAccess(store).upsertHoverInteraction(
+      InteractionChannel.PRIMARY_HOVER,
+      {
+        pointer: { x: 0, y: 0, containerX: 0, containerY: 0, isTouch: false },
+        targets: [
+          {
+            data: data[0],
+            dataIndex: 0,
+            coordinate: { x: width * 0.8, y: 50 },
+          },
+        ],
+      },
+    );
     return { store, data };
   };
 
@@ -622,7 +649,10 @@ describe("legacy keyboard and hover without domain overrides", () => {
       expect(hover).toMatchObject({
         target: { data: { x: "A", y: 23 }, dataIndex: 0 },
       });
-      upsertInteraction(store, InteractionChannel.PRIMARY_HOVER, hover);
+      createInteractionAccess(store).upsertHoverInteraction(
+        InteractionChannel.PRIMARY_HOVER,
+        hover!,
+      );
       updateChartState(store, {
         data,
         dimensions: store.getState().dimensions,
@@ -633,4 +663,20 @@ describe("legacy keyboard and hover without domain overrides", () => {
       ).toMatchObject({ target: { data: { x: "A", y: 23 }, dataIndex: 0 } });
     },
   );
+});
+
+it("does not navigate a claimed key or a key release", () => {
+  const ctx = createMockContext();
+  const sensor = KeyboardSensor();
+  const claimed = createMockEvent(InputAction.KEY, "ArrowRight");
+  claimed.claimed = true;
+  sensor(claimed, ctx);
+  const release = createMockEvent(InputAction.KEY, "ArrowRight");
+  release.signal.keyPhase = "up";
+  sensor(release, ctx);
+  expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
+  sensor(createMockEvent(InputAction.KEY, "ArrowRight"), ctx);
+  expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toMatchObject({
+    target: { dataIndex: 0 },
+  });
 });

@@ -4,15 +4,14 @@ import { type EngineEvent, InputAction, InputSource } from "../../engine";
 import {
   createChartStore,
   registerSeries,
-  removeInteraction,
   updateChartState,
-  upsertInteraction,
 } from "../../state/store/chart.store";
 import type { SensorContext } from "../../types/events";
 import {
   type HoverInteraction,
   InteractionChannel,
 } from "../../types/interaction";
+import { createInteractionAccess } from "../../utils/interactionChannels";
 import { KeyboardSensor } from "./KeyboardSensor";
 
 it.each([false, true])(
@@ -30,9 +29,7 @@ it.each([false, true])(
     }
     const context = {
       getChartContext: () => ({ chartStore: store }),
-      upsertInteraction: (name: string, payload: unknown) =>
-        upsertInteraction(store, name, payload),
-      removeInteraction: (name: string) => removeInteraction(store, name),
+      ...createInteractionAccess(store),
     } as SensorContext;
     const event: EngineEvent = {
       signal: {

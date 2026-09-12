@@ -42,7 +42,8 @@
     "test:storybook": "test-storybook --maxWorkers=2",
     "test:storybook:ci": "start-server-and-test \"http-server storybook-static --port ${STORYBOOK_TEST_PORT:-6006} --silent\" http://127.0.0.1:${STORYBOOK_TEST_PORT:-6006}/index.json \"npm run test:storybook -- --url http://127.0.0.1:${STORYBOOK_TEST_PORT:-6006} --ci\"",
     "typecheck": "tsc --noEmit --incremental false",
-    "test:browser:chart": "vitest run --config vitest.chart-browser.config.ts"
+    "test:browser:chart": "vitest run --config vitest.chart-browser.config.ts",
+    "test:performance:chart": "vitest run --config vitest.chart-performance.config.ts"
   },
   "keywords": [
     "design-system",

@@ -1,12 +1,16 @@
-import { Behavior } from "../types/events";
-import { InteractionChannel } from "../types/interaction";
+import { Behavior, GenericBehavior } from "../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+} from "../types/interaction";
 
-export interface CursorOptions {
+export interface CursorOptions<T = unknown> {
   /**
    * The interaction channel to listen to.
    * Defaults to `InteractionChannel.PRIMARY_HOVER`.
    */
-  on?: InteractionChannel | string;
+  on?: ChannelReference<HoverInteraction<T>>;
 
   /**
    * Whether to display the vertical crosshair line (X-axis).
@@ -39,7 +43,15 @@ export interface CursorOptions {
  * @param options - Configuration options for the cursor lines
  * @returns A Behavior function
  */
-export const Cursor = (options: CursorOptions = {}): Behavior => {
+let nextCursorOwner = 0;
+
+export function Cursor(
+  options?: Omit<CursorOptions, "on"> & { on?: string },
+): GenericBehavior;
+export function Cursor<T>(options: CursorOptions<T>): Behavior<T>;
+export function Cursor<T = unknown>(
+  options: CursorOptions<T> = {},
+): Behavior<T> {
   const {
     on = InteractionChannel.PRIMARY_HOVER,
     showX = true,
@@ -47,14 +59,17 @@ export const Cursor = (options: CursorOptions = {}): Behavior => {
   } = options;
 
   return ({ upsertInteraction, removeInteraction }) => {
-    // Sync configuration to the store so the Cursor component can read it
-    upsertInteraction(InteractionChannel.CURSOR_CONFIG, {
-      on,
+    const key =
+      `${InteractionChannel.CURSOR_CONFIG}:${++nextCursorOwner}` as const;
+    upsertInteraction(key, {
       ...options,
+      on,
+      showX,
+      showY,
     });
 
     return () => {
-      removeInteraction(InteractionChannel.CURSOR_CONFIG);
+      removeInteraction(key);
     };
   };
-};
+}

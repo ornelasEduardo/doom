@@ -15,6 +15,7 @@
 export enum InputSource {
   MOUSE = "mouse",
   TOUCH = "touch",
+  PEN = "pen",
   KEYBOARD = "keyboard",
   REMOTE = "remote",
 }
@@ -43,6 +44,9 @@ export interface InputSignal {
   /** The action being performed */
   action: InputAction;
 
+  /** CANCEL affects its stream unless explicitly dismissing the whole chart. */
+  cancelScope?: "stream" | "chart";
+
   /** Where this input came from */
   source: InputSource;
 
@@ -61,6 +65,28 @@ export interface InputSignal {
   /** Optional: For keyboard events, the key that was pressed */
   key?: string;
 
+  /** Phase emitted for every native KEY input. */
+  keyPhase?: "down" | "up";
+  code?: string;
+  repeat?: boolean;
+  pointerType?: string;
+  button?: number;
+  buttons?: number;
+  pressure?: number;
+  isPrimary?: boolean;
+
+  /**
+   * Available during synchronous START/END/CANCEL/KEY dispatch only.
+   * MOVE is deferred and has no native controls. Saved callbacks expire when
+   * the listener returns; capture at START to receive movement outside the plot.
+   * Capture does not disable browser touch scrolling; touch-action is consumer policy.
+   */
+  native?: {
+    capturePointer: () => void;
+    releasePointer: () => void;
+    preventDefault: () => void;
+  };
+
   /** Optional: Modifier keys state */
   modifiers?: {
     shift: boolean;
@@ -69,6 +95,11 @@ export interface InputSignal {
     meta: boolean;
   };
 }
+
+/** Cancellation of native resources follows the same stream identity as scheduled input. */
+export type EngineCancellation =
+  | { scope: "chart" }
+  | { scope: "stream"; userId: string; source: InputSource; id: number };
 
 // =============================================================================
 // INTERACTION CANDIDATE (The Hydrated Hit Result)
@@ -91,6 +122,9 @@ export type CandidateType =
  * It contains everything a Sensor needs to make a decision.
  */
 export interface InteractionCandidate<T = unknown> {
+  /** Opaque provenance for engine-owned geometry; preserve when copying targets. */
+  readonly geometryOwner?: object;
+
   /** What kind of element this is */
   type: CandidateType;
 
@@ -136,6 +170,9 @@ export interface InteractionCandidate<T = unknown> {
 export interface EngineEvent<T = unknown> {
   /** Set true synchronously after handling a KEY signal to cancel its native default. */
   handled?: boolean;
+
+  /** Claims keyboard ownership without implicitly cancelling the browser default. */
+  claimed?: boolean;
 
   /** The normalized input that triggered this event */
   signal: InputSignal;

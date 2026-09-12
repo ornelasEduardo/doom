@@ -10,6 +10,7 @@ import { useChartContext } from "../../context";
 import { resolveAccessor, Series } from "../../types";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
 import { barGeometry, categoryAccessor, valueAccessor } from "../../utils/bars";
+import { getInteractionKey } from "../../utils/interactionChannels";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
 import {
   Reposition,
@@ -31,42 +32,107 @@ import { TooltipProps } from "./types";
 export function Tooltip<T>({
   containerRef,
 }: Omit<TooltipProps<T>, "renderTooltip">) {
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const { chartStore, x, y, config, variant } = useChartContext<T>();
+  const { chartStore } = useChartContext<T>();
+  const interactions = chartStore.useStore((s) => s.interactions);
+  return [...interactions].flatMap(([key, value]) =>
+    typeof key === "string" &&
+    key.startsWith(`${InteractionChannel.TOOLTIP_CONFIG}:`) ? (
+      <TooltipInstance<T>
+        key={key}
+        containerRef={containerRef}
+        tooltipConfig={value as TooltipOptions<T>}
+      />
+    ) : (
+      []
+    ),
+  );
+}
 
+function TooltipInstance<T>({
+  containerRef,
+  tooltipConfig,
+}: Omit<TooltipProps<T>, "renderTooltip"> & {
+  tooltipConfig: TooltipOptions<T>;
+}) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const { chartStore, engine, x, y, config, variant } = useChartContext<T>();
+
+  const dimensions = chartStore.useStore((s) => s.dimensions);
   const series = chartStore.useStore((s) => s.processedSeries);
   const interactions = chartStore.useStore((s) => s.interactions);
 
-  const tooltipConfig = interactions.get(
-    InteractionChannel.TOOLTIP_CONFIG,
-  ) as TooltipOptions<T>;
-
   const interactionType = tooltipConfig?.on || InteractionChannel.PRIMARY_HOVER;
-  const hover = interactions.get(interactionType) as HoverInteraction<T>;
+  const hover = interactions.get(
+    getInteractionKey(interactionType),
+  ) as HoverInteraction<T>;
 
-  // Use primary target for positioning, but pass all targets or primary data to renderer
+  // Anchor the overlay to the first target while preserving the complete target set.
   const target = hover?.targets?.[0] ?? null;
   const position = hover?.pointer;
 
-  const [layout, setLayout] = useState({ x: 0, y: 0, visible: false });
+  const [layout, setLayout] = useState<{
+    x: number;
+    y: number;
+    visible: boolean;
+    pointer?: HoverInteraction<T>["pointer"];
+  }>({ x: 0, y: 0, visible: false });
 
   useLayoutEffect(() => {
     if (!tooltipRef.current || !target || !position) {
       return;
     }
 
+    // Measure after the DOM commit so a moved header or plot is included,
+    // even when the keyboard selection itself has not changed.
+    let pointer = position;
+    if (hover.anchor === "target") {
+      const x = target.coordinate.x - dimensions.margin.left;
+      const y = target.coordinate.y - dimensions.margin.top;
+      const container = engine.resolveContainerCoordinates(x, y);
+      pointer = {
+        ...position,
+        x,
+        y,
+        containerX: container.x,
+        containerY: container.y,
+      };
+    }
     const { x, y } = new Reposition(tooltipRef.current)
       .anchor({
-        x: (position as { containerX?: number }).containerX ?? position.x,
-        y: (position as { containerY?: number }).containerY ?? position.y,
+        x: pointer.containerX,
+        y: pointer.containerY,
       })
       .gap({ x: TOOLTIP_GAP_X, y: TOOLTIP_GAP_Y })
       .align({ vertical: "center" })
       .edgeDetect({ container: containerRef })
       .resolve();
 
-    setLayout({ x, y, visible: true });
-  }, [target, position, containerRef]);
+    setLayout((previous) => {
+      const before = previous.pointer;
+      if (
+        previous.visible &&
+        previous.x === x &&
+        previous.y === y &&
+        before?.x === pointer.x &&
+        before.y === pointer.y &&
+        before.containerX === pointer.containerX &&
+        before.containerY === pointer.containerY &&
+        before.isTouch === pointer.isTouch
+      ) {
+        return previous;
+      }
+      return { x, y, visible: true, pointer };
+    });
+  }, [
+    target,
+    position,
+    hover?.anchor,
+    dimensions,
+    engine,
+    containerRef,
+    config,
+    series,
+  ]);
 
   if (!target || !position) {
     return null;
@@ -85,15 +151,14 @@ export function Tooltip<T>({
         transform: `translate(${layout.x}px, ${layout.y}px)`,
         zIndex: "var(--z-tooltip)",
         opacity: layout.visible ? 1 : 0,
-        transition: "opacity 0.1s ease-out",
       }}
     >
       {tooltipConfig?.render ? (
-        tooltipConfig.render(
-          (hover.targets && hover.targets.length > 1
-            ? hover.targets.map((t) => t.data)
-            : target.data) as any,
-        )
+        tooltipConfig.render({
+          data: hover.targets.map((item) => item.data),
+          targets: hover.targets,
+          pointer: layout.pointer ?? position,
+        })
       ) : (
         <DefaultTooltipContent
           activeData={target.data}
@@ -113,7 +178,7 @@ export function Tooltip<T>({
 interface DefaultTooltipContentProps<T> {
   activeData: T;
   activeSeriesId?: string;
-  targets?: HoverInteraction<T>["targets"];
+  targets: HoverInteraction<T>["targets"];
   series: Series[];
   x?: unknown;
   y?: unknown;
@@ -145,11 +210,6 @@ function DefaultTooltipContent<T>({
     ? resolveAccessor(category as any)(activeData)
     : undefined;
   const xLabel = category ? String(categoryValue) : "Value";
-  // Built-in sensors already select the complete target set. Only legacy
-  // interactions without any series IDs need category-based reconstruction.
-  const hasIdentifiedTargets = targets?.some(
-    (target) => target.seriesId !== undefined,
-  );
 
   return (
     <Card
@@ -159,84 +219,79 @@ function DefaultTooltipContent<T>({
         {xLabel}
       </Text>
 
-      {series.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          {series.map((item, i) => {
-            const accessor = categoryAccessor(item);
-            const candidate = targets?.find(
-              (target) => target.seriesId === item.id,
-            );
-            if (hasIdentifiedTargets && !candidate) {
-              return null;
-            }
-            const datum =
-              item.id === activeSeriesId
-                ? activeData
-                : candidate
-                  ? candidate.data
-                  : accessor && item.data
-                    ? item.data.find(
-                        (row) =>
-                          resolveAccessor(accessor)(row) === categoryValue,
-                      )
-                    : activeData;
-            if (datum === undefined) {
-              return null;
-            }
-            if (bounded && scales.x && scales.y) {
-              const bar =
-                item.type === "bar"
-                  ? barGeometry(
-                      item,
-                      datum,
-                      item.data?.indexOf(datum) ?? -1,
-                      scales.x,
-                      scales.y,
-                    )
-                  : null;
-              const visible = bar
-                ? !!clipRectToPlot(bar, dimensions)
-                : isPointInPlot(
-                    {
-                      x: (scales.x as (value: unknown) => number)(
-                        item.xAccessor
-                          ? resolveAccessor(item.xAccessor)(datum)
-                          : undefined,
-                      ),
-                      y: (scales.y as (value: unknown) => number)(
-                        item.yAccessor
-                          ? resolveAccessor(item.yAccessor)(datum)
-                          : undefined,
-                      ),
-                    },
-                    dimensions,
-                  );
-              if (!visible) {
-                return null;
-              }
-            }
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        {targets.map((candidate, i) => {
+          const item =
+            candidate.seriesId === undefined
+              ? undefined
+              : series.find((series) => series.id === candidate.seriesId);
+          const datum = candidate.data;
+          if (datum === undefined) {
+            return null;
+          }
+          if (!item) {
             return (
-              <TooltipSeriesItem
-                key={i}
-                activeData={datum}
-                config={config}
-                fallbackY={y}
-                series={item}
-              />
+              <Text key={i} as="p" variant="h4">
+                {y ? String(resolveAccessor(y as any)(datum)) : ""}
+              </Text>
             );
-          })}
-        </div>
-      ) : (
-        <Text as="p" variant="h4">
-          {y ? String(resolveAccessor(y as any)(activeData)) : ""}
-        </Text>
-      )}
+          }
+          // Custom DOM marks and owned geometry need not follow Cartesian accessors.
+          if (
+            !candidate.geometryOwner &&
+            item.type !== "custom" &&
+            bounded &&
+            scales.x &&
+            scales.y
+          ) {
+            const bar =
+              item.type === "bar"
+                ? barGeometry(
+                    item,
+                    datum,
+                    item.data?.indexOf(datum) ?? -1,
+                    scales.x,
+                    scales.y,
+                  )
+                : null;
+            const visible = bar
+              ? !!clipRectToPlot(bar, dimensions)
+              : isPointInPlot(
+                  {
+                    x: (scales.x as (value: unknown) => number)(
+                      item.xAccessor
+                        ? resolveAccessor(item.xAccessor)(datum)
+                        : undefined,
+                    ),
+                    y: (scales.y as (value: unknown) => number)(
+                      item.yAccessor
+                        ? resolveAccessor(item.yAccessor)(datum)
+                        : undefined,
+                    ),
+                  },
+                  dimensions,
+                );
+            if (!visible) {
+              return null;
+            }
+          }
+          return (
+            <TooltipSeriesItem
+              key={i}
+              activeData={datum}
+              config={config}
+              fallbackY={y}
+              series={item}
+            />
+          );
+        })}
+      </div>
     </Card>
   );
 }

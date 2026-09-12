@@ -4,14 +4,23 @@ export const moveChartPointer = defineBrowserCommand(
   async ({ page, frame }, clientX: number, clientY: number) => {
     const iframe = await (await frame()).frameElement();
     const box = await iframe.boundingBox();
-    const width = await iframe.evaluate(
-      (el) => (el as HTMLIFrameElement).clientWidth,
-    );
-    if (!box || box.width !== width) {
-      throw new Error("Exact pointer tests require an unscaled runner iframe");
+    const metrics = await iframe.evaluate((element) => {
+      const node = element as HTMLIFrameElement;
+      return {
+        width: node.offsetWidth,
+        height: node.offsetHeight,
+        left: node.clientLeft,
+        top: node.clientTop,
+      };
+    });
+    if (!box || !metrics.width || !metrics.height) {
+      throw new Error("Pointer tests require a visible runner iframe");
     }
-    // Locator.hover truncates positions; mouse.move retains subpixel boundaries.
-    await page.mouse.move(box.x + clientX, box.y + clientY);
+    // Convert frame viewport coordinates without Locator.hover's automatic scrolling.
+    await page.mouse.move(
+      box.x + (clientX + metrics.left) * (box.width / metrics.width),
+      box.y + (clientY + metrics.top) * (box.height / metrics.height),
+    );
   },
 );
 

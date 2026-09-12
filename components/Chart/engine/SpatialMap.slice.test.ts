@@ -61,3 +61,23 @@ it("uses indexed identity and category buckets without scanning unrelated points
   map.updateIndex([]);
   expect(map.findSlice(line[0])).toEqual([]);
 });
+
+it("includes an unindexed DOM hit and root peers despite subpixel DOM rounding", () => {
+  const map = new SpatialMap<number>({ useDomHitTesting: false });
+  map.updateIndex([
+    { x: 149.6, y: 40, data: 90, seriesId: "root", dataIndex: 1 },
+    { x: 151, y: 40, data: 99, seriesId: "other", dataIndex: 0 },
+  ]);
+  const custom = {
+    type: "data-point" as const,
+    data: 30,
+    seriesId: "custom",
+    dataIndex: 0,
+    coordinate: { x: 149.6015625, y: 150 },
+    distance: 0,
+    element: document.createElement("div"),
+  };
+  expect(map.findSlice(custom).map((point) => point.data)).toEqual([30, 90]);
+  map.updateIndex([]);
+  expect(map.findSlice(custom)).toEqual([custom]);
+});

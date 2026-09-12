@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
 import { useChartContext } from "../../context";
-import { InputAction } from "../../engine";
+import { EngineCancellation, InputAction, InputSignal } from "../../engine";
 
 /**
  * InteractionLayer
@@ -10,7 +10,7 @@ import { InputAction } from "../../engine";
  * and forwards them to the Engine as InputSignals.
  *
  * Features:
- * - RAF Throttling (60fps aligned for moves)
+ * - Immediate normalization; the Engine owns move coalescing
  * - Direct Engine integration (no EventContext)
  * - Keyboard Support
  */
@@ -18,77 +18,113 @@ export const InteractionLayer: React.FC = () => {
   const { chartStore, engine } = useChartContext();
   const observerRef = useRef<HTMLDivElement>(null);
 
-  // RAF State
-  const frameRef = useRef<number | null>(null);
-  const lastEventRef = useRef<PointerEvent | null>(null);
-
   useEffect(() => {
-    // 1. Locate the container (parent of this invisible element)
     const container = observerRef.current?.closest(
       "[data-chart-container]",
     ) as HTMLElement;
-
     if (!container || !engine) {
       return;
     }
-
-    const clearPendingMove = () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
+    const captured = new Map<number, Pick<InputSignal, "source" | "userId">>();
+    const releaseCaptured = (event: EngineCancellation) => {
+      for (const [id, owner] of [...captured]) {
+        if (
+          event.scope === "stream" &&
+          (event.id !== id ||
+            event.source !== owner.source ||
+            event.userId !== owner.userId)
+        ) {
+          continue;
+        }
+        captured.delete(id);
+        if (container.hasPointerCapture(id)) {
+          container.releasePointerCapture(id);
+        }
       }
-      frameRef.current = null;
-      lastEventRef.current = null;
     };
+    const unsubscribeCancellation =
+      engine.subscribeCancellation(releaseCaptured);
 
-    // 2. Define the throttled processor
-    const processEvent = () => {
-      const event = lastEventRef.current;
-      if (!event) {
+    const dispatch = (
+      event: PointerEvent | KeyboardEvent,
+      signal: ReturnType<typeof engine.createSignal>,
+    ) => {
+      if (!signal) {
         return;
       }
-
-      // Map native event to InputAction
-      const action = getInputAction(event.type);
-
-      // Create signal and send to engine
-      const signal = engine.createSignal(event, action);
-      if (signal) {
-        engine.input(signal);
+      // Clear the reference itself: even a saved capability must not retain a native event.
+      let native: PointerEvent | KeyboardEvent | null = event;
+      signal.native = {
+        capturePointer: () => {
+          if (
+            native &&
+            !engine.isInputCancelled(signal) &&
+            "pointerId" in native
+          ) {
+            try {
+              container.setPointerCapture(native.pointerId);
+            } catch (error) {
+              // Synthetic input has no active browser pointer to capture.
+              if (
+                error instanceof DOMException &&
+                error.name === "NotFoundError"
+              ) {
+                return;
+              }
+              throw error;
+            }
+            captured.set(native.pointerId, {
+              source: signal.source,
+              userId: signal.userId,
+            });
+          }
+        },
+        releasePointer: () => {
+          if (
+            native &&
+            !engine.isInputCancelled(signal) &&
+            "pointerId" in native
+          ) {
+            captured.delete(native.pointerId);
+            if (container.hasPointerCapture(native.pointerId)) {
+              container.releasePointerCapture(native.pointerId);
+            }
+          }
+        },
+        preventDefault: () => {
+          if (!engine.isInputCancelled(signal)) {
+            native?.preventDefault();
+          }
+        },
+      };
+      try {
+        if (engine.input(signal)) {
+          event.preventDefault();
+        }
+      } finally {
+        native = null;
+        delete signal.native;
       }
-
-      // Reset
-      lastEventRef.current = null;
-      frameRef.current = null;
     };
 
-    // 3. Define the listener (Throttler)
-    const onPointerEvent = (e: PointerEvent) => {
-      // Touch emits pointerleave on release even though its reading should remain.
-      if (e.type === "pointerleave" && e.pointerType === "touch") {
-        return;
-      }
-
-      // CRITICAL: Do NOT throttle state-change events (down, up, leave).
-      // These need immediate processing for proper drag/click handling.
+    const onPointerEvent = (event: PointerEvent) => {
       if (
-        e.type === "pointerdown" ||
-        e.type === "pointerup" ||
-        e.type === "pointerleave" ||
-        e.type === "pointercancel"
+        event.type === "pointerleave" &&
+        (event.pointerType === "touch" || captured.has(event.pointerId))
       ) {
-        // Cancel any pending frame to avoid processing stale events
-        clearPendingMove();
-
-        // Force synchronous processing
-        lastEventRef.current = e;
-        processEvent();
         return;
       }
-
-      // Throttle moves to RAF
-      lastEventRef.current = e;
-      if (!frameRef.current) {
-        frameRef.current = requestAnimationFrame(processEvent);
+      if (event.type === "lostpointercapture") {
+        if (!captured.delete(event.pointerId)) {
+          return;
+        }
+      }
+      try {
+        dispatch(event, engine.createSignal(event, getInputAction(event.type)));
+      } finally {
+        if (event.type === "pointerup" || event.type === "pointercancel") {
+          captured.delete(event.pointerId);
+        }
       }
     };
 
@@ -99,43 +135,25 @@ export const InteractionLayer: React.FC = () => {
       ) {
         return;
       }
-      clearPendingMove();
       const signal = engine.createSignal(event, InputAction.CANCEL);
       if (signal) {
+        signal.cancelScope = "chart";
         engine.input(signal);
       }
     };
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.target !== container) {
-        return;
-      }
-      if (
-        [
-          "ArrowLeft",
-          "ArrowRight",
-          "ArrowUp",
-          "ArrowDown",
-          "Enter",
-          " ",
-          // Escape reaches KeyboardSensor, which clears the active interaction.
-          "Escape",
-        ].includes(e.key)
-      ) {
-        // Create and send keyboard signal
-        const signal = engine.createKeySignal(e);
-        if (engine.input(signal)) {
-          e.preventDefault();
-        }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.target === container) {
+        dispatch(event, engine.createKeySignal(event));
       }
     };
 
     // 4. Attach Listeners
     container.addEventListener("pointermove", onPointerEvent, {
-      passive: true,
+      passive: false,
     });
     container.addEventListener("pointerdown", onPointerEvent, {
-      passive: true,
+      passive: false,
     });
     container.addEventListener("pointerup", onPointerEvent);
     container.addEventListener("pointerleave", onPointerEvent);
@@ -143,9 +161,11 @@ export const InteractionLayer: React.FC = () => {
     container.ownerDocument.addEventListener(
       "pointerdown",
       onOutsidePointerDown,
-      { capture: true, passive: true },
+      { capture: true, passive: false },
     );
-    container.addEventListener("keydown", onKeyDown);
+    container.addEventListener("keydown", onKey);
+    container.addEventListener("keyup", onKey);
+    container.addEventListener("lostpointercapture", onPointerEvent);
 
     return () => {
       container.removeEventListener("pointermove", onPointerEvent);
@@ -158,8 +178,11 @@ export const InteractionLayer: React.FC = () => {
         onOutsidePointerDown,
         true,
       );
-      container.removeEventListener("keydown", onKeyDown);
-      clearPendingMove();
+      container.removeEventListener("keydown", onKey);
+      container.removeEventListener("keyup", onKey);
+      container.removeEventListener("lostpointercapture", onPointerEvent);
+      unsubscribeCancellation();
+      releaseCaptured({ scope: "chart" });
     };
   }, [engine, chartStore]);
 
@@ -185,6 +208,7 @@ function getInputAction(nativeType: string): InputAction {
       return InputAction.START;
     case "pointerup":
       return InputAction.END;
+    case "lostpointercapture":
     case "pointercancel":
     case "pointerleave":
       return InputAction.CANCEL;

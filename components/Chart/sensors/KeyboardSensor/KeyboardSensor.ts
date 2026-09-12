@@ -1,34 +1,62 @@
 import { EngineEvent, InputAction } from "../../engine";
 import { resolveAccessor } from "../../types/accessors";
-import { GenericSensor } from "../../types/events";
-import { InteractionChannel } from "../../types/interaction";
+import { GenericSensor, Sensor } from "../../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+  InteractionTarget,
+} from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
+import { getInteractionKey } from "../../utils/interactionChannels";
 import { clipRectToPlot, isPointInPlot } from "../../utils/plotBounds";
 import { samplePosition } from "../../utils/sampleValidity";
 import { hasDomainOverride } from "../../utils/scales";
 
 // One input may reach supplied and baseline navigators for the same channel.
-const handledChannels = new WeakMap<EngineEvent, Set<string>>();
+const handledChannels = new WeakMap<EngineEvent, Set<string | symbol>>();
 
 /**
  * Professional-grade Keyboard Sensor for A11y.
  * Allows navigating data points using ArrowKeys.
  */
-export const KeyboardSensor = (
-  options: { name?: string } = {},
-): GenericSensor => {
+export interface KeyboardSensorOptions<T = unknown> {
+  name?: ChannelReference<HoverInteraction<T>>;
+}
+
+export function KeyboardSensor(options?: { name?: string }): GenericSensor;
+export function KeyboardSensor<T>(options: KeyboardSensorOptions<T>): Sensor<T>;
+export function KeyboardSensor<T>(
+  options: KeyboardSensorOptions<T> = {},
+): Sensor<T> {
   const { name = InteractionChannel.PRIMARY_HOVER } = options;
+  const channelKey = getInteractionKey(name);
   let focusedIndex = -1;
 
-  return (event, { getChartContext, upsertInteraction, removeInteraction }) => {
+  return (
+    event,
+    { getChartContext, upsertHoverInteraction, removeInteraction },
+  ) => {
     const { signal } = event;
+    const remove = () => {
+      if (typeof name === "string") {
+        removeInteraction(name);
+      } else {
+        removeInteraction(name);
+      }
+    };
 
     // Only handle KEY actions
-    if (signal.action !== InputAction.KEY || !signal.key) {
+    if (
+      signal.action !== InputAction.KEY ||
+      !signal.key ||
+      signal.keyPhase === "up" ||
+      event.claimed
+    ) {
       return;
     }
 
-    if (handledChannels.get(event)?.has(name)) {
+    if (handledChannels.get(event)?.has(channelKey)) {
       return;
     }
 
@@ -74,7 +102,7 @@ export const KeyboardSensor = (
     }
     if (signal.key === "Escape") {
       focusedIndex = -1;
-      removeInteraction(name);
+      remove();
       return;
     }
     const forward = signal.key === "ArrowRight" || signal.key === "ArrowDown";
@@ -112,6 +140,38 @@ export const KeyboardSensor = (
       }),
     );
 
+    const identities = state.processedSeries?.length
+      ? state.processedSeries.flatMap((series) =>
+          (series.data ?? []).flatMap((datum, dataIndex) =>
+            datum == null ? [] : [{ seriesId: series.id, dataIndex }],
+          ),
+        )
+      : entries.map(({ index }) => ({ seriesId: "default", dataIndex: index }));
+    const resolved = ctx.engine?.resolveTargets(identities);
+    const geometry = new Map<
+      string,
+      Map<number, InteractionTarget<T> | null | undefined>
+    >();
+    identities.forEach(({ seriesId, dataIndex }, index) => {
+      const rows = geometry.get(seriesId) ?? new Map();
+      rows.set(dataIndex, resolved?.[index]);
+      geometry.set(seriesId, rows);
+    });
+
+    // Published geometry uses SVG coordinates; slice construction uses plot coordinates.
+    const resolveGeometry = (seriesId: string, dataIndex: number) => {
+      const target = geometry.get(seriesId)?.get(dataIndex);
+      return target
+        ? {
+            ...target,
+            coordinate: {
+              x: target.coordinate.x - state.dimensions.margin.left,
+              y: target.coordinate.y - state.dimensions.margin.top,
+            },
+          }
+        : target;
+    };
+
     // Filter whole slices, preserving a category when any series is visible.
     const slices = entries
       .map((entry) => {
@@ -135,12 +195,22 @@ export const KeyboardSensor = (
         const categoryValue = category
           ? resolveAccessor(category)(d)
           : undefined;
-        const targets = (state.processedSeries ?? []).flatMap((series) => {
+        const targets = (state.processedSeries ?? []).flatMap<
+          InteractionTarget<T>
+        >((series) => {
           const index =
             series.id === entry.series?.id
               ? entry.index
               : (categoryIndices.get(series.id)?.get(categoryValue) ?? -1);
           if (index < 0 || !xScale || !yScale) {
+            return [];
+          }
+          const owned = resolveGeometry(series.id, index);
+          if (owned) {
+            return [owned];
+          }
+          // Unpublished custom rows have no rendered keyboard target.
+          if (series.type === "custom") {
             return [];
           }
           const datum = series.data![index];
@@ -184,6 +254,12 @@ export const KeyboardSensor = (
             },
           ];
         });
+        const ownedPrimary = !entry.series
+          ? resolveGeometry("default", entry.index)
+          : undefined;
+        if (ownedPrimary) {
+          return [ownedPrimary];
+        }
         return targets.length || entry.series
           ? targets
           : primaryPosition &&
@@ -195,7 +271,7 @@ export const KeyboardSensor = (
 
     if (!slices.length) {
       focusedIndex = -1;
-      removeInteraction(name);
+      remove();
       return;
     }
     focusedIndex = forward
@@ -215,7 +291,8 @@ export const KeyboardSensor = (
     const containerPoint =
       ctx.engine?.resolveContainerCoordinates(point.x, point.y) ??
       target.coordinate;
-    upsertInteraction(name, {
+    const interaction: HoverInteraction<T> = {
+      anchor: "target",
       pointer: {
         x: point.x,
         y: point.y,
@@ -225,10 +302,11 @@ export const KeyboardSensor = (
       },
       targets,
       target,
-    });
-    const channels = handledChannels.get(event) ?? new Set<string>();
-    channels.add(name);
+    };
+    upsertHoverInteraction(name, interaction);
+    const channels = handledChannels.get(event) ?? new Set<string | symbol>();
+    channels.add(channelKey);
     handledChannels.set(event, channels);
     event.handled = true;
   };
-};
+}

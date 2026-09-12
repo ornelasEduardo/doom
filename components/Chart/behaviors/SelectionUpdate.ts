@@ -1,98 +1,149 @@
-import { Behavior } from "../types/events";
-import { InteractionChannel } from "../types/interaction";
+import type { Selection } from "d3-selection";
 
-export interface SelectionUpdateOptions<T> {
-  /**
-   * The interaction channel to listen to.
-   * Defaults to `InteractionChannel.SELECTION`, but can be set to `PRIMARY_HOVER` for hover effects.
-   */
-  on?: InteractionChannel | string;
+import { Behavior, GenericBehavior } from "../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+  SelectionInteraction,
+} from "../types/interaction";
+import { getInteractionKey } from "../utils/interactionChannels";
 
-  /**
-   * CSS selector to target elements for updates.
-   * Defaults to ".chart-bar, .chart-point, path".
-   */
+export interface SelectionUpdateOptions<T = unknown> {
+  /** Defaults to selection; hover channels supply all target data. */
+  on?:
+    | ChannelReference<SelectionInteraction<T>>
+    | ChannelReference<HoverInteraction<T>>;
+  /** Elements whose bound datum is T. */
   selector?: string;
-
-  /**
-   * Optional custom update function.
-   * If provided, this function is called with the D3 selection of matched elements and the interaction payload.
-   */
-  fn?: (selection: any, activeData: any) => void;
+  /** Always receives an array, including [] when the channel is cleared. */
+  fn?: (
+    selection: Selection<SVGElement, T, SVGGElement, unknown>,
+    data: T[],
+  ) => void;
 }
 
-/**
- * A generic behavior for handling visual updates based on selection state.
- *
- * This behavior can be configured to listen to different channels (e.g., hover or click selection)
- * and apply visual classes (like `.active` or `.dimmed`) to chart elements.
- *
- * @param options - Configuration options
- * @returns A Behavior function
- */
-export const SelectionUpdate = <T = unknown>(
+type SelectionClass = "selected" | "dimmed";
+interface ClassClaims {
+  baseline: boolean;
+  owners: Map<symbol, boolean>;
+}
+const classClaims = new WeakMap<Element, Map<SelectionClass, ClassClaims>>();
+
+function claimClass(
+  element: Element,
+  name: SelectionClass,
+  owner: symbol,
+  enabled: boolean | null,
+) {
+  let classes = classClaims.get(element);
+  if (!classes) {
+    if (enabled === null) {
+      return;
+    }
+    classes = new Map();
+    classClaims.set(element, classes);
+  }
+  let claims = classes.get(name);
+  if (!claims) {
+    if (enabled === null) {
+      return;
+    }
+    claims = { baseline: element.classList.contains(name), owners: new Map() };
+    classes.set(name, claims);
+  }
+  if (enabled === null) {
+    claims.owners.delete(owner);
+  } else {
+    claims.owners.set(owner, enabled);
+  }
+  element.classList.toggle(
+    name,
+    claims.baseline || [...claims.owners.values()].some(Boolean),
+  );
+  if (claims.owners.size === 0) {
+    classes.delete(name);
+  }
+  if (classes.size === 0) {
+    classClaims.delete(element);
+  }
+}
+
+/** Hydrates and follows selection or hover state without changing callback shape. */
+export function SelectionUpdate(options?: {
+  on?: string;
+  selector?: string;
+  fn?: never;
+}): GenericBehavior;
+export function SelectionUpdate<T>(
+  options: SelectionUpdateOptions<T>,
+): Behavior<T>;
+export function SelectionUpdate<T = unknown>(
   options: SelectionUpdateOptions<T> = {},
-): Behavior => {
+): Behavior<T> {
   const {
     on = InteractionChannel.SELECTION,
     selector = ".chart-bar, .chart-point, path",
     fn,
   } = options;
-
-  return ({ getChartContext, getInteraction }) => {
-    const ctx = getChartContext();
-    if (!ctx || !ctx.g || !ctx.chartStore) {
-      return () => {};
+  return ({ getChartContext }) => {
+    const { g, chartStore } = getChartContext();
+    if (!g) {
+      return;
     }
-
-    const { g } = ctx;
-
+    const owner = Symbol("selection classes");
+    let owned = new Set<Element>();
+    const release = (element: Element) => {
+      claimClass(element, "selected", owner, null);
+      claimClass(element, "dimmed", owner, null);
+    };
     const update = () => {
-      const interaction = getInteraction(on) as any;
-      const targets = interaction?.targets || [];
-      // If we have a direct selection (e.g. from ClickSensor), use it.
-      // Otherwise map targets (from HoverSensor) to data.
-      let activeData = interaction?.data; // Direct data payload from some sensors
-      if (!activeData && targets.length > 0) {
-        const candidate = targets[0] as any;
-        activeData = candidate?.data !== undefined ? candidate.data : candidate;
-      }
-
-      const selectionSet = g.selectAll(selector);
-
+      const interaction = chartStore
+        .getState()
+        .interactions.get(getInteractionKey(on)) as
+        | SelectionInteraction<T>
+        | HoverInteraction<T>
+        | undefined;
+      const data = interaction
+        ? "selection" in interaction
+          ? interaction.selection
+          : interaction.targets.map((target) => target.data)
+        : [];
+      const selection = g.selectAll<SVGElement, T>(selector);
       if (fn) {
-        fn(selectionSet, activeData);
+        fn(selection, data);
         return;
       }
-
-      // Default behavior: toggle classes
-      const selectionData =
-        interaction?.selection || targets.map((t: any) => t.data);
-      const activeSet = new Set(selectionData);
-      const hasSelection = activeSet.size > 0;
-
-      selectionSet
-        .classed("selected", function () {
-          const d = (this as any).__data__;
-          return activeSet.has(d);
-        })
-        .classed("dimmed", function () {
-          const d = (this as any).__data__;
-          return hasSelection && !activeSet.has(d);
-        });
-    };
-
-    const unsubscribe = ctx.chartStore.subscribe(() => {
-      update();
-    });
-
-    return () => {
-      unsubscribe();
-      if (!fn) {
-        g.selectAll(selector)
-          .classed("selected", false)
-          .classed("dimmed", false);
+      const active = new Set(data);
+      const current = new Set<Element>(selection.nodes());
+      for (const element of owned) {
+        if (!current.has(element)) {
+          release(element);
+        }
       }
+      selection.each(function (datum) {
+        claimClass(this, "selected", owner, active.has(datum));
+        claimClass(
+          this,
+          "dimmed",
+          owner,
+          active.size > 0 && !active.has(datum),
+        );
+      });
+      owned = current;
     };
+    const unsubscribe = chartStore.subscribe(update);
+    const cleanup = () => {
+      unsubscribe();
+      owned.forEach(release);
+      owned.clear();
+    };
+    try {
+      update();
+    } catch (error) {
+      cleanup();
+      throw error;
+    }
+    return cleanup;
   };
-};
+}

@@ -12,6 +12,7 @@ export type { IndexedPoint, SpatialMapOptions } from "./SpatialMap";
 export { CHART_DATA_ATTRS, SpatialMap } from "./SpatialMap";
 export type {
   CandidateType,
+  EngineCancellation,
   EngineEvent,
   InputSignal,
   InteractionCandidate,

@@ -1,12 +1,16 @@
-import { Behavior } from "../types/events";
-import { DragInteraction, InteractionChannel } from "../types/interaction";
+import { Behavior, GenericBehavior } from "../types/events";
+import {
+  ChannelReference,
+  DragInteraction,
+  InteractionChannel,
+} from "../types/interaction";
 
-export interface DraggablePuckOptions {
+export interface DraggablePuckOptions<T = unknown> {
   /**
    * Interaction channel to listen to.
    * @default InteractionChannel.DRAG
    */
-  on?: InteractionChannel | string;
+  on?: ChannelReference<DragInteraction<T>>;
 
   /**
    * Radius of the puck circle in pixels.
@@ -38,7 +42,13 @@ export interface DraggablePuckOptions {
  * DraggablePuck({ radius: 10, showGhost: true })
  * ```
  */
-export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
+export function DraggablePuck(
+  options?: Omit<DraggablePuckOptions, "on"> & { on?: string },
+): GenericBehavior;
+export function DraggablePuck<T>(options: DraggablePuckOptions<T>): Behavior<T>;
+export function DraggablePuck<T = unknown>(
+  options: DraggablePuckOptions<T> = {},
+): Behavior<T> {
   const {
     on = InteractionChannel.DRAG,
     radius = 8,
@@ -90,7 +100,9 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
       .style("pointer-events", "none");
 
     const update = () => {
-      const interaction = getInteraction(on) as DragInteraction | null;
+      const interaction = (
+        typeof on === "string" ? getInteraction(on) : getInteraction(on)
+      ) as DragInteraction<T> | null;
 
       if (!interaction || !interaction.isDragging) {
         puck.style("opacity", 0);
@@ -136,9 +148,11 @@ export const DraggablePuck = (options: DraggablePuckOptions = {}): Behavior => {
       update();
     });
 
+    update();
+
     return () => {
       unsubscribe();
       layer.remove();
     };
   };
-};
+}

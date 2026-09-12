@@ -1,5 +1,6 @@
 import { Engine } from "../engine";
 import { Store } from "../state/store/chart.store";
+import type { CustomGeometry } from "../utils/customGeometry";
 import { Accessor, AxisValue, Config, SeriesType } from "./index";
 import { XScale, YScale } from "./scales";
 import { D3Selection } from "./selection";
@@ -14,6 +15,8 @@ export interface RenderFrame<T = unknown> {
   resolveInteraction?: (
     event: React.MouseEvent | React.TouchEvent,
   ) => { element: Element; data: T } | null;
+  /** Stable owner for custom local-space hit points, supplied by CustomSeries. */
+  geometry: CustomGeometry<T>;
   seriesId: string;
   chartDataAttrs: {
     TYPE: string;
@@ -58,7 +61,7 @@ export interface ContextValue<T = unknown> {
 /**
  * Extended context provided to Series renderers.
  */
-export interface SeriesContext<T> extends RenderFrame<T> {
+export interface SeriesContext<T> extends Omit<RenderFrame<T>, "geometry"> {
   g: D3Selection<T>;
   data: T[];
   width: number;

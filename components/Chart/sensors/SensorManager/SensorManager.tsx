@@ -3,12 +3,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
 import {
-  removeInteraction,
-  upsertInteraction,
-} from "../../state/store/chart.store";
+  EngineEvent,
+  InputAction,
+  InputSignal,
+  InputSource,
+} from "../../engine";
 import { ContextValue } from "../../types";
 import { Sensor, SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
+import { createInteractionAccess } from "../../utils/interactionChannels";
 import { DataHoverSensor } from "../DataHoverSensor/DataHoverSensor";
 import { KeyboardSensor } from "../KeyboardSensor";
 
@@ -31,6 +34,7 @@ export const SensorManager = <T,>({
 
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
+  const hasData = data.length > 0;
 
   const contextRef = useRef(value);
   useLayoutEffect(() => {
@@ -55,8 +59,9 @@ export const SensorManager = <T,>({
   const stableSensors = sensorsRef.current;
 
   const activeSensors = useMemo(() => {
+    const baseline = KeyboardSensor();
     if (stableSensors && stableSensors.length > 0) {
-      return [...stableSensors, KeyboardSensor()];
+      return { sensors: stableSensors, baseline };
     }
 
     const defaults: Sensor<T>[] = [];
@@ -79,42 +84,74 @@ export const SensorManager = <T,>({
         }),
       );
     }
-    defaults.push(KeyboardSensor());
-    return defaults;
+    return { sensors: defaults, baseline };
   }, [stableSensors, config.type]);
 
   useEffect(() => {
-    if (status !== "ready" || !data.length || !engine) {
+    if (status !== "ready" || !hasData || !engine) {
       return;
     }
 
     const sensorContext: SensorContext<T> = {
       getChartContext: () => contextRef.current,
-      getInteraction: (name: string) => {
-        return chartStore.getState().interactions.get(name) || null;
-      },
-      upsertInteraction: (name, value) => {
-        upsertInteraction(chartStore, name, value);
-      },
-      removeInteraction: (name: string) => {
-        removeInteraction(chartStore, name);
-      },
+      ...createInteractionAccess(chartStore),
     };
 
-    engine.setHandler((event) => {
-      activeSensors.forEach((sensor) => {
+    const dispatchEvent = (event: EngineEvent<T>) => {
+      const dispatch = (sensor: Sensor<T>) => {
+        if (engine.isInputCancelled(event.signal)) {
+          return;
+        }
         try {
           sensor(event, sensorContext);
         } catch (err) {
           console.error("Sensor Error:", err);
         }
+      };
+      activeSensors.sensors.forEach(dispatch);
+      if (!event.claimed) {
+        dispatch(activeSensors.baseline);
+      }
+    };
+    engine.setHandler(dispatchEvent);
+
+    const cancellationSignal = (): InputSignal => ({
+      action: InputAction.CANCEL,
+      cancelScope: "chart",
+      id: 0,
+      userId: "local",
+      source: InputSource.KEYBOARD,
+      x: 0,
+      y: 0,
+      timestamp: performance.now(),
+    });
+    const cancelSensors = () =>
+      dispatchEvent({
+        signal: cancellationSignal(),
+        candidates: [],
+        sliceCandidates: [],
+        chartX: 0,
+        chartY: 0,
+        isWithinPlot: false,
       });
+    // Disposal rejects input; deliver cleanup without depending on effect teardown order.
+    const unsubscribe = engine.subscribeCancellation(() => {
+      if (engine.isDisposed()) {
+        cancelSensors();
+      }
     });
 
     return () => {
-      engine.setHandler(() => {});
+      try {
+        if (!engine.isDisposed()) {
+          engine.input(cancellationSignal());
+        }
+      } finally {
+        unsubscribe();
+        engine.setHandler(() => {});
+      }
     };
-  }, [activeSensors, engine, chartStore, status, data.length]);
+  }, [activeSensors, engine, chartStore, status, hasData]);
 
   return null;
 };

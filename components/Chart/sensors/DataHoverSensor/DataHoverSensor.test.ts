@@ -27,7 +27,7 @@ const createMockContext = (): SensorContext => {
       },
     })) as any,
     getInteraction: vi.fn((name: string) => interactions.get(name) || null),
-    upsertInteraction: vi.fn((name: string, interaction: unknown) => {
+    upsertHoverInteraction: vi.fn((name: string, interaction: unknown) => {
       interactions.set(name, interaction);
     }),
     removeInteraction: vi.fn((name: string) => {
@@ -74,7 +74,7 @@ describe("DataHoverSensor (Engine)", () => {
     const event = createMockEvent(InputAction.MOVE, candidate);
     sensor(event, ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         targets: [expect.objectContaining({ data: { id: "p0" } })],
@@ -82,9 +82,9 @@ describe("DataHoverSensor (Engine)", () => {
     );
   });
 
-  it("exactHit: true — fires when candidate has a backing DOM element", () => {
+  it("exact hit policy — fires when candidate has a backing DOM element", () => {
     const ctx = createMockContext();
-    const sensor = DataHoverSensor({ exactHit: true });
+    const sensor = DataHoverSensor({ hitPolicy: "exact" });
     const candidate = {
       data: { id: "p0" },
       distance: 5,
@@ -94,7 +94,7 @@ describe("DataHoverSensor (Engine)", () => {
 
     sensor(createMockEvent(InputAction.MOVE, candidate), ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         targets: [expect.objectContaining({ data: { id: "p0" } })],
@@ -103,9 +103,9 @@ describe("DataHoverSensor (Engine)", () => {
     expect(ctx.removeInteraction).not.toHaveBeenCalled();
   });
 
-  it("exactHit: true — suppresses quadtree-only candidate with no element", () => {
+  it("exact hit policy — suppresses quadtree-only candidate with no element", () => {
     const ctx = createMockContext();
-    const sensor = DataHoverSensor({ exactHit: true });
+    const sensor = DataHoverSensor({ hitPolicy: "exact" });
     const candidate = {
       data: { id: "p0" },
       distance: 5,
@@ -118,7 +118,7 @@ describe("DataHoverSensor (Engine)", () => {
     expect(ctx.removeInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
     );
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
+    expect(ctx.upsertHoverInteraction).not.toHaveBeenCalled();
   });
 
   it("should clear interaction on LEAVE", () => {
@@ -174,7 +174,7 @@ describe("DataHoverSensor (Engine)", () => {
 
     sensor(touchEvent, ctx);
 
-    expect(ctx.upsertInteraction).toHaveBeenCalledWith(
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
       expect.objectContaining({
         targets: [expect.objectContaining({ data: { id: "p0" } })],
@@ -199,7 +199,7 @@ describe("DataHoverSensor (Engine)", () => {
     expect(ctx.removeInteraction).toHaveBeenCalledWith(
       InteractionChannel.PRIMARY_HOVER,
     );
-    expect(ctx.upsertInteraction).not.toHaveBeenCalled();
+    expect(ctx.upsertHoverInteraction).not.toHaveBeenCalled();
   });
 });
 
@@ -265,7 +265,7 @@ describe("touch inspection", () => {
 
 describe("engine-queued touch cancellation", () => {
   it.each([1, 2])(
-    "does not restore a queued reading after cancellation by pointer %i",
+    "does not restore a queued reading after chart dismissal by pointer %i",
     (cancelId) => {
       vi.useFakeTimers();
       const ctx = createMockContext();
@@ -301,7 +301,12 @@ describe("engine-queued touch cancellation", () => {
           ctx.getInteraction(InteractionChannel.PRIMARY_HOVER),
         ).not.toBeNull();
         engine.input({ ...signal, action: InputAction.MOVE });
-        engine.input({ ...signal, id: cancelId, action: InputAction.CANCEL });
+        engine.input({
+          ...signal,
+          id: cancelId,
+          action: InputAction.CANCEL,
+          cancelScope: "chart",
+        });
         vi.runAllTimers();
         expect(actions).toEqual([InputAction.START, InputAction.CANCEL]);
         expect(ctx.getInteraction(InteractionChannel.PRIMARY_HOVER)).toBeNull();
@@ -322,4 +327,162 @@ describe("engine-queued touch cancellation", () => {
       }
     },
   );
+});
+
+describe("explicit hover hit policies", () => {
+  const nearest = {
+    type: "data-point" as const,
+    data: { id: "near" },
+    coordinate: { x: 10, y: 10 },
+    distance: 0,
+  };
+  const topmost = {
+    ...nearest,
+    data: { id: "top" },
+    distance: 20,
+    element: document.createElement("div"),
+  };
+  it.each([
+    ["exact", topmost],
+    ["topmost", topmost],
+    ["nearest", nearest],
+  ] as const)("selects %s from eligible candidates", (hitPolicy, expected) => {
+    const ctx = createMockContext();
+    const event = createMockEvent(InputAction.MOVE, nearest);
+    event.candidates = [nearest, topmost];
+    DataHoverSensor({ hitPolicy })(event, ctx);
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({ targets: [expected] }),
+    );
+  });
+  it("examines every candidate for an exact hit", () => {
+    const ctx = createMockContext();
+    const event = createMockEvent(InputAction.MOVE, nearest);
+    event.candidates = [nearest, topmost];
+    DataHoverSensor({ hitPolicy: "exact" })(event, ctx);
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({ targets: [topmost] }),
+    );
+  });
+});
+
+it.each(["exact", "topmost"] as const)(
+  "keeps the chosen %s hit's full slice when the indexed primary is elsewhere",
+  (hitPolicy) => {
+    const ctx = createMockContext();
+    const indexed = {
+      type: "data-point" as const,
+      data: { id: "unrelated" },
+      coordinate: { x: 5, y: 5 },
+      distance: 0,
+    };
+    const dom = {
+      ...indexed,
+      seriesId: "actual",
+      dataIndex: 0,
+      coordinate: { x: 10, y: 10 },
+      data: { id: "actual" },
+      element: document.createElement("div"),
+      distance: 5,
+    };
+    const peer = {
+      ...dom,
+      seriesId: "plan",
+      data: { id: "plan" },
+      coordinate: { x: 10, y: 20 },
+    };
+    const resolveSlice = vi.fn(() => [dom, peer]);
+    const context = ctx.getChartContext();
+    vi.mocked(ctx.getChartContext).mockReturnValue({
+      ...context,
+      engine: { resolveSlice },
+    } as unknown as ReturnType<typeof ctx.getChartContext>);
+    const event = createMockEvent(InputAction.MOVE, indexed);
+    event.candidates = [indexed, dom];
+    event.sliceCandidates = [indexed];
+    DataHoverSensor({ hitPolicy, verticalSlice: true })(event, ctx);
+    expect(resolveSlice).toHaveBeenCalledWith(dom);
+    expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
+      InteractionChannel.PRIMARY_HOVER,
+      expect.objectContaining({ targets: [dom, peer] }),
+    );
+  },
+);
+
+it("skips candidates without data while retaining valid target metadata", () => {
+  const ctx = createMockContext();
+  const missing = {
+    type: "data-point" as const,
+    coordinate: { x: 10, y: 10 },
+    distance: 0,
+    element: document.createElement("div"),
+  };
+  const valid = {
+    ...missing,
+    data: 0,
+    seriesId: "custom",
+    dataIndex: 3,
+    seriesColor: "red",
+    suppressMarker: true,
+  };
+  const event = createMockEvent(InputAction.MOVE, missing);
+  event.candidates = [missing, valid];
+  DataHoverSensor({ hitPolicy: "exact" })(event, ctx);
+  expect(ctx.upsertHoverInteraction).toHaveBeenCalledWith(
+    InteractionChannel.PRIMARY_HOVER,
+    expect.objectContaining({ targets: [valid] }),
+  );
+});
+
+it.each([{ id: 2 }, { source: InputSource.REMOTE }, { userId: "remote" }])(
+  "preserves hover when another input stream cancels: %j",
+  (other) => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor();
+    const event = createMockEvent(InputAction.MOVE, { data: { id: "local" } });
+    sensor(event, ctx);
+    const hover = ctx.getInteraction("primary-hover");
+    sensor(
+      {
+        ...event,
+        signal: { ...event.signal, ...other, action: InputAction.CANCEL },
+      },
+      ctx,
+    );
+    expect(ctx.getInteraction("primary-hover")).toBe(hover);
+    sensor(
+      { ...event, signal: { ...event.signal, action: InputAction.CANCEL } },
+      ctx,
+    );
+    expect(ctx.getInteraction("primary-hover")).toBeNull();
+  },
+);
+
+it("transfers hover ownership to the latest pointer and honors chart cancellation", () => {
+  const ctx = createMockContext();
+  const sensor = DataHoverSensor();
+  const first = createMockEvent(InputAction.MOVE, { data: { id: "first" } });
+  sensor(first, ctx);
+  const second = { ...first, signal: { ...first.signal, id: 2 } };
+  sensor(second, ctx);
+  const hover = ctx.getInteraction("primary-hover");
+  sensor(
+    { ...first, signal: { ...first.signal, action: InputAction.CANCEL } },
+    ctx,
+  );
+  expect(ctx.getInteraction("primary-hover")).toBe(hover);
+  sensor(
+    {
+      ...first,
+      signal: {
+        ...first.signal,
+        action: InputAction.CANCEL,
+        cancelScope: "chart",
+      },
+    },
+    ctx,
+  );
+  expect(ctx.getInteraction("primary-hover")).toBeNull();
 });

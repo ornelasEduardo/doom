@@ -3,6 +3,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as ChartContextModule from "../../context";
+import { Engine } from "../../engine";
 import { CustomSeries } from "./CustomSeries";
 
 const useChartContextMock = vi.fn();
@@ -12,6 +13,7 @@ vi.spyOn(ChartContextModule, "useChartContext").mockImplementation(
 
 describe("CustomSeries", () => {
   const defaultContext = {
+    engine: new Engine(),
     data: [
       { x: 0, y: 10 },
       { x: 50, y: 20 },

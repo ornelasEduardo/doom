@@ -1,17 +1,18 @@
-import { InputAction } from "../../engine";
-import { Sensor } from "../../types/events";
+import { InputAction, InputSignal } from "../../engine";
+import { GenericSensor, Sensor } from "../../types/events";
 import {
+  ChannelReference,
   DragInteraction,
   InteractionChannel,
   InteractionTarget,
 } from "../../types/interaction";
 
-export interface DragSensorOptions<T = any> {
+export interface DragSensorOptions<T = unknown> {
   /**
    * Interaction channel name.
    * @default InteractionChannel.DRAG
    */
-  name?: InteractionChannel | string;
+  name?: ChannelReference<DragInteraction<T>>;
 
   /**
    * Callback fired when a drag ends.
@@ -41,9 +42,11 @@ export interface DragSensorOptions<T = any> {
 /**
  * DragSensor enables dragging data points ("pucks") on a chart.
  */
-export const DragSensor = <T = any>(
-  options: DragSensorOptions<T> = {},
-): Sensor<T> => {
+export function DragSensor(
+  options?: Omit<DragSensorOptions<unknown>, "name"> & { name?: string },
+): GenericSensor;
+export function DragSensor<T>(options: DragSensorOptions<T>): Sensor<T>;
+export function DragSensor<T>(options: DragSensorOptions<T> = {}): Sensor<T> {
   const {
     name = InteractionChannel.DRAG,
     onDragEnd,
@@ -51,6 +54,7 @@ export const DragSensor = <T = any>(
     hitRadius = 20,
   } = options;
 
+  let owner: Pick<InputSignal, "id" | "source" | "userId"> | null = null;
   let isDragging = false;
   let dragTarget: InteractionTarget<T> | null = null;
   let startPosition: { x: number; y: number } | null = null;
@@ -58,14 +62,74 @@ export const DragSensor = <T = any>(
   return (event, { getChartContext, upsertInteraction, removeInteraction }) => {
     const { signal, primaryCandidate, chartX, chartY } = event;
 
+    const write = (interaction: DragInteraction<T>) => {
+      if (typeof name === "string") {
+        upsertInteraction(name, interaction);
+      } else {
+        upsertInteraction(name, interaction);
+      }
+    };
+    const cleanup = (cancel = false) => {
+      const previousOwner = owner;
+      owner = null;
+      isDragging = false;
+      dragTarget = null;
+      startPosition = null;
+      try {
+        if (cancel && previousOwner) {
+          // Deferred MOVE has no native capability; the engine owns capture release.
+          getChartContext().engine?.input({
+            ...signal,
+            ...previousOwner,
+            action: InputAction.CANCEL,
+            cancelScope: "stream",
+            native: undefined,
+          });
+        } else {
+          signal.native?.releasePointer();
+        }
+      } finally {
+        if (typeof name === "string") {
+          removeInteraction(name);
+        } else {
+          removeInteraction(name);
+        }
+      }
+    };
+    if (
+      signal.action === InputAction.CANCEL &&
+      signal.cancelScope === "chart"
+    ) {
+      if (owner) {
+        cleanup();
+      }
+      return;
+    }
+    if (
+      owner &&
+      (owner.id !== signal.id ||
+        owner.source !== signal.source ||
+        owner.userId !== signal.userId)
+    ) {
+      return;
+    }
+
     // 1. START DRAG
     if (signal.action === InputAction.START) {
+      if (owner || (signal.button !== undefined && signal.button !== 0)) {
+        return;
+      }
       if (primaryCandidate && primaryCandidate.distance <= hitRadius) {
         // Start dragging exact target
         const target = primaryCandidate;
         const initialData = target.data as T;
 
         if (initialData) {
+          owner = {
+            id: signal.id,
+            source: signal.source,
+            userId: signal.userId,
+          };
           isDragging = true;
           startPosition = { x: chartX, y: chartY };
 
@@ -86,7 +150,13 @@ export const DragSensor = <T = any>(
             isDragging: true,
           };
 
-          upsertInteraction(name, interaction);
+          try {
+            signal.native?.capturePointer();
+            write(interaction);
+          } catch (error) {
+            cleanup(true);
+            throw error;
+          }
         }
       }
       return;
@@ -129,10 +199,22 @@ export const DragSensor = <T = any>(
         isDragging: true,
       };
 
-      upsertInteraction(name, interaction);
+      write(interaction);
 
+      // Store subscribers may cancel this gesture before its consumer callback.
+      if (
+        dragTarget !== interaction.target ||
+        ctx.engine?.isInputCancelled(signal)
+      ) {
+        return;
+      }
       if (onDrag) {
-        onDrag(dragTarget.data, currentValue, currentPosition);
+        try {
+          onDrag(dragTarget.data, currentValue, currentPosition);
+        } catch (error) {
+          cleanup(true);
+          throw error;
+        }
       }
       return;
     }
@@ -161,15 +243,15 @@ export const DragSensor = <T = any>(
         yValue = yScale.invert(finalPosition.y);
       }
 
-      if (signal.action === InputAction.END && onDragEnd) {
-        onDragEnd(dragTarget.data, { x: xValue, y: yValue }, finalPosition);
+      const data = dragTarget.data;
+      cleanup();
+      if (
+        signal.action === InputAction.END &&
+        onDragEnd &&
+        !ctx.engine?.isInputCancelled(signal)
+      ) {
+        onDragEnd(data, { x: xValue, y: yValue }, finalPosition);
       }
-
-      // Cleanup
-      isDragging = false;
-      dragTarget = null;
-      startPosition = null;
-      removeInteraction(name);
     }
   };
-};
+}

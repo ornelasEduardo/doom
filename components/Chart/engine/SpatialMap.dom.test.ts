@@ -346,3 +346,71 @@ it("maps scaled padding-box coordinates to DOM hits and local distances", () => 
     container.remove();
   }
 });
+
+it("normalizes DOM centers to SVG coordinates below an 80px header", () => {
+  const map = new SpatialMap();
+  const container = document.createElement("div");
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const mark = document.createElementNS(svg.namespaceURI, "circle");
+  container.append(svg);
+  svg.append(mark);
+  vi.spyOn(container, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(10, 20, 400, 300),
+  );
+  vi.spyOn(svg, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(10, 100, 400, 220),
+  );
+  vi.spyOn(mark, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(100, 140, 20, 20),
+  );
+  mark.setAttribute(CHART_DATA_ATTRS.TYPE, "data-point");
+  mark.setAttribute(CHART_DATA_ATTRS.SERIES_ID, "annotation");
+  mark.setAttribute(CHART_DATA_ATTRS.INDEX, "0");
+  map.updateIndex([
+    { x: 100, y: 50, data: { value: 1 }, seriesId: "annotation", dataIndex: 0 },
+  ]);
+  map.setContainer(container, svg);
+  const hit = vi.spyOn(document, "elementsFromPoint").mockReturnValue([mark]);
+  try {
+    const candidates = map.find(100, 50, { x: 100, y: 130 });
+    expect(candidates).toHaveLength(2);
+    expect(candidates.map((c) => c.coordinate)).toEqual([
+      { x: 100, y: 50 },
+      { x: 100, y: 50 },
+    ]);
+    expect(candidates.map((c) => c.distance)).toEqual([0, 0]);
+  } finally {
+    hit.mockRestore();
+  }
+});
+
+it("preserves zero-valued custom data and indexed presentation metadata on DOM hits", () => {
+  const container = document.createElement("div");
+  const mark = document.createElement("div");
+  container.append(mark);
+  mark.setAttribute(CHART_DATA_ATTRS.TYPE, "data-point");
+  mark.setAttribute(CHART_DATA_ATTRS.SERIES_ID, "custom");
+  mark.setAttribute(CHART_DATA_ATTRS.INDEX, "0");
+  const map = new SpatialMap<number>();
+  map.setContainer(container);
+  map.registerGeometry([
+    {
+      x: 0,
+      y: 0,
+      seriesId: "custom",
+      dataIndex: 0,
+      data: 0,
+      suppressMarker: true,
+      seriesColor: "red",
+      draggable: true,
+    },
+  ]);
+  const hit = vi.spyOn(document, "elementsFromPoint").mockReturnValue([mark]);
+  try {
+    expect(map.find(0, 0).find((candidate) => candidate.element)).toMatchObject(
+      { data: 0, suppressMarker: true, seriesColor: "red", draggable: true },
+    );
+  } finally {
+    hit.mockRestore();
+  }
+});

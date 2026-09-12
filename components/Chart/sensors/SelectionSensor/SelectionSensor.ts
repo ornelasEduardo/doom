@@ -1,52 +1,49 @@
 import { InputAction } from "../../engine";
-import { GenericSensor } from "../../types/events";
-import { InteractionChannel } from "../../types/interaction";
+import { GenericSensor, Sensor } from "../../types/events";
+import {
+  ChannelReference,
+  InteractionChannel,
+  SelectionInteraction,
+} from "../../types/interaction";
 
-/**
- * Professional-grade Selection Sensor.
- * Coordinates with Engine to choose data points on click/start.
- */
-export const SelectionSensor = (
-  options: { name?: string } = {},
-): GenericSensor => {
+export interface SelectionSensorOptions<T = unknown> {
+  name?: ChannelReference<SelectionInteraction<T>>;
+}
+
+export function SelectionSensor(options?: { name?: string }): GenericSensor;
+export function SelectionSensor<T>(
+  options: SelectionSensorOptions<T>,
+): Sensor<T>;
+export function SelectionSensor<T>(
+  options: SelectionSensorOptions<T> = {},
+): Sensor<T> {
   const { name = InteractionChannel.SELECTION } = options;
-
   return (
     { signal, primaryCandidate },
-    { getChartContext, upsertInteraction },
+    { getInteraction, upsertInteraction },
   ) => {
-    // Only handle START action (roughly equivalent to mouse down)
-    if (signal.action !== InputAction.START) {
+    if (
+      signal.action !== InputAction.START ||
+      primaryCandidate?.data === undefined
+    ) {
       return;
     }
-
-    if (!primaryCandidate) {
-      return;
-    }
-
-    const ctx = getChartContext();
-    const { chartStore } = ctx;
-    const state = chartStore.getState();
-
     const selectedDatum = primaryCandidate.data;
-    const currentInteraction = state.interactions.get(name);
-    const currentSelection = (currentInteraction as any)?.selection || [];
-
-    // Simple toggle logic
-    // TODO: support multi-select with shift key?
-    // signal.originalEvent is the native event if we need modifiers.
-    const isAlreadySelected = currentSelection.includes(selectedDatum);
-
-    let nextSelection;
-    if (isAlreadySelected) {
-      nextSelection = currentSelection.filter((d: any) => d !== selectedDatum);
-    } else {
-      nextSelection = [...currentSelection, selectedDatum];
-    }
-
-    upsertInteraction(name, {
+    const current =
+      typeof name === "string" ? getInteraction(name) : getInteraction(name);
+    const currentSelection =
+      current && "selection" in current ? current.selection : [];
+    const nextSelection = currentSelection.includes(selectedDatum)
+      ? currentSelection.filter((datum) => datum !== selectedDatum)
+      : [...currentSelection, selectedDatum];
+    const interaction: SelectionInteraction<T> = {
       selection: nextSelection,
-      mode: "discrete", // or "continuous"
-    });
+      mode: "discrete",
+    };
+    if (typeof name === "string") {
+      upsertInteraction(name, interaction);
+    } else {
+      upsertInteraction(name, interaction);
+    }
   };
-};
+}

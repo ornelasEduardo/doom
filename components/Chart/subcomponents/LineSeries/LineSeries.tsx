@@ -79,6 +79,7 @@ const LineSeriesComponent = <T,>({
 
   useEffect(() => {
     if (!yAccessor) {
+      unregisterSeries(chartStore, gradientId);
       return;
     }
     registerSeries(chartStore, gradientId, [
@@ -92,9 +93,6 @@ const LineSeriesComponent = <T,>({
         hideCursor: hideCursor,
       },
     ]);
-    return () => {
-      unregisterSeries(chartStore, gradientId);
-    };
   }, [
     chartStore,
     gradientId,
@@ -104,8 +102,14 @@ const LineSeriesComponent = <T,>({
     xAccessor,
     label,
     hideCursor,
+    localData,
     data,
   ]);
+
+  useEffect(
+    () => () => unregisterSeries(chartStore, gradientId),
+    [chartStore, gradientId],
+  );
 
   const paths = useMemo(() => {
     if (
