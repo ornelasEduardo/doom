@@ -1,4 +1,4 @@
-import { InputAction, InteractionCandidate } from "../../engine";
+import { InputAction, InputSignal, InteractionCandidate } from "../../engine";
 import { GenericSensor, Sensor } from "../../types/events";
 import {
   ChannelReference,
@@ -46,6 +46,7 @@ export function DataHoverSensor<T>(
     verticalSlice = false,
     hitPolicy = "topmost",
   } = options;
+  let owner: Pick<InputSignal, "id" | "source" | "userId"> | null = null;
 
   return (
     event,
@@ -76,10 +77,23 @@ export function DataHoverSensor<T>(
       return;
     }
 
+    if (signal.action === InputAction.CANCEL) {
+      if (
+        signal.cancelScope === "chart" ||
+        (owner?.id === signal.id &&
+          owner.source === signal.source &&
+          owner.userId === signal.userId)
+      ) {
+        owner = null;
+        remove();
+      }
+      return;
+    }
+
+    owner = { id: signal.id, source: signal.source, userId: signal.userId };
     if (
-      signal.action === InputAction.CANCEL ||
-      (!isWithinPlot &&
-        (signal.source !== "touch" || signal.action === InputAction.START))
+      !isWithinPlot &&
+      (signal.source !== "touch" || signal.action === InputAction.START)
     ) {
       remove();
       return;

@@ -57,7 +57,10 @@ it.each([false, true])(
         <Chart.Root
           behaviors={[]}
           data={data}
-          sensors={[Chart.sensors.KeyboardSensor({ name: channel })]}
+          sensors={[
+            Chart.sensors.KeyboardSensor(),
+            Chart.sensors.KeyboardSensor({ name: channel }),
+          ]}
           style={{ width: 600, height: 400 }}
           x="x"
           xDomain={[0, 100]}

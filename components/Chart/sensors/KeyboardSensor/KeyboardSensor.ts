@@ -307,9 +307,6 @@ export function KeyboardSensor<T>(
     const channels = handledChannels.get(event) ?? new Set<string | symbol>();
     channels.add(channelKey);
     handledChannels.set(event, channels);
-    if (name === InteractionChannel.PRIMARY_HOVER) {
-      event.claimed = true;
-    }
     event.handled = true;
   };
 }

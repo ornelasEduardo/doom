@@ -435,3 +435,54 @@ it("skips candidates without data while retaining valid target metadata", () => 
     expect.objectContaining({ targets: [valid] }),
   );
 });
+
+it.each([{ id: 2 }, { source: InputSource.REMOTE }, { userId: "remote" }])(
+  "preserves hover when another input stream cancels: %j",
+  (other) => {
+    const ctx = createMockContext();
+    const sensor = DataHoverSensor();
+    const event = createMockEvent(InputAction.MOVE, { data: { id: "local" } });
+    sensor(event, ctx);
+    const hover = ctx.getInteraction("primary-hover");
+    sensor(
+      {
+        ...event,
+        signal: { ...event.signal, ...other, action: InputAction.CANCEL },
+      },
+      ctx,
+    );
+    expect(ctx.getInteraction("primary-hover")).toBe(hover);
+    sensor(
+      { ...event, signal: { ...event.signal, action: InputAction.CANCEL } },
+      ctx,
+    );
+    expect(ctx.getInteraction("primary-hover")).toBeNull();
+  },
+);
+
+it("transfers hover ownership to the latest pointer and honors chart cancellation", () => {
+  const ctx = createMockContext();
+  const sensor = DataHoverSensor();
+  const first = createMockEvent(InputAction.MOVE, { data: { id: "first" } });
+  sensor(first, ctx);
+  const second = { ...first, signal: { ...first.signal, id: 2 } };
+  sensor(second, ctx);
+  const hover = ctx.getInteraction("primary-hover");
+  sensor(
+    { ...first, signal: { ...first.signal, action: InputAction.CANCEL } },
+    ctx,
+  );
+  expect(ctx.getInteraction("primary-hover")).toBe(hover);
+  sensor(
+    {
+      ...first,
+      signal: {
+        ...first.signal,
+        action: InputAction.CANCEL,
+        cancelScope: "chart",
+      },
+    },
+    ctx,
+  );
+  expect(ctx.getInteraction("primary-hover")).toBeNull();
+});
