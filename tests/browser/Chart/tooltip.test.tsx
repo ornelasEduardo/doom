@@ -5,6 +5,11 @@ import { afterEach, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
+import { useChartContext } from "../../../components/Chart/context";
+import type {
+  ContextValue,
+  RenderFrame,
+} from "../../../components/Chart/types/context";
 import { Sensor } from "../../../components/Chart/types/events";
 import { HoverInteraction } from "../../../components/Chart/types/interaction";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
@@ -202,7 +207,7 @@ it("shows only the supplied datum when targets have no series identity", async (
   await expect.poll(text).toBe("B-20");
 });
 
-it("does not let an unidentified target expand an otherwise identified slice", async () => {
+it("includes an unidentified selected value without inferring series metadata", async () => {
   const sensors = [
     transformTargets((targets) =>
       targets.map((target) =>
@@ -214,7 +219,7 @@ it("does not let an unidentified target expand an otherwise identified slice", a
   ];
   const { marks, text } = await mount({ sensors });
   await userEvent.hover(marks()[1]);
-  await expect.poll(text).toBe("BActual:-20Sparse:-60");
+  await expect.poll(text).toBe("BActual:-20-40Sparse:-60");
 });
 
 it.each([false, true])(
@@ -237,5 +242,166 @@ it.each([false, true])(
     await expect
       .poll(text)
       .toBe(custom ? JSON.stringify([actual[1]]) : "BActual:-20");
+  },
+);
+
+it.each([false, true])(
+  "renders independently registered geometry (custom=%s)",
+  async (custom) => {
+    type Datum = { x: number; y: number };
+    let context: ContextValue<Datum> | undefined;
+    function Probe() {
+      context = useChartContext<Datum>();
+      return null;
+    }
+    const { container } = render(
+      <DesignSystemProvider>
+        <Chart.Root
+          behaviors={[
+            Chart.behaviors.Tooltip<Datum>({
+              render: custom
+                ? ({ data, targets }) =>
+                    JSON.stringify({
+                      data,
+                      ids: targets.map((target) => target.seriesId),
+                    })
+                : undefined,
+            }),
+          ]}
+          data={[
+            { x: 10, y: 20 },
+            { x: 90, y: 80 },
+          ]}
+          style={{ width: 600, height: 400 }}
+          type="line"
+          x="x"
+          xDomain={[0, 100]}
+          y="y"
+          yDomain={[0, 100]}
+        >
+          <Chart.Plot>
+            <Chart.Series label="Root" type="line" />
+            <Probe />
+          </Chart.Plot>
+        </Chart.Root>
+      </DesignSystemProvider>,
+    );
+    await expect
+      .poll(() => context?.chartStore.getState().status)
+      .toBe("ready");
+    context!.engine.registerGeometry([
+      {
+        x: 200,
+        y: 100,
+        data: { x: 35, y: 65 },
+        seriesId: "standalone-owner",
+        dataIndex: 0,
+      },
+    ]);
+    const svg = container.querySelector("svg")!;
+    const screen = new DOMPoint(200, 100).matrixTransform(svg.getScreenCTM()!);
+    container.querySelector("[data-chart-container]")!.dispatchEvent(
+      new PointerEvent("pointermove", {
+        clientX: screen.x,
+        clientY: screen.y,
+        pointerType: "mouse",
+        bubbles: true,
+      }),
+    );
+    await expect
+      .poll(() => container.querySelector("[data-chart-tooltip]")?.textContent)
+      .toBe(
+        custom
+          ? '{"data":[{"x":35,"y":65}],"ids":["standalone-owner"]}'
+          : "3565",
+      );
+  },
+);
+
+it("includes unknown owners alongside known series in the selected order", async () => {
+  const sensors = [
+    transformTargets((targets) => [
+      { ...targets[1], seriesId: "standalone-owner" },
+      targets[0],
+    ]),
+  ];
+  const { marks, text } = await mount({ sensors });
+  await userEvent.hover(marks()[1]);
+  await expect.poll(text).toBe("B-40Actual:-20");
+});
+
+it.each(["pointer", "keyboard", "DOM-only pointer"])(
+  "shows off-domain data for visible custom geometry via %s",
+  async (input) => {
+    type Datum = { x: number; y: number };
+    let context!: ContextValue<Datum>;
+    let frame: RenderFrame<Datum> | undefined;
+    function Probe() {
+      context = useChartContext<Datum>();
+      return null;
+    }
+    const draw = (next: RenderFrame<Datum>) => {
+      frame = next;
+      next.container
+        .selectAll("circle")
+        .data([next.data[0]])
+        .join("circle")
+        .attr("cx", 100)
+        .attr("cy", 70)
+        .attr("r", 8)
+        .attr("data-chart-type", "point")
+        .attr("data-chart-series", next.seriesId)
+        .attr("data-chart-index", 0);
+      if (input !== "DOM-only pointer") {
+        next.geometry.update([
+          { x: 100, y: 70, data: next.data[0], dataIndex: 0 },
+        ]);
+      }
+    };
+    const { container } = render(
+      <DesignSystemProvider>
+        <Chart.Root
+          data={[{ x: 200, y: 200 }]}
+          style={{ width: 600, height: 400 }}
+          x="x"
+          xDomain={[0, 100]}
+          y="y"
+          yDomain={[0, 100]}
+        >
+          <Chart.Plot>
+            <Chart.Series label="Custom" render={draw} x="x" y="y" />
+            <Probe />
+          </Chart.Plot>
+        </Chart.Root>
+      </DesignSystemProvider>,
+    );
+    await expect.poll(() => frame?.geometry).toBeDefined();
+    const chart = container.querySelector("[data-chart-container]")!;
+    if (input === "keyboard") {
+      chart.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    } else {
+      await userEvent.hover(container.querySelector("circle")!);
+    }
+    const target = () =>
+      (
+        context.chartStore.getState().interactions.get("primary-hover") as
+          | HoverInteraction<Datum>
+          | undefined
+      )?.targets[0];
+    await expect.poll(() => target()?.data).toEqual({ x: 200, y: 200 });
+    if (input === "DOM-only pointer") {
+      expect(target()?.geometryOwner).toBeUndefined();
+    } else {
+      expect(target()?.geometryOwner).toBeDefined();
+    }
+    await expect
+      .poll(() => container.querySelector("[data-chart-tooltip]")?.textContent)
+      .toBe("200Custom:200");
   },
 );

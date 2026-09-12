@@ -12,6 +12,7 @@ import "../../../styles/globals.scss";
 import { render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { commands, userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
@@ -118,26 +119,31 @@ describe("Chart in a real browser", () => {
     expect(tooltipText()).not.toContain("A");
   });
 
-  it("still resolves hovers after the page scrolls", async () => {
+  it("still resolves native hovers after the page scrolls", async () => {
     document.body.style.height = "3000px";
-    const { host, root } = await mount(chart());
+    const { host } = await mount(
+      <>
+        <div style={{ height: 200 }} />
+        {chart()}
+      </>,
+    );
+    const before = markCentre(host, 1);
+    await commands.moveChartPointer(before.x, before.y);
+    await expect.poll(tooltipText).toContain("B");
 
-    const before = markCentre(host, 0);
-    await hoverAt(root, before.x, before.y);
-    expect(tooltipText()).toContain("A");
+    // Keep the target visible and actually move the pointer outside before scrolling.
+    await commands.moveChartPointer(900, 20);
+    await expect.poll(tooltipText).toBe("");
+    window.scrollTo(0, 150);
+    await expect.poll(() => window.scrollY).toBe(150);
 
-    // Leave first: with no active hover there is nothing to clear, which is
-    // the state that latches hit-testing off if the rect is stale.
-    await leave(root);
-    window.scrollTo(0, 500);
-    await frame();
-
-    const after = markCentre(host, 0);
-    expect(Math.round(after.y)).not.toBe(Math.round(before.y));
-
-    await hoverAt(root, after.x, after.y);
-
-    expect(tooltipText()).toContain("A");
+    const after = markCentre(host, 1);
+    expect(before.y - after.y).toBeCloseTo(150, 1);
+    expect(after.y).toBeGreaterThan(0);
+    expect(after.y).toBeLessThan(window.innerHeight);
+    await commands.moveChartPointer(after.x, after.y);
+    await expect.poll(tooltipText).toContain("B");
+    expect(window.scrollY).toBe(150);
   });
 
   it("resolves hovers when the chart is not at the viewport origin", async () => {
@@ -328,11 +334,18 @@ describe("Chart in a real browser", () => {
     const marks = host.querySelectorAll("circle");
     const last = marks[marks.length - 1] ?? marks[0];
     const r = last.getBoundingClientRect();
-    await hoverAt(root, r.left + r.width / 2, r.top + r.height / 2);
+    const rootRect = root.getBoundingClientRect();
+    await userEvent.hover(root, {
+      position: {
+        x: r.left + r.width / 2 - rootRect.left - 3,
+        y: r.top + r.height / 2 - rootRect.top + 3,
+      },
+    });
+    await expect
+      .poll(() => host.querySelector("[data-chart-tooltip]")?.textContent)
+      .toContain("D");
 
     const tooltip = host.querySelector("[data-chart-tooltip]") as HTMLElement;
-    expect(tooltip?.textContent ?? "").not.toBe("");
-
     const box = tooltip.getBoundingClientRect();
     expect(box.right).toBeLessThanOrEqual(window.innerWidth + 1);
     expect(box.left).toBeGreaterThanOrEqual(-1);

@@ -56,7 +56,11 @@ export const InteractionLayer: React.FC = () => {
       let native: PointerEvent | KeyboardEvent | null = event;
       signal.native = {
         capturePointer: () => {
-          if (native && "pointerId" in native) {
+          if (
+            native &&
+            !engine.isInputCancelled(signal) &&
+            "pointerId" in native
+          ) {
             try {
               container.setPointerCapture(native.pointerId);
             } catch (error) {
@@ -76,14 +80,22 @@ export const InteractionLayer: React.FC = () => {
           }
         },
         releasePointer: () => {
-          if (native && "pointerId" in native) {
+          if (
+            native &&
+            !engine.isInputCancelled(signal) &&
+            "pointerId" in native
+          ) {
             captured.delete(native.pointerId);
             if (container.hasPointerCapture(native.pointerId)) {
               container.releasePointerCapture(native.pointerId);
             }
           }
         },
-        preventDefault: () => native?.preventDefault(),
+        preventDefault: () => {
+          if (!engine.isInputCancelled(signal)) {
+            native?.preventDefault();
+          }
+        },
       };
       try {
         if (engine.input(signal)) {

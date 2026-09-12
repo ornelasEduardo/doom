@@ -2,6 +2,12 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
+import {
+  EngineEvent,
+  InputAction,
+  InputSignal,
+  InputSource,
+} from "../../engine";
 import { ContextValue } from "../../types";
 import { Sensor, SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
@@ -28,6 +34,7 @@ export const SensorManager = <T,>({
 
   const status = chartStore.useStore((s) => s.status);
   const data = chartStore.useStore((s) => s.data);
+  const hasData = data.length > 0;
 
   const contextRef = useRef(value);
   useLayoutEffect(() => {
@@ -81,7 +88,7 @@ export const SensorManager = <T,>({
   }, [stableSensors, config.type]);
 
   useEffect(() => {
-    if (status !== "ready" || !data.length || !engine) {
+    if (status !== "ready" || !hasData || !engine) {
       return;
     }
 
@@ -90,8 +97,11 @@ export const SensorManager = <T,>({
       ...createInteractionAccess(chartStore),
     };
 
-    engine.setHandler((event) => {
+    const dispatchEvent = (event: EngineEvent<T>) => {
       const dispatch = (sensor: Sensor<T>) => {
+        if (engine.isInputCancelled(event.signal)) {
+          return;
+        }
         try {
           sensor(event, sensorContext);
         } catch (err) {
@@ -102,12 +112,46 @@ export const SensorManager = <T,>({
       if (!event.claimed) {
         dispatch(activeSensors.baseline);
       }
+    };
+    engine.setHandler(dispatchEvent);
+
+    const cancellationSignal = (): InputSignal => ({
+      action: InputAction.CANCEL,
+      cancelScope: "chart",
+      id: 0,
+      userId: "local",
+      source: InputSource.KEYBOARD,
+      x: 0,
+      y: 0,
+      timestamp: performance.now(),
+    });
+    const cancelSensors = () =>
+      dispatchEvent({
+        signal: cancellationSignal(),
+        candidates: [],
+        sliceCandidates: [],
+        chartX: 0,
+        chartY: 0,
+        isWithinPlot: false,
+      });
+    // Disposal rejects input; deliver cleanup without depending on effect teardown order.
+    const unsubscribe = engine.subscribeCancellation(() => {
+      if (engine.isDisposed()) {
+        cancelSensors();
+      }
     });
 
     return () => {
-      engine.setHandler(() => {});
+      try {
+        if (!engine.isDisposed()) {
+          engine.input(cancellationSignal());
+        }
+      } finally {
+        unsubscribe();
+        engine.setHandler(() => {});
+      }
     };
-  }, [activeSensors, engine, chartStore, status, data.length]);
+  }, [activeSensors, engine, chartStore, status, hasData]);
 
   return null;
 };

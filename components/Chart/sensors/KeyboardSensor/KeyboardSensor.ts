@@ -5,6 +5,7 @@ import {
   ChannelReference,
   HoverInteraction,
   InteractionChannel,
+  InteractionTarget,
 } from "../../types/interaction";
 import { barGeometry, categoryAccessor } from "../../utils/bars";
 import { getInteractionKey } from "../../utils/interactionChannels";
@@ -139,6 +140,38 @@ export function KeyboardSensor<T>(
       }),
     );
 
+    const identities = state.processedSeries?.length
+      ? state.processedSeries.flatMap((series) =>
+          (series.data ?? []).flatMap((datum, dataIndex) =>
+            datum == null ? [] : [{ seriesId: series.id, dataIndex }],
+          ),
+        )
+      : entries.map(({ index }) => ({ seriesId: "default", dataIndex: index }));
+    const resolved = ctx.engine?.resolveTargets(identities);
+    const geometry = new Map<
+      string,
+      Map<number, InteractionTarget<T> | null | undefined>
+    >();
+    identities.forEach(({ seriesId, dataIndex }, index) => {
+      const rows = geometry.get(seriesId) ?? new Map();
+      rows.set(dataIndex, resolved?.[index]);
+      geometry.set(seriesId, rows);
+    });
+
+    // Published geometry uses SVG coordinates; slice construction uses plot coordinates.
+    const resolveGeometry = (seriesId: string, dataIndex: number) => {
+      const target = geometry.get(seriesId)?.get(dataIndex);
+      return target
+        ? {
+            ...target,
+            coordinate: {
+              x: target.coordinate.x - state.dimensions.margin.left,
+              y: target.coordinate.y - state.dimensions.margin.top,
+            },
+          }
+        : target;
+    };
+
     // Filter whole slices, preserving a category when any series is visible.
     const slices = entries
       .map((entry) => {
@@ -162,12 +195,22 @@ export function KeyboardSensor<T>(
         const categoryValue = category
           ? resolveAccessor(category)(d)
           : undefined;
-        const targets = (state.processedSeries ?? []).flatMap((series) => {
+        const targets = (state.processedSeries ?? []).flatMap<
+          InteractionTarget<T>
+        >((series) => {
           const index =
             series.id === entry.series?.id
               ? entry.index
               : (categoryIndices.get(series.id)?.get(categoryValue) ?? -1);
           if (index < 0 || !xScale || !yScale) {
+            return [];
+          }
+          const owned = resolveGeometry(series.id, index);
+          if (owned) {
+            return [owned];
+          }
+          // Unpublished custom rows have no rendered keyboard target.
+          if (series.type === "custom") {
             return [];
           }
           const datum = series.data![index];
@@ -211,6 +254,12 @@ export function KeyboardSensor<T>(
             },
           ];
         });
+        const ownedPrimary = !entry.series
+          ? resolveGeometry("default", entry.index)
+          : undefined;
+        if (ownedPrimary) {
+          return [ownedPrimary];
+        }
         return targets.length || entry.series
           ? targets
           : primaryPosition &&

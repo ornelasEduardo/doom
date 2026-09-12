@@ -27,6 +27,9 @@ export class Engine<T = unknown> {
   private scheduler: Scheduler<T>;
   private coords: CoordinateSystem;
   private disposed = false;
+  private disposing = false;
+  private activeSignals: InputSignal[] = [];
+  private invalidatedSignals = new WeakSet<InputSignal>();
   private geometrySubscribers = new Set<() => void>();
   private cancellationSubscribers = new Set<
     (event: EngineCancellation) => void
@@ -41,8 +44,13 @@ export class Engine<T = unknown> {
 
     this.handler = options.onEvent ?? null;
     this.scheduler.setHandler((event) => {
-      this.resolveEvent(event);
-      this.handler?.(event);
+      this.activeSignals.push(event.signal);
+      try {
+        this.resolveEvent(event);
+        this.handler?.(event);
+      } finally {
+        this.activeSignals.pop();
+      }
     });
   }
 
@@ -128,6 +136,24 @@ export class Engine<T = unknown> {
       : null;
   }
 
+  /** Resolve ordered identities with one lazy DOM fallback scan per batch. */
+  resolveTargets(
+    targets: readonly Pick<
+      InteractionTarget<T>,
+      "seriesId" | "dataIndex" | "geometryOwner"
+    >[],
+  ): (InteractionTarget<T> | null | undefined)[] {
+    return this.spatialMap
+      .resolveTargets(targets)
+      .map((resolved) =>
+        resolved === undefined
+          ? undefined
+          : resolved?.data !== undefined
+            ? { ...resolved, data: resolved.data }
+            : null,
+      );
+  }
+
   /** Resolve a vertical slice after a sensor chooses its own primary candidate. */
   resolveSlice(candidate: InteractionCandidate<T>): InteractionCandidate<T>[] {
     return this.spatialMap.findSlice(candidate);
@@ -163,7 +189,31 @@ export class Engine<T = unknown> {
    * for effect setup/cleanup symmetry.
    */
   activate(): void {
-    this.disposed = false;
+    if (!this.disposing) {
+      this.disposed = false;
+    }
+  }
+
+  /** True when cancellation or disposal invalidated this signal while it was in flight. */
+  isInputCancelled(signal: InputSignal): boolean {
+    return this.invalidatedSignals.has(signal);
+  }
+
+  private invalidateInput(
+    event: EngineCancellation,
+    except?: InputSignal,
+  ): void {
+    for (const signal of this.activeSignals) {
+      if (
+        signal !== except &&
+        (event.scope === "chart" ||
+          (event.id === signal.id &&
+            event.source === signal.source &&
+            event.userId === signal.userId))
+      ) {
+        this.invalidatedSignals.add(signal);
+      }
+    }
   }
 
   dispose(): void {
@@ -171,12 +221,17 @@ export class Engine<T = unknown> {
       return;
     }
     this.disposed = true;
-    this.notifyCancellation({ scope: "chart" });
-
-    // Scheduled work only. The handler and index are not resources to reclaim
-    // — the engine is per-instance — and clearing them would make activate()
-    // unable to restore a working engine.
-    this.scheduler.dispose();
+    this.disposing = true;
+    const cancellation = { scope: "chart" } as const;
+    this.cancellations.add(cancellation);
+    try {
+      this.invalidateInput(cancellation);
+      this.scheduler.dispose();
+      this.notifyCancellation(cancellation);
+    } finally {
+      this.cancellations.delete(cancellation);
+      this.disposing = false;
+    }
   }
 
   /**
@@ -190,6 +245,12 @@ export class Engine<T = unknown> {
   input(signal: InputSignal): boolean {
     if (this.disposed) {
       return false;
+    }
+    if (this.invalidatedSignals.has(signal)) {
+      if (this.activeSignals.includes(signal)) {
+        return false;
+      }
+      this.invalidatedSignals.delete(signal);
     }
     if (this.cancellations.size) {
       for (const event of this.cancellations) {
@@ -221,6 +282,7 @@ export class Engine<T = unknown> {
       // Invalidate before callbacks, and keep this scope closed through dispatch.
       this.cancellations.add(cancellation);
       try {
+        this.invalidateInput(cancellation, signal);
         if (cancellation.scope === "chart") {
           this.scheduler.cancelPending();
         } else {
@@ -247,8 +309,23 @@ export class Engine<T = unknown> {
       chartY: 0,
       isWithinPlot: false,
     };
-    this.scheduler.schedule(this.determinePriority(signal.action), event);
-    return signal.action === InputAction.KEY && event.handled === true;
+    // END is already in flight while its final queued MOVE is being delivered.
+    const closing = signal.action === InputAction.END;
+    if (closing) {
+      this.activeSignals.push(signal);
+    }
+    try {
+      this.scheduler.schedule(this.determinePriority(signal.action), event);
+    } finally {
+      if (closing) {
+        this.activeSignals.pop();
+      }
+    }
+    return (
+      signal.action === InputAction.KEY &&
+      event.handled === true &&
+      !this.isInputCancelled(signal)
+    );
   }
 
   private resolveEvent(event: EngineEvent<T>): void {

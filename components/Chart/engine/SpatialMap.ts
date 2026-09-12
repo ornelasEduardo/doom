@@ -257,6 +257,64 @@ export class SpatialMap<T = unknown> {
     dataIndex: number,
     geometryOwner?: object,
   ): InteractionCandidate<T> | null | undefined {
+    return this.resolveTargetWithDOM(seriesId, dataIndex, geometryOwner, () => {
+      for (const element of this.containerElement?.querySelectorAll(
+        `[${CHART_DATA_ATTRS.TYPE}]`,
+      ) ?? []) {
+        if (
+          element.getAttribute(CHART_DATA_ATTRS.SERIES_ID) === seriesId &&
+          element.getAttribute(CHART_DATA_ATTRS.INDEX) === String(dataIndex)
+        ) {
+          return element;
+        }
+      }
+      return undefined;
+    });
+  }
+
+  /** DOM fallback identities are indexed lazily, for this batch only. */
+  resolveTargets(
+    targets: readonly Pick<
+      InteractionCandidate<T>,
+      "seriesId" | "dataIndex" | "geometryOwner"
+    >[],
+  ): (InteractionCandidate<T> | null | undefined)[] {
+    let elements: Map<string, Map<string, Element>> | undefined;
+    const findElement = (seriesId: string, dataIndex: number) => {
+      if (!elements) {
+        elements = new Map();
+        for (const element of this.containerElement?.querySelectorAll(
+          `[${CHART_DATA_ATTRS.TYPE}]`,
+        ) ?? []) {
+          const series = element.getAttribute(CHART_DATA_ATTRS.SERIES_ID);
+          const index = element.getAttribute(CHART_DATA_ATTRS.INDEX);
+          if (series === null || index === null) {
+            continue;
+          }
+          const rows = elements.get(series) ?? new Map<string, Element>();
+          if (!rows.has(index)) {
+            rows.set(index, element);
+          }
+          elements.set(series, rows);
+        }
+      }
+      return elements.get(seriesId)?.get(String(dataIndex));
+    };
+    return targets.map(({ seriesId, dataIndex, geometryOwner }) =>
+      seriesId === undefined || dataIndex === undefined
+        ? null
+        : this.resolveTargetWithDOM(seriesId, dataIndex, geometryOwner, () =>
+            findElement(seriesId, dataIndex),
+          ),
+    );
+  }
+
+  private resolveTargetWithDOM(
+    seriesId: string,
+    dataIndex: number,
+    geometryOwner: object | undefined,
+    findElement: () => Element | undefined,
+  ): InteractionCandidate<T> | null | undefined {
     const owned = geometryOwner
       ? this.geometryOwners.get(geometryOwner)
       : undefined;
@@ -284,26 +342,15 @@ export class SpatialMap<T = unknown> {
         draggable: point.draggable,
       };
     }
-    if (!this.containerElement) {
-      return null;
-    }
-    for (const element of this.containerElement.querySelectorAll(
-      `[${CHART_DATA_ATTRS.TYPE}]`,
-    )) {
-      if (
-        element.getAttribute(CHART_DATA_ATTRS.SERIES_ID) !== seriesId ||
-        element.getAttribute(CHART_DATA_ATTRS.INDEX) !== String(dataIndex)
-      ) {
-        continue;
-      }
-      return this.hydrateElement(
-        element,
-        element.getAttribute(CHART_DATA_ATTRS.TYPE)!,
-        0,
-        0,
-      );
-    }
-    return null;
+    const element = findElement();
+    return element
+      ? this.hydrateElement(
+          element,
+          element.getAttribute(CHART_DATA_ATTRS.TYPE)!,
+          0,
+          0,
+        )
+      : null;
   }
 
   findSlice(candidate: InteractionCandidate<T>): InteractionCandidate<T>[] {

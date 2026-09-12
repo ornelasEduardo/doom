@@ -460,6 +460,9 @@ keys reach baseline keyboard navigation. `engine.subscribeCancellation(listener)
 observes stream or chart cancellation, including engine disposal; return its
 unsubscribe function from the owning behavior cleanup. Native capture release
 follows engine cancellation even when a keyboard or remote producer initiates it.
+Cancellation also stops the remaining sensors in the affected dispatch and
+revokes its native controls. Extensions that continue work after invoking
+consumer callbacks can check `engine.isInputCancelled(signal)` for nested cancellation.
 
 `hitPolicy: "exact"` requires a DOM hit; `"topmost"` prefers the front DOM hit
 and falls back to magnetic picking; `"nearest"` chooses by distance.
@@ -572,9 +575,10 @@ changes as well as the range. A behavior depending only on the range can use
 
 Tooltip renderers receive one stable payload: `{ data, targets, pointer }`.
 `data` is always an array; targets carry series metadata and SVG coordinates.
-The default multi-series tooltip renders only identified targets. Without a
-series ID it displays the first target using the root accessors; it never
-reconstructs additional series by category. Use `render` for custom payloads.
+The default tooltip renders the selected targets in order. Targets with known
+series IDs use that series' metadata and accessors; others use the root
+accessors. It never reconstructs additional series by category. Use `render`
+for custom payloads.
 Multiple cursor or tooltip behaviors own independent overlays and can observe
 different channels without replacing each other.
 
@@ -618,10 +622,16 @@ the owning series ID. Rendering and interaction geometry should be updated
 together. Passing an empty array clears that owner's points. Unmounting the
 series disposes its registration, while root data updates preserve other owners.
 Custom renderers also run with empty data so D3 joins can remove stale marks.
+Keyboard navigation uses published custom geometry rather than projecting its
+data through Cartesian accessors; unpublished rows are not keyboard targets.
 
 A sensor or behavior can also call `context.getChartContext().engine.registerGeometry`
 for an independent registration, with explicit series IDs and SVG coordinates.
 Its `update` replaces only its own geometry; its `dispose` belongs in cleanup.
+`engine.resolveTarget(identity)` resolves live owned or tagged DOM geometry.
+`engine.resolveTargets(identities)` preserves input order and scans DOM fallback
+identities at most once per call. Both return `null` for unavailable geometry
+and `undefined` for ordinary indexed points that use Cartesian reprojection.
 Custom owner updates do not rebuild the root index. When registrations share a
 series/index identity, the most recently registered custom owner takes precedence;
 disposing it reveals the previous owner. Prefer unique identities for unrelated marks.

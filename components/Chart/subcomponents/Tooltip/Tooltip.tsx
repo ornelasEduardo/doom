@@ -178,7 +178,7 @@ function TooltipInstance<T>({
 interface DefaultTooltipContentProps<T> {
   activeData: T;
   activeSeriesId?: string;
-  targets?: HoverInteraction<T>["targets"];
+  targets: HoverInteraction<T>["targets"];
   series: Series[];
   x?: unknown;
   y?: unknown;
@@ -210,9 +210,6 @@ function DefaultTooltipContent<T>({
     ? resolveAccessor(category as any)(activeData)
     : undefined;
   const xLabel = category ? String(categoryValue) : "Value";
-  const hasIdentifiedTargets = targets?.some(
-    (target) => target.seriesId !== undefined,
-  );
 
   return (
     <Card
@@ -222,73 +219,79 @@ function DefaultTooltipContent<T>({
         {xLabel}
       </Text>
 
-      {series.length > 0 && hasIdentifiedTargets ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          {series.map((item, i) => {
-            const candidate = targets?.find(
-              (target) => target.seriesId === item.id,
-            );
-            if (!candidate) {
-              return null;
-            }
-            const datum = candidate.data;
-            if (datum === undefined) {
-              return null;
-            }
-            if (bounded && scales.x && scales.y) {
-              const bar =
-                item.type === "bar"
-                  ? barGeometry(
-                      item,
-                      datum,
-                      item.data?.indexOf(datum) ?? -1,
-                      scales.x,
-                      scales.y,
-                    )
-                  : null;
-              const visible = bar
-                ? !!clipRectToPlot(bar, dimensions)
-                : isPointInPlot(
-                    {
-                      x: (scales.x as (value: unknown) => number)(
-                        item.xAccessor
-                          ? resolveAccessor(item.xAccessor)(datum)
-                          : undefined,
-                      ),
-                      y: (scales.y as (value: unknown) => number)(
-                        item.yAccessor
-                          ? resolveAccessor(item.yAccessor)(datum)
-                          : undefined,
-                      ),
-                    },
-                    dimensions,
-                  );
-              if (!visible) {
-                return null;
-              }
-            }
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        {targets.map((candidate, i) => {
+          const item =
+            candidate.seriesId === undefined
+              ? undefined
+              : series.find((series) => series.id === candidate.seriesId);
+          const datum = candidate.data;
+          if (datum === undefined) {
+            return null;
+          }
+          if (!item) {
             return (
-              <TooltipSeriesItem
-                key={i}
-                activeData={datum}
-                config={config}
-                fallbackY={y}
-                series={item}
-              />
+              <Text key={i} as="p" variant="h4">
+                {y ? String(resolveAccessor(y as any)(datum)) : ""}
+              </Text>
             );
-          })}
-        </div>
-      ) : (
-        <Text as="p" variant="h4">
-          {y ? String(resolveAccessor(y as any)(activeData)) : ""}
-        </Text>
-      )}
+          }
+          // Custom DOM marks and owned geometry need not follow Cartesian accessors.
+          if (
+            !candidate.geometryOwner &&
+            item.type !== "custom" &&
+            bounded &&
+            scales.x &&
+            scales.y
+          ) {
+            const bar =
+              item.type === "bar"
+                ? barGeometry(
+                    item,
+                    datum,
+                    item.data?.indexOf(datum) ?? -1,
+                    scales.x,
+                    scales.y,
+                  )
+                : null;
+            const visible = bar
+              ? !!clipRectToPlot(bar, dimensions)
+              : isPointInPlot(
+                  {
+                    x: (scales.x as (value: unknown) => number)(
+                      item.xAccessor
+                        ? resolveAccessor(item.xAccessor)(datum)
+                        : undefined,
+                    ),
+                    y: (scales.y as (value: unknown) => number)(
+                      item.yAccessor
+                        ? resolveAccessor(item.yAccessor)(datum)
+                        : undefined,
+                    ),
+                  },
+                  dimensions,
+                );
+            if (!visible) {
+              return null;
+            }
+          }
+          return (
+            <TooltipSeriesItem
+              key={i}
+              activeData={datum}
+              config={config}
+              fallbackY={y}
+              series={item}
+            />
+          );
+        })}
+      </div>
     </Card>
   );
 }

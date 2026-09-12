@@ -201,6 +201,13 @@ export function DragSensor<T>(options: DragSensorOptions<T> = {}): Sensor<T> {
 
       write(interaction);
 
+      // Store subscribers may cancel this gesture before its consumer callback.
+      if (
+        dragTarget !== interaction.target ||
+        ctx.engine?.isInputCancelled(signal)
+      ) {
+        return;
+      }
       if (onDrag) {
         try {
           onDrag(dragTarget.data, currentValue, currentPosition);
@@ -238,7 +245,11 @@ export function DragSensor<T>(options: DragSensorOptions<T> = {}): Sensor<T> {
 
       const data = dragTarget.data;
       cleanup();
-      if (signal.action === InputAction.END && onDragEnd) {
+      if (
+        signal.action === InputAction.END &&
+        onDragEnd &&
+        !ctx.engine?.isInputCancelled(signal)
+      ) {
         onDragEnd(data, { x: xValue, y: yValue }, finalPosition);
       }
     }
