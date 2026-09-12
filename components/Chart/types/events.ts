@@ -2,7 +2,7 @@ import { Selection } from "d3-selection";
 
 import { EngineEvent } from "../engine";
 import { ContextValue } from "./context";
-import { Interaction } from "./interaction";
+import { InteractionAccess } from "./interaction";
 
 /**
  * Spatial coordinates normalized to the chart container and plot area.
@@ -43,37 +43,27 @@ export type EventListener = (event: ChartEvent) => void;
 
 export type Cleanup = () => void;
 
-/**
- * BehaviorContext provides the execution environment for behaviors.
- */
-export interface BehaviorContext<T = any> {
+export interface BehaviorContext<T = unknown> extends InteractionAccess<T> {
   getChartContext: () => ContextValue<T> & {
     g: Selection<SVGGElement, unknown, null, undefined> | null;
   };
-  getInteraction: (name: string) => Interaction | null;
-  upsertInteraction: (name: string, interaction: any) => void;
-  removeInteraction: (name: string) => void;
 }
 
-/**
- * A Behavior is a pure function that attaches logic to a chart.
- */
-export type Behavior<T = any> = (context: BehaviorContext<T>) => Cleanup | void;
+export type GenericBehavior = <T>(
+  context: BehaviorContext<T>,
+) => Cleanup | void;
 
-/**
- * SensorContext provides the environment for sensors to interact with the chart state.
- * Refactored for Hyper-Engine: Reduced API surface.
- */
-export interface SensorContext<T = unknown> {
+export type Behavior<T = unknown> = (
+  context: BehaviorContext<T>,
+) => Cleanup | void;
+
+export interface SensorContext<T = unknown> extends InteractionAccess<T> {
   getChartContext: () => ContextValue<T>;
-  getInteraction: (name: string) => Interaction | null;
-  upsertInteraction: (name: string, interaction: Interaction) => void;
-  removeInteraction: (name: string) => void;
 }
 
 /**
  * A Sensor is a function that detects user intent and updates the interaction store.
- * Sensors receive processed EngineEvents and no longer subscribe to events themselves.
+ * The engine invokes sensors after scheduling and spatial resolution.
  */
 export type Sensor<T = unknown> = (
   event: EngineEvent<T>,

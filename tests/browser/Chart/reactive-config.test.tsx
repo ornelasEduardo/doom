@@ -20,11 +20,13 @@ const rows = [
 it.each(["configuration", "responsive width"])(
   "keeps an active behavior current after changing %s",
   async (change) => {
-    let read!: () => ReturnType<BehaviorContext["getChartContext"]>;
+    let read!: () => ReturnType<
+      BehaviorContext<(typeof rows)[number]>["getChartContext"]
+    >;
     let setups = 0;
     let cleanups = 0;
     let advance!: () => number;
-    const behavior: Behavior = (context) => {
+    const behavior: Behavior<(typeof rows)[number]> = (context) => {
       setups++;
       let count = 0;
       advance = () => ++count;

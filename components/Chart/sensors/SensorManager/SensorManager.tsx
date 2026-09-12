@@ -2,13 +2,10 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
-import {
-  removeInteraction,
-  upsertInteraction,
-} from "../../state/store/chart.store";
 import { ContextValue } from "../../types";
 import { Sensor, SensorContext } from "../../types/events";
 import { InteractionChannel } from "../../types/interaction";
+import { createInteractionAccess } from "../../utils/interactionChannels";
 import { DataHoverSensor } from "../DataHoverSensor/DataHoverSensor";
 import { KeyboardSensor } from "../KeyboardSensor";
 
@@ -55,8 +52,9 @@ export const SensorManager = <T,>({
   const stableSensors = sensorsRef.current;
 
   const activeSensors = useMemo(() => {
+    const baseline = KeyboardSensor();
     if (stableSensors && stableSensors.length > 0) {
-      return [...stableSensors, KeyboardSensor()];
+      return { sensors: stableSensors, baseline };
     }
 
     const defaults: Sensor<T>[] = [];
@@ -79,8 +77,7 @@ export const SensorManager = <T,>({
         }),
       );
     }
-    defaults.push(KeyboardSensor());
-    return defaults;
+    return { sensors: defaults, baseline };
   }, [stableSensors, config.type]);
 
   useEffect(() => {
@@ -90,25 +87,21 @@ export const SensorManager = <T,>({
 
     const sensorContext: SensorContext<T> = {
       getChartContext: () => contextRef.current,
-      getInteraction: (name: string) => {
-        return chartStore.getState().interactions.get(name) || null;
-      },
-      upsertInteraction: (name, value) => {
-        upsertInteraction(chartStore, name, value);
-      },
-      removeInteraction: (name: string) => {
-        removeInteraction(chartStore, name);
-      },
+      ...createInteractionAccess(chartStore),
     };
 
     engine.setHandler((event) => {
-      activeSensors.forEach((sensor) => {
+      const dispatch = (sensor: Sensor<T>) => {
         try {
           sensor(event, sensorContext);
         } catch (err) {
           console.error("Sensor Error:", err);
         }
-      });
+      };
+      activeSensors.sensors.forEach(dispatch);
+      if (!event.claimed) {
+        dispatch(activeSensors.baseline);
+      }
     });
 
     return () => {

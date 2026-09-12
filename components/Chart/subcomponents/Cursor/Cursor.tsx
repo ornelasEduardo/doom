@@ -3,6 +3,7 @@
 import { CursorOptions } from "../../behaviors/Cursor";
 import { useChartContext } from "../../context";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
+import { getInteractionKey } from "../../utils/interactionChannels";
 import styles from "./Cursor.module.scss";
 
 /**
@@ -11,15 +12,25 @@ import styles from "./Cursor.module.scss";
  */
 export function CursorLine() {
   const { chartStore } = useChartContext();
+  const interactions = chartStore.useStore((s) => s.interactions);
+
+  return [...interactions].flatMap(([key, value]) =>
+    typeof key === "string" &&
+    key.startsWith(`${InteractionChannel.CURSOR_CONFIG}:`) ? (
+      <CursorInstance key={key} cursorConfig={value as CursorOptions} />
+    ) : (
+      []
+    ),
+  );
+}
+
+function CursorInstance({ cursorConfig }: { cursorConfig: CursorOptions }) {
+  const { chartStore } = useChartContext();
   const series = chartStore.useStore((s) => s.processedSeries);
   const dimensions = chartStore.useStore((s) => s.dimensions);
   const interactions = chartStore.useStore((s) => s.interactions);
-
-  const cursorConfig = interactions.get(
-    InteractionChannel.CURSOR_CONFIG,
-  ) as CursorOptions;
   const on = cursorConfig?.on || InteractionChannel.PRIMARY_HOVER;
-  const hover = interactions.get(on) as HoverInteraction;
+  const hover = interactions.get(getInteractionKey(on)) as HoverInteraction;
 
   // If no cursor config, don't show
   if (!cursorConfig) {
@@ -27,16 +38,14 @@ export function CursorLine() {
   }
 
   const shouldShow =
-    series.length > 0 &&
-    series.some((s: any) => s.hideCursor !== true) &&
-    cursorConfig.showX !== false;
+    series.length > 0 && series.some((s) => s.hideCursor !== true);
 
   const { innerWidth, innerHeight } = dimensions;
 
   // Use primary target or first target in list
   const target = hover?.targets?.[0] ?? null;
   // Use pointer for fallback or if target is missing
-  let point = target ? target.coordinate : ((hover?.pointer as any) ?? null);
+  let point = target ? target.coordinate : (hover?.pointer ?? null);
 
   // Normalize point to plot-relative coordinates consistently
   if (target && point) {
@@ -58,6 +67,7 @@ export function CursorLine() {
     <>
       {cursorConfig.showX !== false && (
         <line
+          data-chart-cursor
           className={styles.cursorLine}
           x1={point.x}
           x2={point.x}
@@ -67,6 +77,7 @@ export function CursorLine() {
       )}
       {cursorConfig.showY && (
         <line
+          data-chart-cursor
           className={styles.cursorLine}
           x1={0}
           x2={innerWidth}

@@ -179,3 +179,70 @@ describe("DragSensor (Engine)", () => {
     expect(ctx.removeInteraction).toHaveBeenCalledWith(InteractionChannel.DRAG);
   });
 });
+
+describe("drag ownership", () => {
+  const candidate = {
+    data: { x: 0, y: 100 },
+    distance: 0,
+    coordinate: { x: 0, y: 100 },
+  };
+  it.each([
+    InputAction.START,
+    InputAction.MOVE,
+    InputAction.END,
+    InputAction.CANCEL,
+  ])("ignores foreign %s", (action) => {
+    const ctx = createMockContext();
+    const sensor = DragSensor();
+    sensor(createMockEvent(InputAction.START, candidate), ctx);
+    const foreign = createMockEvent(action, candidate, { x: 80, y: 80 });
+    foreign.signal.id = 2;
+    sensor(foreign, ctx);
+    expect(ctx.getInteraction(InteractionChannel.DRAG)).toMatchObject({
+      currentPosition: { x: 0, y: 0 },
+    });
+  });
+  it.each(["onDrag", "onDragEnd"] as const)(
+    "cleans up if %s throws",
+    (callback) => {
+      const ctx = createMockContext();
+      const sensor = DragSensor({
+        [callback]: () => {
+          throw new Error("consumer");
+        },
+      });
+      sensor(createMockEvent(InputAction.START, candidate), ctx);
+      expect(() =>
+        sensor(
+          createMockEvent(
+            callback === "onDrag" ? InputAction.MOVE : InputAction.END,
+          ),
+          ctx,
+        ),
+      ).toThrow("consumer");
+      expect(ctx.getInteraction(InteractionChannel.DRAG)).toBeNull();
+      sensor(createMockEvent(InputAction.START, candidate), ctx);
+      expect(ctx.getInteraction(InteractionChannel.DRAG)).not.toBeNull();
+    },
+  );
+});
+
+it("chart cancellation clears the drag even from another stream", () => {
+  const ctx = createMockContext();
+  const end = vi.fn();
+  const sensor = DragSensor({ onDragEnd: end });
+  sensor(
+    createMockEvent(InputAction.START, {
+      data: { x: 0, y: 10 },
+      distance: 0,
+      coordinate: { x: 0, y: 10 },
+    }),
+    ctx,
+  );
+  const cancel = createMockEvent(InputAction.CANCEL);
+  cancel.signal.id = 99;
+  cancel.signal.cancelScope = "chart";
+  sensor(cancel, ctx);
+  expect(ctx.getInteraction(InteractionChannel.DRAG)).toBeNull();
+  expect(end).not.toHaveBeenCalled();
+});

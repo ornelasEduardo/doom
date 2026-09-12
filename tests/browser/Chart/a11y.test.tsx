@@ -191,6 +191,10 @@ describe("Chart accessibility (axe)", () => {
       document.querySelector("[data-chart-tooltip]")?.textContent ?? "",
     ).toContain("A");
 
+    // Readable tooltips must not spend their first frames faded below contrast.
+    expect(
+      getComputedStyle(host.querySelector("[data-chart-tooltip]")!).opacity,
+    ).toBe("1");
     expect(await audit(host)).toEqual([]);
   });
 

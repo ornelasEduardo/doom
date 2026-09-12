@@ -9,11 +9,15 @@ import {
 import { SeriesProps } from "../../types";
 import { D3Selection } from "../../types/selection";
 import { resolveAccessor } from "../../utils/accessors";
+import {
+  createCustomGeometry,
+  CustomGeometry,
+} from "../../utils/customGeometry";
 import { d3 } from "../../utils/d3";
 import { useSeriesColor } from "../../utils/hooks";
 
 const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
-  const { chartStore, config, isMobile, resolveInteraction } =
+  const { chartStore, engine, config, isMobile, resolveInteraction } =
     useChartContext<T>();
 
   const stateData = chartStore.useStore((s) => s.data);
@@ -30,6 +34,20 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
 
   const gRef = useRef<SVGGElement>(null);
   const seriesId = useId();
+  const geometryRef = useRef<CustomGeometry<T> | null>(null);
+  const hasRender = Boolean(render);
+
+  useEffect(() => {
+    if (!gRef.current) {
+      return;
+    }
+    const geometry = createCustomGeometry(engine, gRef.current, seriesId);
+    geometryRef.current = geometry;
+    return () => {
+      geometryRef.current = null;
+      geometry.dispose();
+    };
+  }, [engine, seriesId, hasRender]);
   const seriesColor = useSeriesColor(chartStore, seriesId, color);
 
   // Register CustomSeries so it appears in the Legend
@@ -40,6 +58,7 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     registerSeries(chartStore, seriesId, [
       {
         label: effectiveLabel,
+        type: "custom",
         color,
         data: localData,
         y: yAccessor,
@@ -49,10 +68,6 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
         id: seriesId,
       },
     ]);
-
-    return () => {
-      unregisterSeries(chartStore, seriesId);
-    };
   }, [
     chartStore,
     seriesId,
@@ -61,24 +76,36 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
     color,
     yAccessor,
     xAccessor,
+    localData,
     data,
   ]);
+
+  useEffect(
+    () => () => unregisterSeries(chartStore, seriesId),
+    [chartStore, seriesId],
+  );
 
   useEffect(() => {
     if (
       !render ||
       !gRef.current ||
-      !data.length ||
+      !geometryRef.current ||
       dimensions.width <= 0 ||
       dimensions.height <= 0
     ) {
       return;
     }
 
-    const container = d3.select(gRef.current) as unknown as D3Selection<T>;
-    container.datum(data as any);
+    const container = d3
+      .select(gRef.current)
+      .datum(data) as unknown as D3Selection<T>;
 
+    // Empty frames must clear both the custom DOM join and owned hit geometry.
+    if (data.length === 0) {
+      geometryRef.current.update([]);
+    }
     render({
+      geometry: geometryRef.current,
       container,
       data,
       size: {
@@ -100,6 +127,9 @@ const CustomSeriesComponent = <T,>(props: SeriesProps<T>) => {
       chartDataAttrs: CHART_DATA_ATTRS,
     });
   }, [
+    engine,
+    seriesId,
+    seriesColor,
     render,
     data,
     dimensions,

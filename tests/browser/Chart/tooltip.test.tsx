@@ -44,7 +44,7 @@ function Example({
         behaviors={[
           Chart.behaviors.Tooltip({
             render: custom
-              ? (rows) => <output>{JSON.stringify(rows)}</output>
+              ? ({ data }) => <output>{JSON.stringify(data)}</output>
               : undefined,
           }),
         ]}
@@ -156,7 +156,7 @@ it.each([false, true])(
     await userEvent.hover(marks()[1]);
     await expect
       .poll(() => JSON.parse(text() ?? "null"))
-      .toEqual(slice ? [actual[1], projection[2], sparse[0]] : actual[1]);
+      .toEqual(slice ? [actual[1], projection[2], sparse[0]] : [actual[1]]);
   },
 );
 
@@ -164,23 +164,22 @@ it.each([false, true])(
 // producers supply IDs; older/custom sensors may omit them.
 function transformTargets(
   transform: (
-    targets: HoverInteraction["targets"],
-  ) => HoverInteraction["targets"],
+    targets: HoverInteraction<(typeof actual)[number]>["targets"],
+  ) => HoverInteraction<(typeof actual)[number]>["targets"],
   sensor: Sensor<(typeof actual)[number]> = Chart.sensors.DataHoverSensor({
     verticalSlice: true,
   }),
 ): Sensor<(typeof actual)[number]> {
-  return (event, context) =>
-    sensor(event, {
-      ...context,
-      upsertInteraction: (name, interaction) => {
-        const state = interaction as HoverInteraction;
-        context.upsertInteraction(name, {
-          ...state,
-          targets: transform(state.targets),
-        });
-      },
-    });
+  return (event, context) => {
+    sensor(event, context);
+    const state = context.getInteraction("primary-hover");
+    if (state) {
+      context.upsertInteraction("primary-hover", {
+        ...state,
+        targets: transform(state.targets),
+      });
+    }
+  };
 }
 
 it("does not recreate a series excluded from an explicit multi-target slice", async () => {
@@ -194,13 +193,13 @@ it("does not recreate a series excluded from an explicit multi-target slice", as
   await expect.poll(text).toBe("BActual:-20Sparse:-60");
 });
 
-it("keeps legacy category lookup when every target lacks a series ID", async () => {
+it("shows only the supplied datum when targets have no series identity", async () => {
   const sensors = [
     transformTargets((targets) => [{ ...targets[0], seriesId: undefined }]),
   ];
   const { marks, text } = await mount({ sensors });
   await userEvent.hover(marks()[1]);
-  await expect.poll(text).toBe("BActual:-20Projection:-40Sparse:-60");
+  await expect.poll(text).toBe("B-20");
 });
 
 it("does not let an unidentified target expand an otherwise identified slice", async () => {
@@ -233,10 +232,10 @@ it.each([false, true])(
     await userEvent.keyboard("{ArrowRight}");
     await expect
       .poll(text)
-      .toBe(custom ? JSON.stringify(actual[0]) : "AActual:10");
+      .toBe(custom ? JSON.stringify([actual[0]]) : "AActual:10");
     await userEvent.keyboard("{ArrowRight}");
     await expect
       .poll(text)
-      .toBe(custom ? JSON.stringify(actual[1]) : "BActual:-20");
+      .toBe(custom ? JSON.stringify([actual[1]]) : "BActual:-20");
   },
 );

@@ -1,48 +1,42 @@
-import { Behavior } from "../types/events";
-import { InteractionChannel } from "../types/interaction";
+import type { ReactNode } from "react";
 
-export interface TooltipOptions<T = any> {
-  /**
-   * The interaction channel to listen to.
-   * Defaults to `InteractionChannel.PRIMARY_HOVER`.
-   */
-  on?: InteractionChannel | string;
+import { Behavior, GenericBehavior } from "../types/events";
+import {
+  ChannelReference,
+  HoverInteraction,
+  InteractionChannel,
+  InteractionTarget,
+} from "../types/interaction";
 
-  /**
-   * Optional custom render function for the tooltip content.
-   * If provided, this will override the default rendering logic.
-   */
-  render?: (data: T) => React.ReactNode;
+export interface TooltipContent<T> {
+  data: T[];
+  targets: InteractionTarget<T>[];
+  /** Resolved tooltip anchor: current target position for target-anchored readings. */
+  pointer: HoverInteraction<T>["pointer"];
 }
 
-/**
- * A "passive" behavior that synchronizes the chart's interaction state with the Tooltip subcomponent.
- *
- * Use this behavior when you want a standard hover tooltip. It listens to the specified
- * interaction channel (usually `PRIMARY_HOVER`) and ensures clarity and consistency
- * in how tooltip data is resolved.
- *
- * @example
- * ```tsx
- * <Chart behaviors={[Tooltip()]} />
- * ```
- *
- * @param options - Configuration options for the tooltip behavior
- * @returns A Behavior function that can be consumed by the Chart
- */
-export const Tooltip = <T>(options: TooltipOptions<T> = {}): Behavior => {
+export interface TooltipOptions<T = unknown> {
+  /** Interaction channel to display. Defaults to primary hover. */
+  on?: ChannelReference<HoverInteraction<T>>;
+  /** Receives the same payload shape for one or many targets. */
+  render?: (content: TooltipContent<T>) => ReactNode;
+}
+
+let nextTooltipOwner = 0;
+
+/** Registers one independently owned tooltip, released when the behavior detaches. */
+export function Tooltip(options?: { on?: string }): GenericBehavior;
+export function Tooltip<T>(options: TooltipOptions<T>): Behavior<T>;
+export function Tooltip<T = unknown>(
+  options: TooltipOptions<T> = {},
+): Behavior<T> {
   const { on = InteractionChannel.PRIMARY_HOVER } = options;
-
-  return ({ getInteraction, upsertInteraction, removeInteraction }) => {
-    // Sync configuration to the store so the Tooltip component can read it
-    upsertInteraction(InteractionChannel.TOOLTIP_CONFIG, {
-      on,
-      ...options,
-    });
-
-    // Cleanup: remove config when behavior unmounts
+  return ({ upsertInteraction, removeInteraction }) => {
+    const key =
+      `${InteractionChannel.TOOLTIP_CONFIG}:${++nextTooltipOwner}` as const;
+    upsertInteraction(key, { ...options, on });
     return () => {
-      removeInteraction(InteractionChannel.TOOLTIP_CONFIG);
+      removeInteraction(key);
     };
   };
-};
+}

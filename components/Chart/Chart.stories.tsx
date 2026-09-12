@@ -320,7 +320,7 @@ export const CustomRender1: Story = {
       SelectionUpdate({
         on: "primary-hover",
         selector: ".arc",
-        fn: (selection, activeData: any) => {
+        fn: (selection, [activeData]: any[]) => {
           (selection as any).style("opacity", (d: any) => {
             if (!activeData) {
               return 0.8;
@@ -331,7 +331,7 @@ export const CustomRender1: Story = {
         },
       }),
       Tooltip({
-        render: (data: any) => (
+        render: ({ data: [data] }: { data: any[] }) => (
           <Card
             style={{
               padding: "8px 12px",
@@ -513,12 +513,12 @@ export const CustomRender1: Story = {
 
 export const CustomRender2: Story = {
   args: {
-    sensors: [DataHoverSensor({ exactHit: true })],
+    sensors: [DataHoverSensor({ hitPolicy: "exact" })],
     behaviors: [
       SelectionUpdate({
         on: "primary-hover",
         selector: ".treemap-node",
-        fn: (selection, activeData) => {
+        fn: (selection, [activeData]: any[]) => {
           selection.attr("fill-opacity", (d: any) => {
             if (!activeData) {
               return 0.8;
@@ -528,7 +528,7 @@ export const CustomRender2: Story = {
         },
       }),
       Tooltip({
-        render: (data: any) => (
+        render: ({ data: [data] }: { data: any[] }) => (
           <Card style={{ padding: "8px 12px", minWidth: 150 }}>
             <Text style={{ marginBottom: 4 }} variant="h6">
               {data && data.id}
@@ -814,7 +814,7 @@ export const DetailedTooltip: Story = {
     },
     behaviors: [
       Tooltip({
-        render: (data: any) => (
+        render: ({ data: [data] }: { data: any[] }) => (
           <Card style={{ padding: "12px", minWidth: "200px" }}>
             <div
               style={{
@@ -1069,11 +1069,11 @@ const dailyRevenue = [...actualRevenue, ...revenuePlan].sort(
   (a, b) => a.date - b.date,
 );
 const revenueBehaviors = [
-  Chart.behaviors.Tooltip<RevenueObservation | RevenueObservation[]>({
-    render: (reading) => (
+  Chart.behaviors.Tooltip<RevenueObservation>({
+    render: ({ data: reading }) => (
       <Card>
         <Stack gap={2}>
-          {(Array.isArray(reading) ? reading : [reading]).map((datum) => (
+          {reading.map((datum) => (
             <Stack key={datum.series} gap={1}>
               <Text variant="h6">
                 {revenueDateFormat.format(datum.date)} · UTC
@@ -1219,7 +1219,7 @@ export const ScatterPlot: Story = {
       <Chart.Root
         behaviors={[
           Tooltip({
-            render: (data: any) => (
+            render: ({ data: [data] }: { data: any[] }) => (
               <Card
                 className="p-3"
                 style={{

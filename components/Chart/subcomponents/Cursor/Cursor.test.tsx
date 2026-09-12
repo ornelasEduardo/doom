@@ -61,7 +61,7 @@ describe("Cursor", () => {
         series: new Map(),
         processedSeries: [{ id: "series1", hideCursor: false }],
         interactions: new Map([
-          ["cursor-config", { on: "primary-hover", showX: true }],
+          ["cursor-config:test", { on: "primary-hover", showX: true }],
           [
             "primary-hover",
             {
@@ -94,7 +94,7 @@ describe("Cursor", () => {
           series: new Map(),
           processedSeries: [{ id: "series1", hideCursor: false }],
           interactions: new Map([
-            ["cursor-config", { on: "primary-hover", showX: true }],
+            ["cursor-config:test", { on: "primary-hover", showX: true }],
             [
               "primary-hover",
               {
@@ -231,7 +231,7 @@ describe("Cursor", () => {
               series: new Map(),
               processedSeries: [{ id: "series1", hideCursor: false }],
               interactions: new Map([
-                ["cursor-config", { on: "primary-hover", showX: true }],
+                ["cursor-config:test", { on: "primary-hover", showX: true }],
                 [
                   "primary-hover",
                   {
@@ -281,7 +281,7 @@ describe("Cursor", () => {
               series: new Map(),
               processedSeries: [{ id: "series1", hideCursor: true }],
               interactions: new Map([
-                ["cursor-config", { on: "primary-hover", showX: true }],
+                ["cursor-config:test", { on: "primary-hover", showX: true }],
                 [
                   "primary-hover",
                   {

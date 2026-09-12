@@ -1,6 +1,7 @@
 # Chart
 
 ## Import
+
 ```tsx
 import { Chart } from "doom-design-system";
 ```
@@ -15,45 +16,45 @@ component's own semantics win on conflict.
 
 > `Props` is still exported as a deprecated alias. Prefer `ChartProps`.
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `data` | `T[]` | required | Data array |
-| `x` | `keyof T \| (d: T) => string \| number` | required | X-axis accessor (string key or function) |
-| `y` | `keyof T \| (d: T) => number` | required | Y-axis accessor (string key or function) |
-| `xDomain` | `readonly [number \| null, number \| null]` | automatic | Numeric X bounds; `null` keeps that end automatic. Ignored for categorical X. |
-| `yDomain` | `readonly [number \| null, number \| null]` | automatic | Numeric Y bounds; `null` keeps that end automatic. Ignored for categorical Y. |
-| `type` | `"line" \| "area" \| "bar" \| "scatter"` | — | Chart type (shorthand API) |
-| `title` | `string \| ReactNode` | — | Chart title |
-| `subtitle` | `string` | — | Chart subtitle |
-| `withLegend` | `boolean` | — | Show legend |
-| `withFrame` | `boolean` | `true` | Render card frame around chart |
-| `variant` | `"default" \| "solid"` | `"default"` | Visual variant |
-| `flat` | `boolean` | `false` | Remove shadow |
-| `d3Config` | `Config` | — | D3 configuration options |
-| `render` | `(frame: RenderFrame<T>) => void` | — | Custom D3 render function |
-| `sensors` | `Sensor[]` | — | Custom sensors (replaces pointer defaults; baseline keyboard navigation is always retained) |
-| `behaviors` | `Behavior[]` | — | Custom behaviors (replaces defaults) |
-| `onValueChange` | `(data: T \| null) => void` | — | Callback when hovered value changes |
-| `style` | `CSSProperties` | — | Inline styles |
-| `className` | `string` | — | CSS class name |
+| Prop            | Type                                        | Default     | Description                                                                                 |
+| --------------- | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| `data`          | `T[]`                                       | required    | Data array                                                                                  |
+| `x`             | `keyof T \| (d: T) => string \| number`     | required    | X-axis accessor (string key or function)                                                    |
+| `y`             | `keyof T \| (d: T) => number`               | required    | Y-axis accessor (string key or function)                                                    |
+| `xDomain`       | `readonly [number \| null, number \| null]` | automatic   | Numeric X bounds; `null` keeps that end automatic. Ignored for categorical X.               |
+| `yDomain`       | `readonly [number \| null, number \| null]` | automatic   | Numeric Y bounds; `null` keeps that end automatic. Ignored for categorical Y.               |
+| `type`          | `"line" \| "area" \| "bar" \| "scatter"`    | —           | Chart type (shorthand API)                                                                  |
+| `title`         | `string \| ReactNode`                       | —           | Chart title                                                                                 |
+| `subtitle`      | `string`                                    | —           | Chart subtitle                                                                              |
+| `withLegend`    | `boolean`                                   | —           | Show legend                                                                                 |
+| `withFrame`     | `boolean`                                   | `true`      | Render card frame around chart                                                              |
+| `variant`       | `"default" \| "solid"`                      | `"default"` | Visual variant                                                                              |
+| `flat`          | `boolean`                                   | `false`     | Remove shadow                                                                               |
+| `d3Config`      | `Config`                                    | —           | D3 configuration options                                                                    |
+| `render`        | `(frame: RenderFrame<T>) => void`           | —           | Custom D3 render function                                                                   |
+| `sensors`       | `Sensor[]`                                  | —           | Custom sensors (replaces pointer defaults; baseline keyboard navigation is always retained) |
+| `behaviors`     | `Behavior[]`                                | —           | Custom behaviors (replaces defaults)                                                        |
+| `onValueChange` | `(data: T \| null) => void`                 | —           | Callback when hovered value changes                                                         |
+| `style`         | `CSSProperties`                             | —           | Inline styles                                                                               |
+| `className`     | `string`                                    | —           | CSS class name                                                                              |
 
 ## d3Config Fields
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `margin` | `{ top, right, bottom, left }` | — | Chart margins |
-| `width` | `number` | — | Fixed width override |
-| `height` | `number` | — | Fixed height override |
-| `curve` | `d3Shape.CurveFactory` | — | D3 curve factory (e.g. `curveMonotoneX`) |
-| `showAxes` | `boolean` | `true` | Show X/Y axes |
-| `xAxisLabel` | `string` | — | X-axis label text |
-| `axes` | `{ x?: AxisOptions; y?: AxisOptions }` | — | Per-axis tick formatting and label limits using the same options for either axis. |
-| `yAxisLabel` | `string` | — | Y-axis label text |
-| `grid` | `boolean` | — | Show grid lines |
-| `withGradient` | `boolean` | — | Fill area with gradient |
-| `showDots` | `boolean` | — | Show data point dots |
-| `hideYAxisDomain` | `boolean` | — | Hide Y-axis domain line |
-| `type` | `SeriesType` | — | Series type override within config |
+| Field             | Type                                   | Default | Description                                                                       |
+| ----------------- | -------------------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `margin`          | `{ top, right, bottom, left }`         | —       | Chart margins                                                                     |
+| `width`           | `number`                               | —       | Fixed width override                                                              |
+| `height`          | `number`                               | —       | Fixed height override                                                             |
+| `curve`           | `d3Shape.CurveFactory`                 | —       | D3 curve factory (e.g. `curveMonotoneX`)                                          |
+| `showAxes`        | `boolean`                              | `true`  | Show X/Y axes                                                                     |
+| `xAxisLabel`      | `string`                               | —       | X-axis label text                                                                 |
+| `axes`            | `{ x?: AxisOptions; y?: AxisOptions }` | —       | Per-axis tick formatting and label limits using the same options for either axis. |
+| `yAxisLabel`      | `string`                               | —       | Y-axis label text                                                                 |
+| `grid`            | `boolean`                              | —       | Show grid lines                                                                   |
+| `withGradient`    | `boolean`                              | —       | Fill area with gradient                                                           |
+| `showDots`        | `boolean`                              | —       | Show data point dots                                                              |
+| `hideYAxisDomain` | `boolean`                              | —       | Hide Y-axis domain line                                                           |
+| `type`            | `SeriesType`                           | —       | Series type override within config                                                |
 
 Numeric timestamps use the existing linear scale, not calendar-aligned time ticks.
 `axes.x.valueFormat` and `axes.y.valueFormat` accept
@@ -194,10 +195,10 @@ The Chart uses a layered pipeline: **Engine → Sensors → Store → Behaviors*
 
 ```
 Browser Event (pointer/touch/keyboard)
-  → InteractionLayer (RAF throttling)
+  → InteractionLayer (native controls and normalization)
     → Engine.input(InputSignal)
-      → SpatialMap.find() + CoordinateSystem (hit detection)
-        → Scheduler (priority queue)
+      → Scheduler (one sampled movement per input stream per frame)
+        → SpatialMap.find() + CoordinateSystem (hit detection at dispatch)
           → Sensors (process EngineEvent, update store)
             → Store (interactions map triggers subscriptions)
               → Behaviors (subscribe to store, update D3 visuals)
@@ -205,50 +206,51 @@ Browser Event (pointer/touch/keyboard)
 
 ### Engine
 
-Pure, DOM-independent orchestrator. Converts raw input into processed `EngineEvent`s with hit-test candidates.
+Per-chart orchestrator with a normalized-input API and DOM-backed coordinate and hit-test adapters. Converts raw input into processed `EngineEvent`s with hit-test candidates.
 
 **Key files:** `Chart/engine/Engine.ts`, `engine/SpatialMap.ts`, `engine/CoordinateSystem.ts`, `engine/Scheduler.ts`
 
 - **InputSignal** — Normalized input format: `{ id, action, source, x, y, timestamp, key?, modifiers? }`
   - Actions: `START`, `MOVE`, `END`, `CANCEL`, `KEY`
-  - Sources: `MOUSE`, `TOUCH`, `KEYBOARD`, `REMOTE`
+  - Sources: `MOUSE`, `TOUCH`, `PEN`, `KEYBOARD`, `REMOTE`
 - **SpatialMap** — Hybrid hit detection: DOM `elementsFromPoint()` broad phase + quadtree fine phase. Configurable `magneticRadius` (default 40px) for snapping.
 - **CoordinateSystem** — Transforms client → container → plot-relative coordinates.
-- **Scheduler** — Priority-based: `CRITICAL` (sync, for pointer down/up), `VISUAL` (RAF-batched, for moves), `IDLE` (requestIdleCallback). Visual queue coalesces events per pointer ID.
+- **Scheduler** — Priority-based: `CRITICAL` (sync, for pointer down/up), `VISUAL` (RAF-batched, for moves), `IDLE` (requestIdleCallback). Visual queue coalesces by user, source, and pointer ID. The final pending movement is delivered before `END`. `CANCEL` clears its stream; `cancelScope: "chart"` explicitly dismisses all queued chart input. Movement is frame-sampled, not a lossless drawing-event log.
 
 ### EngineEvent
 
 The processed output sensors receive:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `signal` | `InputSignal` | Raw normalized input |
-| `candidates` | `InteractionCandidate<T>[]` | All hit results, sorted by relevance |
-| `primaryCandidate` | `InteractionCandidate<T>` | Closest/most relevant hit |
-| `sliceCandidates` | `InteractionCandidate<T>[]` | All series points at primary's X (vertical slice) |
-| `chartX` | `number` | X relative to plot area |
-| `chartY` | `number` | Y relative to plot area |
-| `isWithinPlot` | `boolean` | Whether pointer is inside the plot bounds |
+| Field              | Type                        | Description                                       |
+| ------------------ | --------------------------- | ------------------------------------------------- |
+| `signal`           | `InputSignal`               | Raw normalized input                              |
+| `candidates`       | `InteractionCandidate<T>[]` | All hit results, sorted by relevance              |
+| `primaryCandidate` | `InteractionCandidate<T>`   | Closest/most relevant hit                         |
+| `sliceCandidates`  | `InteractionCandidate<T>[]` | All series points at primary's X (vertical slice) |
+| `chartX`           | `number`                    | X relative to plot area                           |
+| `chartY`           | `number`                    | Y relative to plot area                           |
+| `isWithinPlot`     | `boolean`                   | Whether pointer is inside the plot bounds         |
 
 ### InteractionCandidate
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | `"data-point" \| "bar" \| "area" \| "label" \| "axis" \| "legend-item" \| "custom"` | Hit target type |
-| `data` | `T` | The underlying data object |
-| `seriesId` | `string` | Series identifier |
-| `dataIndex` | `number` | Index in data array |
-| `seriesColor` | `string` | Series color |
-| `coordinate` | `{ x, y }` | Pixel coordinates |
-| `distance` | `number` | Distance from pointer |
-| `element` | `Element` | DOM element hit |
-| `draggable` | `boolean` | Whether target is draggable |
+| Field         | Type                                                                                | Description                                          |
+| ------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `type`        | `"data-point" \| "bar" \| "area" \| "label" \| "axis" \| "legend-item" \| "custom"` | Hit target type                                      |
+| `data`        | `T`                                                                                 | The underlying data object                           |
+| `seriesId`    | `string`                                                                            | Series identifier                                    |
+| `dataIndex`   | `number`                                                                            | Index in data array                                  |
+| `seriesColor` | `string`                                                                            | Series color                                         |
+| `coordinate`  | `{ x, y }`                                                                          | Coordinates in the chart SVG, including plot margins |
+| `distance`    | `number`                                                                            | Distance from pointer                                |
+| `element`     | `Element`                                                                           | DOM element hit                                      |
+| `draggable`   | `boolean`                                                                           | Whether target is draggable                          |
 
 ### Store (State Management)
 
 Unified store with slices: `lifecycle`, `dimensions`, `data`, `series`, `interactions`, `scales`.
 
 Key operations:
+
 - `upsertInteraction(store, name, payload)` — Write to interactions map
 - `removeInteraction(store, name)` — Delete from interactions map
 - `chartStore.subscribe(listener)` — Subscribe to changes (used by behaviors)
@@ -256,14 +258,14 @@ Key operations:
 
 ### Interaction Channels
 
-| Channel | Constant | Used By |
-|---------|----------|---------|
-| `"primary-hover"` | `InteractionChannel.PRIMARY_HOVER` | DataHoverSensor, KeyboardSensor |
-| `"selection"` | `InteractionChannel.SELECTION` | SelectionSensor |
-| `"drag"` | `InteractionChannel.DRAG` | DragSensor |
-| `"cursor-config"` | `InteractionChannel.CURSOR_CONFIG` | Cursor behavior |
-| `"tooltip-config"` | `InteractionChannel.TOOLTIP_CONFIG` | Tooltip behavior |
-| `"crosshair"` | `InteractionChannel.CROSSHAIR` | Custom crosshair state |
+| Channel            | Constant                            | Used By                         |
+| ------------------ | ----------------------------------- | ------------------------------- |
+| `"primary-hover"`  | `InteractionChannel.PRIMARY_HOVER`  | DataHoverSensor, KeyboardSensor |
+| `"selection"`      | `InteractionChannel.SELECTION`      | SelectionSensor                 |
+| `"drag"`           | `InteractionChannel.DRAG`           | DragSensor                      |
+| `"cursor-config"`  | `InteractionChannel.CURSOR_CONFIG`  | Cursor behavior                 |
+| `"tooltip-config"` | `InteractionChannel.TOOLTIP_CONFIG` | Tooltip behavior                |
+| `"crosshair"`      | `InteractionChannel.CROSSHAIR`      | Custom crosshair state          |
 
 > **Channel payloads are not uniform.** `primary-hover` and `drag` carry
 > `targets`, while `selection` carries `selection` — a plain array of the
@@ -286,13 +288,13 @@ Series that do not name a `color` are assigned one from the categorical data
 palette in registration order, so sibling series are distinguishable and
 re-theme with the rest of the system:
 
-| Token | Default |
-|-------|---------|
-| `--chart-series-1` | `var(--primary)` |
-| `--chart-series-2` | `var(--accent)` |
-| `--chart-series-3` | `var(--success)` |
-| `--chart-series-4` | `var(--warning)` |
-| `--chart-series-5` | `var(--error)` |
+| Token              | Default            |
+| ------------------ | ------------------ |
+| `--chart-series-1` | `var(--primary)`   |
+| `--chart-series-2` | `var(--accent)`    |
+| `--chart-series-3` | `var(--success)`   |
+| `--chart-series-4` | `var(--warning)`   |
+| `--chart-series-5` | `var(--error)`     |
 | `--chart-series-6` | `var(--secondary)` |
 
 These are deliberately separate from the semantic UI tokens: `variant="solid"`
@@ -300,14 +302,12 @@ remaps `--primary` to the axis colour and `--secondary` to near-background, so a
 palette built on those would render two series unreadable. Override
 `--chart-series-*` to brand the palette.
 
-
-
-| Condition | Strategy | Complexity |
-|-----------|----------|------------|
-| < 50 items | `LinearStrategy` | O(n) scan |
-| line/area (sorted X) | `BinaryXStrategy` | O(log n) bisect |
-| scatter/bubble | `QuadtreeStrategy` | O(log n) spatial |
-| Fallback | `LinearStrategy` | O(n) scan |
+| Condition            | Strategy           | Complexity       |
+| -------------------- | ------------------ | ---------------- |
+| < 50 items           | `LinearStrategy`   | O(n) scan        |
+| line/area (sorted X) | `BinaryXStrategy`  | O(log n) bisect  |
+| scatter/bubble       | `QuadtreeStrategy` | O(log n) spatial |
+| Fallback             | `LinearStrategy`   | O(n) scan        |
 
 **Key files:** `subcomponents/Series/`, `subcomponents/{LineSeries,BarSeries,ScatterSeries,CustomSeries}/`, `sensors/utils/strategies/`
 
@@ -329,8 +329,8 @@ import {
   type SensorContext,
 } from "doom-design-system";
 
-Chart.sensors;    // DataHoverSensor, KeyboardSensor, DragSensor, SelectionSensor
-Chart.behaviors;  // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpdate
+Chart.sensors; // DataHoverSensor, KeyboardSensor, DragSensor, SelectionSensor
+Chart.behaviors; // Tooltip, Cursor, Markers, Dim, DraggablePuck, SelectionUpdate
 ```
 
 The default tooltip displays the sensor's selected targets. Use
@@ -349,17 +349,17 @@ const sensors = useMemo(
   [],
 );
 
-<Chart data={data} x="month" y="revenue" sensors={sensors} />
+<Chart data={data} x="month" y="revenue" sensors={sensors} />;
 ```
 
-> **Memoise the array.** Sensors hold their state in a closure, so calling a
+> **Keep factory instances stable.** Sensors hold their state in a closure, so calling a
 > factory inline — `sensors={[DragSensor()]}` — builds a new sensor on every
 > render and discards any in-progress gesture. A stable sensor in a fresh array
 > literal is fine; the component compares contents, not array identity.
 
 ## Sensors
 
-Sensors receive `EngineEvent`s and write to the interaction store. They are stateless functions with closure-based internal state.
+Sensors receive `EngineEvent`s and write to the interaction store. Stateful sensors keep gesture ownership in a closure.
 
 ### Type Signature
 
@@ -369,241 +369,262 @@ type Sensor<T = unknown> = (
   context: SensorContext<T>,
 ) => void;
 
-interface SensorContext<T> {
+interface SensorContext<T> extends InteractionAccess<T> {
   getChartContext: () => ContextValue<T>;
-  getInteraction: (name: string) => Interaction | null;
-  upsertInteraction: (name: string, interaction: Interaction) => void;
-  removeInteraction: (name: string) => void;
 }
 ```
 
 ### Built-in Sensors
 
-| Sensor | Options | Description |
-|--------|---------|-------------|
-| `DataHoverSensor` | `{ name?, exactHit?, verticalSlice? }` | Tracks pointer hover, writes `HoverInteraction` |
-| `KeyboardSensor` | `{ name? }` | Arrow key navigation through data points (a11y) |
-| `DragSensor` | `{ name?, onDrag?, onDragEnd?, hitRadius? }` | Drag-to-edit with scale inversion |
-| `SelectionSensor` | `{ name? }` | Click-to-select with toggle support |
+| Sensor            | Options                                      | Description                                     |
+| ----------------- | -------------------------------------------- | ----------------------------------------------- |
+| `DataHoverSensor` | `{ name?, hitPolicy?, verticalSlice? }`      | Tracks pointer hover, writes `HoverInteraction` |
+| `KeyboardSensor`  | `{ name? }`                                  | Arrow key navigation through data points (a11y) |
+| `DragSensor`      | `{ name?, onDrag?, onDragEnd?, hitRadius? }` | Drag-to-edit with scale inversion               |
+| `SelectionSensor` | `{ name? }`                                  | Click-to-select with toggle support             |
 
 **Defaults by chart type:**
+
 - line/area/bar: `DataHoverSensor({ verticalSlice: true })` + `KeyboardSensor`
 - scatter/bubble/custom: `DataHoverSensor()` + `KeyboardSensor`
 
 ### Creating a Custom Sensor
 
+Create a typed channel once and share its handle between the sensor and behavior.
+The name is diagnostic: two handles named `"range"` remain isolated. Stores are
+per chart, so sharing a handle does not synchronize charts automatically.
+
 ```tsx
-import { InputAction, type Sensor, type EngineEvent, type SensorContext } from "./types";
+import {
+  createInteractionChannel,
+  InputAction,
+  type Sensor,
+} from "doom-design-system";
 
-interface RangeSensorOptions {
-  name?: string;
-  onRangeComplete?: (start: number, end: number) => void;
+interface Range {
+  start: number;
+  end: number;
+  active: boolean;
 }
+const rangeChannel = createInteractionChannel<Range>("range");
 
-export const RangeSensor = (options: RangeSensorOptions = {}): Sensor => {
-  const { name = "range-selection", onRangeComplete } = options;
-
-  // Closure state persists across calls
-  let rangeStart: number | null = null;
-
-  return (event: EngineEvent, context: SensorContext) => {
-    const { signal, chartX, isWithinPlot } = event;
-
-    if (!isWithinPlot) {
-      rangeStart = null;
-      context.removeInteraction(name);
+function RangeSensor<T>(): Sensor<T> {
+  let owner: string | null = null;
+  let start = 0;
+  return ({ signal, chartX, isWithinPlot }, context) => {
+    const stream = JSON.stringify([signal.userId, signal.source, signal.id]);
+    if (signal.action === InputAction.START && isWithinPlot && owner === null) {
+      owner = stream;
+      start = chartX;
+      signal.native?.capturePointer();
+      signal.native?.preventDefault();
+    }
+    if (
+      signal.action === InputAction.CANCEL &&
+      (signal.cancelScope === "chart" || owner === stream)
+    ) {
+      owner = null;
+      context.removeInteraction(rangeChannel);
       return;
     }
-
-    switch (signal.action) {
-      case InputAction.START:
-        rangeStart = chartX;
-        break;
-
-      case InputAction.MOVE:
-        if (rangeStart !== null) {
-          context.upsertInteraction(name, {
-            start: Math.min(rangeStart, chartX),
-            end: Math.max(rangeStart, chartX),
-            isActive: true,
-          });
-        }
-        break;
-
-      case InputAction.END:
-        if (rangeStart !== null) {
-          const start = Math.min(rangeStart, chartX);
-          const end = Math.max(rangeStart, chartX);
-          context.upsertInteraction(name, { start, end, isActive: false });
-          onRangeComplete?.(start, end);
-          rangeStart = null;
-        }
-        break;
-
-      case InputAction.CANCEL:
-        rangeStart = null;
-        context.removeInteraction(name);
-        break;
-    }
+    if (
+      owner !== stream ||
+      ![InputAction.START, InputAction.MOVE, InputAction.END].includes(
+        signal.action,
+      )
+    )
+      return;
+    const active = signal.action !== InputAction.END;
+    context.upsertInteraction(rangeChannel, {
+      start: Math.min(start, chartX),
+      end: Math.max(start, chartX),
+      active,
+    });
+    if (!active) owner = null;
   };
-};
+}
 ```
 
-Register by passing to `sensors` prop (replaces pointer defaults — include `DataHoverSensor` if you still want hover):
+Create each stateful sensor once per chart instance, for example with `useMemo`.
+Include `Chart.sensors.DataHoverSensor()` if the chart should also retain pointer
+hover. Keyboard navigation remains available for unclaimed keyboard actions.
 
-```tsx
-<Chart
-  data={data}
-  type="bar"
-  x="month"
-  y="value"
-  sensors={[
-    DataHoverSensor({ verticalSlice: true }),
-    KeyboardSensor(),
-    RangeSensor({ onRangeComplete: (start, end) => console.log(start, end) }),
-  ]}
-/>
-```
+Native controls are synchronous capabilities: capture or prevent the default
+inside the `START` callback. They expire when the native listener returns and
+are unavailable on deferred movement. Capturing a pointer does not disable the
+browser's touch scrolling; choose an appropriate `touch-action` for a dedicated
+gesture surface. Input signals include pointer type, buttons, pressure, keyboard
+code/repeat, and keyboard phase (`keyPhase: "down" | "up"`). A custom keyboard sensor sets `event.claimed`
+to own an action; `event.handled` requests native default prevention. Unclaimed
+keys reach baseline keyboard navigation. `engine.subscribeCancellation(listener)`
+observes stream or chart cancellation, including engine disposal; return its
+unsubscribe function from the owning behavior cleanup. Native capture release
+follows engine cancellation even when a keyboard or remote producer initiates it.
+
+`hitPolicy: "exact"` requires a DOM hit; `"topmost"` prefers the front DOM hit
+and falls back to magnetic picking; `"nearest"` chooses by distance.
 
 ## Behaviors
 
-Behaviors subscribe to the store and update D3 visuals in response to interaction changes. They run once when the chart is "ready" and return a cleanup function.
+Behaviors subscribe to state and update visuals. Each behavior instance attaches to a ready plot and returns a cleanup function.
 
 ### Type Signature
 
 ```tsx
-type Behavior<T = any> = (context: BehaviorContext<T>) => Cleanup | void;
-type Cleanup = () => void;
+type Behavior<T = unknown> = (
+  context: BehaviorContext<T>,
+) => (() => void) | void;
+type GenericBehavior = <T>(context: BehaviorContext<T>) => (() => void) | void;
 
-interface BehaviorContext<T> {
-  getChartContext: () => ContextValue<T> & {
-    g: D3Selection | null;  // SVG plot group — use for D3 rendering
-  };
-  getInteraction: (name: string) => Interaction | null;
-  upsertInteraction: (name: string, interaction: any) => void;
-  removeInteraction: (name: string) => void;
+interface BehaviorContext<T> extends InteractionAccess<T> {
+  getChartContext: () => ContextValue<T> & { g: D3Selection | null };
 }
 ```
 
+Use `Behavior<Row>` for a datum-specific behavior, or `GenericBehavior` when it
+works with any datum type. Both contexts expose typed `getInteraction`,
+`upsertInteraction`, and `removeInteraction`. `subscribeInteraction(channel, listener, equality?)`
+notifies only when that channel changes, using `Object.is` by default. Read the
+initial snapshot explicitly before subscribing. `batchInteractions(writer =>
+{ ... })` stages related updates with read-your-writes and publishes once;
+throwing discards the staged changes. The callback must be synchronous; async callbacks are rejected. Subscriber errors are reported independently so healthy subscribers still run. Subscriptions observe the latest committed snapshot, not an event log: reentrant writes can supersede intermediate snapshots before later subscribers read them.
+
+Use `upsertHoverInteraction(channel, reading)` when the chart should keep a
+reading synchronized with its series and geometry. Built-in hover and keyboard
+sensors use this method for both named and typed channels. Streaming updates
+refresh managed readings, and actual series or geometry removal clears them.
+Custom geometry is authoritative; it is never projected through Cartesian
+accessors while waiting for the renderer's geometry update. Preserve the opaque
+`geometryOwner` field when copying engine targets.
+
+`upsertInteraction` leaves reconciliation to your extension, even on
+`primary-hover`. It also removes any previous managed registration for that
+channel. This is appropriate for the range example, or linked readings whose
+semantic identity policy is controlled by an application. Batch writers expose
+both operations and publish their management metadata atomically.
+
+Hover readings can set `anchor: "target"` to attach tooltips to the current
+selected point. The default `"pointer"` policy follows the supplied pointer
+position. Keyboard sensors use target anchoring, including during stationary
+data and layout updates.
+
+Behaviors retain their closure and DOM when siblings are added, removed, or
+reordered. Removing a behavior or replacing its plot runs its cleanup. Keep
+behavior factory instances stable across React renders.
+
 ### Built-in Behaviors
 
-| Behavior | Options | Description |
-|----------|---------|-------------|
-| `Tooltip` | `{ on?, render? }` | Positions tooltip near pointer |
-| `Cursor` | `{ on?, showX?, showY? }` | Vertical/horizontal crosshair lines |
-| `Markers` | `{ on?, radius?, color? }` | Circles at hovered data points |
-| `Dim` | `{ on?, selector?, opacity? }` | Dims non-hovered elements (default 0.3 opacity) |
-| `Selection` | `{ mode?, on?, onSelectionChange? }` | Manages selected data, fires callback |
-| `DraggablePuck` | `{ on?, radius?, color?, showGhost? }` | Visual feedback for drag (puck + ghost + connecting line) |
+| Behavior          | Options                                | Description                                                 |
+| ----------------- | -------------------------------------- | ----------------------------------------------------------- |
+| `Tooltip`         | `{ on?, render? }`                     | Positions tooltip near pointer                              |
+| `Cursor`          | `{ on?, showX?, showY? }`              | Vertical/horizontal crosshair lines                         |
+| `Markers`         | `{ on?, radius?, color? }`             | Circles at hovered data points                              |
+| `Dim`             | `{ on?, selector?, opacity? }`         | Dims non-hovered elements (default 0.3 opacity)             |
+| `SelectionUpdate` | `{ on?, fn? }`                         | Reflects selection and delivers selected data to a callback |
+| `DraggablePuck`   | `{ on?, radius?, color?, showGhost? }` | Visual feedback for drag (puck + ghost + connecting line)   |
 
 **Defaults by chart type:**
+
 - All types: `Tooltip` + `Cursor({ showX: true })`
 - line/area: + `Markers({ radius: 8 })`
 - bar/scatter: + `Dim`
 
 ### Creating a Custom Behavior
 
+This behavior consumes the `rangeChannel` above without a cast or direct store
+write. Its initial read also supports a range created before the behavior mounts.
+
 ```tsx
-import type { Behavior, InteractionTarget } from "./types";
+import type { Behavior } from "doom-design-system";
 
-interface HighlightRangeOptions {
-  on?: string;          // Interaction channel to listen to
-  color?: string;
-}
-
-export const HighlightRange = (options: HighlightRangeOptions = {}): Behavior => {
-  const { on = "range-selection", color = "var(--primary)" } = options;
-
+function HighlightRange<T>(): Behavior<T> {
   return (context) => {
-    const ctx = context.getChartContext();
-    if (!ctx?.g) return;
-
-    const { g, chartStore } = ctx;
-
-    // Create a D3 layer for the highlight rectangle
-    const layer = g.append("g").attr("class", "range-highlight-layer");
-    const rect = layer
+    const { g, chartStore } = context.getChartContext();
+    if (!g) return;
+    const rect = g
       .append("rect")
-      .attr("fill", color)
+      .attr("fill", "var(--primary)")
       .attr("opacity", 0.15)
-      .attr("y", 0)
-      .attr("height", chartStore.getState().dimensions.innerHeight)
-      .style("display", "none");
-
-    // Subscribe to store — runs on every interaction change
-    const unsubscribe = chartStore.subscribe(() => {
-      const interaction = context.getInteraction(on) as any;
-
-      if (!interaction || !interaction.isActive) {
-        rect.style("display", "none");
-        return;
-      }
-
-      const { start, end } = interaction;
-      rect
-        .attr("x", start)
-        .attr("width", end - start)
-        .style("display", null);
-    });
-
-    // Cleanup: remove DOM elements and unsubscribe
+      .attr("pointer-events", "none");
+    const draw = () => {
+      const range = context.getInteraction(rangeChannel);
+      rect.attr("display", range ? null : "none");
+      if (range)
+        rect
+          .attr("x", range.start)
+          .attr("y", 0)
+          .attr("width", range.end - range.start)
+          .attr("height", chartStore.getState().dimensions.innerHeight);
+    };
+    draw();
+    const unsubscribe = chartStore.subscribe(draw);
     return () => {
       unsubscribe();
-      layer.remove();
+      rect.remove();
     };
   };
-};
+}
 ```
 
-Register by passing to `behaviors` prop (replaces all defaults — include `Tooltip`/`Cursor` if you still want them):
+This example subscribes to the chart store because its height must follow layout
+changes as well as the range. A behavior depending only on the range can use
+`context.subscribeInteraction(rangeChannel, draw)` instead.
 
-```tsx
-<Chart
-  data={data}
-  type="bar"
-  x="month"
-  y="value"
-  sensors={[
-    DataHoverSensor({ verticalSlice: true }),
-    RangeSensor(),
-  ]}
-  behaviors={[
-    Tooltip(),
-    Cursor({ showX: true }),
-    HighlightRange({ on: "range-selection", color: "var(--primary)" }),
-  ]}
-/>
-```
+Tooltip renderers receive one stable payload: `{ data, targets, pointer }`.
+`data` is always an array; targets carry series metadata and SVG coordinates.
+The default multi-series tooltip renders only identified targets. Without a
+series ID it displays the first target using the root accessors; it never
+reconstructs additional series by category. Use `render` for custom payloads.
+Multiple cursor or tooltip behaviors own independent overlays and can observe
+different channels without replacing each other.
 
 ## Composition API Subcomponents
 
-| Subcomponent | Description |
-|-------------|-------------|
-| `Chart.Root` | Creates store + engine, provides context, manages resize |
-| `Chart.Header` | Title + subtitle container, accepts `<Chart.Legend />` as child |
-| `Chart.Footer` | Footer content below the chart |
-| `Chart.Legend` | Series legend |
-| `Chart.Plot` | SVG wrapper with proper transforms |
+| Subcomponent   | Description                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| `Chart.Root`   | Creates store + engine, provides context, manages resize                                    |
+| `Chart.Header` | Title + subtitle container, accepts `<Chart.Legend />` as child                             |
+| `Chart.Footer` | Footer content below the chart                                                              |
+| `Chart.Legend` | Series legend                                                                               |
+| `Chart.Plot`   | SVG wrapper with proper transforms                                                          |
 | `Chart.Series` | Router: switches on `type` to `LineSeries`, `BarSeries`, `ScatterSeries`, or `CustomSeries` |
-| `Chart.Grid` | Grid lines |
-| `Chart.Axis` | X/Y axes with labels |
-| `Chart.Cursor` | Crosshair lines (reads from `CURSOR_CONFIG` channel) |
+| `Chart.Grid`   | Grid lines                                                                                  |
+| `Chart.Axis`   | X/Y axes with labels                                                                        |
+| `Chart.Cursor` | Crosshair lines (reads from `CURSOR_CONFIG` channel)                                        |
 
 ## RenderFrame Type
 
 Available in the `render` prop and `CustomSeries`:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `container` | `D3Selection<T>` | SVG group — use for D3 rendering |
-| `data` | `T[]` | Chart data |
-| `size` | `{ width, height, radius }` | Plot dimensions |
-| `scales` | `{ x?: XScale, y?: YScale }` | D3 scale instances |
-| `theme` | `{ colors: string[], isMobile: boolean }` | Theme values |
-| `config` | `Config` | Active d3Config |
-| `seriesId` | `string` | Series identifier |
-| `resolveInteraction` | `(event) => { element, data } \| null` | Hit-test helper |
-| `chartDataAttrs` | `{ TYPE, SERIES_ID, INDEX, DRAGGABLE }` | DOM data attributes for hit detection |
+| Field                | Type                                      | Description                                              |
+| -------------------- | ----------------------------------------- | -------------------------------------------------------- |
+| `container`          | `D3Selection<T>`                          | SVG group — use for D3 rendering                         |
+| `data`               | `T[]`                                     | Chart data                                               |
+| `size`               | `{ width, height, radius }`               | Plot dimensions                                          |
+| `scales`             | `{ x?: XScale, y?: YScale }`              | D3 scale instances                                       |
+| `theme`              | `{ colors: string[], isMobile: boolean }` | Theme values                                             |
+| `config`             | `Config`                                  | Active d3Config                                          |
+| `seriesId`           | `string`                                  | Series identifier                                        |
+| `resolveInteraction` | `(event) => { element, data } \| null`    | Hit-test helper                                          |
+| `chartDataAttrs`     | `{ TYPE, SERIES_ID, INDEX, DRAGGABLE }`   | DOM data attributes for hit detection                    |
+| `geometry`           | `CustomGeometry<T>`                       | Owner-scoped interaction points for this custom renderer |
+
+### Custom geometry
+
+Custom renderers receive `frame.geometry.update(points)`. Points use local
+render-group coordinates; an optional `element` identifies a nested SVG
+coordinate system. Supply `data`, `dataIndex`, `x`, and `y`; the chart supplies
+the owning series ID. Rendering and interaction geometry should be updated
+together. Passing an empty array clears that owner's points. Unmounting the
+series disposes its registration, while root data updates preserve other owners.
+Custom renderers also run with empty data so D3 joins can remove stale marks.
+
+A sensor or behavior can also call `context.getChartContext().engine.registerGeometry`
+for an independent registration, with explicit series IDs and SVG coordinates.
+Its `update` replaces only its own geometry; its `dispose` belongs in cleanup.
+Custom owner updates do not rebuild the root index. When registrations share a
+series/index identity, the most recently registered custom owner takes precedence;
+disposing it reveals the previous owner. Prefer unique identities for unrelated marks.
 
 ## Notes
 
@@ -620,11 +641,11 @@ Available in the `render` prop and `CustomSeries`:
 
 These options belong to `Chart.Series` with `type="bar"`:
 
-| Prop | Type | Default | Behavior |
-|------|------|---------|----------|
-| `orientation` | `"vertical" \| "horizontal"` | Inherited, otherwise vertical | First explicit declaration establishes the orientation. Omitted siblings inherit it. |
-| `barWidth` | `number \| "auto"` | `"auto"` | Thickness in pixels, centered in the category band; automatic thickness fills the band. |
-| `stackId` | `string` | Unstacked | Adds preceding series values for the same category and stack ID. |
+| Prop          | Type                         | Default                       | Behavior                                                                                |
+| ------------- | ---------------------------- | ----------------------------- | --------------------------------------------------------------------------------------- |
+| `orientation` | `"vertical" \| "horizontal"` | Inherited, otherwise vertical | First explicit declaration establishes the orientation. Omitted siblings inherit it.    |
+| `barWidth`    | `number \| "auto"`           | `"auto"`                      | Thickness in pixels, centered in the category band; automatic thickness fills the band. |
+| `stackId`     | `string`                     | Unstacked                     | Adds preceding series values for the same category and stack ID.                        |
 
 Accessors describe physical axes: horizontal bars use numeric `x` and category `y`; vertical bars use category `x` and numeric `y`. Functions and property keys both work.
 
@@ -632,10 +653,21 @@ Accessors describe physical axes: horizontal bars use numeric `x` and category `
 <Chart.Root data={rows} type="bar" x="actual" y="category">
   <Chart.Plot>
     <Chart.Grid />
-    <Chart.Series type="bar" orientation="horizontal" x="actual"
-      label="Actual" stackId="sales" barWidth={28} />
-    <Chart.Series type="bar" x="forecast"
-      label="Forecast" stackId="sales" barWidth={28} />
+    <Chart.Series
+      type="bar"
+      orientation="horizontal"
+      x="actual"
+      label="Actual"
+      stackId="sales"
+      barWidth={28}
+    />
+    <Chart.Series
+      type="bar"
+      x="forecast"
+      label="Forecast"
+      stackId="sales"
+      barWidth={28}
+    />
     <Chart.Axis />
   </Chart.Plot>
 </Chart.Root>
@@ -648,3 +680,12 @@ Different stack IDs accumulate independently. They share the category center rat
 All bars in one chart share an orientation. A later explicitly conflicting series is omitted with a console diagnostic. Use separate charts for different orientations. Mixed line/area/scatter and bar charts are supported with vertical bars and shared compatible axes; root line domains are retained and expanded to include bar totals. Non-bar series on horizontal bar axes are omitted with a console diagnostic; use separate charts.
 
 Default hover and keyboard navigation use each series' own matching category row. Horizontal tooltips and accessible bar labels read category followed by value. Arrow keys navigate categories; Escape clears the focused reading. Live-region DOM tests cover emitted text, not screen-reader behavior.
+
+## Performance verification
+
+`npm run test:performance:chart` runs the isolated Chromium dense-scatter
+benchmark, reporting activation cost and warmed frame/handler percentiles.
+Compare runs on the same machine and browser; these timings are informational.
+Normal browser CI retains deterministic bounds on spatial query counts and
+mark-style writes. It also runs custom brush, multi-pointer, keyboard, linked
+streaming, geometry, and behavior-ownership regressions.

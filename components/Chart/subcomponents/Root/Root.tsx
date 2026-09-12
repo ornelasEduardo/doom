@@ -17,6 +17,8 @@ import { useEngine } from "../../hooks/useEngine";
 import { SensorManager } from "../../sensors/SensorManager/SensorManager";
 import {
   createChartStore,
+  installManagedHoverResolver,
+  refreshManagedHover,
   Store,
   updateChartAccessors,
   updateChartDimensions,
@@ -275,6 +277,28 @@ export function Root<T>({
   const { engine } = useEngine<T>();
 
   useLayoutEffect(() => {
+    const uninstall = installManagedHoverResolver(chartStore, (target) => {
+      const series = chartStore
+        .getState()
+        .processedSeries.find((series) => series.id === target.seriesId);
+      return target.geometryOwner || series?.type === "custom"
+        ? engine.resolveTarget(target)
+        : undefined;
+    });
+    const unsubscribe = engine.subscribeGeometryChanges(() =>
+      refreshManagedHover(chartStore),
+    );
+    return () => {
+      unsubscribe();
+      uninstall();
+    };
+  }, [chartStore, engine]);
+
+  useEffect(() => {
+    refreshManagedHover(chartStore);
+  });
+
+  useLayoutEffect(() => {
     if (!containerRef.current) {
       return;
     }
@@ -313,7 +337,8 @@ export function Root<T>({
   const indexInputsRef = useRef<unknown[] | null>(null);
 
   useEffect(() => {
-    return chartStore.subscribe(() => {
+    let refreshFrame: number | null = null;
+    const unsubscribe = chartStore.subscribe(() => {
       const state = chartStore.getState();
       if (!state) {
         return;
@@ -353,6 +378,10 @@ export function Root<T>({
 
         if (hasSeries) {
           processedSeries.forEach((series: SeriesType) => {
+            // Custom renderers own their actual geometry; accessors do not describe annotations.
+            if (series.type === "custom") {
+              return;
+            }
             const seriesData = series.data || data;
             if (!seriesData) {
               return;
@@ -464,8 +493,24 @@ export function Root<T>({
         }
 
         engine.updateData(allPoints);
+      } else {
+        engine.updateData([]);
+      }
+      // DOM-only custom renderers publish their new marks during React effects.
+      // Resolve stationary targets after that commit, once per layout/data frame.
+      if (refreshFrame === null) {
+        refreshFrame = requestAnimationFrame(() => {
+          refreshFrame = null;
+          refreshManagedHover(chartStore);
+        });
       }
     });
+    return () => {
+      unsubscribe();
+      if (refreshFrame !== null) {
+        cancelAnimationFrame(refreshFrame);
+      }
+    };
   }, [chartStore, engine, x, y]);
 
   const [xMin, xMax] = xDomain ?? [];

@@ -63,6 +63,7 @@ describe("InteractionLayer", () => {
     vi.clearAllMocks();
 
     const mockEngine = {
+      subscribeCancellation: () => () => {},
       input: mockEngineInput,
       createSignal: mockCreateSignal.mockReturnValue({
         id: 0,
@@ -230,7 +231,7 @@ describe("InteractionLayer", () => {
       expect(mockEngineInput).toHaveBeenCalled();
     });
 
-    it("should ignore non-navigation keyboard events", () => {
+    it("forwards arbitrary keyboard events", () => {
       render(
         <ContainerWrapper>
           <InteractionLayer />
@@ -240,8 +241,7 @@ describe("InteractionLayer", () => {
       const container = document.querySelector("[data-chart-container]")!;
       fireEvent.keyDown(container, { key: "a" });
 
-      // Should not call createKeySignal for regular keys
-      expect(mockCreateKeySignal).not.toHaveBeenCalled();
+      expect(mockCreateKeySignal).toHaveBeenCalled();
     });
   });
 
@@ -298,27 +298,19 @@ describe("InteractionLayer", () => {
   // ===========================================================================
 
   describe("Throttling", () => {
-    it("forwards pointercancel immediately and discards a queued move", () => {
-      let queued: FrameRequestCallback = () => {};
-      vi.mocked(window.requestAnimationFrame).mockImplementation((callback) => {
-        queued = callback;
-        return 7;
-      });
+    it("forwards moves and cancel immediately without a layer frame", () => {
+      vi.mocked(window.requestAnimationFrame).mockImplementation(() => 7);
       render(
         <ContainerWrapper>
           <InteractionLayer />
         </ContainerWrapper>,
       );
       const container = document.querySelector("[data-chart-container]")!;
-      fireEvent.pointerMove(container, { pointerType: "touch" });
-      fireEvent.pointerCancel(container, { pointerType: "touch" });
-      expect(mockCreateSignal).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "pointercancel" }),
-        "CANCEL",
-      );
-      expect(window.cancelAnimationFrame).toHaveBeenCalledWith(7);
-      queued(0);
-      expect(mockEngineInput).toHaveBeenCalledTimes(1);
+      fireEvent.pointerMove(container, { pointerId: 1 });
+      fireEvent.pointerMove(container, { pointerId: 2 });
+      fireEvent.pointerCancel(container, { pointerId: 1 });
+      expect(mockEngineInput).toHaveBeenCalledTimes(3);
+      expect(window.requestAnimationFrame).not.toHaveBeenCalled();
     });
 
     it("dismisses on an outside touch without cancelling an inside touch", () => {
@@ -352,39 +344,6 @@ describe("InteractionLayer", () => {
       ]);
     });
 
-    it("coalesces pointermove events into one engine input per frame", () => {
-      // Hold the frame instead of running it, so we can observe what is queued.
-      let frameCallback: FrameRequestCallback | null = null;
-      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-        frameCallback = cb;
-        return 1;
-      });
-
-      render(
-        <ContainerWrapper>
-          <InteractionLayer />
-        </ContainerWrapper>,
-      );
-
-      const container = document.querySelector("[data-chart-container]")!;
-
-      fireEvent.pointerMove(container, { clientX: 10, clientY: 10 });
-      fireEvent.pointerMove(container, { clientX: 20, clientY: 20 });
-      fireEvent.pointerMove(container, { clientX: 30, clientY: 30 });
-
-      // All three share one frame, so nothing has reached the engine yet.
-      expect(mockEngineInput).not.toHaveBeenCalled();
-
-      frameCallback!(0);
-
-      // One dispatch for the whole frame, carrying the most recent position.
-      expect(mockEngineInput).toHaveBeenCalledTimes(1);
-      const dispatched =
-        mockCreateSignal.mock.calls[mockCreateSignal.mock.calls.length - 1][0];
-      expect(dispatched.clientX).toBe(30);
-      expect(dispatched.clientY).toBe(30);
-    });
-
     it("should process state-change events immediately (not throttled)", () => {
       // Reset RAF mock to NOT execute immediately
       vi.restoreAllMocks();
@@ -396,6 +355,7 @@ describe("InteractionLayer", () => {
 
       (useEngine as ReturnType<typeof vi.fn>).mockReturnValue({
         engine: {
+          subscribeCancellation: () => () => {},
           input: mockEngineInput,
           createSignal: mockCreateSignal.mockReturnValue({ id: 0 }),
           createKeySignal: mockCreateKeySignal,
@@ -406,6 +366,7 @@ describe("InteractionLayer", () => {
       (useChartContext as ReturnType<typeof vi.fn>).mockReturnValue({
         chartStore: { getState: mockGetState },
         engine: {
+          subscribeCancellation: () => () => {},
           input: mockEngineInput,
           createSignal: mockCreateSignal.mockReturnValue({ id: 0 }),
           createKeySignal: mockCreateKeySignal,
@@ -464,6 +425,8 @@ describe("InteractionLayer", () => {
       // cleanup returns early, and says nothing about which element it ran on.
       expect(removed.sort()).toEqual([
         "keydown",
+        "keyup",
+        "lostpointercapture",
         "pointercancel",
         "pointerdown",
         "pointerleave",
@@ -472,28 +435,18 @@ describe("InteractionLayer", () => {
       ]);
     });
 
-    it("cancels a pending move frame on unmount", () => {
-      let queued: FrameRequestCallback | null = null;
-      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-        queued = cb;
-        return 7;
-      });
-      const cancel = vi.spyOn(window, "cancelAnimationFrame");
-
-      const { unmount } = render(
+    it("forwards keyup", () => {
+      render(
         <ContainerWrapper>
           <InteractionLayer />
         </ContainerWrapper>,
       );
-
-      const container = document.querySelector("[data-chart-container]")!;
-      fireEvent.pointerMove(container, { clientX: 10, clientY: 10 });
-      expect(queued).not.toBeNull();
-
-      unmount();
-
-      // A frame left pending would dispatch into a torn-down chart.
-      expect(cancel).toHaveBeenCalledWith(7);
+      fireEvent.keyUp(document.querySelector("[data-chart-container]")!, {
+        key: "a",
+      });
+      expect(mockCreateKeySignal).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "keyup" }),
+      );
     });
   });
 });

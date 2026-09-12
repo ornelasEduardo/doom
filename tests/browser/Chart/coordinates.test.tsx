@@ -141,7 +141,7 @@ it("keeps differently scaled chart instances independent", async () => {
 });
 
 it("preserves exact DOM hits on scaled bars away from their spatial centers", async () => {
-  const sensors = [Chart.sensors.DataHoverSensor({ exactHit: true })];
+  const sensors = [Chart.sensors.DataHoverSensor({ hitPolicy: "exact" })];
   const { container } = render(
     <DesignSystemProvider>
       <div style={{ transform: "scale(0.75)", transformOrigin: "top left" }}>

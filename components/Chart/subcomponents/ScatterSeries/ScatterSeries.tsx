@@ -84,6 +84,7 @@ const ScatterSeriesComponent = <T,>({
 
   useEffect(() => {
     if (!yAccessor) {
+      unregisterSeries(chartStore, seriesId);
       return;
     }
     registerSeries(chartStore, seriesId, [
@@ -98,9 +99,6 @@ const ScatterSeriesComponent = <T,>({
         interactionMode: "xy",
       } as any,
     ]);
-    return () => {
-      unregisterSeries(chartStore, seriesId);
-    };
   }, [
     chartStore,
     seriesId,
@@ -109,8 +107,14 @@ const ScatterSeriesComponent = <T,>({
     xAccessor,
     label,
     hideCursor,
+    localData,
     data,
   ]);
+
+  useEffect(
+    () => () => unregisterSeries(chartStore, seriesId),
+    [chartStore, seriesId],
+  );
 
   if (
     !xScale ||

@@ -96,23 +96,24 @@ it("keeps custom coordinates and multi-series tooltips after data and layout upd
   await expect
     .poll(tooltip)
     .toMatch(/^20(?:Custom:60Root:90|Root:90Custom:60)$/);
-  await expect
-    .poll(() => {
-      const state = store.getState();
-      const hover = state.interactions.get(
-        InteractionChannel.PRIMARY_HOVER,
-      ) as HoverInteraction;
-      const target = hover?.targets.find(
-        (item) => item.seriesId === mark().getAttribute("data-chart-series"),
-      );
-      return target?.coordinate;
-    })
-    .toEqual({
-      x:
-        Number(mark().getAttribute("cx")) +
-        store!.getState().dimensions.margin.left,
-      y:
-        Number(mark().getAttribute("cy")) +
-        store!.getState().dimensions.margin.top,
-    });
+  for (const axis of ["x", "y"] as const) {
+    await expect
+      .poll(() => {
+        const state = store.getState();
+        const hover = state.interactions.get(
+          InteractionChannel.PRIMARY_HOVER,
+        ) as HoverInteraction;
+        const coordinate = hover?.targets.find(
+          (item) => item.seriesId === mark().getAttribute("data-chart-series"),
+        )?.coordinate[axis];
+        const expected =
+          Number(mark().getAttribute(axis === "x" ? "cx" : "cy")) +
+          state.dimensions.margin[axis === "x" ? "left" : "top"];
+        return coordinate === undefined
+          ? Infinity
+          : Math.abs(coordinate - expected);
+      })
+      // DOM rectangles quantize SVG subpixels differently across browser engines.
+      .toBeLessThan(0.02);
+  }
 });

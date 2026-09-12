@@ -34,6 +34,7 @@ export const CHART_DATA_ATTRS = {
  * This is stored in memory for fast spatial queries.
  */
 export interface IndexedPoint<T = unknown> {
+  /** Position in the chart SVG coordinate system, including plot margins. */
   x: number;
   y: number;
   data: T;
@@ -48,6 +49,11 @@ export interface IndexedPoint<T = unknown> {
 // =============================================================================
 // SPATIAL MAP CLASS
 // =============================================================================
+
+export interface GeometryRegistration<T = unknown> {
+  update(points: IndexedPoint<T>[]): void;
+  dispose(): void;
+}
 
 export interface SpatialMapOptions {
   /**
@@ -76,7 +82,11 @@ export interface SpatialMapOptions {
  */
 export class SpatialMap<T = unknown> {
   private tree: Quadtree<IndexedPoint<T>> | null = null;
-  private points: IndexedPoint<T>[] = [];
+  private owners = new Map<symbol, SpatialMap<T>>();
+  private geometryOwners = new WeakMap<object, SpatialMap<T> | null>();
+  private geometryOwner?: object;
+  private plotElement: Element | null = null;
+  private sortedX: number[] = [];
   private xBuckets: Map<number, IndexedPoint<T>[]> = new Map();
   private yBuckets: Map<number, IndexedPoint<T>[]> = new Map();
   private identities = new Map<string, Map<number, IndexedPoint<T>>>();
@@ -94,8 +104,12 @@ export class SpatialMap<T = unknown> {
    * Set the container element for DOM-based hit testing.
    * Elements outside this container are ignored.
    */
-  setContainer(element: Element | null): void {
+  setContainer(
+    element: Element | null,
+    plotElement: Element | null = null,
+  ): void {
     this.containerElement = element;
+    this.plotElement = plotElement;
   }
 
   /**
@@ -105,7 +119,7 @@ export class SpatialMap<T = unknown> {
    * @param points - The data points with their pixel coordinates
    */
   updateIndex(points: IndexedPoint<T>[]): void {
-    this.points = points;
+    this.sortedX = [];
     this.yBuckets.clear();
     this.identities.clear();
 
@@ -133,13 +147,82 @@ export class SpatialMap<T = unknown> {
       bucket.push(p);
       buckets.set(coordinate, bucket);
     }
+    this.sortedX = [...this.xBuckets.keys()].sort((a, b) => a - b);
+  }
+
+  /** Each owner has an independent index: moving a handle never scans root marks. */
+  registerGeometry(points: IndexedPoint<T>[] = []): GeometryRegistration<T> {
+    const owner = Symbol("geometry");
+    const index = new SpatialMap<T>({
+      ...this.options,
+      useDomHitTesting: false,
+    });
+    const token = Object.freeze({});
+    index.geometryOwner = token;
+    this.geometryOwners.set(token, index);
+    index.updateIndex(points);
+    this.owners.set(owner, index);
+    return {
+      update: (next) => {
+        if (this.owners.has(owner)) {
+          index.updateIndex(next);
+        }
+      },
+      dispose: () => {
+        this.owners.delete(owner);
+        this.geometryOwners.set(token, null);
+      },
+    };
+  }
+
+  // Later registrations win identity collisions, independently of update order.
+  private lookupPoint(
+    seriesId: string,
+    dataIndex: number,
+  ): IndexedPoint<T> | undefined {
+    const owners = Array.from(this.owners.values());
+    for (let i = owners.length - 1; i >= 0; i--) {
+      const point = owners[i].identities.get(seriesId)?.get(dataIndex);
+      if (point) {
+        return point;
+      }
+    }
+    return this.identities.get(seriesId)?.get(dataIndex);
+  }
+
+  private getGeometryOwner(point: IndexedPoint<T>): object | undefined {
+    if (this.geometryOwner) {
+      return this.geometryOwner;
+    }
+    const owners = [...this.owners.values()];
+    for (let i = owners.length - 1; i >= 0; i--) {
+      if (
+        owners[i].identities.get(point.seriesId)?.get(point.dataIndex) === point
+      ) {
+        return owners[i].geometryOwner;
+      }
+    }
+    return undefined;
+  }
+
+  private isVisible = (point: IndexedPoint<T>): boolean =>
+    this.lookupPoint(point.seriesId, point.dataIndex) === point;
+
+  private slicePoints(axis: "x" | "y", coordinate: number): IndexedPoint<T>[] {
+    return [this, ...this.owners.values()].flatMap((index) =>
+      (
+        (axis === "y" ? index.yBuckets : index.xBuckets).get(coordinate) ?? []
+      ).filter(this.isVisible),
+    );
   }
 
   /**
    * Clear the spatial index.
    */
   clear(): void {
-    this.points = [];
+    this.owners.clear();
+    this.geometryOwners = new WeakMap();
+    this.sortedX = [];
     this.yBuckets.clear();
     this.identities.clear();
     this.tree = null;
@@ -154,10 +237,11 @@ export class SpatialMap<T = unknown> {
    * @param x - The exact X pixel coordinate (as stored in the index)
    */
   findAllAtX(x: number): InteractionCandidate<T>[] {
-    const bucket = this.xBuckets.get(x) ?? [];
+    const bucket = this.slicePoints("x", x);
     return bucket.map((p) => ({
       type: "data-point" as CandidateType,
       data: p.data,
+      geometryOwner: this.getGeometryOwner(p),
       seriesId: p.seriesId,
       dataIndex: p.dataIndex,
       coordinate: { x: p.x, y: p.y },
@@ -168,21 +252,118 @@ export class SpatialMap<T = unknown> {
     }));
   }
 
+  resolveTarget(
+    seriesId: string,
+    dataIndex: number,
+    geometryOwner?: object,
+  ): InteractionCandidate<T> | null | undefined {
+    const owned = geometryOwner
+      ? this.geometryOwners.get(geometryOwner)
+      : undefined;
+    const point = geometryOwner
+      ? owned?.identities.get(seriesId)?.get(dataIndex)
+      : this.lookupPoint(seriesId, dataIndex);
+    if (geometryOwner && !point) {
+      return null;
+    }
+    if (point) {
+      const token = geometryOwner ?? this.getGeometryOwner(point);
+      if (!token) {
+        return undefined;
+      }
+      return {
+        type: "data-point",
+        data: point.data,
+        seriesId,
+        dataIndex,
+        geometryOwner: token,
+        coordinate: { x: point.x, y: point.y },
+        distance: 0,
+        seriesColor: point.seriesColor,
+        suppressMarker: point.suppressMarker,
+        draggable: point.draggable,
+      };
+    }
+    if (!this.containerElement) {
+      return null;
+    }
+    for (const element of this.containerElement.querySelectorAll(
+      `[${CHART_DATA_ATTRS.TYPE}]`,
+    )) {
+      if (
+        element.getAttribute(CHART_DATA_ATTRS.SERIES_ID) !== seriesId ||
+        element.getAttribute(CHART_DATA_ATTRS.INDEX) !== String(dataIndex)
+      ) {
+        continue;
+      }
+      return this.hydrateElement(
+        element,
+        element.getAttribute(CHART_DATA_ATTRS.TYPE)!,
+        0,
+        0,
+      );
+    }
+    return null;
+  }
+
   findSlice(candidate: InteractionCandidate<T>): InteractionCandidate<T>[] {
     const point =
       candidate.seriesId !== undefined && candidate.dataIndex !== undefined
-        ? this.identities.get(candidate.seriesId)?.get(candidate.dataIndex)
+        ? this.lookupPoint(candidate.seriesId, candidate.dataIndex)
         : undefined;
     if (!point) {
-      return this.findAllAtX(candidate.coordinate.x);
+      if (!candidate.element) {
+        return this.findAllAtX(candidate.coordinate.x);
+      }
+      // DOM rectangles round subpixel centers; match only the adjacent X bucket,
+      // not a magnetic radius that could pull in a different category.
+      const peers = [this, ...this.owners.values()].flatMap((index) => {
+        const xs = index.sortedX;
+        const x = candidate.coordinate.x;
+        let low = 0;
+        let high = xs.length;
+        while (low < high) {
+          const mid = (low + high) >>> 1;
+          if (xs[mid] < x) {
+            low = mid + 1;
+          } else {
+            high = mid;
+          }
+        }
+        const closest = [xs[low - 1], xs[low]]
+          .filter((value): value is number => value !== undefined)
+          .sort((a, b) => Math.abs(a - x) - Math.abs(b - x))[0];
+        return closest !== undefined && Math.abs(closest - x) <= 0.5
+          ? index
+              .findAllAtX(closest)
+              .filter(
+                (peer) =>
+                  peer.seriesId !== undefined &&
+                  peer.dataIndex !== undefined &&
+                  this.lookupPoint(peer.seriesId, peer.dataIndex) ===
+                    index.identities.get(peer.seriesId)?.get(peer.dataIndex),
+              )
+          : [];
+      });
+      return [
+        candidate,
+        ...peers.filter(
+          (peer) =>
+            !(
+              peer.seriesId === candidate.seriesId &&
+              peer.dataIndex === candidate.dataIndex
+            ),
+        ),
+      ];
     }
-    const bucket =
-      point.sliceAxis === "y"
-        ? this.yBuckets.get(point.y)
-        : this.xBuckets.get(point.x);
+    const bucket = this.slicePoints(
+      point.sliceAxis ?? "x",
+      point.sliceAxis === "y" ? point.y : point.x,
+    );
     return (bucket ?? []).map((p) => ({
       type: "data-point",
       data: p.data,
+      geometryOwner: this.getGeometryOwner(p),
       seriesId: p.seriesId,
       dataIndex: p.dataIndex,
       coordinate: { x: p.x, y: p.y },
@@ -196,10 +377,10 @@ export class SpatialMap<T = unknown> {
   /**
    * Find all interaction candidates near a point.
    *
-   * @param x - X coordinate (relative to plot area for Quadtree)
-   * @param y - Y coordinate (relative to plot area for Quadtree)
+   * @param x - X coordinate in the chart SVG
+   * @param y - Y coordinate in the chart SVG
    * @param containerPoint - Optional container-relative coordinates for DOM hit testing
-   * @returns Sorted array of candidates (closest first)
+   * @returns DOM hits in stacking order, followed by nearest indexed points
    */
   find(
     x: number,
@@ -219,13 +400,24 @@ export class SpatialMap<T = unknown> {
     }
 
     // Phase 2: Quadtree (Fine Phase)
-    const treeCandidates = this.findFromTree(x, y);
+    const treeCandidates = [this, ...this.owners.values()].flatMap((index) =>
+      index.findFromTree(x, y, this.isVisible),
+    );
     candidates.push(...treeCandidates);
 
     candidates.sort((a, b) => {
       const zDiff = (b.zIndex ?? 0) - (a.zIndex ?? 0);
       if (zDiff !== 0) {
         return zDiff;
+      }
+      if (a.element && b.element) {
+        return 0;
+      }
+      if (a.element) {
+        return -1;
+      }
+      if (b.element) {
+        return 1;
       }
       return a.distance - b.distance;
     });
@@ -283,8 +475,7 @@ export class SpatialMap<T = unknown> {
     const seriesId =
       element.getAttribute(CHART_DATA_ATTRS.SERIES_ID) ?? undefined;
     const indexStr = element.getAttribute(CHART_DATA_ATTRS.INDEX);
-    const draggable =
-      element.getAttribute(CHART_DATA_ATTRS.DRAGGABLE) === "true";
+    const draggableAttribute = element.getAttribute(CHART_DATA_ATTRS.DRAGGABLE);
 
     const rect = element.getBoundingClientRect();
     const containerRect = this.containerElement?.getBoundingClientRect();
@@ -306,28 +497,36 @@ export class SpatialMap<T = unknown> {
       pointerY - elementCenterY,
     );
 
+    let indexed: IndexedPoint<T> | undefined;
     let data: T | undefined;
     let dataIndex: number | undefined;
 
     if (indexStr !== null && seriesId) {
       dataIndex = parseInt(indexStr, 10);
-      const point = this.identities.get(seriesId)?.get(dataIndex);
-      if (point) {
-        data = point.data;
-      }
+      indexed = this.lookupPoint(seriesId, dataIndex);
+      data = indexed?.data;
     }
 
     // Fall back to D3's __data__ binding for custom renders that don't index their points
-    if (!data) {
-      const d3Data = (element as any).__data__;
-      if (d3Data && !Array.isArray(d3Data)) {
+    if (data === undefined) {
+      const d3Data = (element as Element & { __data__?: T }).__data__;
+      if (d3Data !== undefined && !Array.isArray(d3Data)) {
         data = d3Data as T;
       }
     }
 
+    const plotRect = this.plotElement?.getBoundingClientRect();
+    const offsetX = plotRect
+      ? (plotRect.left - containerRect.left) / scale.x -
+        (parseFloat(style.borderLeftWidth) || 0)
+      : 0;
+    const offsetY = plotRect
+      ? (plotRect.top - containerRect.top) / scale.y -
+        (parseFloat(style.borderTopWidth) || 0)
+      : 0;
     const zIndex = parseZIndex(element);
 
-    if (!data) {
+    if (data === undefined) {
       return null;
     }
 
@@ -336,10 +535,16 @@ export class SpatialMap<T = unknown> {
       data,
       seriesId,
       dataIndex,
-      coordinate: { x: elementCenterX, y: elementCenterY },
+      coordinate: { x: elementCenterX - offsetX, y: elementCenterY - offsetY },
       distance,
       element,
-      draggable,
+      geometryOwner: indexed ? this.getGeometryOwner(indexed) : undefined,
+      seriesColor: indexed?.seriesColor,
+      suppressMarker: indexed?.suppressMarker,
+      draggable:
+        draggableAttribute === null
+          ? indexed?.draggable
+          : draggableAttribute === "true",
       zIndex,
     };
   }
@@ -347,7 +552,11 @@ export class SpatialMap<T = unknown> {
   /**
    * Find candidates using the Quadtree (nearby data points).
    */
-  private findFromTree(x: number, y: number): InteractionCandidate<T>[] {
+  private findFromTree(
+    x: number,
+    y: number,
+    isVisible: (point: IndexedPoint<T>) => boolean,
+  ): InteractionCandidate<T>[] {
     if (!this.tree) {
       return [];
     }
@@ -371,12 +580,13 @@ export class SpatialMap<T = unknown> {
         let current: LeafNode | undefined = node;
         while (current) {
           const point = current.data;
-          if (point) {
+          if (point && isVisible(point)) {
             const distance = Math.hypot(point.x - x, point.y - y);
             if (distance <= radius) {
               candidates.push({
                 type: "data-point",
                 data: point.data,
+                geometryOwner: this.geometryOwner,
                 seriesId: point.seriesId,
                 dataIndex: point.dataIndex,
                 coordinate: { x: point.x, y: point.y },
