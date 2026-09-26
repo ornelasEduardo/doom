@@ -157,3 +157,129 @@ it("retains the last drawing during replacement and ignores a cancelled worker",
   unmount();
   expect(first.terminate).toHaveBeenCalledTimes(1);
 });
+
+it.each(["raw", "projected"] as const)(
+  "preserves edits when revisiting a completed %s dataset",
+  (encoding) => {
+    WorkerDouble.instances = [];
+    vi.stubGlobal("Worker", WorkerDouble);
+    const { result, rerender, unmount } = renderHook(
+      ({ count }) => useCompactWorld(count, 0, encoding),
+      { initialProps: { count: 100000 } },
+    );
+    const complete = (worker: WorkerDouble) => {
+      const buffers = prepareCompact(100000, 0, encoding);
+      act(() => {
+        worker.send({
+          stage: "draw",
+          encoding,
+          positions: buffers.positions,
+          values: encoding === "projected" ? buffers.values : undefined,
+          preparationMs: 1,
+        });
+        worker.send({
+          stage: "ready",
+          grid: buffers.grid,
+          values: encoding === "raw" ? buffers.values : undefined,
+          indexMs: 2,
+        });
+      });
+    };
+    complete(WorkerDouble.instances[0]);
+    const completed = result.current.world;
+    rerender({ count: 8 });
+    expect(result.current.world.length).toBe(8);
+    rerender({ count: 100000 });
+    expect(result.current.loading).toBe(false);
+    act(() =>
+      result.current.world.patch([
+        { index: 0, x: result.current.world.get(0).requests, y: 123 },
+      ]),
+    );
+    for (const replacement of WorkerDouble.instances.slice(1)) {
+      complete(replacement);
+    }
+    expect(result.current.world.get(0).latency).toBe(123);
+    expect(result.current.world).toBe(completed);
+    expect(WorkerDouble.instances).toHaveLength(1);
+    unmount();
+  },
+);
+
+it.each([
+  { count: 100001, revision: 0, encoding: "projected" as const },
+  { count: 100000, revision: 1, encoding: "projected" as const },
+  { count: 100000, revision: 0, encoding: "raw" as const },
+])(
+  "prepares a replacement when the completed cache key changes: %j",
+  (next) => {
+    WorkerDouble.instances = [];
+    vi.stubGlobal("Worker", WorkerDouble);
+    const { result, rerender, unmount } = renderHook(
+      ({
+        count,
+        revision,
+        encoding,
+      }: {
+        count: number;
+        revision: number;
+        encoding: "raw" | "projected";
+      }) => useCompactWorld(count, revision, encoding),
+      {
+        initialProps: {
+          count: 100000,
+          revision: 0,
+          encoding: "projected" as "raw" | "projected",
+        },
+      },
+    );
+    const buffers = prepareCompact(100000);
+    act(() => {
+      WorkerDouble.instances[0].send({
+        stage: "draw",
+        encoding: "projected",
+        values: buffers.values,
+        positions: buffers.positions,
+        preparationMs: 1,
+      });
+      WorkerDouble.instances[0].send({
+        stage: "ready",
+        grid: buffers.grid,
+        indexMs: 2,
+      });
+    });
+    expect(result.current.loading).toBe(false);
+    rerender(next);
+    expect(result.current.loading).toBe(true);
+    expect(WorkerDouble.instances[1].postMessage).toHaveBeenCalledWith(next);
+    unmount();
+  },
+);
+it("restarts an incomplete cached drawing after visiting a small dataset", () => {
+  WorkerDouble.instances = [];
+  vi.stubGlobal("Worker", WorkerDouble);
+  const { result, rerender, unmount } = renderHook(
+    ({ count }) => useCompactWorld(count, 0),
+    { initialProps: { count: 100000 } },
+  );
+  const buffers = prepareCompact(100000);
+  act(() =>
+    WorkerDouble.instances[0].send({
+      stage: "draw",
+      encoding: "projected",
+      values: buffers.values,
+      positions: buffers.positions,
+      preparationMs: 1,
+    }),
+  );
+  rerender({ count: 8 });
+  rerender({ count: 100000 });
+  expect(result.current.loading).toBe(true);
+  expect(result.current.world.ready).toBe(false);
+  expect(WorkerDouble.instances[1].postMessage).toHaveBeenCalledWith({
+    count: 100000,
+    revision: 0,
+    encoding: "projected",
+  });
+  unmount();
+});

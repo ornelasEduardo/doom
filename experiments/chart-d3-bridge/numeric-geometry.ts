@@ -14,6 +14,11 @@ export interface NumericChange {
   y: number;
 }
 
+const typedArrayName = Object.getOwnPropertyDescriptor(
+  Object.getPrototypeOf(Float32Array.prototype),
+  Symbol.toStringTag,
+)!.get!;
+
 /** Columns are borrowed exclusively; callers publish mutations through patch. */
 export function createNumericGeometry(
   input: {
@@ -37,7 +42,9 @@ export function createNumericGeometry(
   const column = (source: NumericColumn) => {
     const offset = source.offset ?? 0,
       stride = source.stride ?? 1;
+    const type = typedArrayName.call(source.values);
     if (
+      (type !== "Float32Array" && type !== "Float64Array") ||
       !Number.isInteger(offset) ||
       offset < 0 ||
       !Number.isInteger(stride) ||
@@ -46,7 +53,7 @@ export function createNumericGeometry(
     ) {
       throw new RangeError("Invalid numeric column");
     }
-    return { ...source, offset, stride };
+    return { ...source, offset, stride, float32: type === "Float32Array" };
   };
   const x = column(input.x),
     y = column(input.y);
@@ -181,10 +188,8 @@ export function createNumericGeometry(
       }
       const updates = Array.from(pending.values(), (change) => {
         // Respect the storage precision before deriving CPU and GPU coordinates.
-        const vx =
-          x.values instanceof Float32Array ? Math.fround(change.x) : change.x;
-        const vy =
-          y.values instanceof Float32Array ? Math.fround(change.y) : change.y;
+        const vx = x.float32 ? Math.fround(change.x) : change.x;
+        const vy = y.float32 ? Math.fround(change.y) : change.y;
         return { ...change, x: vx, y: vy, projected: project(vx, vy) };
       });
       const changed: number[] = [];

@@ -1,3 +1,5 @@
+import { runInNewContext } from "node:vm";
+
 import { expect, it } from "vitest";
 
 import { createNumericGeometry } from "./numeric-geometry";
@@ -182,3 +184,75 @@ it.each(["raw", "projected"] as const)(
     ).toThrow(RangeError);
   },
 );
+
+it.each(["x", "y"] as const)(
+  "projects stored cross-realm Float32 precision on the %s axis",
+  (axis) => {
+    const foreign: Float32Array = runInNewContext("new Float32Array([0])");
+    const exact: Float64Array = runInNewContext("new Float64Array([0])");
+    const geometry = createNumericGeometry({
+      length: 1,
+      x: { values: axis === "x" ? foreign : exact },
+      y: { values: axis === "y" ? foreign : exact },
+      projectX: (v) => (v - 1) * 1e9,
+      projectY: (v) => (v - 1) * 1e9,
+    });
+    expect(
+      geometry.patch([{ index: 0, x: 1.00000001, y: 1.00000001 }]),
+    ).toEqual([0]);
+    const coordinate = axis === "x" ? 0 : 1;
+    expect(foreign[0]).toBe(1);
+    expect(exact[0]).toBe(1.00000001);
+    expect(geometry.coordinates[coordinate]).toBe(0);
+    expect(geometry.positions[coordinate]).toBe(0);
+    expect(geometry.coordinates[1 - coordinate]).toBeCloseTo(10);
+    expect(
+      geometry.patch([{ index: 0, x: 1.00000001, y: 1.00000001 }]),
+    ).toEqual([]);
+  },
+);
+it.each(["x", "y"] as const)(
+  "rejects cross-realm Float32 %s overflow before mutating a batch",
+  (axis) => {
+    const x: Float32Array = runInNewContext("new Float32Array([1, 2])");
+    const y: Float32Array = runInNewContext("new Float32Array([3, 4])");
+    const geometry = createNumericGeometry({
+      length: 2,
+      x: { values: x },
+      y: { values: y },
+      projectX: Math.log10,
+      projectY: Math.log10,
+    });
+    const coordinates = geometry.coordinates.slice();
+    const positions = geometry.positions.slice();
+    expect(() =>
+      geometry.patch([
+        { index: 0, x: 5, y: 6 },
+        { index: 1, x: 7, y: 8, [axis]: 1e40 },
+      ]),
+    ).toThrow(RangeError);
+    expect(Array.from(x)).toEqual([1, 2]);
+    expect(Array.from(y)).toEqual([3, 4]);
+    expect(geometry.coordinates).toEqual(coordinates);
+    expect(geometry.positions).toEqual(positions);
+  },
+);
+it.each([
+  new Int32Array([1]),
+  new Uint32Array([1]),
+  Object.defineProperty(new Int32Array([1]), Symbol.toStringTag, {
+    value: "Float32Array",
+  }),
+  [1],
+  { 0: 1, length: 1, [Symbol.toStringTag]: "Float32Array" },
+])("rejects non-floating column storage", (values) => {
+  expect(() =>
+    createNumericGeometry({
+      length: 1,
+      x: { values: values as unknown as Float32Array },
+      y: { values: new Float64Array([1]) },
+      projectX: (v) => v,
+      projectY: (v) => v,
+    }),
+  ).toThrow(RangeError);
+});

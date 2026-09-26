@@ -31,21 +31,20 @@ export function useCompactWorld(
     revision: -1,
     world: EMPTY,
   });
-  const previous = useRef(EMPTY);
-  const world =
-    small ??
-    (prepared.count === count &&
+  const matchesPrepared =
+    prepared.count === count &&
     prepared.revision === revision &&
-    prepared.encoding === encoding
-      ? prepared.world
-      : previous.current);
+    prepared.encoding === encoding;
+  const completed = matchesPrepared && prepared.world.ready;
+  const previous = useRef(EMPTY);
+  const world = small ?? (matchesPrepared ? prepared.world : previous.current);
   useEffect(() => {
     previous.current = world;
   }, [world]);
   const [error, setError] = useState<string>();
   useEffect(() => {
     setError(undefined);
-    if (small) {
+    if (small || completed) {
       return;
     }
     let active = true;
@@ -127,7 +126,7 @@ export function useCompactWorld(
       fail(cause);
     }
     return stop;
-  }, [count, revision, small, encoding]);
+  }, [count, revision, small, encoding, completed]);
   return {
     world,
     loading:
