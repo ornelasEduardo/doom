@@ -5,6 +5,7 @@ out float intensity;
 uniform float maxWeight;
 uniform vec2 viewport;
 uniform vec2 plot;
+uniform vec2 clipPadding;
 uniform vec3 zoom;
 uniform mat3 matrix;
 uniform highp float diameter;
@@ -30,16 +31,23 @@ void main() {
   vec2 local = projected * plot * zoom.z + zoom.xy;
   vec2 pixel = (matrix * vec3(local, 1.0)).xy;
   gl_Position = vec4(pixel.x / viewport.x * 2.0 - 1.0, 1.0 - pixel.y / viewport.y * 2.0, 0.0, 1.0);
-  if (any(lessThan(local, vec2(0.0))) || any(greaterThan(local, plot))) gl_Position = vec4(2.0,2.0,2.0,1.0);
+  if (any(lessThan(local, -clipPadding)) || any(greaterThan(local, plot + clipPadding))) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   gl_PointSize = diameter + 2.0;
 }`;
 const fragment = `#version 300 es
 precision mediump float;
 uniform vec4 color;
+uniform highp mat3 clipMatrix;
+uniform highp vec2 framebuffer;
+uniform highp vec2 viewport;
+uniform highp vec2 plot;
 uniform highp float diameter;
 in float intensity;
 out vec4 outputColor;
 void main() {
+  highp vec2 pixel = vec2(gl_FragCoord.x, framebuffer.y - gl_FragCoord.y) * viewport / framebuffer;
+  highp vec3 local = clipMatrix * vec3(pixel, 1.0);
+  if (local.z == 0.0 || any(lessThan(local.xy, vec2(0.0))) || any(greaterThan(local.xy, plot))) discard;
   // One device-pixel coverage ramp; output uses premultiplied alpha.
   float distance = length((gl_PointCoord - vec2(0.5)) * (diameter + 2.0));
   float coverage = clamp(diameter * 0.5 + 0.5 - distance, 0.0, 1.0);
@@ -109,6 +117,9 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         "plot",
         "zoom",
         "matrix",
+        "clipMatrix",
+        "clipPadding",
+        "framebuffer",
         "diameter",
         "color",
         "maxWeight",

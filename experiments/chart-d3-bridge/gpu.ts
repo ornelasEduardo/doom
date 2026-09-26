@@ -187,6 +187,40 @@ export function createGpuPoints(
         throw error;
       }
     }
+    const m = view.matrix;
+    const [a, b, c, d, e, f] = [m.a, m.b, m.c, m.d, m.e, m.f].map(Math.fround);
+    const determinant = a * d - b * c;
+    const inverse =
+      determinant === 0
+        ? [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        : [
+            d / determinant,
+            -b / determinant,
+            0,
+            -c / determinant,
+            a / determinant,
+            0,
+            (c * f - d * e) / determinant,
+            (b * e - a * f) / determinant,
+            1,
+          ];
+    const footprint = diameter * 0.5 + 1;
+    const padX =
+      determinant === 0
+        ? Infinity
+        : footprint *
+          Math.hypot(
+            (inverse[0] * view.width) / canvas.width,
+            (inverse[3] * view.height) / canvas.height,
+          );
+    const padY =
+      determinant === 0
+        ? Infinity
+        : footprint *
+          Math.hypot(
+            (inverse[1] * view.width) / canvas.width,
+            (inverse[4] * view.height) / canvas.height,
+          );
     const resources = owned!;
     const { program, buffer, vao, uniforms: u } = resources;
     context.useProgram(program);
@@ -235,18 +269,41 @@ export function createGpuPoints(
         );
         uploaded = data;
       }
-      const visible = (x: number, y: number) => {
-        const px =
-          ((xAxis[2] ? Math.log10(x) : x) - xAxis[0]) / (xAxis[1] - xAxis[0]);
-        const py =
-          ((yAxis[2] ? Math.log10(y) : y) - yAxis[0]) / (yAxis[1] - yAxis[0]);
+      const overlaps = (
+        value: number,
+        axis: number[],
+        size: number,
+        offset: number,
+        padding: number,
+      ) => {
+        if (!Number.isFinite(value) || (axis[2] && value <= 0)) {
+          return false;
+        }
+        // Log implementations have device-dependent error; uncertain patches must upload.
+        if (axis[2]) {
+          return true;
+        }
+        const start = Math.fround(axis[0]);
+        const span = Math.fround(Math.fround(axis[1]) - start);
+        const scale = Math.fround(size) * Math.fround(view.k);
+        const pixel = ((value - start) / span) * scale + Math.fround(offset);
+        // Include cancellation error as well as the transformed device-pixel footprint.
+        const error =
+          32 *
+          2 ** -23 *
+          (((Math.abs(value) + Math.abs(start)) / Math.abs(span)) *
+            Math.abs(scale) +
+            Math.abs(offset));
+        const margin = padding + error;
         return (
-          px * view.plotWidth * view.k + view.x >= 0 &&
-          px * view.plotWidth * view.k + view.x <= view.plotWidth &&
-          py * view.plotHeight * view.k + view.y >= 0 &&
-          py * view.plotHeight * view.k + view.y <= view.plotHeight
+          !Number.isFinite(pixel) ||
+          !Number.isFinite(margin) ||
+          (pixel >= -margin && pixel <= size + margin)
         );
       };
+      const visible = (x: number, y: number) =>
+        overlaps(x, xAxis, view.plotWidth, view.x, padX) &&
+        overlaps(y, yAxis, view.plotHeight, view.y, padY);
       const ready: number[] = [];
       for (const index of dirty) {
         const x = compact![index * 2];
@@ -295,7 +352,9 @@ export function createGpuPoints(
     context.uniform2f(u.viewport, view.width, view.height);
     context.uniform2f(u.plot, view.plotWidth, view.plotHeight);
     context.uniform3f(u.zoom, view.x, view.y, view.k);
-    const m = view.matrix;
+    context.uniform2f(u.framebuffer, canvas.width, canvas.height);
+    context.uniformMatrix3fv(u.clipMatrix, false, inverse);
+    context.uniform2f(u.clipPadding, padX, padY);
     context.uniformMatrix3fv(u.matrix, false, [
       m.a,
       m.b,
