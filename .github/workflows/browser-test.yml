@@ -49,3 +49,6 @@ jobs:
 
       - name: Run Chart cross-browser regressions
         run: npm run test:browser:chart
+
+      - name: Run Chart GPU rendering regressions
+        run: npm run test:proof:chart
