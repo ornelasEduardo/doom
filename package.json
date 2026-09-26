@@ -43,7 +43,9 @@
     "test:storybook:ci": "start-server-and-test \"http-server storybook-static --port ${STORYBOOK_TEST_PORT:-6006} --silent\" http://127.0.0.1:${STORYBOOK_TEST_PORT:-6006}/index.json \"npm run test:storybook -- --url http://127.0.0.1:${STORYBOOK_TEST_PORT:-6006} --ci\"",
     "typecheck": "tsc --noEmit --incremental false",
     "test:browser:chart": "vitest run --config vitest.chart-browser.config.ts",
-    "test:performance:chart": "vitest run --config vitest.chart-performance.config.ts"
+    "test:performance:chart": "vitest run --config vitest.chart-performance.config.ts",
+    "proof:chart": "vite --config experiments/chart-d3-bridge/vite.config.ts --host 127.0.0.1 --port 63410 --strictPort",
+    "test:proof:chart": "vitest run --config experiments/chart-d3-bridge/vitest.config.ts"
   },
   "keywords": [
     "design-system",
@@ -70,6 +72,7 @@
     "@testing-library/react": "^16.3.0",
     "@types/d3-format": "^3.0.4",
     "@types/d3-hierarchy": "^3.1.7",
+    "@types/d3-zoom": "^3.0.8",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
     "@types/styled-jsx": "^2.2.9",
@@ -83,6 +86,7 @@
     "chromatic": "^13.3.5",
     "copyfiles": "^2.4.1",
     "d3-hierarchy": "^3.1.2",
+    "d3-zoom": "^3.0.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
