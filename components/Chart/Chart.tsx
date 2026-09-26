@@ -35,7 +35,11 @@ export type {
   InteractionCandidate,
 } from "./engine";
 export { InputAction, InputSource } from "./engine";
-export type { GeometryRegistration, IndexedPoint } from "./engine/SpatialMap";
+export type {
+  GeometryRegistration,
+  GeometryViewport,
+  IndexedPoint,
+} from "./engine/SpatialMap";
 export type {
   Accessor,
   AxisDomain,

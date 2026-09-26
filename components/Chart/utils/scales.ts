@@ -4,6 +4,7 @@ import type { AxisValue } from "../types/accessors";
 import { AxisDomain } from "../types/props";
 import { Scale } from "../types/scales";
 import { d3 } from "./d3";
+import { numericBounds } from "./numericBounds";
 import { isSampleValue, numericSample } from "./sampleValidity";
 
 export type ChartXScale =
@@ -34,9 +35,15 @@ export function createScales<T>(
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
-  const xValues = data
-    .flatMap((datum) => (datum == null ? [] : [x(datum)]))
-    .filter(isSampleValue);
+  const xValues: AxisValue[] = [];
+  for (const datum of data) {
+    if (datum != null) {
+      const value = x(datum);
+      if (isSampleValue(value)) {
+        xValues.push(value);
+      }
+    }
+  }
   let xScale: ChartXScale;
 
   // Missing samples must not decide whether the axis is numeric.
@@ -66,13 +73,17 @@ export function createScales<T>(
       .padding(0.1);
   }
 
-  const yValues = data.flatMap((datum) => {
-    const value = datum == null ? undefined : numericSample(y(datum));
-    return value === undefined ? [] : [value];
-  });
+  function* yValues() {
+    for (const datum of data) {
+      const value = datum == null ? undefined : numericSample(y(datum));
+      if (value !== undefined) {
+        yield value;
+      }
+    }
+  }
   const yScale = d3
     .scaleLinear()
-    .domain(automaticYDomain(yValues))
+    .domain(automaticYDomain(yValues()))
     .nice()
     .range([innerHeight, 0]);
 
@@ -82,17 +93,17 @@ export function createScales<T>(
 /** Tick budget shared by the Y axis and the grid, so the two cannot drift. */
 export const yTickCount = (isMobile?: boolean) => (isMobile ? 3 : 5);
 
-export function automaticYDomain(values: number[]): [number, number] {
-  const finite = values.filter(Number.isFinite);
-  const min = Math.min(0, d3.min(finite) ?? 0);
-  const max = Math.max(0, d3.max(finite) ?? 0);
+export function automaticYDomain(values: Iterable<number>): [number, number] {
+  const bounds = numericBounds(values);
+  const min = Math.min(0, bounds?.[0] ?? 0);
+  const max = Math.max(0, bounds?.[1] ?? 0);
   return [min * 1.1, max * 1.1 || (min < 0 ? 0 : 1)];
 }
 
 function numericExtent(values: number[]): [number, number] {
-  const finite = values.filter(Number.isFinite);
-  const min = d3.min(finite) ?? 0;
-  const max = d3.max(finite) ?? 1;
+  const bounds = numericBounds(values);
+  const min = bounds?.[0] ?? 0;
+  const max = bounds?.[1] ?? 1;
   return min === max ? [min - 1, max + 1] : [min, max];
 }
 

@@ -30,6 +30,7 @@ export class Engine<T = unknown> {
   private disposing = false;
   private activeSignals: InputSignal[] = [];
   private invalidatedSignals = new WeakSet<InputSignal>();
+  private geometryRevision = 0;
   private geometrySubscribers = new Set<() => void>();
   private cancellationSubscribers = new Set<
     (event: EngineCancellation) => void
@@ -75,10 +76,20 @@ export class Engine<T = unknown> {
   }
 
   /** Register extension-owned hit geometry without replacing built-in series. */
+  navigateCompact(current: number, direction: 1 | -1) {
+    const candidate = this.spatialMap.navigateCompact(current, direction);
+    return candidate === undefined
+      ? undefined
+      : candidate?.data !== undefined
+        ? { ...candidate, data: candidate.data }
+        : null;
+  }
+
   registerGeometry(points: IndexedPoint<T>[] = []): GeometryRegistration<T> {
     const registration = this.spatialMap.registerGeometry(points);
     let active = true;
     const notify = () => {
+      this.geometryRevision += 1;
       this.geometrySubscribers.forEach((listener) => {
         try {
           listener();
@@ -89,11 +100,32 @@ export class Engine<T = unknown> {
     };
     notify();
     return {
-      update: (next) => {
+      updatePrepared: (points, grid, viewport) => {
         if (!active) {
           return;
         }
-        registration.update(next);
+        registration.updatePrepared(points, grid, viewport);
+        notify();
+      },
+      patch: (points) => {
+        if (!active || !points.length) {
+          return;
+        }
+        registration.patch(points);
+        notify();
+      },
+      setViewport: (viewport) => {
+        if (!active) {
+          return;
+        }
+        registration.setViewport(viewport);
+        notify();
+      },
+      update: (next, viewport) => {
+        if (!active) {
+          return;
+        }
+        registration.update(next, viewport);
         notify();
       },
       dispose: () => {
@@ -105,6 +137,11 @@ export class Engine<T = unknown> {
         notify();
       },
     };
+  }
+
+  /** Changes whenever extension-owned geometry is registered, replaced, or removed. */
+  getGeometryRevision(): number {
+    return this.geometryRevision;
   }
 
   subscribeGeometryChanges(listener: () => void): () => void {

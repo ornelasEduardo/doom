@@ -4,10 +4,14 @@
  * The "Hybrid Radar" that finds interaction candidates.
  * Combines DOM-based hit testing with Quadtree spatial queries.
  */
-
 import { Quadtree, quadtree } from "d3-quadtree";
 
 import { getElementScale } from "../utils/elementScale";
+import {
+  type GridBuffers,
+  type PointSource,
+  PreparedGrid,
+} from "./PreparedGrid";
 import { CandidateType, InteractionCandidate } from "./types";
 
 // =============================================================================
@@ -34,7 +38,7 @@ export const CHART_DATA_ATTRS = {
  * This is stored in memory for fast spatial queries.
  */
 export interface IndexedPoint<T = unknown> {
-  /** Position in the chart SVG coordinate system, including plot margins. */
+  /** Position in owner index coordinates; defaults to SVG coordinates including plot margins. */
   x: number;
   y: number;
   data: T;
@@ -50,8 +54,27 @@ export interface IndexedPoint<T = unknown> {
 // SPATIAL MAP CLASS
 // =============================================================================
 
+export interface GeometryViewport {
+  scaleX: number;
+  scaleY: number;
+  translateX: number;
+  translateY: number;
+  /** Visible rectangle in SVG coordinates. */
+  clip?: { x: number; y: number; width: number; height: number };
+}
+
 export interface GeometryRegistration<T = unknown> {
-  update(points: IndexedPoint<T>[]): void;
+  updatePrepared(
+    points: IndexedPoint<T>[] | PointSource<T>,
+    grid: GridBuffers,
+    viewport: GeometryViewport,
+  ): void;
+  /** Replace existing identities in one batch without rebuilding the owner index. */
+  patch(points: IndexedPoint<T>[]): void;
+  /** Positive axis-aligned projection; updates queries without rebuilding the index. */
+  setViewport(viewport: GeometryViewport | undefined): void;
+  /** Optional viewport is published with the replacement points; null restores SVG coordinates. */
+  update(points: IndexedPoint<T>[], viewport?: GeometryViewport | null): void;
   dispose(): void;
 }
 
@@ -81,6 +104,9 @@ export interface SpatialMapOptions {
  *    points with "magnetic" snapping (great for scatter/line charts).
  */
 export class SpatialMap<T = unknown> {
+  private viewport?: GeometryViewport;
+  private grid?: PreparedGrid<T>;
+  private sortedY: number[] = [];
   private tree: Quadtree<IndexedPoint<T>> | null = null;
   private owners = new Map<symbol, SpatialMap<T>>();
   private geometryOwners = new WeakMap<object, SpatialMap<T> | null>();
@@ -119,7 +145,9 @@ export class SpatialMap<T = unknown> {
    * @param points - The data points with their pixel coordinates
    */
   updateIndex(points: IndexedPoint<T>[]): void {
+    this.grid = undefined;
     this.sortedX = [];
+    this.sortedY = [];
     this.yBuckets.clear();
     this.identities.clear();
 
@@ -148,6 +176,83 @@ export class SpatialMap<T = unknown> {
       buckets.set(coordinate, bucket);
     }
     this.sortedX = [...this.xBuckets.keys()].sort((a, b) => a - b);
+    this.sortedY = [...this.yBuckets.keys()].sort((a, b) => a - b);
+  }
+
+  private patchIndex(points: IndexedPoint<T>[]): void {
+    if (this.grid) {
+      this.grid.patch(points);
+      return;
+    }
+    const changes = new Map<string, Map<number, IndexedPoint<T>>>();
+    for (const point of points) {
+      if (
+        !this.identities.get(point.seriesId)?.has(point.dataIndex) ||
+        !Number.isFinite(point.x) ||
+        !Number.isFinite(point.y)
+      ) {
+        throw new RangeError(
+          "Geometry patches require existing identities and finite coordinates",
+        );
+      }
+      const rows =
+        changes.get(point.seriesId) ?? new Map<number, IndexedPoint<T>>();
+      rows.set(point.dataIndex, point);
+      changes.set(point.seriesId, rows);
+    }
+    const changeBucket = (point: IndexedPoint<T>, add: boolean) => {
+      const vertical = point.sliceAxis === "y";
+      const buckets = vertical ? this.yBuckets : this.xBuckets;
+      const sorted = vertical ? this.sortedY : this.sortedX;
+      const coordinate = vertical ? point.y : point.x;
+      const bucket = buckets.get(coordinate);
+      if (add && bucket) {
+        bucket.push(point);
+        return;
+      }
+      if (!add && bucket && bucket.length > 1) {
+        bucket.splice(bucket.indexOf(point), 1);
+        return;
+      }
+      let low = 0,
+        high = sorted.length;
+      while (low < high) {
+        const middle = (low + high) >>> 1;
+        if (sorted[middle] < coordinate) {
+          low = middle + 1;
+        } else {
+          high = middle;
+        }
+      }
+      if (add) {
+        buckets.set(coordinate, [point]);
+        sorted.splice(low, 0, coordinate);
+      } else {
+        buckets.delete(coordinate);
+        sorted.splice(low, 1);
+      }
+    };
+    for (const [seriesId, rows] of changes) {
+      for (const [dataIndex, point] of rows) {
+        const previous = this.identities.get(seriesId)!.get(dataIndex)!;
+        this.tree!.remove(previous);
+        const axis = point.sliceAxis ?? "x";
+        if (
+          axis === (previous.sliceAxis ?? "x") &&
+          point[axis] === previous[axis]
+        ) {
+          const bucket = (axis === "x" ? this.xBuckets : this.yBuckets).get(
+            point[axis],
+          )!;
+          bucket[bucket.indexOf(previous)] = point;
+        } else {
+          changeBucket(previous, false);
+          changeBucket(point, true);
+        }
+        this.identities.get(seriesId)!.set(dataIndex, point);
+        this.tree!.add(point);
+      }
+    }
   }
 
   /** Each owner has an independent index: moving a handle never scans root marks. */
@@ -162,9 +267,55 @@ export class SpatialMap<T = unknown> {
     this.geometryOwners.set(token, index);
     index.updateIndex(points);
     this.owners.set(owner, index);
+    const setViewport = (viewport: GeometryViewport | undefined) => {
+      if (!this.owners.has(owner)) {
+        return;
+      }
+      if (
+        viewport &&
+        (!Number.isFinite(viewport.scaleX) ||
+          viewport.scaleX <= 0 ||
+          !Number.isFinite(viewport.scaleY) ||
+          viewport.scaleY <= 0 ||
+          !Number.isFinite(viewport.translateX) ||
+          !Number.isFinite(viewport.translateY) ||
+          (viewport.clip &&
+            (!Object.values(viewport.clip).every(Number.isFinite) ||
+              viewport.clip.width < 0 ||
+              viewport.clip.height < 0)))
+      ) {
+        throw new RangeError(
+          "Geometry viewport requires finite positive scales and a valid clip rectangle",
+        );
+      }
+      index.viewport = viewport
+        ? {
+            ...viewport,
+            clip: viewport.clip ? { ...viewport.clip } : undefined,
+          }
+        : undefined;
+    };
     return {
-      update: (next) => {
+      updatePrepared: (points, buffers, viewport) => {
+        if (!this.owners.has(owner)) {
+          return;
+        }
+        const grid = new PreparedGrid(points, buffers);
+        setViewport(viewport);
+        index.updateIndex([]);
+        index.grid = grid;
+      },
+      patch: (points) => {
         if (this.owners.has(owner)) {
+          index.patchIndex(points);
+        }
+      },
+      setViewport,
+      update: (next, viewport) => {
+        if (this.owners.has(owner)) {
+          if (viewport !== undefined) {
+            setViewport(viewport ?? undefined);
+          }
           index.updateIndex(next);
         }
       },
@@ -182,12 +333,53 @@ export class SpatialMap<T = unknown> {
   ): IndexedPoint<T> | undefined {
     const owners = Array.from(this.owners.values());
     for (let i = owners.length - 1; i >= 0; i--) {
-      const point = owners[i].identities.get(seriesId)?.get(dataIndex);
+      const point = owners[i].ownPoint(seriesId, dataIndex);
       if (point) {
         return point;
       }
     }
-    return this.identities.get(seriesId)?.get(dataIndex);
+    return this.ownPoint(seriesId, dataIndex);
+  }
+
+  private ownPoint(
+    seriesId: string,
+    dataIndex: number,
+  ): IndexedPoint<T> | undefined {
+    return (
+      this.grid?.get(seriesId, dataIndex) ??
+      this.identities.get(seriesId)?.get(dataIndex)
+    );
+  }
+
+  navigateCompact(
+    current: number,
+    direction: 1 | -1,
+  ): InteractionCandidate<T> | null | undefined {
+    const index = [...this.owners.values()]
+      .reverse()
+      .find((owner) => owner.grid?.lazy);
+    if (!index?.grid) {
+      return undefined;
+    }
+    const grid = index.grid;
+    let next = Math.max(0, Math.min(grid.length - 1, current + direction));
+    for (; next >= 0 && next < grid.length; next += direction) {
+      if (index.project(grid.coordinate(next) as IndexedPoint<T>)) {
+        const point = grid.at(next);
+        return (
+          this.resolveTarget(point.seriesId, next, index.geometryOwner) ?? null
+        );
+      }
+    }
+    return current >= 0 &&
+      current < grid.length &&
+      index.project(grid.coordinate(current) as IndexedPoint<T>)
+      ? (this.resolveTarget(
+          grid.at(current).seriesId,
+          current,
+          index.geometryOwner,
+        ) ?? null)
+      : null;
   }
 
   private getGeometryOwner(point: IndexedPoint<T>): object | undefined {
@@ -196,9 +388,7 @@ export class SpatialMap<T = unknown> {
     }
     const owners = [...this.owners.values()];
     for (let i = owners.length - 1; i >= 0; i--) {
-      if (
-        owners[i].identities.get(point.seriesId)?.get(point.dataIndex) === point
-      ) {
+      if (owners[i].ownPoint(point.seriesId, point.dataIndex) === point) {
         return owners[i].geometryOwner;
       }
     }
@@ -208,21 +398,110 @@ export class SpatialMap<T = unknown> {
   private isVisible = (point: IndexedPoint<T>): boolean =>
     this.lookupPoint(point.seriesId, point.dataIndex) === point;
 
-  private slicePoints(axis: "x" | "y", coordinate: number): IndexedPoint<T>[] {
-    return [this, ...this.owners.values()].flatMap((index) =>
-      (
-        (axis === "y" ? index.yBuckets : index.xBuckets).get(coordinate) ?? []
-      ).filter(this.isVisible),
+  private screenAxis(axis: "x" | "y", value: number): number {
+    const v = this.viewport;
+    return v
+      ? value * (axis === "x" ? v.scaleX : v.scaleY) +
+          (axis === "x" ? v.translateX : v.translateY)
+      : value;
+  }
+
+  private project(point: IndexedPoint<T>): { x: number; y: number } | null {
+    const coordinate = {
+      x: this.screenAxis("x", point.x),
+      y: this.screenAxis("y", point.y),
+    };
+    const clip = this.viewport?.clip;
+    return !Number.isFinite(coordinate.x) ||
+      !Number.isFinite(coordinate.y) ||
+      (clip &&
+        (coordinate.x < clip.x ||
+          coordinate.y < clip.y ||
+          coordinate.x > clip.x + clip.width ||
+          coordinate.y > clip.y + clip.height))
+      ? null
+      : coordinate;
+  }
+
+  private coordinates(point: IndexedPoint<T>): { x: number; y: number } | null {
+    const token = this.getGeometryOwner(point);
+    return (token ? (this.geometryOwners.get(token) ?? this) : this).project(
+      point,
     );
+  }
+
+  private slicePoints(axis: "x" | "y", coordinate: number): IndexedPoint<T>[] {
+    return [this, ...this.owners.values()].flatMap((index) => {
+      if (index.grid) {
+        const scale =
+          axis === "x"
+            ? (index.viewport?.scaleX ?? 1)
+            : (index.viewport?.scaleY ?? 1);
+        const translation =
+          axis === "x"
+            ? (index.viewport?.translateX ?? 0)
+            : (index.viewport?.translateY ?? 0);
+        const value = (coordinate - translation) / scale;
+        const tolerance =
+          (Number.EPSILON *
+            Math.max(1, Math.abs(coordinate), Math.abs(translation)) *
+            16) /
+          scale;
+        const points: IndexedPoint<T>[] = [];
+        index.grid.query(
+          axis === "x" ? value - tolerance : -Infinity,
+          axis === "y" ? value - tolerance : -Infinity,
+          axis === "x" ? value + tolerance : Infinity,
+          axis === "y" ? value + tolerance : Infinity,
+          (point) => {
+            if (
+              (point.sliceAxis ?? "x") === axis &&
+              this.isVisible(point) &&
+              index.project(point)
+            ) {
+              points.push(point);
+            }
+          },
+        );
+        return points;
+      }
+      const keys = axis === "x" ? index.sortedX : index.sortedY;
+      let low = 0,
+        high = keys.length;
+      while (low < high) {
+        const middle = (low + high) >>> 1;
+        if (index.screenAxis(axis, keys[middle]) < coordinate) {
+          low = middle + 1;
+        } else {
+          high = middle;
+        }
+      }
+      const key = [keys[low - 1], keys[low]].find(
+        (value) =>
+          value !== undefined &&
+          Math.abs(index.screenAxis(axis, value) - coordinate) <=
+            Number.EPSILON * Math.max(1, Math.abs(coordinate)) * 8,
+      );
+      if (key === undefined) {
+        return [];
+      }
+      return (
+        (axis === "x" ? index.xBuckets : index.yBuckets).get(key) ?? []
+      ).filter(
+        (point) => this.isVisible(point) && index.project(point) !== null,
+      );
+    });
   }
 
   /**
    * Clear the spatial index.
    */
   clear(): void {
+    this.grid = undefined;
     this.owners.clear();
     this.geometryOwners = new WeakMap();
     this.sortedX = [];
+    this.sortedY = [];
     this.yBuckets.clear();
     this.identities.clear();
     this.tree = null;
@@ -244,7 +523,7 @@ export class SpatialMap<T = unknown> {
       geometryOwner: this.getGeometryOwner(p),
       seriesId: p.seriesId,
       dataIndex: p.dataIndex,
-      coordinate: { x: p.x, y: p.y },
+      coordinate: this.coordinates(p)!,
       distance: 0,
       seriesColor: p.seriesColor,
       draggable: p.draggable,
@@ -319,7 +598,7 @@ export class SpatialMap<T = unknown> {
       ? this.geometryOwners.get(geometryOwner)
       : undefined;
     const point = geometryOwner
-      ? owned?.identities.get(seriesId)?.get(dataIndex)
+      ? owned?.ownPoint(seriesId, dataIndex)
       : this.lookupPoint(seriesId, dataIndex);
     if (geometryOwner && !point) {
       return null;
@@ -329,13 +608,17 @@ export class SpatialMap<T = unknown> {
       if (!token) {
         return undefined;
       }
+      const coordinate = this.coordinates(point);
+      if (!coordinate) {
+        return null;
+      }
       return {
         type: "data-point",
         data: point.data,
         seriesId,
         dataIndex,
         geometryOwner: token,
-        coordinate: { x: point.x, y: point.y },
+        coordinate,
         distance: 0,
         seriesColor: point.seriesColor,
         suppressMarker: point.suppressMarker,
@@ -371,7 +654,7 @@ export class SpatialMap<T = unknown> {
         let high = xs.length;
         while (low < high) {
           const mid = (low + high) >>> 1;
-          if (xs[mid] < x) {
+          if (index.screenAxis("x", xs[mid]) < x) {
             low = mid + 1;
           } else {
             high = mid;
@@ -379,16 +662,21 @@ export class SpatialMap<T = unknown> {
         }
         const closest = [xs[low - 1], xs[low]]
           .filter((value): value is number => value !== undefined)
-          .sort((a, b) => Math.abs(a - x) - Math.abs(b - x))[0];
-        return closest !== undefined && Math.abs(closest - x) <= 0.5
+          .sort(
+            (a, b) =>
+              Math.abs(index.screenAxis("x", a) - x) -
+              Math.abs(index.screenAxis("x", b) - x),
+          )[0];
+        return closest !== undefined &&
+          Math.abs(index.screenAxis("x", closest) - x) <= 0.5
           ? index
-              .findAllAtX(closest)
+              .findAllAtX(index.screenAxis("x", closest))
               .filter(
                 (peer) =>
                   peer.seriesId !== undefined &&
                   peer.dataIndex !== undefined &&
                   this.lookupPoint(peer.seriesId, peer.dataIndex) ===
-                    index.identities.get(peer.seriesId)?.get(peer.dataIndex),
+                    index.ownPoint(peer.seriesId, peer.dataIndex),
               )
           : [];
       });
@@ -403,9 +691,13 @@ export class SpatialMap<T = unknown> {
         ),
       ];
     }
+    const coordinate = this.coordinates(point);
+    if (!coordinate) {
+      return [];
+    }
     const bucket = this.slicePoints(
       point.sliceAxis ?? "x",
-      point.sliceAxis === "y" ? point.y : point.x,
+      point.sliceAxis === "y" ? coordinate.y : coordinate.x,
     );
     return (bucket ?? []).map((p) => ({
       type: "data-point",
@@ -413,7 +705,7 @@ export class SpatialMap<T = unknown> {
       geometryOwner: this.getGeometryOwner(p),
       seriesId: p.seriesId,
       dataIndex: p.dataIndex,
-      coordinate: { x: p.x, y: p.y },
+      coordinate: this.coordinates(p)!,
       distance: 0,
       seriesColor: p.seriesColor,
       suppressMarker: p.suppressMarker,
@@ -450,7 +742,9 @@ export class SpatialMap<T = unknown> {
     const treeCandidates = [this, ...this.owners.values()].flatMap((index) =>
       index.findFromTree(x, y, this.isVisible),
     );
-    candidates.push(...treeCandidates);
+    for (const candidate of treeCandidates) {
+      candidates.push(candidate);
+    }
 
     candidates.sort((a, b) => {
       const zDiff = (b.zIndex ?? 0) - (a.zIndex ?? 0);
@@ -604,19 +898,72 @@ export class SpatialMap<T = unknown> {
     y: number,
     isVisible: (point: IndexedPoint<T>) => boolean,
   ): InteractionCandidate<T>[] {
-    if (!this.tree) {
+    if (!this.tree && !this.grid) {
       return [];
     }
 
     const candidates: InteractionCandidate<T>[] = [];
     const radius = this.options.magneticRadius;
+    const viewport = this.viewport;
+    const queryX = viewport ? (x - viewport.translateX) / viewport.scaleX : x;
+    const queryY = viewport ? (y - viewport.translateY) / viewport.scaleY : y;
+    const radiusX = radius / (viewport?.scaleX ?? 1);
+    const radiusY = radius / (viewport?.scaleY ?? 1);
 
-    this.tree.visit((node, x0, y0, x1, y1) => {
+    if (this.grid) {
+      this.grid.query(
+        queryX - radiusX,
+        queryY - radiusY,
+        queryX + radiusX,
+        queryY + radiusY,
+        (point) => {
+          if (!isVisible(point)) {
+            return;
+          }
+          const coordinate = this.project(point);
+          if (!coordinate) {
+            return;
+          }
+          const distance = Math.hypot(coordinate.x - x, coordinate.y - y);
+          if (distance <= radius) {
+            candidates.push({
+              type: "data-point",
+              data: point.data,
+              geometryOwner: this.geometryOwner,
+              seriesId: point.seriesId,
+              dataIndex: point.dataIndex,
+              coordinate,
+              distance,
+              seriesColor: point.seriesColor,
+              draggable: point.draggable,
+              suppressMarker: point.suppressMarker,
+            });
+          }
+        },
+        (px, py) => {
+          const sx = this.screenAxis("x", px),
+            sy = this.screenAxis("y", py);
+          const clip = viewport?.clip;
+          return (
+            Number.isFinite(sx) &&
+            Number.isFinite(sy) &&
+            (!clip ||
+              (sx >= clip.x &&
+                sy >= clip.y &&
+                sx <= clip.x + clip.width &&
+                sy <= clip.y + clip.height)) &&
+            Math.hypot(sx - x, sy - y) <= radius
+          );
+        },
+      );
+      return candidates;
+    }
+    this.tree!.visit((node, x0, y0, x1, y1) => {
       if (
-        x0 > x + radius ||
-        x1 < x - radius ||
-        y0 > y + radius ||
-        y1 < y - radius
+        x0 > queryX + radiusX ||
+        x1 < queryX - radiusX ||
+        y0 > queryY + radiusY ||
+        y1 < queryY - radiusY
       ) {
         return true; // Skip this branch
       }
@@ -628,15 +975,18 @@ export class SpatialMap<T = unknown> {
         while (current) {
           const point = current.data;
           if (point && isVisible(point)) {
-            const distance = Math.hypot(point.x - x, point.y - y);
-            if (distance <= radius) {
+            const coordinate = this.project(point);
+            const distance = coordinate
+              ? Math.hypot(coordinate.x - x, coordinate.y - y)
+              : Infinity;
+            if (coordinate && distance <= radius) {
               candidates.push({
                 type: "data-point",
                 data: point.data,
                 geometryOwner: this.geometryOwner,
                 seriesId: point.seriesId,
                 dataIndex: point.dataIndex,
-                coordinate: { x: point.x, y: point.y },
+                coordinate,
                 distance,
                 seriesColor: point.seriesColor,
                 draggable: point.draggable,
