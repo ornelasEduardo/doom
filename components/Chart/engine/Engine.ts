@@ -79,8 +79,13 @@ export class Engine<T = unknown> {
   navigateCompact(
     current: Parameters<SpatialMap<T>["navigateCompact"]>[0],
     direction: 1 | -1,
+    categoryFor?: Parameters<SpatialMap<T>["navigateCompact"]>[2],
   ) {
-    const slice = this.spatialMap.navigateCompact(current, direction);
+    const slice = this.spatialMap.navigateCompact(
+      current,
+      direction,
+      categoryFor,
+    );
     return slice === undefined
       ? undefined
       : slice === null

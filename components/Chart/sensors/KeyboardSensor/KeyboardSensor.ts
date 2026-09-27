@@ -3,12 +3,14 @@ import {
   InputAction,
   type InteractionCandidate,
 } from "../../engine";
+import { resolveAccessor } from "../../types/accessors";
 import { GenericSensor, Sensor } from "../../types/events";
 import {
   ChannelReference,
   HoverInteraction,
   InteractionChannel,
 } from "../../types/interaction";
+import { categoryAccessor } from "../../utils/bars";
 import { getInteractionKey } from "../../utils/interactionChannels";
 import { buildNavigation, navigationKey } from "./navigation";
 
@@ -82,9 +84,26 @@ export function KeyboardSensor<T>(
     if (!xScale || !yScale) {
       return;
     }
+    const categories = new Map(
+      (state.processedSeries ?? []).map((series) => {
+        const accessor = categoryAccessor(series);
+        return [
+          series.id,
+          {
+            data: series.data,
+            get: accessor ? resolveAccessor(accessor) : undefined,
+          },
+        ];
+      }),
+    );
     const compactSlice = ctx.engine?.navigateCompact?.(
       compactCursor,
       forward ? 1 : -1,
+      (seriesId, dataIndex) => {
+        const series = categories.get(seriesId);
+        const datum = series?.data?.[dataIndex];
+        return datum == null ? undefined : series?.get?.(datum);
+      },
     );
     if (compactSlice !== undefined) {
       const compact = compactSlice?.[0];

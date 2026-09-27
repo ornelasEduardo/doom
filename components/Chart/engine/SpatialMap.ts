@@ -332,14 +332,20 @@ export class SpatialMap<T = unknown> {
     seriesId: string,
     dataIndex: number,
   ): IndexedPoint<T> | undefined {
+    return this.identityOwner(seriesId, dataIndex)?.ownPoint(
+      seriesId,
+      dataIndex,
+    );
+  }
+
+  private identityOwner(seriesId: string, dataIndex: number) {
     const owners = Array.from(this.owners.values());
     for (let i = owners.length - 1; i >= 0; i--) {
-      const point = owners[i].ownPoint(seriesId, dataIndex);
-      if (point) {
-        return point;
+      if (owners[i].ownsIdentity(seriesId, dataIndex)) {
+        return owners[i];
       }
     }
-    return this.ownPoint(seriesId, dataIndex);
+    return this.ownsIdentity(seriesId, dataIndex) ? this : undefined;
   }
 
   private ownPoint(
@@ -425,6 +431,7 @@ export class SpatialMap<T = unknown> {
       seriesId: string,
       dataIndex: number,
     ) => boolean,
+    categoryFor?: (seriesId: string, dataIndex: number) => unknown,
   ) {
     const ordinary = owners.map((owner) =>
       owner.grid
@@ -439,7 +446,12 @@ export class SpatialMap<T = unknown> {
     );
     const domTargets = this.unindexedKeyboardTargets(owners);
     ordinary[0].push(...domTargets.keys());
-    const slices = new Map<string, InteractionCandidate<T>[]>();
+    const slices = new Map<unknown, InteractionCandidate<T>[]>();
+    const categorySlices = new Map<
+      unknown,
+      { point: IndexedPoint<T>; target: InteractionCandidate<T> }[]
+    >();
+    let firstSeries: string | undefined;
     const leaders = new Map<IndexedPoint<T>, InteractionCandidate<T>[]>();
     ordinary.forEach((points, ownerIndex) => {
       const owner = owners[ownerIndex];
@@ -452,6 +464,17 @@ export class SpatialMap<T = unknown> {
           continue;
         }
         const axis = point.sliceAxis ?? "x";
+        const category = categoryFor?.(point.seriesId, point.dataIndex);
+        const categorized = category !== undefined && !Number.isNaN(category);
+        const target =
+          domTargets.get(point) ?? owner.keyboardTarget(point, coordinate);
+        firstSeries ??= point.seriesId;
+        if (categorized) {
+          const entries = categorySlices.get(category) ?? [];
+          entries.push({ point, target });
+          categorySlices.set(category, entries);
+          continue;
+        }
         const key = `${axis}:${coordinate[axis]}`;
         let slice = slices.get(key);
         if (!slice) {
@@ -459,11 +482,28 @@ export class SpatialMap<T = unknown> {
           slices.set(key, slice);
           leaders.set(point, slice);
         }
-        slice.push(
-          domTargets.get(point) ?? owner.keyboardTarget(point, coordinate),
-        );
+        slice.push(target);
       }
     });
+    for (const entries of categorySlices.values()) {
+      const firstBySeries = new Map<string, InteractionCandidate<T>>();
+      for (const { point, target } of entries) {
+        if (!firstBySeries.has(point.seriesId)) {
+          firstBySeries.set(point.seriesId, target);
+        }
+      }
+      const primary = entries.filter(
+        ({ point }) => point.seriesId === firstSeries,
+      );
+      for (const { point, target } of primary.length ? primary : [entries[0]]) {
+        leaders.set(
+          point,
+          [...firstBySeries].map(([seriesId, first]) =>
+            seriesId === point.seriesId ? target : first,
+          ),
+        );
+      }
+    }
     return { ordinary, leaders };
   }
 
@@ -474,6 +514,7 @@ export class SpatialMap<T = unknown> {
       "seriesId" | "dataIndex" | "geometryOwner"
     > | null,
     direction: 1 | -1,
+    categoryFor?: (seriesId: string, dataIndex: number) => unknown,
   ): InteractionCandidate<T>[] | null | undefined {
     const owners = [this, ...this.owners.values()];
     if (!owners.some((owner) => owner.grid?.lazy)) {
@@ -492,7 +533,11 @@ export class SpatialMap<T = unknown> {
       }
       return true;
     };
-    const { ordinary, leaders } = this.ordinaryKeyboardSlices(owners, visible);
+    const { ordinary, leaders } = this.ordinaryKeyboardSlices(
+      owners,
+      visible,
+      categoryFor,
+    );
     const currentOwner = current
       ? owners.findIndex(
           (owner) => owner.geometryOwner === current.geometryOwner,
@@ -566,8 +611,12 @@ export class SpatialMap<T = unknown> {
     return undefined;
   }
 
-  private isVisible = (point: IndexedPoint<T>): boolean =>
-    this.lookupPoint(point.seriesId, point.dataIndex) === point;
+  private isVisible(point: IndexedPoint<T>, owner: SpatialMap<T>): boolean {
+    return (
+      this.identityOwner(point.seriesId, point.dataIndex) === owner &&
+      owner.ownPoint(point.seriesId, point.dataIndex) === point
+    );
+  }
 
   private screenAxis(axis: "x" | "y", value: number): number {
     const v = this.viewport;
@@ -630,7 +679,7 @@ export class SpatialMap<T = unknown> {
           (point) => {
             if (
               (point.sliceAxis ?? "x") === axis &&
-              this.isVisible(point) &&
+              this.isVisible(point, index) &&
               index.project(point)
             ) {
               points.push(point);
@@ -638,7 +687,10 @@ export class SpatialMap<T = unknown> {
           },
           (x, y) => index.project({ x, y }) !== null,
         );
-        return points;
+        const exact = points.filter(
+          (point) => index.screenAxis(axis, point[axis]) === coordinate,
+        );
+        return exact.length ? exact : points;
       }
       const keys = axis === "x" ? index.sortedX : index.sortedY;
       let low = 0,
@@ -667,7 +719,8 @@ export class SpatialMap<T = unknown> {
       return (
         (axis === "x" ? index.xBuckets : index.yBuckets).get(key) ?? []
       ).filter(
-        (point) => this.isVisible(point) && index.project(point) !== null,
+        (point) =>
+          this.isVisible(point, index) && index.project(point) !== null,
       );
     });
   }
@@ -919,7 +972,7 @@ export class SpatialMap<T = unknown> {
 
     // Phase 2: Quadtree (Fine Phase)
     const treeCandidates = [this, ...this.owners.values()].flatMap((index) =>
-      index.findFromTree(x, y, this.isVisible),
+      index.findFromTree(x, y, (point) => this.isVisible(point, index)),
     );
     for (const candidate of treeCandidates) {
       candidates.push(candidate);

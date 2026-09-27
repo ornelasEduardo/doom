@@ -163,5 +163,7 @@ it("can retry failed context restoration on a later interaction", async () => {
   await expect
     .poll(() => primary().querySelector("[data-proof-ready-at]"))
     .not.toBeNull();
-  expect(primary().textContent).not.toContain("GPU rendering unavailable");
+  await expect
+    .poll(() => primary().textContent)
+    .not.toContain("GPU rendering unavailable");
 });
