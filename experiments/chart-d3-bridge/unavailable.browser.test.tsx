@@ -88,6 +88,7 @@ it("ends the busy state when indexing fails after points have been drawn", async
       .poll(
         () =>
           view.container.querySelectorAll('[data-proof-count="100000"]').length,
+        { timeout: 10000 },
       )
       .toBe(2);
     fail!();

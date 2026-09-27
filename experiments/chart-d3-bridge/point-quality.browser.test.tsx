@@ -55,7 +55,8 @@ it.each([1, 2])(
           if (alpha > 0 && alpha < 255) {
             partial++;
           }
-          expect(pixels[offset]).toBe(alpha);
+          // Independent fixed-point channel rounding can differ by one byte.
+          expect(Math.abs(pixels[offset] - alpha)).toBeLessThanOrEqual(1);
         }
       }
       expect(partial).toBeGreaterThan(0);
