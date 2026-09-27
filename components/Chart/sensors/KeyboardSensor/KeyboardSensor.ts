@@ -1,4 +1,8 @@
-import { EngineEvent, InputAction } from "../../engine";
+import {
+  EngineEvent,
+  InputAction,
+  type InteractionCandidate,
+} from "../../engine";
 import { GenericSensor, Sensor } from "../../types/events";
 import {
   ChannelReference,
@@ -27,6 +31,7 @@ export function KeyboardSensor<T>(
   const { name = InteractionChannel.PRIMARY_HOVER } = options;
   const channelKey = getInteractionKey(name);
   let focusedIndex = -1;
+  let compactCursor: InteractionCandidate<T> | null = null;
   let cached:
     | (ReturnType<typeof buildNavigation<T>> & { key: unknown[] })
     | undefined;
@@ -63,6 +68,7 @@ export function KeyboardSensor<T>(
     const state = chartStore.getState();
     const { scales } = state;
     if (signal.key === "Escape") {
+      compactCursor = null;
       focusedIndex = -1;
       remove();
       return;
@@ -76,17 +82,19 @@ export function KeyboardSensor<T>(
     if (!xScale || !yScale) {
       return;
     }
-    const compact = ctx.engine?.navigateCompact?.(
-      focusedIndex,
+    const compactSlice = ctx.engine?.navigateCompact?.(
+      compactCursor,
       forward ? 1 : -1,
     );
-    if (compact !== undefined) {
+    if (compactSlice !== undefined) {
+      const compact = compactSlice?.[0];
       if (!compact) {
+        compactCursor = null;
         focusedIndex = -1;
         remove();
         return;
       }
-      focusedIndex = compact.dataIndex ?? -1;
+      compactCursor = compact;
       const { margin } = state.dimensions;
       const x = compact.coordinate.x - margin.left,
         y = compact.coordinate.y - margin.top;
@@ -101,7 +109,7 @@ export function KeyboardSensor<T>(
           containerY: container.y,
           isTouch: false,
         },
-        targets: [compact],
+        targets: compactSlice!,
         target: compact,
       });
       const channels = handledChannels.get(event) ?? new Set<string | symbol>();
@@ -110,6 +118,7 @@ export function KeyboardSensor<T>(
       event.handled = true;
       return;
     }
+    compactCursor = null;
     const key = navigationKey(state, ctx.engine);
     if (
       !cached ||

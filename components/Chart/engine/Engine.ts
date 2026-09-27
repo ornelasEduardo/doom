@@ -75,16 +75,24 @@ export class Engine<T = unknown> {
     this.spatialMap.updateIndex(points);
   }
 
-  /** Register extension-owned hit geometry without replacing built-in series. */
-  navigateCompact(current: number, direction: 1 | -1) {
-    const candidate = this.spatialMap.navigateCompact(current, direction);
-    return candidate === undefined
+  /** Resolve the next keyboard slice when compact geometry is present. */
+  navigateCompact(
+    current: Parameters<SpatialMap<T>["navigateCompact"]>[0],
+    direction: 1 | -1,
+  ) {
+    const slice = this.spatialMap.navigateCompact(current, direction);
+    return slice === undefined
       ? undefined
-      : candidate?.data !== undefined
-        ? { ...candidate, data: candidate.data }
-        : null;
+      : slice === null
+        ? null
+        : slice.flatMap((candidate) =>
+            candidate.data !== undefined
+              ? [{ ...candidate, data: candidate.data }]
+              : [],
+          );
   }
 
+  /** Register extension-owned hit geometry without replacing built-in series. */
   registerGeometry(points: IndexedPoint<T>[] = []): GeometryRegistration<T> {
     const registration = this.spatialMap.registerGeometry(points);
     let active = true;

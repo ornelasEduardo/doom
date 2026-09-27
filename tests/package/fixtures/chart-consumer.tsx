@@ -4,9 +4,13 @@ import {
   Chart,
   type ChartProps,
   createInteractionChannel,
+  type CustomGeometrySource,
+  type GeometryViewport,
+  type GridBuffers,
   type HoverInteraction,
   InteractionChannel,
   type InteractionChannelHandle,
+  type RenderFrame,
   type Sensor,
   type SeriesProps,
 } from "doom-design-system";
@@ -35,6 +39,30 @@ const props: ChartProps<Row> = {
   sensors: [sensor],
   behaviors: [behavior],
 };
+
+declare const preparedGrid: GridBuffers;
+const numericSource: CustomGeometrySource<Row> = {
+  length: rows.length,
+  get: (index) => ({
+    data: rows[index],
+    dataIndex: index,
+    x: index,
+    y: rows[index].value,
+  }),
+};
+const projectedRenderer = ({ geometry }: RenderFrame<Row>) => {
+  const viewport: GeometryViewport = {
+    scaleX: 100,
+    scaleY: 200,
+    translateX: 0,
+    translateY: 0,
+    clip: { x: 0, y: 0, width: 100, height: 200 },
+  };
+  geometry.updatePrepared(numericSource, preparedGrid, viewport);
+  geometry.updateProjected(numericSource, viewport);
+  geometry.patchProjected([numericSource.get(0)]);
+};
+<Chart data={rows} render={projectedRenderer} />;
 <Chart {...props} />;
 <Chart.Root {...props} />;
 <Chart

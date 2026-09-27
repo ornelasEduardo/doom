@@ -29,11 +29,11 @@ it("adopts lazy geometry without materializing rows and navigates visible indice
     },
   );
   expect(get).not.toHaveBeenCalled();
-  expect(map.navigateCompact(-1, 1)?.dataIndex).toBe(2);
+  expect(map.navigateCompact(null, 1)?.[0].dataIndex).toBe(2);
   expect(get.mock.calls.length).toBeLessThan(3);
   expect(map.resolveTarget("s", 5)?.data?.value).toBe(5);
   owner.dispose();
-  expect(map.navigateCompact(-1, 1)).toBeUndefined();
+  expect(map.navigateCompact(null, 1)).toBeUndefined();
 });
 
 it("filters screen-space radius and clipping before materializing lazy records", () => {

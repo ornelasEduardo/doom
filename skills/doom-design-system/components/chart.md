@@ -213,7 +213,7 @@ Per-chart orchestrator with a normalized-input API and DOM-backed coordinate and
 - **InputSignal** — Normalized input format: `{ id, action, source, x, y, timestamp, key?, modifiers? }`
   - Actions: `START`, `MOVE`, `END`, `CANCEL`, `KEY`
   - Sources: `MOUSE`, `TOUCH`, `PEN`, `KEYBOARD`, `REMOTE`
-- **SpatialMap** — Hybrid hit detection: DOM `elementsFromPoint()` broad phase + quadtree fine phase. Configurable `magneticRadius` (default 40px) for snapping.
+- **SpatialMap** — DOM `elementsFromPoint()` broad phase with quadtree or prepared-grid queries. Configurable `magneticRadius` (default 40px) for snapping.
 - **CoordinateSystem** — Transforms client → container → plot-relative coordinates.
 - **Scheduler** — Priority-based: `CRITICAL` (sync, for pointer down/up), `VISUAL` (RAF-batched, for moves), `IDLE` (requestIdleCallback). Visual queue coalesces by user, source, and pointer ID. The final pending movement is delivered before `END`. `CANCEL` clears its stream; `cancelScope: "chart"` explicitly dismisses all queued chart input. Movement is frame-sampled, not a lossless drawing-event log.
 
@@ -624,6 +624,31 @@ series disposes its registration, while root data updates preserve other owners.
 Custom renderers also run with empty data so D3 joins can remove stale marks.
 Keyboard navigation uses published custom geometry rather than projecting its
 data through Cartesian accessors; unpublished rows are not keyboard targets.
+
+For retained geometry, `updateProjected(points, viewport)` separates index
+coordinates from a positive, axis-aligned projection. Reusing the same points
+changes only the viewport; publish changed points or use `patchProjected` for
+sparse edits. The viewport's optional `clip` uses render-group coordinates.
+
+`updatePrepared(source, grid, viewport)` accepts prebuilt `GridBuffers` and a
+`CustomGeometrySource<T>` with `length` and `get(index)`. Each source represents
+one series with contiguous zero-based `dataIndex` values. The owning series ID
+is supplied by Chart. The grid coordinates are authoritative for positioning;
+the getter supplies the datum and interaction metadata lazily. Publish a new
+source with `updatePrepared`; `updateProjected` accepts only an already
+published numeric source and rejects an unprepared replacement.
+
+Each prepared registration snapshots its index buffers once at publication.
+Patching a registration does not mutate another registration or the supplied
+buffers. Publish source changes through each affected registration; changing
+borrowed datum objects alone does not notify the engine. Viewport changes and
+sparse patches reuse the acquired index. Keyboard traversal retains ordinary
+multi-series slices and visits compact registrations without expanding every
+numeric row.
+
+`Chart.Root` accepts `dataDescription` to describe a compact dataset whose
+rendered rows exceed the root seed data. It replaces the automatic summary;
+selected-value announcements still use the actual interaction target.
 
 A sensor or behavior can also call `context.getChartContext().engine.registerGeometry`
 for an independent registration, with explicit series IDs and SVG coordinates.

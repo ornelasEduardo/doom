@@ -6,6 +6,7 @@ import {
   InputAction,
   InputSource,
 } from "../../engine";
+import { buildGrid } from "../../engine/PreparedGrid";
 import {
   createChartStore,
   registerSeries,
@@ -172,3 +173,92 @@ it.each(["unpublished", "dom-only"] as const)(
     expect(queries).toHaveBeenCalledTimes(1);
   },
 );
+
+it("keeps ordinary keyboard slices and traverses multiple lazy owners with colliding row indices", () => {
+  const store = createChartStore({ width: 600, height: 400 }, "x", "y");
+  updateChartState(store, {
+    data: [
+      { x: 0, y: 1 },
+      { x: 1, y: 2 },
+    ],
+    dimensions: store.getState().dimensions,
+  });
+  const engine = new Engine({ useDomHitTesting: false });
+  const point = (seriesId: string, dataIndex: number, x: number, y = 30) => ({
+    seriesId,
+    dataIndex,
+    x,
+    y,
+    data: { x, y },
+  });
+  engine.updateData([
+    point("a", 0, 60),
+    point("a", 1, 90),
+    point("b", 0, 60, 40),
+    point("b", 1, 90, 40),
+  ]);
+  for (const seriesId of ["lazy-a", "lazy-b"]) {
+    engine
+      .registerGeometry()
+      .updatePrepared(
+        { length: 1, seriesId, get: () => point(seriesId, 0, 100) },
+        buildGrid(new Float64Array([100, 30])),
+        { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0 },
+      );
+  }
+  const access = createInteractionAccess(store);
+  const context = {
+    getChartContext: () => ({ chartStore: store, engine }),
+    ...access,
+  } as SensorContext;
+  const sensor = KeyboardSensor();
+  const press = (key = "ArrowRight") =>
+    sensor(
+      {
+        signal: {
+          action: InputAction.KEY,
+          source: InputSource.KEYBOARD,
+          key,
+          id: 0,
+          x: 0,
+          y: 0,
+          timestamp: 0,
+          userId: "local",
+        },
+        candidates: [],
+        sliceCandidates: [],
+        chartX: 0,
+        chartY: 0,
+        isWithinPlot: true,
+      } as EngineEvent,
+      context,
+    );
+  const identities = () =>
+    access
+      .getInteraction("primary-hover")
+      ?.targets.map(({ seriesId, dataIndex }) => [seriesId, dataIndex]);
+  press();
+  expect(identities()).toEqual([
+    ["a", 0],
+    ["b", 0],
+  ]);
+  press();
+  expect(identities()).toEqual([
+    ["a", 1],
+    ["b", 1],
+  ]);
+  press();
+  expect(identities()).toEqual([["lazy-a", 0]]);
+  press();
+  expect(identities()).toEqual([["lazy-b", 0]]);
+  press("ArrowLeft");
+  expect(identities()).toEqual([["lazy-a", 0]]);
+  press("Escape");
+  expect(access.getInteraction("primary-hover")).toBeNull();
+  press();
+  expect(identities()).toEqual([
+    ["a", 0],
+    ["b", 0],
+  ]);
+  engine.dispose();
+});

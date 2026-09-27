@@ -64,6 +64,7 @@ export interface GeometryViewport {
 }
 
 export interface GeometryRegistration<T = unknown> {
+  /** Snapshot numeric buffers and point slots once; patches and viewport changes retain that ownership. */
   updatePrepared(
     points: IndexedPoint<T>[] | PointSource<T>,
     grid: GridBuffers,
@@ -351,35 +352,205 @@ export class SpatialMap<T = unknown> {
     );
   }
 
-  navigateCompact(
-    current: number,
-    direction: 1 | -1,
-  ): InteractionCandidate<T> | null | undefined {
-    const index = [...this.owners.values()]
-      .reverse()
-      .find((owner) => owner.grid?.lazy);
-    if (!index?.grid) {
-      return undefined;
+  private ownsIdentity(seriesId: string, dataIndex: number): boolean {
+    return (
+      this.grid?.has(seriesId, dataIndex) ??
+      this.identities.get(seriesId)?.has(dataIndex) ??
+      false
+    );
+  }
+
+  private unindexedKeyboardTargets(owners: SpatialMap<T>[]) {
+    const targets = new Map<IndexedPoint<T>, InteractionCandidate<T>>();
+    const seen = new Map<string, Set<number>>();
+    for (const element of this.containerElement?.querySelectorAll(
+      `[${CHART_DATA_ATTRS.TYPE}]`,
+    ) ?? []) {
+      const seriesId = element.getAttribute(CHART_DATA_ATTRS.SERIES_ID);
+      const index = element.getAttribute(CHART_DATA_ATTRS.INDEX);
+      if (seriesId === null || index === null) {
+        continue;
+      }
+      const dataIndex = Number(index);
+      if (
+        !Number.isInteger(dataIndex) ||
+        dataIndex < 0 ||
+        seen.get(seriesId)?.has(dataIndex) ||
+        owners.some((owner) => owner.ownsIdentity(seriesId, dataIndex))
+      ) {
+        continue;
+      }
+      const candidate = this.hydrateElement(
+        element,
+        element.getAttribute(CHART_DATA_ATTRS.TYPE)!,
+        0,
+        0,
+      );
+      if (!candidate || candidate.data === undefined) {
+        continue;
+      }
+      const indices = seen.get(seriesId) ?? new Set<number>();
+      indices.add(dataIndex);
+      seen.set(seriesId, indices);
+      targets.set(
+        { ...candidate.coordinate, seriesId, dataIndex, data: candidate.data },
+        candidate,
+      );
     }
-    const grid = index.grid;
-    let next = Math.max(0, Math.min(grid.length - 1, current + direction));
-    for (; next >= 0 && next < grid.length; next += direction) {
-      if (index.project(grid.coordinate(next) as IndexedPoint<T>)) {
-        const point = grid.at(next);
-        return (
-          this.resolveTarget(point.seriesId, next, index.geometryOwner) ?? null
+    return targets;
+  }
+
+  private keyboardTarget(
+    point: IndexedPoint<T>,
+    coordinate: { x: number; y: number },
+  ): InteractionCandidate<T> {
+    return {
+      type: "data-point",
+      data: point.data,
+      seriesId: point.seriesId,
+      dataIndex: point.dataIndex,
+      geometryOwner: this.geometryOwner,
+      coordinate,
+      distance: 0,
+      seriesColor: point.seriesColor,
+      suppressMarker: point.suppressMarker,
+      draggable: point.draggable,
+    };
+  }
+
+  private ordinaryKeyboardSlices(
+    owners: SpatialMap<T>[],
+    visible: (
+      ownerIndex: number,
+      seriesId: string,
+      dataIndex: number,
+    ) => boolean,
+  ) {
+    const ordinary = owners.map((owner) =>
+      owner.grid
+        ? owner.grid.lazy
+          ? []
+          : Array.from({ length: owner.grid.length }, (_, i) =>
+              owner.grid!.at(i),
+            )
+        : [...owner.identities.values()].flatMap((series) => [
+            ...series.values(),
+          ]),
+    );
+    const domTargets = this.unindexedKeyboardTargets(owners);
+    ordinary[0].push(...domTargets.keys());
+    const slices = new Map<string, InteractionCandidate<T>[]>();
+    const leaders = new Map<IndexedPoint<T>, InteractionCandidate<T>[]>();
+    ordinary.forEach((points, ownerIndex) => {
+      const owner = owners[ownerIndex];
+      for (const point of points) {
+        if (!visible(ownerIndex, point.seriesId, point.dataIndex)) {
+          continue;
+        }
+        const coordinate = owner.project(point);
+        if (!coordinate) {
+          continue;
+        }
+        const axis = point.sliceAxis ?? "x";
+        const key = `${axis}:${coordinate[axis]}`;
+        let slice = slices.get(key);
+        if (!slice) {
+          slice = [];
+          slices.set(key, slice);
+          leaders.set(point, slice);
+        }
+        slice.push(
+          domTargets.get(point) ?? owner.keyboardTarget(point, coordinate),
         );
       }
+    });
+    return { ordinary, leaders };
+  }
+
+  /** Traverse ordinary slices and lazy rows in registration order without expanding lazy sources. */
+  navigateCompact(
+    current: Pick<
+      InteractionCandidate<T>,
+      "seriesId" | "dataIndex" | "geometryOwner"
+    > | null,
+    direction: 1 | -1,
+  ): InteractionCandidate<T>[] | null | undefined {
+    const owners = [this, ...this.owners.values()];
+    if (!owners.some((owner) => owner.grid?.lazy)) {
+      return undefined;
     }
-    return current >= 0 &&
-      current < grid.length &&
-      index.project(grid.coordinate(current) as IndexedPoint<T>)
-      ? (this.resolveTarget(
-          grid.at(current).seriesId,
-          current,
-          index.geometryOwner,
-        ) ?? null)
-      : null;
+    const visible = (
+      ownerIndex: number,
+      seriesId: string,
+      dataIndex: number,
+    ) => {
+      for (let i = ownerIndex + 1; i < owners.length; i++) {
+        const owner = owners[i];
+        if (owner.ownsIdentity(seriesId, dataIndex)) {
+          return false;
+        }
+      }
+      return true;
+    };
+    const { ordinary, leaders } = this.ordinaryKeyboardSlices(owners, visible);
+    const currentOwner = current
+      ? owners.findIndex(
+          (owner) => owner.geometryOwner === current.geometryOwner,
+        )
+      : -1;
+    const currentRow =
+      currentOwner < 0
+        ? -1
+        : owners[currentOwner].grid?.lazy &&
+            owners[currentOwner].grid?.has(
+              current!.seriesId!,
+              current!.dataIndex!,
+            )
+          ? current!.dataIndex!
+          : ordinary[currentOwner].findIndex(
+              (point) =>
+                point.seriesId === current!.seriesId &&
+                point.dataIndex === current!.dataIndex,
+            );
+    const validCursor = currentOwner >= 0 && currentRow >= 0;
+    const candidate = (ownerIndex: number, row: number) => {
+      const owner = owners[ownerIndex],
+        grid = owner.grid;
+      if (!grid?.lazy) {
+        return leaders.get(ordinary[ownerIndex][row]) ?? null;
+      }
+      if (!visible(ownerIndex, grid.seriesId!, row)) {
+        return null;
+      }
+      const coordinate = owner.project(grid.coordinate(row));
+      return coordinate
+        ? [owner.keyboardTarget(grid.at(row), coordinate)]
+        : null;
+    };
+    // A missing/disposed cursor starts at the first target, like ordinary keyboard navigation.
+    const step = validCursor ? direction : 1;
+    for (
+      let i = validCursor ? currentOwner : 0;
+      i >= 0 && i < owners.length;
+      i += step
+    ) {
+      const length = owners[i].grid?.lazy
+        ? owners[i].grid!.length
+        : ordinary[i].length;
+      const start =
+        validCursor && i === currentOwner
+          ? currentRow + step
+          : step === 1
+            ? 0
+            : length - 1;
+      for (let row = start; row >= 0 && row < length; row += step) {
+        const slice = candidate(i, row);
+        if (slice) {
+          return slice;
+        }
+      }
+    }
+    return validCursor ? candidate(currentOwner, currentRow) : null;
   }
 
   private getGeometryOwner(point: IndexedPoint<T>): object | undefined {
@@ -406,7 +577,10 @@ export class SpatialMap<T = unknown> {
       : value;
   }
 
-  private project(point: IndexedPoint<T>): { x: number; y: number } | null {
+  private project(point: {
+    x: number;
+    y: number;
+  }): { x: number; y: number } | null {
     const coordinate = {
       x: this.screenAxis("x", point.x),
       y: this.screenAxis("y", point.y),
@@ -462,6 +636,7 @@ export class SpatialMap<T = unknown> {
               points.push(point);
             }
           },
+          (x, y) => index.project({ x, y }) !== null,
         );
         return points;
       }
@@ -476,12 +651,16 @@ export class SpatialMap<T = unknown> {
           high = middle;
         }
       }
-      const key = [keys[low - 1], keys[low]].find(
-        (value) =>
-          value !== undefined &&
-          Math.abs(index.screenAxis(axis, value) - coordinate) <=
-            Number.EPSILON * Math.max(1, Math.abs(coordinate)) * 8,
-      );
+      const key =
+        keys[low] !== undefined &&
+        index.screenAxis(axis, keys[low]) === coordinate
+          ? keys[low]
+          : [keys[low - 1], keys[low]].find(
+              (value) =>
+                value !== undefined &&
+                Math.abs(index.screenAxis(axis, value) - coordinate) <=
+                  Number.EPSILON * Math.max(1, Math.abs(coordinate)) * 8,
+            );
       if (key === undefined) {
         return [];
       }

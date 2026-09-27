@@ -122,6 +122,19 @@ export class PreparedGrid<T> {
   get lazy() {
     return !Array.isArray(this.points);
   }
+  get seriesId() {
+    return Array.isArray(this.points)
+      ? this.points[0]?.seriesId
+      : this.points.seriesId;
+  }
+  has(seriesId: string, index: number) {
+    return (
+      this.seriesId === seriesId &&
+      Number.isInteger(index) &&
+      index >= 0 &&
+      index < this.length
+    );
+  }
   get length() {
     return this.points.length;
   }
@@ -137,7 +150,7 @@ export class PreparedGrid<T> {
     }
     let point = this.cache.get(index);
     if (!point) {
-      point = this.points.get(index);
+      point = { ...this.points.get(index), ...this.coordinate(index) };
       this.cache.set(index, point);
     }
     return point;
@@ -168,14 +181,20 @@ export class PreparedGrid<T> {
         );
       }
     }
+    // Publications acquire ownership once; viewport changes and patches retain it.
+    this.buffers = {
+      ...buffers,
+      coordinates: buffers.coordinates.slice(),
+      heads: buffers.heads.slice(),
+      next: buffers.next.slice(),
+      previous: buffers.previous.slice(),
+    };
+    if (Array.isArray(points)) {
+      this.points = points.slice();
+    }
   }
   get(seriesId: string, index: number) {
-    if (
-      !Number.isInteger(index) ||
-      index < 0 ||
-      index >= this.points.length ||
-      (!Array.isArray(this.points) && this.points.seriesId !== seriesId)
-    ) {
+    if (!this.has(seriesId, index)) {
       return undefined;
     }
     const point = this.at(index);

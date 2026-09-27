@@ -35,6 +35,7 @@ export type {
   InteractionCandidate,
 } from "./engine";
 export { InputAction, InputSource } from "./engine";
+export type { GridBuffers } from "./engine/PreparedGrid";
 export type {
   GeometryRegistration,
   GeometryViewport,
@@ -80,6 +81,7 @@ export { InteractionChannel } from "./types/interaction";
 export type {
   CustomGeometry,
   CustomGeometryPoint,
+  CustomGeometrySource,
 } from "./utils/customGeometry";
 export { createInteractionChannel } from "./utils/interactionChannels";
 

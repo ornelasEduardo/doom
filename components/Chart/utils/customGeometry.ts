@@ -1,5 +1,5 @@
 import type { Engine } from "../engine/Engine";
-import type { GridBuffers, PointSource } from "../engine/PreparedGrid";
+import type { GridBuffers } from "../engine/PreparedGrid";
 import type { GeometryViewport, IndexedPoint } from "../engine/SpatialMap";
 
 export type CustomGeometryPoint<T = unknown> = Omit<
@@ -10,11 +10,14 @@ export type CustomGeometryPoint<T = unknown> = Omit<
   element?: SVGGraphicsElement;
 };
 
+export interface CustomGeometrySource<T = unknown> {
+  length: number;
+  get(index: number): Omit<CustomGeometryPoint<T>, "element">;
+}
+
 export interface CustomGeometry<T = unknown> {
   updatePrepared(
-    points:
-      | Omit<CustomGeometryPoint<T>, "element">[]
-      | Omit<PointSource<T>, "seriesId">,
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
     grid: GridBuffers,
     viewport: GeometryViewport,
   ): void;
@@ -22,11 +25,9 @@ export interface CustomGeometry<T = unknown> {
   patchProjected(points: Omit<CustomGeometryPoint<T>, "element">[]): void;
   /** Replaces this owner's points. Coordinates are local to the render group or point.element. */
   update(points: CustomGeometryPoint<T>[]): void;
-  /** Retains points in index coordinates; only the viewport changes between draws. */
+  /** Numeric sources must first be published with updatePrepared; replacement sources require a new grid. */
   updateProjected(
-    points:
-      | Omit<CustomGeometryPoint<T>, "element">[]
-      | Omit<PointSource<T>, "seriesId">,
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
     viewport: GeometryViewport,
   ): void;
   dispose(): void;
@@ -40,15 +41,18 @@ export function createCustomGeometry<T>(
   const registration = engine.registerGeometry();
   let projectedSource:
     | Omit<CustomGeometryPoint<T>, "element">[]
-    | Omit<PointSource<T>, "seriesId">
+    | CustomGeometrySource<T>
     | undefined;
   const publishProjected = (
-    points:
-      | Omit<CustomGeometryPoint<T>, "element">[]
-      | Omit<PointSource<T>, "seriesId">,
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
     viewport: GeometryViewport,
     grid?: GridBuffers,
   ) => {
+    if (!grid && !Array.isArray(points) && points !== projectedSource) {
+      throw new RangeError(
+        "Publish new numeric sources with updatePrepared before updateProjected",
+      );
+    }
     const svg = group.ownerSVGElement;
     const svgMatrix = svg?.getScreenCTM();
     const groupMatrix = group.getScreenCTM();

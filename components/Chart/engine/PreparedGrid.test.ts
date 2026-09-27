@@ -24,7 +24,7 @@ it("finds exact regions and moves existing slots without rebuilding buffers", ()
   grid.query(1, 1, 3, 3, (p) => moved.push(p.dataIndex));
   expect(moved).toEqual([0]);
   expect(grid.get("s", 0)?.x).toBe(2);
-  expect(buffers.coordinates[0]).toBe(2);
+  expect(buffers.coordinates[0]).toBe(0);
 });
 it("adopts a prepared owner and preserves viewport, slice, and patch behavior", () => {
   const rows = points(),
