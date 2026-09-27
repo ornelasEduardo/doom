@@ -49,3 +49,8 @@ jobs:
 
       - name: Run Chart cross-browser regressions
         run: npm run test:browser:chart
+
+      - name: Run Chart GPU rendering regressions
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: xvfb-run --auto-servernum npm run test:proof:chart -- --browser.headless=false

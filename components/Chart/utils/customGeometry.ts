@@ -1,5 +1,6 @@
 import type { Engine } from "../engine/Engine";
-import type { IndexedPoint } from "../engine/SpatialMap";
+import type { GridBuffers } from "../engine/PreparedGrid";
+import type { GeometryViewport, IndexedPoint } from "../engine/SpatialMap";
 
 export type CustomGeometryPoint<T = unknown> = Omit<
   IndexedPoint<T>,
@@ -9,9 +10,26 @@ export type CustomGeometryPoint<T = unknown> = Omit<
   element?: SVGGraphicsElement;
 };
 
+export interface CustomGeometrySource<T = unknown> {
+  length: number;
+  get(index: number): Omit<CustomGeometryPoint<T>, "element">;
+}
+
 export interface CustomGeometry<T = unknown> {
+  updatePrepared(
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
+    grid: GridBuffers,
+    viewport: GeometryViewport,
+  ): void;
+  /** Patch existing identities in the retained index coordinate space. */
+  patchProjected(points: Omit<CustomGeometryPoint<T>, "element">[]): void;
   /** Replaces this owner's points. Coordinates are local to the render group or point.element. */
   update(points: CustomGeometryPoint<T>[]): void;
+  /** Numeric sources must first be published with updatePrepared; replacement sources require a new grid. */
+  updateProjected(
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
+    viewport: GeometryViewport,
+  ): void;
   dispose(): void;
 }
 
@@ -21,8 +39,86 @@ export function createCustomGeometry<T>(
   seriesId: string,
 ): CustomGeometry<T> {
   const registration = engine.registerGeometry();
+  let projectedSource:
+    | Omit<CustomGeometryPoint<T>, "element">[]
+    | CustomGeometrySource<T>
+    | undefined;
+  const publishProjected = (
+    points: Omit<CustomGeometryPoint<T>, "element">[] | CustomGeometrySource<T>,
+    viewport: GeometryViewport,
+    grid?: GridBuffers,
+  ) => {
+    if (!grid && !Array.isArray(points) && points !== projectedSource) {
+      throw new RangeError(
+        "Publish new numeric sources with updatePrepared before updateProjected",
+      );
+    }
+    const svg = group.ownerSVGElement;
+    const svgMatrix = svg?.getScreenCTM();
+    const groupMatrix = group.getScreenCTM();
+    if (!svgMatrix || !groupMatrix) {
+      registration.update([]);
+      projectedSource = undefined;
+      return;
+    }
+    const matrix = svgMatrix.inverse().multiply(groupMatrix);
+    if (
+      matrix.is2D === false ||
+      matrix.b !== 0 ||
+      matrix.c !== 0 ||
+      matrix.a <= 0 ||
+      matrix.d <= 0
+    ) {
+      throw new RangeError(
+        "Projected geometry requires a positive axis-aligned plot transform",
+      );
+    }
+    const projectedViewport = {
+      scaleX: matrix.a * viewport.scaleX,
+      scaleY: matrix.d * viewport.scaleY,
+      translateX: matrix.a * viewport.translateX + matrix.e,
+      translateY: matrix.d * viewport.translateY + matrix.f,
+      clip: viewport.clip
+        ? {
+            x: matrix.a * viewport.clip.x + matrix.e,
+            y: matrix.d * viewport.clip.y + matrix.f,
+            width: matrix.a * viewport.clip.width,
+            height: matrix.d * viewport.clip.height,
+          }
+        : undefined,
+    };
+    if (grid) {
+      registration.updatePrepared(
+        Array.isArray(points)
+          ? points.map((point) => ({ ...point, seriesId }))
+          : {
+              length: points.length,
+              seriesId,
+              get: (index: number) => ({ ...points.get(index), seriesId }),
+            },
+        grid,
+        projectedViewport,
+      );
+      projectedSource = points;
+    } else if (points !== projectedSource && Array.isArray(points)) {
+      registration.update(
+        points.map((point) => ({ ...point, seriesId })),
+        projectedViewport,
+      );
+      projectedSource = points;
+    } else {
+      registration.setViewport(projectedViewport);
+    }
+  };
   return {
+    patchProjected(points) {
+      if (!projectedSource) {
+        throw new Error("Publish projected geometry before patching it");
+      }
+      registration.patch(points.map((point) => ({ ...point, seriesId })));
+    },
     update(points) {
+      projectedSource = undefined;
       const svg = group.ownerSVGElement;
       const svgMatrix = svg?.getScreenCTM?.();
       if (!svg || !svgMatrix) {
@@ -30,27 +126,38 @@ export function createCustomGeometry<T>(
         return;
       }
       const inverse = svgMatrix.inverse();
-      registration.update(
-        points.flatMap(({ element = group, ...point }) => {
-          if (element !== group && !group.contains(element)) {
-            return [];
-          }
-          const matrix = element.getScreenCTM?.();
-          if (!matrix) {
-            return [];
-          }
-          // Convert through the viewport so nested SVG transforms, CSS scale and
-          // chart margins all produce the same SVG coordinates as built-in marks.
-          const position = new DOMPoint(point.x, point.y)
-            .matrixTransform(matrix)
-            .matrixTransform(inverse);
-          if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
-            return [];
-          }
-          return [{ ...point, x: position.x, y: position.y, seriesId }];
-        }),
-      );
+      const transforms = new Map<SVGGraphicsElement, DOMMatrix | null>();
+      const converted: IndexedPoint<T>[] = [];
+      for (const { element = group, ...point } of points) {
+        if (!transforms.has(element)) {
+          const matrix =
+            element === group || group.contains(element)
+              ? element.getScreenCTM?.()
+              : null;
+          transforms.set(element, matrix ? inverse.multiply(matrix) : null);
+        }
+        const matrix = transforms.get(element);
+        if (!matrix) {
+          continue;
+        }
+        const position = matrix.is2D
+          ? {
+              x: matrix.a * point.x + matrix.c * point.y + matrix.e,
+              y: matrix.b * point.x + matrix.d * point.y + matrix.f,
+            }
+          : new DOMPoint(point.x, point.y).matrixTransform(matrix);
+        if (Number.isFinite(position.x) && Number.isFinite(position.y)) {
+          converted.push({ ...point, x: position.x, y: position.y, seriesId });
+        }
+      }
+      registration.update(converted, null);
     },
-    dispose: () => registration.dispose(),
+    updateProjected: (points, viewport) => publishProjected(points, viewport),
+    updatePrepared: (points, grid, viewport) =>
+      publishProjected(points, viewport, grid),
+    dispose: () => {
+      projectedSource = undefined;
+      registration.dispose();
+    },
   };
 }

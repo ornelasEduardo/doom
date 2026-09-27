@@ -6,6 +6,7 @@ import {
   InputAction,
   InputSource,
 } from "../../engine";
+import { buildGrid } from "../../engine/PreparedGrid";
 import {
   createChartStore,
   registerSeries,
@@ -170,5 +171,177 @@ it.each(["unpublished", "dom-only"] as const)(
       expect(access.getInteraction("primary-hover")!.target!.dataIndex).toBe(0);
     }
     expect(queries).toHaveBeenCalledTimes(1);
+  },
+);
+
+it("keeps ordinary keyboard slices and traverses multiple lazy owners with colliding row indices", () => {
+  const store = createChartStore({ width: 600, height: 400 }, "x", "y");
+  updateChartState(store, {
+    data: [
+      { x: 0, y: 1 },
+      { x: 1, y: 2 },
+    ],
+    dimensions: store.getState().dimensions,
+  });
+  const engine = new Engine({ useDomHitTesting: false });
+  const point = (seriesId: string, dataIndex: number, x: number, y = 30) => ({
+    seriesId,
+    dataIndex,
+    x,
+    y,
+    data: { x, y },
+  });
+  engine.updateData([
+    point("a", 0, 60),
+    point("a", 1, 90),
+    point("b", 0, 60, 40),
+    point("b", 1, 90, 40),
+  ]);
+  for (const seriesId of ["lazy-a", "lazy-b"]) {
+    engine
+      .registerGeometry()
+      .updatePrepared(
+        { length: 1, seriesId, get: () => point(seriesId, 0, 100) },
+        buildGrid(new Float64Array([100, 30])),
+        { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0 },
+      );
+  }
+  const access = createInteractionAccess(store);
+  const context = {
+    getChartContext: () => ({ chartStore: store, engine }),
+    ...access,
+  } as SensorContext;
+  const sensor = KeyboardSensor();
+  const press = (key = "ArrowRight") =>
+    sensor(
+      {
+        signal: {
+          action: InputAction.KEY,
+          source: InputSource.KEYBOARD,
+          key,
+          id: 0,
+          x: 0,
+          y: 0,
+          timestamp: 0,
+          userId: "local",
+        },
+        candidates: [],
+        sliceCandidates: [],
+        chartX: 0,
+        chartY: 0,
+        isWithinPlot: true,
+      } as EngineEvent,
+      context,
+    );
+  const identities = () =>
+    access
+      .getInteraction("primary-hover")
+      ?.targets.map(({ seriesId, dataIndex }) => [seriesId, dataIndex]);
+  press();
+  expect(identities()).toEqual([
+    ["a", 0],
+    ["b", 0],
+  ]);
+  press();
+  expect(identities()).toEqual([
+    ["a", 1],
+    ["b", 1],
+  ]);
+  press();
+  expect(identities()).toEqual([["lazy-a", 0]]);
+  press();
+  expect(identities()).toEqual([["lazy-b", 0]]);
+  press("ArrowLeft");
+  expect(identities()).toEqual([["lazy-a", 0]]);
+  press("Escape");
+  expect(access.getInteraction("primary-hover")).toBeNull();
+  press();
+  expect(identities()).toEqual([
+    ["a", 0],
+    ["b", 0],
+  ]);
+  engine.dispose();
+});
+
+it.each([false, true])(
+  "preserves ordinary custom category slices with repeated categories: %s",
+  (repeated) => {
+    const p = (x: number, y = 10, dataIndex = 0, seriesId = "s") => ({
+      x,
+      y,
+      dataIndex,
+      seriesId,
+      data: { x: 0, y: 1 },
+    });
+    const v = { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0 };
+    const run = (withLazy: boolean) => {
+      const store = createChartStore({ width: 600, height: 400 }, "x", "y");
+      updateChartState(store, {
+        data: repeated
+          ? [
+              { x: 0, y: 1 },
+              { x: 0, y: 2 },
+            ]
+          : [{ x: 0, y: 1 }],
+        dimensions: store.getState().dimensions,
+      });
+      registerSeries(store, "a", [{ id: "a", type: "custom", x: "x", y: "y" }]);
+      registerSeries(store, "b", [{ id: "b", type: "custom", x: "x", y: "y" }]);
+      const engine = new Engine({ useDomHitTesting: false });
+      engine.registerGeometry([
+        p(10, 10, 0, "a"),
+        ...(repeated ? [p(30, 30, 1, "a")] : []),
+      ]);
+      engine.registerGeometry([
+        p(20, 20, 0, "b"),
+        ...(repeated ? [p(40, 40, 1, "b")] : []),
+      ]);
+      if (withLazy) {
+        engine
+          .registerGeometry()
+          .updatePrepared(
+            { length: 1, seriesId: "lazy", get: () => p(200, 200, 0, "lazy") },
+            buildGrid(new Float64Array([200, 200])),
+            v,
+          );
+      }
+      const access = createInteractionAccess(store);
+      KeyboardSensor()(
+        {
+          signal: {
+            action: InputAction.KEY,
+            source: InputSource.KEYBOARD,
+            key: "ArrowRight",
+            id: 0,
+            x: 0,
+            y: 0,
+            timestamp: 0,
+            userId: "local",
+          },
+          candidates: [],
+          sliceCandidates: [],
+          chartX: 0,
+          chartY: 0,
+          isWithinPlot: true,
+        } as EngineEvent,
+        {
+          getChartContext: () => ({ chartStore: store, engine }),
+          ...access,
+        } as SensorContext,
+      );
+      const result = access
+        .getInteraction("primary-hover")
+        ?.targets.map((p) => [p.seriesId, p.dataIndex]);
+      engine.dispose();
+      return result;
+    };
+    expect(run(false)).toEqual([
+      ["a", 0],
+      ["b", 0],
+    ]);
+    expect(run(true)).toEqual([
+      ["a", 0],
+      ["b", 0],
+    ]);
   },
 );

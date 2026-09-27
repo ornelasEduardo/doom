@@ -35,7 +35,12 @@ export type {
   InteractionCandidate,
 } from "./engine";
 export { InputAction, InputSource } from "./engine";
-export type { GeometryRegistration, IndexedPoint } from "./engine/SpatialMap";
+export type { GridBuffers } from "./engine/PreparedGrid";
+export type {
+  GeometryRegistration,
+  GeometryViewport,
+  IndexedPoint,
+} from "./engine/SpatialMap";
 export type {
   Accessor,
   AxisDomain,
@@ -76,6 +81,7 @@ export { InteractionChannel } from "./types/interaction";
 export type {
   CustomGeometry,
   CustomGeometryPoint,
+  CustomGeometrySource,
 } from "./utils/customGeometry";
 export { createInteractionChannel } from "./utils/interactionChannels";
 
