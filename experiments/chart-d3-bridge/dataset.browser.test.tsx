@@ -25,7 +25,9 @@ it("keeps current charts available during preparation and allows a newer selecti
   await userEvent.click(
     view.getByRole("combobox", { name: "Points per chart" }),
   );
-  await userEvent.click(view.getByRole("option", { name: "100,000" }));
+  await userEvent.click(
+    view.getByRole("option", { name: (100000).toLocaleString() }),
+  );
   await expect.poll(() => post.mock.calls.length).toBe(1);
   expect(
     view.container.querySelectorAll('[data-proof-count="1000"]').length,
@@ -35,7 +37,9 @@ it("keeps current charts available during preparation and allows a newer selecti
   await userEvent.click(
     view.getByRole("combobox", { name: "Points per chart" }),
   );
-  await userEvent.click(view.getByRole("option", { name: "10,000" }));
+  await userEvent.click(
+    view.getByRole("option", { name: (10000).toLocaleString() }),
+  );
   await expect
     .poll(
       () =>

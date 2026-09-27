@@ -21,7 +21,9 @@ it("reports measured render timings and makes the isolation chart optional", asy
   expect(view.getAllByText("Latest draw submission")).toHaveLength(2);
   await userEvent.click(view.getByRole("button", { name: "Hide comparison" }));
   expect(view.container.querySelectorAll("[data-proof-chart]")).toHaveLength(1);
-  expect(view.getByText("1,000 total points")).toBeTruthy();
+  expect(
+    view.getByText(`${(1000).toLocaleString()} total points`),
+  ).toBeTruthy();
 });
 
 it("keeps metrics scoped to their chart when separate labs reuse display names", async () => {
