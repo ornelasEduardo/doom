@@ -728,9 +728,11 @@ streaming, geometry, and behavior-ownership regressions.
 ### GPU rendering
 
 Built-in line, area, bar, and scatter marks are rendered by WebGL2 on one shared
-canvas per chart. Chart composition, accessors, sensors, behaviors, tooltip
+canvas per chart. Gridlines and axis strokes share that scene to preserve their order relative
+to data marks.
+Chart composition, accessors, sensors, behaviors, tooltip
 payloads, and keyboard navigation keep the same public API. SVG remains the
-semantic and interaction overlay for axes, labels, and mark hit targets; it does
+semantic and interaction overlay for axis labels, cursors, and mark hit targets; it does
 not paint the built-in marks. Custom `render` callbacks retain ownership of their
 drawing surface. GPU marks update directly; invisible SVG hit targets do not
 animate between interaction states.

@@ -8,6 +8,7 @@ export type GpuMark =
   | {
       kind: "path";
       contours: readonly VectorContour[];
+      strokeOpacity?: number;
       gradient?: { startOpacity: number; endOpacity: number };
     }
   | { kind: "point"; x: number; y: number; radius: number }
@@ -235,7 +236,10 @@ function createScene(svg: SVGSVGElement) {
           continue;
         }
         const fill = color(css.fill, opacity),
-          strokeColor = color(css.stroke, opacity);
+          strokeColor = color(
+            css.stroke,
+            opacity * (mark.kind === "path" ? (mark.strokeOpacity ?? 1) : 1),
+          );
         const strokeWidth =
           Number.parseFloat(css.strokeWidth) *
           Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c));

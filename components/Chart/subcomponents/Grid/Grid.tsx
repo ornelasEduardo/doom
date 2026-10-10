@@ -1,6 +1,7 @@
 "use strict";
 
 import { useChartContext } from "../../context";
+import { GpuLine } from "../../rendering/GpuLine";
 import { yTickCount } from "../../utils/scales";
 import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Grid.module.scss";
@@ -33,16 +34,18 @@ export function Grid() {
     <g data-chart-grid aria-hidden="true" className={styles.grid}>
       {ticks.map((t, i) =>
         horizontal ? (
-          <line
+          <GpuLine
             key={i}
+            strokeOpacity={0.5}
             x1={numeric(t)}
             x2={numeric(t)}
             y1={0}
             y2={dimensions.innerHeight}
           />
         ) : (
-          <line
+          <GpuLine
             key={i}
+            strokeOpacity={0.5}
             x1={0}
             x2={innerWidth}
             y1={numeric(t)}
