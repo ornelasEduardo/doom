@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 
-import { createGpuPoints } from "./gpu";
+import { createGpuPoints } from "../../components/Chart/rendering/gpu";
 
 it("projects supplied numeric data on the GPU and changes domains without reuploading", () => {
   const canvas = document.createElement("canvas");

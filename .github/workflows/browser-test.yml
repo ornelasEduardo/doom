@@ -8,6 +8,8 @@ jobs:
     name: Run Browser Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      LIBGL_ALWAYS_SOFTWARE: "1"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,12 +47,16 @@ jobs:
         run: npx playwright install-deps chromium firefox webkit
 
       - name: Run browser tests
-        run: npm run test:browser
+        run: xvfb-run --auto-servernum npm run test:browser -- --browser.headless=false --no-file-parallelism
 
       - name: Run Chart cross-browser regressions
-        run: npm run test:browser:chart
+        run: |
+          for browser in chromium firefox webkit; do
+            xvfb-run --auto-servernum npm run test:browser:chart -- --project="$browser" --browser.headless=false --no-file-parallelism
+          done
 
       - name: Run Chart GPU rendering regressions
-        env:
-          LIBGL_ALWAYS_SOFTWARE: "1"
-        run: xvfb-run --auto-servernum npm run test:proof:chart -- --browser.headless=false
+        run: |
+          for browser in chromium firefox webkit; do
+            xvfb-run --auto-servernum npm run test:proof:chart -- --project="$browser" --browser.headless=false --no-file-parallelism
+          done

@@ -4,6 +4,8 @@ import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
 import { CHART_DATA_ATTRS } from "../../engine";
+import { GpuPath } from "../../rendering/GpuPath";
+import { roundedBarContour } from "../../rendering/vector-path";
 import {
   registerSeries,
   unregisterSeries,
@@ -163,13 +165,14 @@ const BarSeriesComponent = <T,>({
               : "top";
         const radius = registered?.stackEnds?.[i] === false ? 0 : BAR_RADIUS;
 
+        const contour = roundedBarContour(finalX, finalY, w, h, end, radius);
+
         return (
-          <path
+          <GpuPath
             key={i}
             ref={(node) => {
               if (node) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (node as any).__data__ = d;
+                (node as SVGPathElement & { __data__: T }).__data__ = d;
               }
             }}
             aria-label={
@@ -187,6 +190,7 @@ const BarSeriesComponent = <T,>({
             }
             aria-roledescription="bar"
             className={`${styles.bar} chart-bar`}
+            contours={contour ? [contour] : []}
             d={createBarPath(finalX, finalY, w, h, end, radius)}
             role="graphics-symbol"
             style={{

@@ -1,0 +1,27 @@
+@layer doom.components {
+  // Semantic SVG marks do not paint; GPU draw frames consume their final styles.
+  :global([data-chart-plot] [data-chart-gpu-mark]) {
+    transition: none;
+  }
+
+  .canvas + :global(svg) {
+    position: relative;
+  }
+
+  .status {
+    position: absolute;
+    inset: var(--space-4);
+    padding: var(--space-3);
+    background: var(--background);
+    color: var(--foreground);
+    border: var(--surface-border-width) solid var(--card-border);
+    height: fit-content;
+    pointer-events: none;
+  }
+
+  .canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+}

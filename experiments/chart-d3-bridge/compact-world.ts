@@ -2,6 +2,7 @@ import {
   buildGrid,
   type GridBuffers,
 } from "../../components/Chart/engine/PreparedGrid";
+import type { GpuAxis } from "../../components/Chart/rendering/gpu";
 import {
   type CoordinateEncoding,
   validateCompactRequest,
@@ -13,7 +14,6 @@ import {
   packServiceValues,
   projectServiceValues,
 } from "./direct-data";
-import type { GpuAxis } from "./gpu";
 import { createNumericGeometry, type NumericChange } from "./numeric-geometry";
 import type { Service } from "./scatter";
 

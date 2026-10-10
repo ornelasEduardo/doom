@@ -1,6 +1,13 @@
 const vertex = `#version 300 es
 in vec2 position;
 in float weight;
+in float pointRadius;
+in float selected;
+uniform float inactiveOpacity;
+flat out float pointOpacity;
+flat out highp float diameter;
+uniform highp float radiusRatio;
+uniform highp float strokeWidth;
 out float intensity;
 uniform float maxWeight;
 uniform vec2 viewport;
@@ -8,13 +15,14 @@ uniform vec2 plot;
 uniform vec2 clipPadding;
 uniform vec3 zoom;
 uniform mat3 matrix;
-uniform highp float diameter;
 uniform vec3 xAxis;
 uniform vec3 yAxis;
 float project(float value, vec3 axis) {
   return ((axis.z > 0.5 ? log(value) / log(10.0) : value) - axis.x) / (axis.y - axis.x);
 }
 void main() {
+  pointOpacity = selected > 0.0 ? selected - 1.0 : inactiveOpacity;
+  diameter = pointRadius * 2.0 * radiusRatio + strokeWidth;
   intensity = maxWeight > 0.0 ? 0.15 + 0.85 * log(1.0 + weight) / log(1.0 + maxWeight) : 1.0;
   // Invalid coordinates never enter projection or rasterization.
   if (any(isnan(position)) || any(isinf(position))) {
@@ -37,23 +45,34 @@ void main() {
 const fragment = `#version 300 es
 precision mediump float;
 uniform vec4 color;
+uniform vec4 strokeColor;
+uniform highp float strokeWidth;
 uniform highp mat3 clipMatrix;
 uniform highp vec2 framebuffer;
 uniform highp vec2 viewport;
 uniform highp vec2 plot;
-uniform highp float diameter;
+flat in highp float diameter;
 in float intensity;
+flat in float pointOpacity;
 out vec4 outputColor;
 void main() {
   highp vec2 pixel = vec2(gl_FragCoord.x, framebuffer.y - gl_FragCoord.y) * viewport / framebuffer;
   highp vec3 local = clipMatrix * vec3(pixel, 1.0);
   if (local.z == 0.0 || any(lessThan(local.xy, vec2(0.0))) || any(greaterThan(local.xy, plot))) discard;
   // One device-pixel coverage ramp; output uses premultiplied alpha.
-  float distance = length((gl_PointCoord - vec2(0.5)) * (diameter + 2.0));
+  highp float distance = length((gl_PointCoord - vec2(0.5)) * (diameter + 2.0));
   float coverage = clamp(diameter * 0.5 + 0.5 - distance, 0.0, 1.0);
   if (coverage == 0.0) discard;
-  float alpha = color.a * coverage;
-  outputColor = vec4(color.rgb * intensity * alpha, alpha);
+  highp float radius = (diameter - strokeWidth) * 0.5;
+  float fillCoverage = clamp(radius + 0.5 - distance, 0.0, 1.0);
+  float strokeCoverage = strokeWidth > 0.0
+    ? coverage - clamp(radius - strokeWidth * 0.5 + 0.5 - distance, 0.0, 1.0)
+    : 0.0;
+  // SVG paints the centered stroke over the fill, including translucent rings.
+  float strokeAlpha = strokeColor.a * strokeCoverage;
+  float fillAlpha = color.a * fillCoverage * (1.0 - strokeAlpha);
+  outputColor = vec4((color.rgb * fillAlpha + strokeColor.rgb * strokeAlpha) * intensity,
+                     fillAlpha + strokeAlpha) * pointOpacity;
 }`;
 
 export function createGpuResources(context: WebGL2RenderingContext) {
@@ -102,7 +121,14 @@ export function createGpuResources(context: WebGL2RenderingContext) {
     context.bindBuffer(context.ARRAY_BUFFER, buffer);
     const attribute = context.getAttribLocation(program, "position");
     const weightAttribute = context.getAttribLocation(program, "weight");
-    if (attribute < 0 || weightAttribute < 0) {
+    const radiusAttribute = context.getAttribLocation(program, "pointRadius");
+    const selectedAttribute = context.getAttribLocation(program, "selected");
+    if (
+      attribute < 0 ||
+      weightAttribute < 0 ||
+      radiusAttribute < 0 ||
+      selectedAttribute < 0
+    ) {
       throw new Error("GPU program attributes are unavailable");
     }
     context.enableVertexAttribArray(attribute);
@@ -120,8 +146,11 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         "clipMatrix",
         "clipPadding",
         "framebuffer",
-        "diameter",
+        "radiusRatio",
+        "inactiveOpacity",
         "color",
+        "strokeColor",
+        "strokeWidth",
         "maxWeight",
         "xAxis",
         "yAxis",
@@ -133,7 +162,18 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         return [name, location];
       }),
     );
-    return { program, buffer, vao, uniforms, weights, weightAttribute };
+    return {
+      program,
+      buffer,
+      vao,
+      uniforms,
+      weights,
+      weightAttribute,
+      radiusAttribute,
+      radii: null as WebGLBuffer | null,
+      selectedAttribute,
+      emphasis: null as WebGLBuffer | null,
+    };
   } catch (error) {
     if (buffer) {
       context.deleteBuffer(buffer);

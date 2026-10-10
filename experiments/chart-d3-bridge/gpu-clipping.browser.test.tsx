@@ -1,7 +1,10 @@
 import { expect, it, vi } from "vitest";
 
+import {
+  createGpuPoints,
+  type GpuView,
+} from "../../components/Chart/rendering/gpu";
 import { createDensity } from "./density";
-import { createGpuPoints, type GpuView } from "./gpu";
 
 function fixture(ratio: number, matrix = new DOMMatrix().translate(20, 20)) {
   const canvas = document.createElement("canvas");

@@ -16,7 +16,7 @@ try {
   await page.goto(proofUrl("points=8"));
   const result = await page.evaluate(async () => {
     const { createGpuPoints } =
-      await import("/experiments/chart-d3-bridge/gpu.ts");
+      await import("/components/Chart/rendering/gpu.ts");
     const { prepareCompact, adoptCompact } =
       await import("/experiments/chart-d3-bridge/compact-world.ts");
     const canvas = document.createElement("canvas");

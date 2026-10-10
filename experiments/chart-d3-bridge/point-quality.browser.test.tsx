@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { createGpuPoints } from "./gpu";
+import { createGpuPoints } from "../../components/Chart/rendering/gpu";
 
 it.each([1, 2])(
   "smooths only the circle boundary at pixel ratio %s",

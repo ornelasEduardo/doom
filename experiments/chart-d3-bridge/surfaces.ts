@@ -1,8 +1,11 @@
 import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 
 import type { RenderFrame } from "../../components/Chart/Chart";
+import {
+  createGpuPoints,
+  type DensityFrame,
+} from "../../components/Chart/rendering/gpu";
 import type { CompactWorld } from "./compact-world";
-import { createGpuPoints, type DensityFrame } from "./gpu";
 import styles from "./Proof.module.scss";
 import type { Service } from "./scatter";
 

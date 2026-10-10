@@ -1,6 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { cdp } from "vitest/browser";
 
 import { ChartContext } from "../../../components/Chart/context";
 import { Engine, InputAction } from "../../../components/Chart/engine";
@@ -8,6 +7,7 @@ import { DragSensor } from "../../../components/Chart/sensors/DragSensor/DragSen
 import { InteractionLayer } from "../../../components/Chart/subcomponents/InteractionLayer/InteractionLayer";
 import { ContextValue } from "../../../components/Chart/types/context";
 import { SensorContext } from "../../../components/Chart/types/events";
+import { dispatchChartMouse, dispatchChartTouch } from "./nativeInput";
 
 afterEach(cleanup);
 const frame = () =>
@@ -83,7 +83,7 @@ it
       prevented = event.defaultPrevented;
     });
     const box = second.querySelector("button")!.getBoundingClientRect();
-    await cdp().send("Input.dispatchTouchEvent", {
+    await dispatchChartTouch({
       type: "touchStart",
       touchPoints: [{ x: box.left + 30, y: box.top + 30, id: 1 }],
     });
@@ -92,7 +92,7 @@ it
       expect(prevented).toBe(false);
       expect(foreignCapture).toBe(false);
     } finally {
-      await cdp().send("Input.dispatchTouchEvent", {
+      await dispatchChartTouch({
         type: "touchEnd",
         touchPoints: [],
       });
@@ -146,7 +146,7 @@ it.skipIf(!navigator.userAgent.includes("Chrome"))(
       x: number,
       buttons: number,
     ) =>
-      cdp().send("Input.dispatchMouseEvent", {
+      dispatchChartMouse({
         type,
         x: box.left + x,
         y: box.top + 20,

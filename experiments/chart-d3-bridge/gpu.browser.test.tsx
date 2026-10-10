@@ -5,7 +5,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 
 import { SpatialMap } from "../../components/Chart/engine/SpatialMap";
-import { createGpuPoints } from "./gpu";
+import { createGpuPoints } from "../../components/Chart/rendering/gpu";
 import { Proof } from "./Proof";
 
 afterEach(() => {

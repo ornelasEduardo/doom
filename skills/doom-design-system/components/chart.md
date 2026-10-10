@@ -724,3 +724,19 @@ Compare runs on the same machine and browser; these timings are informational.
 Normal browser CI retains deterministic bounds on spatial query counts and
 mark-style writes. It also runs custom brush, multi-pointer, keyboard, linked
 streaming, geometry, and behavior-ownership regressions.
+
+### GPU rendering
+
+Built-in line, area, bar, and scatter marks are rendered by WebGL2 on one shared
+canvas per chart. Chart composition, accessors, sensors, behaviors, tooltip
+payloads, and keyboard navigation keep the same public API. SVG remains the
+semantic and interaction overlay for axes, labels, and mark hit targets; it does
+not paint the built-in marks. Custom `render` callbacks retain ownership of their
+drawing surface. GPU marks update directly; invisible SVG hit targets do not
+animate between interaction states.
+
+Large scatter series use compact GPU buffers instead of a DOM element for each
+point. Ordinary marks retain semantic SVG identities for accessibility and
+selector-based behaviors. GPU resource ownership, context restoration, and
+canvas cleanup are scoped to each chart. When WebGL2 is unavailable, the chart
+announces the rendering failure while retaining keyboard access to the data.

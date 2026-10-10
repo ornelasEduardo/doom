@@ -18,7 +18,7 @@ try {
     const { prepareCompact, adoptCompact } =
       await import("/experiments/chart-d3-bridge/compact-world.ts");
     const { createGpuPoints } =
-      await import("/experiments/chart-d3-bridge/gpu.ts");
+      await import("/components/Chart/rendering/gpu.ts");
     const buffers = prepareCompact(1000000),
       world = adoptCompact(buffers);
     const coordinates = buffers.grid.coordinates;

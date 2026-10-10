@@ -1,7 +1,10 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
-import { moveChartPointer } from "./tests/browser/Chart/coordinateCommands";
+import {
+  chartViewportPoint,
+  moveChartPointer,
+} from "./tests/browser/Chart/coordinateCommands";
 
 /**
  * Real-browser lane.
@@ -23,7 +26,9 @@ export default defineConfig({
       },
       provider: playwright(),
       headless: true,
+      ui: false,
       commands: {
+        chartViewportPoint,
         moveChartPointer,
         async setReducedMotion(
           { page },
