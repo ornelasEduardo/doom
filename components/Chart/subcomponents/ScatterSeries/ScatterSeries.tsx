@@ -1,9 +1,10 @@
-"use strict";
+"use client";
 
 import React, { useEffect, useId, useMemo } from "react";
 
 import { useChartContext } from "../../context";
 import { CHART_DATA_ATTRS } from "../../engine";
+import { GpuPointCloud } from "../../rendering/GpuPointCloud";
 import {
   registerSeries,
   unregisterSeries,
@@ -64,20 +65,65 @@ const ScatterSeriesComponent = <T,>({
     if (!data.length || !sizeAccessor) {
       return null;
     }
-    const sizes = data.flatMap((datum) => {
+    let maxVal = 0;
+    for (const datum of data) {
       if (datum == null) {
-        return [];
+        continue;
       }
       const size = numericSample(sizeAccessor(datum));
-      return size === undefined || size < 0 ? [] : [size];
-    });
-    const maxVal = Math.max(0, ...sizes);
+      if (size !== undefined && size >= 0) {
+        maxVal = Math.max(maxVal, size);
+      }
+    }
     // Use sqrt scale for circular area sizing (area ~ value)
     return (val: number) => {
       const normalized = Math.sqrt(val) / Math.sqrt(maxVal || 1);
       return 4 + normalized * 16;
     };
   }, [data, sizeAccessor]);
+
+  const cloud = useMemo(() => {
+    if (data.length <= 1000 || !xAccessor || !yAccessor || !xScale || !yScale) {
+      return null;
+    }
+    const positions = new Float32Array(data.length * 2);
+    const radii = new Float32Array(data.length);
+    const dataIndices = new Int32Array(data.length);
+    let count = 0;
+    for (let dataIndex = 0; dataIndex < data.length; dataIndex += 1) {
+      const datum = data[dataIndex];
+      const position = samplePosition(
+        datum,
+        xAccessor,
+        yAccessor,
+        xScale,
+        yScale,
+      );
+      if (!position) {
+        continue;
+      }
+      let radius = 6;
+      if (rScale && sizeAccessor) {
+        const size = numericSample(sizeAccessor(datum));
+        if (size !== undefined && size >= 0) {
+          radius = rScale(size);
+        }
+      }
+      positions[count * 2] = position.x;
+      positions[count * 2 + 1] = position.y;
+      radii[count] = radius;
+      dataIndices[count] = dataIndex;
+      count += 1;
+    }
+    // Root retains original row indices; compaction here affects drawing only.
+    const indices = dataIndices.subarray(0, count);
+    return {
+      positions: positions.subarray(0, count * 2),
+      radii: radii.subarray(0, count),
+      dataIndices: indices,
+      dataAt: (slot: number): unknown => data[indices[slot]],
+    };
+  }, [data, xAccessor, yAccessor, xScale, yScale, rScale, sizeAccessor]);
 
   const seriesId = useId();
   const strokeColor = useSeriesColor(chartStore, seriesId, color);
@@ -129,45 +175,57 @@ const ScatterSeriesComponent = <T,>({
 
   return (
     <g className="chart-scatter-series">
-      {data.map((d, i) => {
-        const position = samplePosition(
-          d,
-          xAccessor,
-          yAccessor,
-          xScale,
-          yScale,
-        );
-        if (!position) {
-          return null;
-        }
-
-        let radius = 6;
-        if (rScale && sizeAccessor) {
-          const size = numericSample(sizeAccessor(d));
-          if (size !== undefined && size >= 0) {
-            radius = rScale(size);
+      {cloud ? (
+        <GpuPointCloud
+          dataAt={cloud.dataAt}
+          dataIndices={cloud.dataIndices}
+          label={label}
+          positions={cloud.positions}
+          radii={cloud.radii}
+          seriesColor={strokeColor}
+          seriesId={seriesId}
+        />
+      ) : (
+        data.map((d, i) => {
+          const position = samplePosition(
+            d,
+            xAccessor,
+            yAccessor,
+            xScale,
+            yScale,
+          );
+          if (!position) {
+            return null;
           }
-        }
 
-        return (
-          <SeriesPoint
-            key={i}
-            color={strokeColor}
-            datum={d}
-            description={describeDatum(d, xAccessor, yAccessor)}
-            hoverRadius={radius + 4}
-            radius={radius}
-            x={position.x}
-            y={position.y}
-            {...{
-              [CHART_DATA_ATTRS.TYPE]: "scatter",
-              [CHART_DATA_ATTRS.SERIES_ID]: seriesId,
-              [CHART_DATA_ATTRS.INDEX]: i,
-              [CHART_DATA_ATTRS.DRAGGABLE]: false,
-            }}
-          />
-        );
-      })}
+          let radius = 6;
+          if (rScale && sizeAccessor) {
+            const size = numericSample(sizeAccessor(d));
+            if (size !== undefined && size >= 0) {
+              radius = rScale(size);
+            }
+          }
+
+          return (
+            <SeriesPoint
+              key={i}
+              color={strokeColor}
+              datum={d}
+              description={describeDatum(d, xAccessor, yAccessor)}
+              hoverRadius={radius + 4}
+              radius={radius}
+              x={position.x}
+              y={position.y}
+              {...{
+                [CHART_DATA_ATTRS.TYPE]: "scatter",
+                [CHART_DATA_ATTRS.SERIES_ID]: seriesId,
+                [CHART_DATA_ATTRS.INDEX]: i,
+                [CHART_DATA_ATTRS.DRAGGABLE]: false,
+              }}
+            />
+          );
+        })
+      )}
     </g>
   );
 };

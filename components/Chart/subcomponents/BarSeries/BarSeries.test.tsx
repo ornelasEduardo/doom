@@ -111,6 +111,27 @@ describe("BarSeries", () => {
     expect(paths.length).toBe(3); // 3 bars
   });
 
+  it("forwards datum refs through the real GPU path while retaining semantic hit targets", () => {
+    useChartContextMock.mockReturnValue(defaultContext);
+    const { container } = render(
+      <svg>
+        <BarSeriesWrapper />
+      </svg>,
+    );
+    const bars = container.querySelectorAll<
+      SVGPathElement & { __data__?: { x: string; y: number } }
+    >('[aria-roledescription="bar"]');
+    expect(bars).toHaveLength(3);
+    bars.forEach((bar, index) => {
+      expect(bar.__data__).toEqual(defaultContext.data[index]);
+      expect(bar).toHaveAttribute("data-chart-gpu-mark", "path");
+      expect(bar).toHaveAttribute("fill-opacity", "0");
+      expect(bar).toHaveAttribute("stroke-opacity", "0");
+      expect(bar.style.pointerEvents).toBe("all");
+      expect(bar.getAttribute("d")).toBeTruthy();
+    });
+  });
+
   it("renders nothing when data is empty", () => {
     useChartContextMock.mockReturnValue({
       ...defaultContext,

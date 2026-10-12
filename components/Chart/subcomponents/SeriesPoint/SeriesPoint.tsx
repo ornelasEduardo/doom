@@ -1,5 +1,6 @@
-import React, { memo } from "react";
+import React, { memo, useEffect, useRef } from "react";
 
+import { registerGpuMark } from "../../rendering/scene";
 import styles from "./SeriesPoint.module.scss";
 
 export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
@@ -33,6 +34,19 @@ export const SeriesPoint = memo(
     datum,
     ...props
   }: SeriesPointProps) => {
+    const point = useRef<SVGCircleElement>(null);
+    const renderedRadius = isHovered ? hoverRadius : radius;
+    useEffect(() => {
+      if (!point.current || !Number.isFinite(x) || !Number.isFinite(y)) {
+        return;
+      }
+      return registerGpuMark(point.current, {
+        kind: "point",
+        x,
+        y,
+        radius: renderedRadius,
+      });
+    }, [x, y, renderedRadius]);
     if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) {
       return null;
     }
@@ -52,6 +66,7 @@ export const SeriesPoint = memo(
     return (
       <circle
         ref={(node) => {
+          point.current = node;
           if (node) {
             (node as SVGCircleElement & { __data__?: unknown }).__data__ =
               datum;
@@ -62,8 +77,11 @@ export const SeriesPoint = memo(
         className={`${styles.point} ${className || ""}`}
         cx={x}
         cy={y}
+        data-chart-gpu-mark="point"
+        fillOpacity={0}
         r={isHovered ? hoverRadius : radius}
         role="graphics-symbol"
+        strokeOpacity={0}
         style={{
           ...computedStyle,
           pointerEvents: "all",

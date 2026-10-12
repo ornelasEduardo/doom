@@ -1,6 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { cdp } from "vitest/browser";
 
 import { ChartContext } from "../../../components/Chart/context";
 import {
@@ -18,6 +17,7 @@ import {
 import { InteractionLayer } from "../../../components/Chart/subcomponents/InteractionLayer/InteractionLayer";
 import type { ContextValue, Sensor } from "../../../components/Chart/types";
 import { createInteractionAccess } from "../../../components/Chart/utils/interactionChannels";
+import { dispatchChartMouse } from "./nativeInput";
 
 const datum = { x: 1, y: 2 };
 afterEach(cleanup);
@@ -57,7 +57,7 @@ function mount(
   });
   const box = root.getBoundingClientRect();
   const mouse = (type: "mousePressed" | "mouseReleased") =>
-    cdp().send("Input.dispatchMouseEvent", {
+    dispatchChartMouse({
       type,
       x: box.left + 20,
       y: box.top + 20,

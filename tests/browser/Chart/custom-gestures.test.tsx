@@ -2,7 +2,7 @@ import "../../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
-import { cdp, userEvent } from "vitest/browser";
+import { userEvent } from "vitest/browser";
 
 import {
   type Behavior,
@@ -16,6 +16,7 @@ import {
   InputSource,
 } from "../../../components/Chart/engine";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
+import { dispatchChartMouse } from "./nativeInput";
 
 afterEach(cleanup);
 type Row = { x: number; y: number };
@@ -210,7 +211,7 @@ it.skipIf(!navigator.userAgent.includes("Chrome"))(
     const box = root.getBoundingClientRect();
     const x = box.left + 100,
       y = box.top + 100;
-    await cdp().send("Input.dispatchMouseEvent", {
+    await dispatchChartMouse({
       type: "mousePressed",
       x,
       y,
@@ -219,7 +220,7 @@ it.skipIf(!navigator.userAgent.includes("Chrome"))(
       clickCount: 1,
     });
     expect(captured).toBe(true);
-    await cdp().send("Input.dispatchMouseEvent", {
+    await dispatchChartMouse({
       type: "mouseMoved",
       x: box.right + 80,
       y,
@@ -228,7 +229,7 @@ it.skipIf(!navigator.userAgent.includes("Chrome"))(
     });
     await frame();
     expect(positions.some((position) => position > box.width)).toBe(true);
-    await cdp().send("Input.dispatchMouseEvent", {
+    await dispatchChartMouse({
       type: "mouseReleased",
       x: box.right + 80,
       y,
@@ -293,7 +294,7 @@ it
     const box = root.getBoundingClientRect();
     const x = box.left + 100,
       y = box.top + 100;
-    await cdp().send("Input.dispatchMouseEvent", {
+    await dispatchChartMouse({
       type: "mousePressed",
       x,
       y,
@@ -322,7 +323,7 @@ it
       }
       expect(root.hasPointerCapture(pointerId)).toBe(false);
     } finally {
-      await cdp().send("Input.dispatchMouseEvent", {
+      await dispatchChartMouse({
         type: "mouseReleased",
         x,
         y,

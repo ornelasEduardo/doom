@@ -13,6 +13,7 @@ import {
   type InputSignal,
 } from "../../../components/Chart/engine";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
+import { dispatchChartTouch } from "./nativeInput";
 
 const rows = [
   { month: "Jan", actual: 10, forecast: 20 },
@@ -31,7 +32,7 @@ const touch = async (
   if (type === "touchStart") {
     touching = true;
   }
-  await cdp().send("Input.dispatchTouchEvent", {
+  await dispatchChartTouch({
     type,
     touchPoints: point ? [{ ...point, id: 1 }] : [],
   });
@@ -136,7 +137,11 @@ it("native vertical swiping scrolls the page and clears inspection", async () =>
   for (const distance of [5, 30, 70, 110]) {
     await touch("touchMove", { x: point.x, y: point.y - distance });
   }
+  const scrollingStopped = new Promise<void>((resolve) => {
+    document.addEventListener("scrollend", () => resolve(), { once: true });
+  });
   await touch("touchEnd");
+  await scrollingStopped;
   await expect.poll(() => window.scrollY).toBeGreaterThan(0);
   expect(cancelled).toBe(true);
   await expect.poll(() => live.textContent).toBe("");

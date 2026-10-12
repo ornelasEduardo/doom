@@ -1,3 +1,4 @@
+import { updateGpuDimming } from "../rendering/gpu-effects";
 import { Behavior, GenericBehavior } from "../types/events";
 import {
   ChannelReference,
@@ -232,6 +233,13 @@ export function Dim<T = unknown>(options: DimOptions<T> = {}): Behavior<T> {
         typeof on === "string" ? getInteraction(on) : getInteraction(on);
       const targets =
         interaction && "targets" in interaction ? interaction.targets : [];
+      updateGpuDimming(
+        root,
+        owner,
+        targets.length && dimOpacity && Number.isFinite(opacity)
+          ? { selector, targets, opacity: Math.min(1, Math.max(0, opacity)) }
+          : undefined,
+      );
       const next = new Set<Mark>();
       const hasActive = targets.length > 0;
       observer.disconnect();
@@ -239,7 +247,9 @@ export function Dim<T = unknown>(options: DimOptions<T> = {}): Behavior<T> {
         if (dirty) {
           const nextMarks = new Set(
             Array.from(root.querySelectorAll<Mark>(selector)).filter(
-              (mark) => !!mark.style,
+              (mark) =>
+                !!mark.style &&
+                mark.getAttribute("data-chart-gpu-mark") !== "cloud",
             ),
           );
           for (const mark of marks) {
@@ -343,6 +353,7 @@ export function Dim<T = unknown>(options: DimOptions<T> = {}): Behavior<T> {
       invalidate(observer.takeRecords());
       disposed = true;
       unsubscribe();
+      updateGpuDimming(root, owner);
       observer.disconnect();
       for (const mark of owned.keys()) {
         restore(mark);

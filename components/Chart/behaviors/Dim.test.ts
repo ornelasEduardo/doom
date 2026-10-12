@@ -1,6 +1,7 @@
 import { select } from "d3-selection";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { readGpuEmphasis } from "../rendering/gpu-effects";
 import { createChartStore } from "../state/store/chart.store";
 import type { Behavior, BehaviorContext } from "../types/events";
 import type { HoverInteraction } from "../types/interaction";
@@ -59,6 +60,37 @@ function scene(count = 3, initial: unknown[] = [], sameKey = false) {
 const mutations = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("Dim", () => {
+  it.each([
+    [-1, 0],
+    [2, 1],
+    [NaN, undefined],
+    [Infinity, undefined],
+  ])("normalizes GPU opacity %s to the CSS result %s", (opacity, expected) => {
+    const s = scene();
+    const cloud = s.g.append("g").attr("data-chart-gpu-mark", "cloud").node()!;
+    disposals.push(Dim({ selector: "g", opacity })(s.context)!);
+    s.hover(s.data[0]);
+    expect(readGpuEmphasis(cloud, "s", new Int32Array([0, 1]))?.opacity).toBe(
+      expected,
+    );
+  });
+  it("applies dense-cloud dimming only on the GPU while preserving consumer opacity", () => {
+    const s = scene();
+    const cloud = s.g
+      .append("g")
+      .attr("data-chart-gpu-mark", "cloud")
+      .attr("data-chart-type", "scatter")
+      .style("opacity", "0.8")
+      .node()!;
+    s.start('[data-chart-type="scatter"]');
+    s.hover(s.data[0]);
+    expect(cloud.style.opacity).toBe("0.8");
+    const emphasis = readGpuEmphasis(cloud, "s", new Int32Array([0, 1]));
+    expect(emphasis?.opacity).toBe(0.3);
+    s.hover();
+    expect(cloud.style.opacity).toBe("0.8");
+    expect(readGpuEmphasis(cloud, "s", new Int32Array([0, 1]))).toBeUndefined();
+  });
   it("reconciles consumer edits when the first observer has no opacity claim on the mark", async () => {
     const s = scene();
     s.hover(s.data[0]);
