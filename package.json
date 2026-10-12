@@ -45,7 +45,8 @@
     "test:browser:chart": "vitest run --config vitest.chart-browser.config.ts",
     "test:performance:chart": "vitest run --config vitest.chart-performance.config.ts",
     "proof:chart": "vite --config experiments/chart-d3-bridge/vite.config.ts --host 127.0.0.1 --port 63410 --strictPort",
-    "test:proof:chart": "vitest run --config experiments/chart-d3-bridge/vitest.config.ts"
+    "test:proof:chart": "vitest run --config experiments/chart-d3-bridge/vitest.config.ts",
+    "test:proof:dashboards": "vitest run --config experiments/chart-dashboards/vitest.config.ts"
   },
   "keywords": [
     "design-system",

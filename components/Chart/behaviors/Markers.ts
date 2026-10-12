@@ -57,7 +57,10 @@ export function Markers<T = unknown>(
     }
 
     const { g } = ctx;
-    const layer = g.append("g").attr("class", "chart-markers-layer");
+    const layer = g
+      .append("g")
+      .attr("class", "chart-markers-layer")
+      .style("pointer-events", "none");
 
     const update = () => {
       const interaction = (
@@ -83,8 +86,8 @@ export function Markers<T = unknown>(
         .append("circle")
         .attr("r", radius)
         .attr("fill", (d) => d.seriesColor || options.color || "currentColor")
-        .attr("stroke", "var(--card-border)")
-        .attr("stroke-width", 2)
+        .attr("stroke", "var(--card-bg)")
+        .attr("stroke-width", 4)
         .attr("cx", (d) => d.coordinate.x - margin.left)
         .attr("cy", (d) => d.coordinate.y - margin.top)
         .style("opacity", 1);
