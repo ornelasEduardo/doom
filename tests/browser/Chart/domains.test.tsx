@@ -329,12 +329,21 @@ describe("Chart axis domains in a real browser", () => {
           </Chart.Root>
         </DesignSystemProvider>,
       );
-      await settle();
-      const scales = store.getState().scales;
-      expect((horizontal ? scales.x : scales.y)!.domain()).toEqual([
-        -10.5, 2.5,
-      ]);
-      expect((horizontal ? scales.y : scales.x)!.domain()).toEqual(["A", "B"]);
+      await expect
+        .poll(() => {
+          const scales = store.getState().scales;
+          return (horizontal ? scales.x : scales.y)?.domain();
+        })
+        .toEqual([-10.5, 2.5]);
+      await expect
+        .poll(() => {
+          const scales = store.getState().scales;
+          return (horizontal ? scales.y : scales.x)?.domain();
+        })
+        .toEqual(["A", "B"]);
+      await expect
+        .poll(() => container.querySelectorAll(".chart-bar").length)
+        .toBe(2);
       const bars = container.querySelectorAll<SVGPathElement>(".chart-bar");
       expect(bars).toHaveLength(2);
       // Domain ratios and seams concern fill geometry, excluding stroke.
