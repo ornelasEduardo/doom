@@ -1,11 +1,15 @@
 "use client";
-
 import React, { useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Popover } from "../Popover/Popover";
 import styles from "./Tooltip.module.scss";
 
 interface TooltipProps {
+  classNames?: ThemeClassNames<"Tooltip">;
   content: string;
   children: React.ReactNode;
   delay?: number;
@@ -18,6 +22,8 @@ export function Tooltip({
   delay = 200,
   placement = "top",
 }: TooltipProps) {
+  const doomPart = useThemeParts("Tooltip", undefined, {});
+
   const [isVisible, setIsVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
@@ -39,7 +45,10 @@ export function Tooltip({
   return (
     <Popover
       content={
-        <div className={styles.tooltipBody} role="tooltip">
+        <div
+          {...doomPart("tooltipBody", { className: styles.tooltipBody })}
+          role="tooltip"
+        >
           {content}
         </div>
       }
@@ -48,7 +57,7 @@ export function Tooltip({
       placement={popoverPlacement}
       trigger={
         <div
-          className={styles.triggerWrapper}
+          {...doomPart("root", { className: styles.triggerWrapper })}
           onBlur={hide}
           onFocus={show}
           onMouseEnter={show}

@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useMemo } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { Flex } from "../../../Layout/Layout";
 import { Text } from "../../../Text/Text";
 import { useChartContext } from "../../context";
@@ -11,6 +14,7 @@ import { LegendItem } from "../../types";
 import styles from "./Legend.module.scss";
 
 export interface LegendProps {
+  classNames?: ThemeClassNames<"Chart">;
   items?: LegendItem[] | ((items: LegendItem[]) => LegendItem[]);
   layout?: "horizontal" | "vertical";
   align?: "start" | "center" | "end";
@@ -19,12 +23,15 @@ export interface LegendProps {
 }
 
 export function Legend({
+  classNames,
   items,
   layout = "horizontal",
   align = "start",
   className,
   style,
 }: LegendProps) {
+  const doomPart = useThemeParts("Chart", classNames, {});
+
   const { chartStore } = useChartContext();
   const series = chartStore.useStore((s: State) => s.processedSeries);
 
@@ -52,7 +59,7 @@ export function Legend({
 
   return (
     <Flex
-      className={clsx(styles.legend, className)}
+      {...doomPart("legend", { className: clsx(styles.legend, className) })}
       gap={isVertical ? 2 : 4}
       style={{
         flexWrap: "wrap",
@@ -66,16 +73,19 @@ export function Legend({
         <Flex
           key={item.label || index}
           align="center"
-          className={styles.legendItem}
+          {...doomPart("legendItem", { className: styles.legendItem })}
           gap={1}
         >
           <span
-            className={styles.legendDot}
+            {...doomPart("legendDot", { className: styles.legendDot })}
             style={{
               backgroundColor: item.color,
             }}
           />
-          <Text className={styles.legendLabel} variant="small">
+          <Text
+            {...doomPart("legendLabel", { className: styles.legendLabel })}
+            variant="small"
+          >
             {item.label}
           </Text>
         </Flex>

@@ -1,13 +1,17 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useId, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import type { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import styles from "./Textarea.module.scss";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  classNames?: ThemeClassNames<"Textarea">;
   label?: string;
   error?: string;
   helperText?: string;
@@ -16,6 +20,7 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 }
 
 export function Textarea({
+  classNames,
   label,
   error,
   helperText,
@@ -31,6 +36,8 @@ export function Textarea({
   onChange,
   ...props
 }: TextareaProps) {
+  const doomPart = useThemeParts("Textarea", classNames, { size: size });
+
   const reactId = useId();
   const textareaId = id || `textarea-${reactId}`;
   const helperId = `${textareaId}-helper`;
@@ -59,15 +66,17 @@ export function Textarea({
 
   return (
     <div
-      className={clsx(
-        styles.container,
-        size !== "md" && styles[size],
-        className,
-      )}
+      {...doomPart("root", {
+        className: clsx(
+          styles.container,
+          size !== "md" && styles[size],
+          className,
+        ),
+      })}
       style={style}
     >
       {label && (
-        <Label htmlFor={textareaId} required={required}>
+        <Label {...doomPart("label")} htmlFor={textareaId} required={required}>
           {label}
         </Label>
       )}
@@ -75,7 +84,9 @@ export function Textarea({
       <textarea
         aria-describedby={describedBy}
         aria-invalid={!!error}
-        className={clsx(styles.textarea, error && styles.error)}
+        {...doomPart("textarea", {
+          className: clsx(styles.textarea, error && styles.error),
+        })}
         defaultValue={defaultValue}
         id={textareaId}
         maxLength={maxLength}
@@ -86,11 +97,14 @@ export function Textarea({
       />
 
       {(error || helperText || (showCount ?? maxLength !== undefined)) && (
-        <div className={styles.bottomRow}>
-          <div className={styles.messageArea}>
+        <div {...doomPart("bottomRow", { className: styles.bottomRow })}>
+          <div {...doomPart("messageArea", { className: styles.messageArea })}>
             {error ? (
               <span
-                className={clsx(styles.helperText, styles.error)}
+                {...doomPart("helperText", {
+                  "data-invalid": true,
+                  className: clsx(styles.helperText, styles.error),
+                })}
                 id={errorId}
                 role="alert"
               >
@@ -98,7 +112,10 @@ export function Textarea({
               </span>
             ) : (
               helperText && (
-                <span className={styles.helperText} id={helperId}>
+                <span
+                  {...doomPart("helperText", { className: styles.helperText })}
+                  id={helperId}
+                >
                   {helperText}
                 </span>
               )
@@ -106,7 +123,7 @@ export function Textarea({
           </div>
 
           {(showCount ?? maxLength !== undefined) && (
-            <span className={styles.counter}>
+            <span {...doomPart("counter", { className: styles.counter })}>
               {charCount}
               {maxLength !== undefined ? ` / ${maxLength}` : ""}
             </span>

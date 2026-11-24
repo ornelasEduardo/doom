@@ -1,6 +1,7 @@
 # Accordion
 
 ## Import
+
 ```tsx
 import { Accordion, AccordionItem } from "doom-design-system";
 ```
@@ -9,20 +10,20 @@ import { Accordion, AccordionItem } from "doom-design-system";
 
 ### Accordion
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `type` | `"single" \| "multiple"` | `"single"` | Allow one or multiple panels open |
-| `defaultValue` | `string \| string[]` | — | Initially open item(s) (uncontrolled) |
-| `value` | `string \| string[]` | — | Controlled open value(s) |
-| `onValueChange` | `(value: string \| string[]) => void` | — | Change callback |
+| Prop            | Type                                  | Default    | Description                           |
+| --------------- | ------------------------------------- | ---------- | ------------------------------------- |
+| `type`          | `"single" \| "multiple"`              | `"single"` | Allow one or multiple panels open     |
+| `defaultValue`  | `string \| string[]`                  | —          | Initially open item(s) (uncontrolled) |
+| `value`         | `string \| string[]`                  | —          | Controlled open value(s)              |
+| `onValueChange` | `(value: string \| string[]) => void` | —          | Change callback                       |
 
 ### AccordionItem
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `string` | required | Unique identifier for this item |
-| `trigger` | `string` | required | Header/trigger text |
-| `children` | `ReactNode` | required | Panel content |
+| Prop       | Type        | Default  | Description                     |
+| ---------- | ----------- | -------- | ------------------------------- |
+| `value`    | `string`    | required | Unique identifier for this item |
+| `trigger`  | `string`    | required | Header/trigger text             |
+| `children` | `ReactNode` | required | Panel content                   |
 
 ## Usage
 
@@ -46,6 +47,11 @@ import { Accordion, AccordionItem } from "doom-design-system";
 ```
 
 ## Notes
+
 - Use `type="multiple"` for FAQs where users may want multiple sections open simultaneously
 - Use `type="single"` (default) for settings panels or navigation where only one section should be active
 - `value` and `onValueChange` enable controlled mode; omit for uncontrolled with `defaultValue`
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Accordion theme contract](../../../THEME-REFERENCE.md#component-accordion).

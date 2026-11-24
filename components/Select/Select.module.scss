@@ -8,15 +8,15 @@
   }
 
   .trigger {
-    background: var(--card-bg);
+    background: var(--input, var(--card-bg));
     color: var(--foreground);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-weight: var(--font-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--control-font-weight, var(--font-bold));
+    text-transform: var(--control-text-transform, uppercase);
+    letter-spacing: var(--control-letter-spacing, 0.05em);
     width: 100%;
     box-sizing: border-box;
 
@@ -29,7 +29,7 @@
     &:disabled {
       @include disabled-state;
       transform: none;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--control-shadow, var(--shadow-md));
     }
   }
 
@@ -44,7 +44,8 @@
 
   .optionsList {
     background: var(--card-bg);
-    border: var(--surface-border-width) solid var(--primary);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--primary);
     border-radius: var(--control-radius);
     box-shadow: none;
     min-width: 12.5rem;
@@ -86,14 +87,14 @@
     }
 
     &.selected {
-      background: var(--primary);
-      color: var(--primary-foreground);
+      background: var(--surface-selection, var(--primary));
+      color: var(--on-selection, var(--primary-foreground));
       font-weight: var(--font-bold);
 
       &:hover {
-        background-color: var(--primary);
-        color: var(--primary-foreground);
-        filter: brightness(1.1);
+        background-color: var(--surface-selection, var(--primary));
+        color: var(--on-selection, var(--primary-foreground));
+        filter: var(--control-hover-filter, brightness(1.1));
       }
     }
   }

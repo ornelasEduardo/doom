@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useCallback, useState } from "react";
 
+import {
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+} from "../../styles/theming/parts";
 import { Stack } from "../Layout/Layout";
 import { SidebarContext } from "./context";
 import styles from "./Sidebar.module.scss";
@@ -19,6 +22,7 @@ import { SidebarContextValue, SidebarProps } from "./types";
 import { extractSections, filterNodesForRail } from "./utils";
 
 function SidebarRoot({
+  classNames,
   children,
   withRail = false,
   activeSection: activeSecProp,
@@ -29,6 +33,8 @@ function SidebarRoot({
   brandIcon,
   className,
 }: SidebarProps) {
+  const doomPart = useOwnedThemeParts("Sidebar", classNames, {});
+
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [internalActiveSection, setInternalActiveSection] = useState<
@@ -98,11 +104,13 @@ function SidebarRoot({
 
   const sidebarContent = (
     <Stack
-      className={clsx(
-        styles.root,
-        collapsed && !isPeeking && styles.collapsed,
-        className,
-      )}
+      {...doomPart("root", {
+        className: clsx(
+          styles.root,
+          collapsed && !isPeeking && styles.collapsed,
+          className,
+        ),
+      })}
       gap={0}
       width="100%"
     >
@@ -111,59 +119,78 @@ function SidebarRoot({
   );
 
   return (
-    <SidebarContext.Provider value={contextValue}>
-      <div
-        className={clsx(
-          styles.shell,
-          withRail && styles.withRail,
-          collapsed && styles.collapsed,
-        )}
-        data-testid="sidebar-desktop"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => {
-          setHovered(false);
-          setHoveredSection(null);
-        }}
-      >
-        <div
-          className={clsx(
-            styles.frame,
-            withRail && styles.withRail,
-            collapsed && styles.collapsed,
-            isPeeking && styles.peeking,
-          )}
-        >
-          {withRail && (
-            <Rail
-              activeSection={activeSection}
-              brandIcon={brandIcon}
-              sections={sectionInfo}
-              onSectionClick={handleSectionChange}
-              onSectionMouseEnter={setHoveredSection}
-            />
-          )}
+    <ThemePartsBoundary classNames={classNames} component="Sidebar" visual={{}}>
+      {
+        <SidebarContext.Provider value={contextValue}>
           <div
-            className={clsx(
-              styles.panel,
-              withRail && styles.withRail,
-              collapsed && styles.collapsed,
-              isPeeking && styles.peeking,
-            )}
-            data-testid="sidebar-panel"
+            {...doomPart("root", {
+              className: clsx(
+                styles.shell,
+                withRail && styles.withRail,
+                collapsed && styles.collapsed,
+              ),
+            })}
+            data-testid="sidebar-desktop"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => {
+              setHovered(false);
+              setHoveredSection(null);
+            }}
           >
-            {sidebarContent}
+            <div
+              {...doomPart("frame", {
+                className: clsx(
+                  styles.frame,
+                  withRail && styles.withRail,
+                  collapsed && styles.collapsed,
+                  isPeeking && styles.peeking,
+                ),
+              })}
+            >
+              {withRail && (
+                <Rail
+                  activeSection={activeSection}
+                  brandIcon={brandIcon}
+                  sections={sectionInfo}
+                  onSectionClick={handleSectionChange}
+                  onSectionMouseEnter={setHoveredSection}
+                />
+              )}
+              <div
+                {...doomPart("panel", {
+                  className: clsx(
+                    styles.panel,
+                    withRail && styles.withRail,
+                    collapsed && styles.collapsed,
+                    isPeeking && styles.peeking,
+                  ),
+                })}
+                data-testid="sidebar-panel"
+              >
+                {sidebarContent}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <MobileOverlay isOpen={isMobileOpen} onClose={() => setMobileOpen(false)}>
-        <SidebarContext.Provider value={{ ...contextValue, withRail: false }}>
-          <Stack className={styles.root} gap={0} width="sidebar">
-            {children}
-          </Stack>
+          <MobileOverlay
+            isOpen={isMobileOpen}
+            onClose={() => setMobileOpen(false)}
+          >
+            <SidebarContext.Provider
+              value={{ ...contextValue, withRail: false }}
+            >
+              <Stack
+                {...doomPart("root", { className: styles.root })}
+                gap={0}
+                width="sidebar"
+              >
+                {children}
+              </Stack>
+            </SidebarContext.Provider>
+          </MobileOverlay>
         </SidebarContext.Provider>
-      </MobileOverlay>
-    </SidebarContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }
 

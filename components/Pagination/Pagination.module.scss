@@ -14,12 +14,13 @@
     justify-content: center;
     width: var(--control-height);
     height: var(--control-height);
-    border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
+    border-radius: var(--control-radius, var(--radius-md));
     background-color: var(--card-bg);
     color: var(--foreground);
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: var(--font-bold, 700);
     cursor: pointer;
     box-shadow: var(--shadow-sm);
     transition:

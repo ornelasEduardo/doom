@@ -1,8 +1,13 @@
 "use client";
-
 import clsx from "clsx";
 import React, { createContext, useContext, useId, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import styles from "./Tabs.module.scss";
 
 interface TabsContextType {
@@ -14,6 +19,7 @@ interface TabsContextType {
 const TabsContext = createContext<TabsContextType | null>(null);
 
 interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Tabs">;
   defaultValue?: string;
   value?: string;
   onValueChange?: (value: string) => void;
@@ -21,6 +27,7 @@ interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Tabs({
+  classNames,
   defaultValue,
   value,
   onValueChange,
@@ -28,6 +35,7 @@ export function Tabs({
   className,
   ...props
 }: TabsProps) {
+  const doomPart = useOwnedThemeParts("Tabs", classNames);
   const [internalActiveTab, setInternalActiveTab] = useState(
     defaultValue || "",
   );
@@ -44,30 +52,42 @@ export function Tabs({
   };
 
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab, baseId: reactId }}>
-      <div className={className} {...props}>
-        {children}
-      </div>
-    </TabsContext.Provider>
+    <ThemePartsBoundary classNames={classNames} component="Tabs">
+      {
+        <TabsContext.Provider
+          value={{ activeTab, setActiveTab, baseId: reactId }}
+        >
+          <div {...doomPart("root", { className })} {...props}>
+            {children}
+          </div>
+        </TabsContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }
 
 interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Tabs">;
   children: React.ReactNode;
   align?: "left" | "right";
 }
 
 export function TabsList({
+  classNames,
   children,
   className,
   align = "left",
   ...props
 }: TabsListProps) {
+  const doomPart = useThemeParts("Tabs", classNames, {});
+
   return (
     <div
       aria-label={props["aria-label"] || "Tabs"}
       aria-orientation="horizontal"
-      className={clsx(styles.tabsList, styles[`align-${align}`], className)}
+      {...doomPart("tabsList", {
+        className: clsx(styles.tabsList, styles[`align-${align}`], className),
+      })}
       role="tablist"
       {...props}
     >
@@ -77,17 +97,21 @@ export function TabsList({
 }
 
 interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  classNames?: ThemeClassNames<"Tabs">;
   value: string;
   children: React.ReactNode;
 }
 
 export function TabsTrigger({
+  classNames,
   value,
   children,
   className,
   onClick,
   ...props
 }: TabsTriggerProps) {
+  const doomPart = useThemeParts("Tabs", classNames, {});
+
   const context = useContext(TabsContext);
   if (!context) {
     throw new Error("TabsTrigger must be used within Tabs");
@@ -101,7 +125,13 @@ export function TabsTrigger({
     <button
       aria-controls={isActive ? contentId : undefined}
       aria-selected={isActive}
-      className={clsx(styles.tabsTrigger, isActive && styles.active, className)}
+      {...doomPart("tabsTrigger", {
+        className: clsx(
+          styles.tabsTrigger,
+          isActive && styles.active,
+          className,
+        ),
+      })}
       id={triggerId}
       role="tab"
       tabIndex={isActive ? 0 : -1}
@@ -118,33 +148,45 @@ export function TabsTrigger({
 }
 
 interface TabsBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Tabs">;
   children: React.ReactNode;
 }
 
 export function TabsBody({
+  classNames,
   children,
   className,
   style,
   ...props
 }: TabsBodyProps) {
+  const doomPart = useThemeParts("Tabs", classNames, {});
+
   return (
-    <div className={clsx(styles.tabsBody, className)} style={style} {...props}>
+    <div
+      {...doomPart("body", { className: clsx(styles.tabsBody, className) })}
+      style={style}
+      {...props}
+    >
       {children}
     </div>
   );
 }
 
 interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Tabs">;
   value: string;
   children: React.ReactNode;
 }
 
 export function TabsContent({
+  classNames,
   value,
   children,
   className,
   ...props
 }: TabsContentProps) {
+  const doomPart = useThemeParts("Tabs", classNames, {});
+
   const context = useContext(TabsContext);
   if (!context) {
     throw new Error("TabsContent must be used within Tabs");
@@ -161,7 +203,9 @@ export function TabsContent({
   return (
     <div
       aria-labelledby={triggerId}
-      className={clsx(styles.tabsContent, className)}
+      {...doomPart("tabsContent", {
+        className: clsx(styles.tabsContent, className),
+      })}
       id={contentId}
       role="tabpanel"
       tabIndex={0}

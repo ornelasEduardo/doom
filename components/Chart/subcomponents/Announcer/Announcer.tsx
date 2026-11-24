@@ -1,7 +1,10 @@
 "use client";
-
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { resolveAccessor } from "../../types/accessors";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
@@ -13,6 +16,7 @@ import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Announcer.module.scss";
 
 interface AnnouncerProps {
+  classNames?: ThemeClassNames<"Chart">;
   /** Id the chart region points its aria-describedby at. */
   summaryId: string;
 }
@@ -33,6 +37,8 @@ const describe = (value: unknown) =>
  * Subscribes to the store itself so hovering re-renders only this component.
  */
 export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const { chartStore, isMobile } = useChartContext();
 
   const data = chartStore.useStore((s) => s.data);
@@ -162,10 +168,14 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
 
   return (
     <>
-      <div className={styles.srOnly} id={summaryId}>
+      <div {...doomPart("srOnly", { className: styles.srOnly })} id={summaryId}>
         {summary}
       </div>
-      <div aria-live="polite" className={styles.srOnly} role="status">
+      <div
+        aria-live="polite"
+        {...doomPart("srOnly", { className: styles.srOnly })}
+        role="status"
+      >
         {active}
       </div>
     </>

@@ -30,7 +30,7 @@
           fill: var(--foreground);
           font-size: var(--text-xs);
           font-weight: var(--font-bold);
-          text-transform: uppercase;
+          text-transform: var(--label-text-transform, uppercase);
         }
       }
     }
@@ -69,7 +69,7 @@
 
     &:hover {
       cursor: crosshair;
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -134,9 +134,9 @@
 
   .tooltipLabel {
     color: var(--muted-foreground);
-    text-transform: uppercase;
+    text-transform: var(--label-text-transform, uppercase);
     font-size: var(--text-2xs);
-    letter-spacing: 0.05em;
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     margin-bottom: var(--space-1);
   }
 
@@ -145,7 +145,7 @@
 
     font-size: var(--text-xs);
     font-weight: var(--font-bold);
-    text-transform: uppercase;
+    text-transform: var(--label-text-transform, uppercase);
     text-anchor: middle;
   }
 }
@@ -153,7 +153,8 @@
 @layer doom.components {
   /* WCAG 2.3.3 — honour a stated preference for reduced motion. */
   @media (prefers-reduced-motion: reduce) {
-    * {
+    .chart,
+    .chart * {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;

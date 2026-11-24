@@ -6,9 +6,9 @@
     align-items: center;
     gap: var(--space-1);
     font-family: var(--font-family);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--font-semibold, 600);
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     border: var(--surface-border-width) solid var(--card-border);
     border-radius: var(--radius-md);
     background: var(--surface-accent);
@@ -31,7 +31,7 @@
     &.interactive {
       // Subtle hover (brightness only, no lift - Chips are inline content)
       &:hover:not(.disabled) {
-        filter: brightness(1.1);
+        filter: var(--control-hover-filter, brightness(1.1));
       }
 
       @include focus;

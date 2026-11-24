@@ -1,16 +1,17 @@
 # Skeleton
 
 ## Import
+
 ```tsx
 import { Skeleton } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `width` | `string` | — | CSS width |
-| `height` | `string` | — | CSS height |
+| Prop      | Type                                    | Default         | Description  |
+| --------- | --------------------------------------- | --------------- | ------------ |
+| `width`   | `string`                                | —               | CSS width    |
+| `height`  | `string`                                | —               | CSS height   |
 | `variant` | `"text" \| "circular" \| "rectangular"` | `"rectangular"` | Shape preset |
 
 ## Usage
@@ -27,7 +28,12 @@ import { Skeleton } from "doom-design-system";
 ```
 
 ## Notes
+
 - `variant="text"` adds `margin-bottom: var(--spacing-2)` automatically for stacking text lines
 - Use `variant="text"` for text lines, `variant="circular"` for avatars/icons
 - Match skeleton dimensions to the expected content to prevent layout shift
 - Used internally by the `Image` component during load — do not add manually in that case
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Skeleton theme contract](../../../THEME-REFERENCE.md#component-skeleton).

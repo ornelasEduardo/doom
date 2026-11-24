@@ -1,9 +1,13 @@
 "use client";
-
 import clsx from "clsx";
 import { X } from "lucide-react";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import styles from "./Chip.module.scss";
 
 type ChipVariant = "default" | "primary" | "success" | "warning" | "error";
@@ -18,6 +22,7 @@ const DISMISS_ICON_SIZE: Record<ChipSize, number> = {
 };
 
 interface ChipProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Chip">;
   variant?: ChipVariant;
   size?: ChipSize;
   onDismiss?: () => void;
@@ -28,6 +33,7 @@ interface ChipProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
   (
     {
+      classNames,
       variant = "default",
       size = "md",
       onDismiss,
@@ -40,21 +46,29 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
     },
     ref,
   ) => {
+    const doomPart = useThemeParts("Chip", classNames, {
+      variant: variant,
+      size: size,
+      disabled: disabled,
+    });
+
     const isInteractive = !!onClick || !!onDismiss;
     const isClickable = !!onClick;
 
     return (
       <div
         ref={ref}
-        className={clsx(
-          styles.chip,
-          styles[variant],
-          styles[size],
-          isInteractive && styles.interactive,
-          isClickable && styles.clickable,
-          disabled && styles.disabled,
-          className,
-        )}
+        {...doomPart("root", {
+          className: clsx(
+            styles.chip,
+            styles[variant],
+            styles[size],
+            isInteractive && styles.interactive,
+            isClickable && styles.clickable,
+            disabled && styles.disabled,
+            className,
+          ),
+        })}
         role={onClick ? "button" : undefined}
         tabIndex={onClick && !disabled ? 0 : undefined}
         onClick={disabled ? undefined : onClick}
@@ -75,18 +89,24 @@ export const Chip = React.forwardRef<HTMLDivElement, ChipProps>(
         }}
         {...props}
       >
-        <span className={styles.content}>{children}</span>
+        <span {...doomPart("content", { className: styles.content })}>
+          {children}
+        </span>
         {onDismiss && !disabled && (
           <button
             aria-label="Dismiss"
-            className={styles.dismissButton}
+            {...doomPart("dismissButton", { className: styles.dismissButton })}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onDismiss();
             }}
           >
-            <X size={DISMISS_ICON_SIZE[size]} />
+            <ThemedIcon
+              icon={X}
+              iconName="close"
+              size={DISMISS_ICON_SIZE[size]}
+            />
           </button>
         )}
       </div>

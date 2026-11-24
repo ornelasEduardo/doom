@@ -1,6 +1,7 @@
 # Combobox
 
 ## Import
+
 ```tsx
 import { Combobox } from "doom-design-system";
 import type { ComboboxOption } from "doom-design-system";
@@ -8,18 +9,18 @@ import type { ComboboxOption } from "doom-design-system";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `options` | `ComboboxOption[]` | required | Available options |
-| `value` | `string \| string[] \| undefined` | — | Controlled selected value(s) |
-| `onChange` | `(value: string \| string[] \| undefined) => void` | required | Change handler (`undefined` when all cleared) |
-| `placeholder` | `string` | `"Select..."` | Placeholder text |
-| `multiple` | `boolean` | `false` | Allow multiple selection |
-| `searchable` | `boolean` | `true` | Enable search/filter input |
-| `size` | `"sm" \| "md"` | `"md"` | Trigger size |
-| `disabled` | `boolean` | `false` | Disabled state |
-| `inline` | `boolean` | `false` | Render dropdown only — no trigger button |
-| `className` | `string` | — | CSS class name |
+| Prop          | Type                                               | Default       | Description                                   |
+| ------------- | -------------------------------------------------- | ------------- | --------------------------------------------- |
+| `options`     | `ComboboxOption[]`                                 | required      | Available options                             |
+| `value`       | `string \| string[] \| undefined`                  | —             | Controlled selected value(s)                  |
+| `onChange`    | `(value: string \| string[] \| undefined) => void` | required      | Change handler (`undefined` when all cleared) |
+| `placeholder` | `string`                                           | `"Select..."` | Placeholder text                              |
+| `multiple`    | `boolean`                                          | `false`       | Allow multiple selection                      |
+| `searchable`  | `boolean`                                          | `true`        | Enable search/filter input                    |
+| `size`        | `"sm" \| "md"`                                     | `"md"`        | Trigger size                                  |
+| `disabled`    | `boolean`                                          | `false`       | Disabled state                                |
+| `inline`      | `boolean`                                          | `false`       | Render dropdown only — no trigger button      |
+| `className`   | `string`                                           | —             | CSS class name                                |
 
 ### ComboboxOption
 
@@ -54,6 +55,7 @@ interface ComboboxOption {
 ```
 
 ## Notes
+
 - List is virtualized (`@tanstack/react-virtual`, 36px row height, 5-item overscan) — safe for large option arrays
 - Search uses regex matching with substring fallback on invalid patterns
 - In multi-select mode, pressing Enter in the search field selects all currently filtered results
@@ -64,3 +66,7 @@ interface ComboboxOption {
 - Disabled state renders at 50% opacity
 - Empty state shows "No results" message
 - Also exports `useComboboxFilter` hook for accessing search/filter state separately
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Combobox theme contract](../../../THEME-REFERENCE.md#component-combobox).

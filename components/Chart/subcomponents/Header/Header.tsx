@@ -1,13 +1,17 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { Flex, Stack } from "../../../Layout/Layout";
 import { Text } from "../../../Text/Text";
 import styles from "./Header.module.scss";
 
 export interface HeaderProps {
+  classNames?: ThemeClassNames<"Chart">;
   title?: React.ReactNode;
   subtitle?: string;
   className?: string;
@@ -16,12 +20,15 @@ export interface HeaderProps {
 }
 
 export function Header({
+  classNames,
   title,
   subtitle,
   className,
   style,
   children,
 }: HeaderProps) {
+  const doomPart = useThemeParts("Chart", classNames, {});
+
   const hasTitle = title || subtitle;
 
   if (!hasTitle && !children) {
@@ -32,7 +39,7 @@ export function Header({
     <Flex
       wrap
       align="center"
-      className={clsx(styles.header, className)}
+      {...doomPart("header", { className: clsx(styles.header, className) })}
       gap={4}
       justify="space-between"
       style={{
@@ -54,7 +61,10 @@ export function Header({
             </div>
           )}
           {subtitle && (
-            <Text className={styles.subtitle} variant="small">
+            <Text
+              {...doomPart("subtitle", { className: styles.subtitle })}
+              variant="small"
+            >
               {subtitle}
             </Text>
           )}

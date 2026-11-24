@@ -17,7 +17,7 @@
   .legendDot {
     width: var(--space-4);
     height: var(--space-2);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     flex-shrink: 0;
     border: var(--surface-border-width) solid var(--border-strong);
   }

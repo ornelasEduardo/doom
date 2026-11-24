@@ -32,18 +32,15 @@ const fixImports = () => {
         const fileDir = path.dirname(file);
         const resolvedPath = path.resolve(fileDir, importPath);
 
-        // Check if it's a directory
-        if (
-          fs.existsSync(resolvedPath) &&
-          fs.statSync(resolvedPath).isDirectory()
-        ) {
-          // It's a directory, add /index.js
-          modified = true;
-          return `${prefix}${importPath}/index.js${suffix}`;
-        } else if (fs.existsSync(resolvedPath + ".js")) {
-          // It's a file, add .js
+        // Match TypeScript's file-before-directory module resolution. A module
+        // may have both a public facade (presets.ts) and a supporting folder.
+        if (fs.existsSync(resolvedPath + ".js")) {
           modified = true;
           return `${prefix}${importPath}.js${suffix}`;
+        }
+        if (fs.existsSync(path.join(resolvedPath, "index.js"))) {
+          modified = true;
+          return `${prefix}${importPath}/index.js${suffix}`;
         }
 
         // If we can't determine, assume it's a file and add .js

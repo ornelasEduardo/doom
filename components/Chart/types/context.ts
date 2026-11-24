@@ -31,6 +31,11 @@ export interface RenderFrame<T = unknown> {
  * Internal components use this via the useChartContext hook.
  */
 export interface ContextValue<T = unknown> {
+  /** Apply the current theme to an engine-created visual without changing geometry. */
+  stylePart?: (
+    element: Element,
+    part: import("../../../styles/theming/registry").PartName<"Chart">,
+  ) => void;
   chartStore: Store<T>;
   engine: Engine<T>; // Shared engine instance
   config: Config;

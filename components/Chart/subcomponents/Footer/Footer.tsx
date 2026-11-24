@@ -1,12 +1,16 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { Flex } from "../../../Layout/Layout";
 import styles from "./Footer.module.scss";
 
 export interface FooterProps {
+  classNames?: ThemeClassNames<"Chart">;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
@@ -14,11 +18,14 @@ export interface FooterProps {
 }
 
 export function Footer({
+  classNames,
   className,
   style,
   children,
   align = "center",
 }: FooterProps) {
+  const doomPart = useThemeParts("Chart", classNames, {});
+
   if (!children) {
     return null;
   }
@@ -36,7 +43,7 @@ export function Footer({
   return (
     <Flex
       align="center"
-      className={clsx(styles.footer, className)}
+      {...doomPart("footer", { className: clsx(styles.footer, className) })}
       justify={justifyMap[align]}
       style={{
         width: "100%",

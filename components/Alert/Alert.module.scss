@@ -6,9 +6,11 @@
     padding: var(--space-4);
     width: 100%;
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     background-color: var(--card-bg);
-    box-shadow: var(--shadow-sm); /* Subtle depth, not full hard shadow usually */
+    box-shadow: var(
+      --shadow-sm
+    ); /* Subtle depth, not full hard shadow usually */
     position: relative;
     overflow: hidden;
 
@@ -47,11 +49,11 @@
   .title {
     margin: 0;
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: var(--font-bold, 700);
     font-size: var(--text-base);
     color: var(--on-surface);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
   }
 
   .description {

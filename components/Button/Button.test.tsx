@@ -36,3 +36,26 @@ describe("Button Component", () => {
     expect(screen.getByText("Secondary")).toBeInTheDocument();
   });
 });
+
+it("invokes the custom indicator only while loading and keeps the button disabled", () => {
+  const indicator = vi.fn(({ props }) => <span {...props}>Please wait</span>);
+  const { rerender } = render(
+    <Button renderLoadingIndicator={indicator}>Save</Button>,
+  );
+  expect(indicator).not.toHaveBeenCalled();
+  rerender(
+    <Button loading renderLoadingIndicator={indicator} size="lg">
+      Save
+    </Button>,
+  );
+  expect(indicator.mock.calls[0][0]).toMatchObject({
+    loading: true,
+    disabled: true,
+    size: "lg",
+  });
+  expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  expect(screen.getByText("Please wait")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+});

@@ -4,7 +4,10 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, var(--overlay-opacity));
+    background-color: var(
+      --overlay-color,
+      rgba(0, 0, 0, var(--overlay-opacity))
+    );
     backdrop-filter: blur(var(--blur-standard));
     opacity: 0;
     visibility: hidden;
@@ -68,13 +71,13 @@
       @include solid-variant;
 
       .header {
-        background-color: transparent !important;
+        background-color: transparent;
         color: var(--solid-fg);
       }
 
       .content,
       .footer {
-        background-color: transparent !important;
+        background-color: transparent;
       }
     }
   }
@@ -94,10 +97,10 @@
     margin: 0;
     font-family: var(--font-heading);
     font-size: var(--text-xl);
-    font-weight: 800;
+    font-weight: var(--font-extrabold, 800);
     min-height: var(--header-height);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
   }
 
   .content {

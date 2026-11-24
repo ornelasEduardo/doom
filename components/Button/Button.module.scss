@@ -8,9 +8,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--control-font-weight, 700);
+    text-transform: var(--control-text-transform, uppercase);
+    letter-spacing: var(--control-letter-spacing, 0.05em);
     cursor: pointer;
     background-color: var(--card-bg);
     color: var(--foreground);
@@ -28,7 +28,7 @@
     &:disabled {
       @include disabled-state;
       transform: none;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--control-shadow, var(--shadow-md));
     }
   }
 
@@ -42,7 +42,7 @@
     border-color: var(--border-strong);
 
     &:hover:not(:disabled) {
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -55,7 +55,7 @@
     border-color: var(--border-strong);
 
     &:hover:not(:disabled) {
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -68,7 +68,7 @@
     border-color: var(--border-strong);
 
     &:hover:not(:disabled) {
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -81,7 +81,7 @@
     border-color: var(--border-strong);
 
     &:hover:not(:disabled) {
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -102,6 +102,11 @@
       transform: none;
       box-shadow: none;
       border-color: transparent;
+      outline: var(--control-focus-outline, none);
+      outline-offset: var(--control-focus-outline-offset, 0px);
+    }
+
+    &:hover:not(:focus-visible) {
       outline: none;
     }
 
@@ -110,7 +115,7 @@
     }
 
     &:active {
-      transform: scale(0.95);
+      transform: var(--control-ghost-press-transform, scale(0.95));
       transition: none;
     }
   }

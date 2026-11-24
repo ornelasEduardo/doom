@@ -11,6 +11,13 @@ import React, {
   useState,
 } from "react";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
+import { ThemeSurface } from "../../../../styles/theming/ThemeSurface";
 import { ChartContext } from "../../context";
 import { useChartBehaviors } from "../../hooks/useChartBehaviors";
 import { useEngine } from "../../hooks/useEngine";
@@ -64,7 +71,7 @@ const LEGEND_PALETTE = [
   "var(--error)",
 ];
 
-export type RootProps<T> = Omit<
+export type RootProps<T> = { classNames?: ThemeClassNames<"Chart"> } & Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "title" | "children"
 > &
@@ -116,6 +123,8 @@ function RootPlot({
   children: React.ReactNode;
   chartStore: Store;
 }) {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const plotRef = useRef<SVGGElement>(null);
   const frameRef = useRef<SVGSVGElement>(null);
 
@@ -136,7 +145,7 @@ function RootPlot({
   return (
     <svg
       ref={frameRef}
-      className={styles.svg}
+      {...doomPart("svg", { className: styles.svg })}
       data-chart-plot="true"
       height={dimensions.height}
       viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
@@ -144,7 +153,7 @@ function RootPlot({
     >
       <g
         ref={plotRef}
-        className={styles.plot}
+        {...doomPart("plot", { className: styles.plot })}
         transform={`translate(${dimensions.margin.left}, ${dimensions.margin.top})`}
       >
         {children}
@@ -196,6 +205,7 @@ const accessorSignature = (accessor: unknown, data: any[]): string => {
 };
 
 export function Root<T>({
+  classNames,
   data,
   d3Config,
   xDomain,
@@ -218,12 +228,63 @@ export function Root<T>({
   sensors,
   ...rest
 }: RootProps<T>) {
+  const doomPart = useOwnedThemeParts("Chart", classNames, {
+    variant: variant,
+  });
+
   const [chartStore] = useState(() =>
     createChartStore<T>({ ...d3Config, type }, x, y),
   );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const stylePart = useCallback(
+    (
+      element: Element,
+      part: import("../../../../styles/theming/registry").PartName<"Chart">,
+    ) => {
+      const prior =
+        element
+          .getAttribute("data-doom-engine-classes")
+          ?.split(/\s+/)
+          .filter(Boolean) ?? [];
+      element.classList.remove(...prior);
+      const attrs = doomPart(part);
+      for (const [key, value] of Object.entries(attrs)) {
+        if (key === "className") {
+          continue;
+        }
+        if (value === undefined) {
+          element.removeAttribute(key);
+        } else {
+          element.setAttribute(key, String(value));
+        }
+      }
+      const classes = attrs.className?.split(/\s+/).filter(Boolean) ?? [];
+      element.classList.add(...classes);
+      element.setAttribute("data-doom-engine-classes", classes.join(" "));
+      element.setAttribute("data-doom-engine-part", part);
+    },
+    [doomPart],
+  );
+  useEffect(() => {
+    containerRef.current
+      ?.querySelectorAll("[data-doom-engine-part]")
+      .forEach((element) => {
+        if (
+          element.closest("[data-chart-container]") !== containerRef.current
+        ) {
+          return;
+        }
+        stylePart(
+          element,
+          element.getAttribute(
+            "data-doom-engine-part",
+          ) as import("../../../../styles/theming/registry").PartName<"Chart">,
+        );
+      });
+  }, [stylePart]);
+
   const lastValueRef = useRef<any>(null);
   const summaryId = useId();
 
@@ -750,6 +811,7 @@ export function Root<T>({
   const value: ContextValue<T> = useMemo(
     () => ({
       chartStore,
+      stylePart,
       engine,
       data,
       config: config as any,
@@ -778,6 +840,7 @@ export function Root<T>({
       y,
       variant,
       engine,
+      stylePart,
     ],
   );
 
@@ -790,63 +853,77 @@ export function Root<T>({
   const hasCursor = hasContent && hasChildOfTypeDeep(children, CursorWrapper);
 
   return (
-    <ChartContext.Provider value={value as any}>
-      <BehaviorManager behaviors={behaviors as any} value={value as any} />
-      <div
-        // Spread first: the chart's own role, label and description win.
-        {...rest}
-        ref={containerRef}
-        data-chart-container
-        aria-describedby={summaryId}
-        aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
-        className={clsx(
-          styles.chartContainer,
-          variant === "solid" && styles.solid,
-          flat && styles.flat,
-          isMobile && styles.mobile,
-          !withFrame && styles.frameless,
-          className,
-        )}
-        role="region"
-        style={style}
-        tabIndex={0}
-      >
-        <InteractionLayer />
-        <SensorManager sensors={sensors} value={value} />
-        <Announcer summaryId={summaryId} />
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Chart"
+      visual={{ variant }}
+    >
+      {
+        <ChartContext.Provider value={value as any}>
+          <BehaviorManager behaviors={behaviors as any} value={value as any} />
+          <ThemeSurface surface={variant === "solid" ? "solid" : undefined}>
+            <div
+              // Spread first: the chart's own role, label and description win.
+              {...rest}
+              ref={containerRef}
+              data-chart-container
+              aria-describedby={summaryId}
+              aria-label={title ? `Chart: ${title}` : "Interactive Chart"}
+              {...doomPart("root", {
+                className: clsx(
+                  styles.chartContainer,
+                  variant === "solid" && styles.solid,
+                  flat && styles.flat,
+                  isMobile && styles.mobile,
+                  !withFrame && styles.frameless,
+                  className,
+                ),
+              })}
+              role="region"
+              style={style}
+              tabIndex={0}
+            >
+              <InteractionLayer />
+              <SensorManager sensors={sensors} value={value} />
+              <Announcer summaryId={summaryId} />
 
-        {isAutoLayout && (title || subtitle) && (
-          <Header subtitle={subtitle} title={title} />
-        )}
-
-        {isAutoLayout ? (
-          <div
-            ref={wrapperRef}
-            className={styles.responsiveWrapper}
-            style={{ flex: 1, position: "relative" }}
-          >
-            <RootPlot chartStore={chartStore}>
-              {!hasGrid && config.grid !== false && <Grid />}
-
-              {!hasCursor && !render && <CursorWrapper mode="line" />}
-
-              {children}
-
-              {!hasAxis && config.showAxes !== false && <Axis />}
-
-              {showShorthand && (
-                <Series render={render} type={type} x={x} y={y} />
+              {isAutoLayout && (title || subtitle) && (
+                <Header subtitle={subtitle} title={title} />
               )}
-            </RootPlot>
-          </div>
-        ) : (
-          children
-        )}
 
-        {withLegend && <Legend />}
+              {isAutoLayout ? (
+                <div
+                  ref={wrapperRef}
+                  {...doomPart("responsiveWrapper", {
+                    className: styles.responsiveWrapper,
+                  })}
+                  style={{ flex: 1, position: "relative" }}
+                >
+                  <RootPlot chartStore={chartStore}>
+                    {!hasGrid && config.grid !== false && <Grid />}
 
-        <Tooltip containerRef={tooltipBoundsRef} />
-      </div>
-    </ChartContext.Provider>
+                    {!hasCursor && !render && <CursorWrapper mode="line" />}
+
+                    {children}
+
+                    {!hasAxis && config.showAxes !== false && <Axis />}
+
+                    {showShorthand && (
+                      <Series render={render} type={type} x={x} y={y} />
+                    )}
+                  </RootPlot>
+                </div>
+              ) : (
+                children
+              )}
+
+              {withLegend && <Legend />}
+
+              <Tooltip containerRef={tooltipBoundsRef} />
+            </div>
+          </ThemeSurface>
+        </ChartContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }

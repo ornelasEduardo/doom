@@ -3,6 +3,11 @@
 import clsx from "clsx";
 import { useLayoutEffect, useRef, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
+import { ThemeSurface } from "../../../../styles/theming/ThemeSurface";
 import { Card } from "../../../Card/Card";
 import { Text } from "../../../Text/Text";
 import { TooltipOptions } from "../../behaviors/Tooltip";
@@ -54,6 +59,8 @@ function TooltipInstance<T>({
 }: Omit<TooltipProps<T>, "renderTooltip"> & {
   tooltipConfig: TooltipOptions<T>;
 }) {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { chartStore, engine, x, y, config, variant } = useChartContext<T>();
 
@@ -142,7 +149,7 @@ function TooltipInstance<T>({
     <div
       ref={tooltipRef}
       data-chart-tooltip
-      className={styles.tooltipWrapper}
+      {...doomPart("tooltipWrapper", { className: styles.tooltipWrapper })}
       style={{
         pointerEvents: "none",
         position: "absolute",
@@ -176,6 +183,7 @@ function TooltipInstance<T>({
 }
 
 interface DefaultTooltipContentProps<T> {
+  classNames?: ThemeClassNames<"Chart">;
   activeData: T;
   activeSeriesId?: string;
   targets: HoverInteraction<T>["targets"];
@@ -196,6 +204,8 @@ function DefaultTooltipContent<T>({
   config,
   variant,
 }: DefaultTooltipContentProps<T>) {
+  const doomPart = useThemeParts("Chart", undefined, { variant: variant });
+
   const { chartStore } = useChartContext<T>();
   const scales = chartStore.useStore((state) => state.scales);
   const dimensions = chartStore.useStore((state) => state.dimensions);
@@ -212,91 +222,97 @@ function DefaultTooltipContent<T>({
   const xLabel = category ? String(categoryValue) : "Value";
 
   return (
-    <Card
-      className={clsx(styles.tooltipCard, variant === "solid" && styles.solid)}
-    >
-      <Text as="p" className={styles.tooltipLabel} variant="h6">
-        {xLabel}
-      </Text>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
+    <ThemeSurface surface={variant === "solid" ? "solid" : undefined}>
+      <Card
+        {...doomPart("tooltipCard", {
+          className: clsx(
+            styles.tooltipCard,
+            variant === "solid" && styles.solid,
+          ),
+        })}
       >
-        {targets.map((candidate, i) => {
-          const item =
-            candidate.seriesId === undefined
-              ? undefined
-              : series.find((series) => series.id === candidate.seriesId);
-          const datum = candidate.data;
-          if (datum === undefined) {
-            return null;
-          }
-          if (!item) {
-            return (
-              <Text key={i} as="p" variant="h4">
-                {y ? String(resolveAccessor(y as any)(datum)) : ""}
-              </Text>
-            );
-          }
-          // Custom DOM marks and owned geometry need not follow Cartesian accessors.
-          if (
-            !candidate.geometryOwner &&
-            item.type !== "custom" &&
-            bounded &&
-            scales.x &&
-            scales.y
-          ) {
-            const bar =
-              item.type === "bar"
-                ? barGeometry(
-                    item,
-                    datum,
-                    item.data?.indexOf(datum) ?? -1,
-                    scales.x,
-                    scales.y,
-                  )
-                : null;
-            const visible = bar
-              ? !!clipRectToPlot(bar, dimensions)
-              : isPointInPlot(
-                  {
-                    x: (scales.x as (value: unknown) => number)(
-                      item.xAccessor
-                        ? resolveAccessor(item.xAccessor)(datum)
-                        : undefined,
-                    ),
-                    y: (scales.y as (value: unknown) => number)(
-                      item.yAccessor
-                        ? resolveAccessor(item.yAccessor)(datum)
-                        : undefined,
-                    ),
-                  },
-                  dimensions,
-                );
-            if (!visible) {
+        <Text
+          as="p"
+          {...doomPart("tooltipLabel", { className: styles.tooltipLabel })}
+          variant="h6"
+        >
+          {xLabel}
+        </Text>
+
+        <div {...doomPart("tooltipList", { className: styles.tooltipList })}>
+          {targets.map((candidate, i) => {
+            const item =
+              candidate.seriesId === undefined
+                ? undefined
+                : series.find((series) => series.id === candidate.seriesId);
+            const datum = candidate.data;
+            if (datum === undefined) {
               return null;
             }
-          }
-          return (
-            <TooltipSeriesItem
-              key={i}
-              activeData={datum}
-              config={config}
-              fallbackY={y}
-              series={item}
-            />
-          );
-        })}
-      </div>
-    </Card>
+            if (!item) {
+              return (
+                <Text key={i} as="p" {...doomPart("tooltipValue")} variant="h4">
+                  {y ? String(resolveAccessor(y as any)(datum)) : ""}
+                </Text>
+              );
+            }
+            // Custom DOM marks and owned geometry need not follow Cartesian accessors.
+            if (
+              !candidate.geometryOwner &&
+              item.type !== "custom" &&
+              bounded &&
+              scales.x &&
+              scales.y
+            ) {
+              const bar =
+                item.type === "bar"
+                  ? barGeometry(
+                      item,
+                      datum,
+                      item.data?.indexOf(datum) ?? -1,
+                      scales.x,
+                      scales.y,
+                    )
+                  : null;
+              const visible = bar
+                ? !!clipRectToPlot(bar, dimensions)
+                : isPointInPlot(
+                    {
+                      x: (scales.x as (value: unknown) => number)(
+                        item.xAccessor
+                          ? resolveAccessor(item.xAccessor)(datum)
+                          : undefined,
+                      ),
+                      y: (scales.y as (value: unknown) => number)(
+                        item.yAccessor
+                          ? resolveAccessor(item.yAccessor)(datum)
+                          : undefined,
+                      ),
+                    },
+                    dimensions,
+                  );
+              if (!visible) {
+                return null;
+              }
+            }
+            return (
+              <TooltipSeriesItem
+                key={i}
+                activeData={datum}
+                config={config}
+                fallbackY={y}
+                series={item}
+              />
+            );
+          })}
+        </div>
+      </Card>
+    </ThemeSurface>
   );
 }
 
 interface TooltipSeriesItemProps<T> {
+  classNames?: ThemeClassNames<"Chart">;
   series: Series;
   activeData: T;
   fallbackY?: unknown;
@@ -309,6 +325,7 @@ function TooltipSeriesItem<T>({
   fallbackY,
   config,
 }: TooltipSeriesItemProps<T>) {
+  const doomPart = useThemeParts("Chart");
   const value = valueAccessor(series);
   const accessor = value ? resolveAccessor(value) : null;
   const val = accessor
@@ -327,25 +344,20 @@ function TooltipSeriesItem<T>({
       : String(val);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
+    <div {...doomPart("tooltipRow", { className: styles.tooltipRow })}>
       <div
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          backgroundColor: series.color,
-        }}
+        {...doomPart("tooltipSwatch", { className: styles.tooltipSwatch })}
+        style={{ backgroundColor: series.color }}
       />
-      <Text style={{ color: "var(--muted-foreground)" }} variant="body">
+      <Text
+        {...doomPart("tooltipSeriesLabel", {
+          className: styles.tooltipSeriesLabel,
+        })}
+        variant="body"
+      >
         {series.label}:
       </Text>
-      <Text as="p" variant="h6">
+      <Text as="p" {...doomPart("tooltipValue")} variant="h6">
         {formattedVal}
       </Text>
     </div>

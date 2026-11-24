@@ -1,44 +1,51 @@
 # Tabs
 
 ## Import
+
 ```tsx
-import { Tabs, TabsList, TabsTrigger, TabsBody, TabsContent } from "doom-design-system";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsBody,
+  TabsContent,
+} from "doom-design-system";
 ```
 
 ## Props
 
 ### Tabs
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `defaultValue` | `string` | — | Initial active tab (uncontrolled) |
-| `value` | `string` | — | Controlled active tab |
-| `onValueChange` | `(value: string) => void` | — | Change callback |
+| Prop            | Type                      | Default | Description                       |
+| --------------- | ------------------------- | ------- | --------------------------------- |
+| `defaultValue`  | `string`                  | —       | Initial active tab (uncontrolled) |
+| `value`         | `string`                  | —       | Controlled active tab             |
+| `onValueChange` | `(value: string) => void` | —       | Change callback                   |
 
 ### TabsList
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop    | Type                | Default  | Description   |
+| ------- | ------------------- | -------- | ------------- |
 | `align` | `"left" \| "right"` | `"left"` | Tab alignment |
 
 ### TabsTrigger
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop    | Type     | Default  | Description                                       |
+| ------- | -------- | -------- | ------------------------------------------------- |
 | `value` | `string` | required | Tab identifier — must match a `TabsContent` value |
 
 ### TabsBody
 
 Container for `TabsContent` panels. Required wrapper.
 
-| Prop | Type | Description |
-|------|------|-------------|
+| Prop       | Type        | Description            |
+| ---------- | ----------- | ---------------------- |
 | `children` | `ReactNode` | `TabsContent` elements |
 
 ### TabsContent
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop    | Type     | Default  | Description                                       |
+| ------- | -------- | -------- | ------------------------------------------------- |
 | `value` | `string` | required | Tab identifier — must match a `TabsTrigger` value |
 
 ## Usage
@@ -72,6 +79,11 @@ Container for `TabsContent` panels. Required wrapper.
 ```
 
 ## Notes
+
 - `value` strings in `TabsTrigger` and `TabsContent` must match exactly — mismatches silently break rendering
 - Inactive `TabsContent` is unmounted (not hidden with CSS) — do not rely on DOM persistence between tab switches
 - Full keyboard navigation and ARIA roles are built in
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Tabs theme contract](../../../THEME-REFERENCE.md#component-tabs).

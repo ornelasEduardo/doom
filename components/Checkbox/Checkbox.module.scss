@@ -22,8 +22,11 @@
     margin: 0;
 
     &:focus-visible + .checkboxDisplay {
-      @include focus;
-      outline: var(--surface-border-width) solid var(--primary);
+      outline: var(
+        --control-focus-outline,
+        var(--surface-border-width) solid var(--primary)
+      );
+      outline-offset: var(--control-focus-outline-offset, 0px);
     }
   }
 
@@ -38,8 +41,9 @@
     background-color: var(--card-bg);
     color: transparent;
 
-    border: var(--surface-border-width) solid var(--muted-foreground);
-    border-radius: var(--radius-md);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--muted-foreground);
+    border-radius: var(--control-radius, var(--radius-md));
 
     transition: all var(--duration-fast) var(--ease-in-out);
 
@@ -54,7 +58,7 @@
   .icon {
     width: 80%;
     height: 80%;
-    stroke-width: 3.5px;
+    stroke-width: var(--icon-stroke, 3.5);
   }
 
   .labelOverride {

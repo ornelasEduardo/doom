@@ -14,30 +14,44 @@
   height: var(--control-height);
   padding: var(--control-padding-y) var(--control-padding-x);
   font-size: var(--control-font-size);
-  border: var(--surface-border-width) solid var(--card-border);
+  border: var(--control-border-width, var(--surface-border-width)) solid
+    var(--card-border);
   border-radius: var(--control-radius);
-  box-shadow: var(--shadow-md);
-  transition: all var(--duration-fast) var(--ease-in-out);
+  box-shadow: var(--control-shadow, var(--shadow-md));
+  transition-property:
+    transform, box-shadow, color, background-color, border-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-in-out);
   outline: none;
 }
 
 /// Hover lift with shadow grow.
 @mixin hover {
   &:hover {
-    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
-    box-shadow: var(--shadow-lg);
+    transform: var(
+      --control-hover-transform,
+      translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)))
+    );
+    box-shadow: var(--control-hover-shadow, var(--shadow-lg));
   }
 }
 
 /// Keyboard focus ring.
 @mixin focus {
   &:focus-visible {
-    outline: none;
-    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
-    box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+    outline: var(--control-focus-outline, none);
+    outline-offset: var(--control-focus-outline-offset, 0px);
+    transform: var(
+      --control-focus-transform,
+      translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)))
+    );
+    box-shadow: var(
+      --control-focus-shadow,
+      var(--shadow-offset-xl) var(--shadow-primary)
+    );
     border-color: var(--primary);
   }
-  &:focus {
+  &:focus:not(:focus-visible) {
     outline: none;
   }
 }
@@ -46,9 +60,16 @@
 /// Compose with @include focus for controls that need both.
 @mixin active-ring {
   &[aria-expanded="true"] {
-    outline: none;
-    transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
-    box-shadow: var(--shadow-offset-xl) var(--shadow-primary);
+    outline: var(--control-focus-outline, none);
+    outline-offset: var(--control-focus-outline-offset, 0px);
+    transform: var(
+      --control-focus-transform,
+      translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)))
+    );
+    box-shadow: var(
+      --control-focus-shadow,
+      var(--shadow-offset-xl) var(--shadow-primary)
+    );
     border-color: var(--primary);
   }
 }
@@ -57,7 +78,10 @@
 @mixin press {
   &:active {
     transition: none;
-    transform: translate(var(--space-0\.5), var(--space-0\.5));
+    transform: var(
+      --control-press-transform,
+      translate(var(--space-0\.5), var(--space-0\.5))
+    );
     box-shadow: none;
   }
 }
@@ -65,30 +89,39 @@
 /// Error state border and shadow.
 @mixin error {
   border-color: var(--error);
-  box-shadow: var(--shadow-offset-lg) var(--shadow-error);
+  box-shadow: var(
+    --control-error-shadow,
+    var(--shadow-offset-lg) var(--shadow-error)
+  );
 
   &:focus,
   &:focus-visible {
     border-color: var(--error);
-    box-shadow: var(--shadow-offset-xl) var(--shadow-error);
+    box-shadow: var(
+      --control-error-focus-shadow,
+      var(--shadow-offset-xl) var(--shadow-error)
+    );
   }
 }
 
 /// Disabled state with hatched overlay.
 @mixin disabled-state {
-  opacity: 0.6;
-  cursor: not-allowed !important;
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 10px,
-    rgba(0, 0, 0, 0.05) 10px,
-    rgba(0, 0, 0, 0.05) 20px
-  ) !important;
+  opacity: var(--control-disabled-opacity, 0.6);
+  cursor: not-allowed;
+  background-image: var(
+    --control-disabled-background,
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.05) 10px,
+      rgba(0, 0, 0, 0.05) 20px
+    )
+  );
 
   &:hover {
-    transform: none !important;
-    filter: none !important;
+    transform: none;
+    filter: none;
   }
 }
 
@@ -101,7 +134,7 @@
   border: var(--surface-border-width) solid var(--card-border);
   border-radius: var(--surface-radius);
   background: var(--card-bg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--surface-shadow, var(--shadow-md));
 }
 
 // ---------------------------------------------------------------------------
@@ -110,41 +143,45 @@
 
 /// Inverts theme for content on primary-colored backgrounds.
 @mixin invert-theme {
-  --primary: var(--primary-foreground);
-  --primary-foreground: var(--primary);
-  --foreground: var(--primary-foreground);
-  --muted-foreground: var(--primary-foreground);
+  &:not(:where([data-doom-scope], [data-doom-scope] *)) {
+    --primary: var(--solid-fg);
+    --primary-foreground: var(--solid-bg);
+    --foreground: var(--solid-fg);
+    --muted-foreground: var(--solid-fg);
+  }
 }
 
 /// Applies solid variant styling using subtheme tokens.
 @mixin solid-variant {
   background-color: var(--solid-bg);
   color: var(--solid-fg);
-  --background: var(--solid-bg);
-  --foreground: var(--solid-fg);
-  --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
-  --surface-brand: var(--solid-bg);
-  --surface-brand-foreground: var(--solid-fg);
-  --success: var(--solid-success);
-  --success-foreground: var(--solid-fg);
-  --error: var(--solid-error);
-  --error-foreground: var(--solid-fg);
-  --warning: var(--solid-warning);
-  --warning-foreground: var(--solid-fg);
-  --on-surface: var(--solid-bg);
-  --on-surface-muted: var(--solid-bg);
-  --card-bg: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
-  --card-border: var(--solid-fg);
-  --card-foreground: var(--solid-fg);
-  --popover: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
-  --popover-foreground: var(--solid-bg);
-  --input: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
-  --border-strong: var(--solid-fg);
-  --primary: var(--solid-fg);
-  --primary-foreground: var(--solid-bg);
-  --secondary: color-mix(in srgb, var(--solid-bg) 90%, transparent);
-  --secondary-foreground: var(--solid-fg);
-  --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
+  &:not(:where([data-doom-scope], [data-doom-scope] *)) {
+    --background: var(--solid-bg);
+    --foreground: var(--solid-fg);
+    --muted-foreground: color-mix(in srgb, var(--solid-fg) 70%, transparent);
+    --surface-brand: var(--solid-bg);
+    --surface-brand-foreground: var(--solid-fg);
+    --success: var(--solid-success);
+    --success-foreground: var(--solid-fg);
+    --error: var(--solid-error);
+    --error-foreground: var(--solid-fg);
+    --warning: var(--solid-warning);
+    --warning-foreground: var(--solid-fg);
+    --on-surface: var(--solid-bg);
+    --on-surface-muted: var(--solid-bg);
+    --card-bg: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
+    --card-border: var(--solid-fg);
+    --card-foreground: var(--solid-fg);
+    --popover: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
+    --popover-foreground: var(--solid-bg);
+    --input: color-mix(in srgb, var(--solid-fg) 95%, var(--solid-bg) 5%);
+    --border-strong: var(--solid-fg);
+    --primary: var(--solid-fg);
+    --primary-foreground: var(--solid-bg);
+    --secondary: color-mix(in srgb, var(--solid-bg) 90%, transparent);
+    --secondary-foreground: var(--solid-fg);
+    --muted: color-mix(in srgb, var(--solid-fg) 20%, transparent);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -158,15 +195,30 @@
   $color: var(--shadow-base)
 ) {
   @if $direction == "standard" {
-    box-shadow: #{$size} #{$size} 0 0 $color;
+    box-shadow: var(
+      --surface-shadow-#{$direction},
+      #{$size} #{$size} 0 0 $color
+    );
   } @else if $direction == "top" {
-    box-shadow: #{$size} calc(-1 * #{$size}) 0 0 $color;
+    box-shadow: var(
+      --surface-shadow-#{$direction},
+      #{$size} calc(-1 * #{$size}) 0 0 $color
+    );
   } @else if $direction == "bottom" {
-    box-shadow: #{$size} #{$size} 0 0 $color;
+    box-shadow: var(
+      --surface-shadow-#{$direction},
+      #{$size} #{$size} 0 0 $color
+    );
   } @else if $direction == "left" {
-    box-shadow: calc(-1 * #{$size}) #{$size} 0 0 $color;
+    box-shadow: var(
+      --surface-shadow-#{$direction},
+      calc(-1 * #{$size}) #{$size} 0 0 $color
+    );
   } @else if $direction == "right" {
-    box-shadow: #{$size} #{$size} 0 0 $color;
+    box-shadow: var(
+      --surface-shadow-#{$direction},
+      #{$size} #{$size} 0 0 $color
+    );
   }
 }
 

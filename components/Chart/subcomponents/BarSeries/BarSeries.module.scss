@@ -7,7 +7,7 @@
     transition: opacity 0.2s;
 
     &:hover {
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 }

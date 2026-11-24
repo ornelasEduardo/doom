@@ -1,19 +1,20 @@
 # Avatar
 
 ## Import
+
 ```tsx
 import { Avatar } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `src` | `string` | — | Image URL |
-| `alt` | `string` | `"Avatar"` | Alt text |
-| `fallback` | `ReactNode` | required | Fallback content when image fails (initials or icon) |
-| `size` | `"sm" \| "md" \| "lg" \| "xl"` | `"md"` | Avatar size |
-| `shape` | `"circle" \| "square"` | `"square"` | Shape |
+| Prop       | Type                           | Default    | Description                                          |
+| ---------- | ------------------------------ | ---------- | ---------------------------------------------------- |
+| `src`      | `string`                       | —          | Image URL                                            |
+| `alt`      | `string`                       | `"Avatar"` | Alt text                                             |
+| `fallback` | `ReactNode`                    | required   | Fallback content when image fails (initials or icon) |
+| `size`     | `"sm" \| "md" \| "lg" \| "xl"` | `"md"`     | Avatar size                                          |
+| `shape`    | `"circle" \| "square"`         | `"square"` | Shape                                                |
 
 ## Usage
 
@@ -26,6 +27,11 @@ import { Avatar } from "doom-design-system";
 ```
 
 ## Notes
+
 - `fallback` is required — always provide it for when image fails to load
 - String fallbacks are auto-truncated to 2 characters
 - Use `shape="circle"` for user profiles, `shape="square"` for entities/orgs
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Avatar theme contract](../../../THEME-REFERENCE.md#component-avatar).

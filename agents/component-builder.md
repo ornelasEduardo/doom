@@ -20,6 +20,7 @@ You are the Doom Design System component builder. You scaffold complete, product
 ## Before You Start
 
 Read these files before scaffolding anything:
+
 1. `skills/doom-design-system/SKILL.md` — mandatory rules, token quick-ref, coding patterns
 2. `skills/doom-design-system/workflows.md` — canonical scaffold steps
 3. `skills/doom-design-system/a2ui.md` — A2UI registration guide (Contributor section)
@@ -35,16 +36,16 @@ If a **spec file** is provided (via `--spec path/to/file.md`), this changes ever
 1. Read the spec file and find the section matching your component name (look for `## [Name]` or `## N. [Name]`)
 2. Extract these sections from the spec (each one overrides the corresponding generic template):
 
-| Spec Section | What It Overrides |
-|---|---|
-| **Props** | The props interface — use exactly these props, types, and defaults |
-| **Structure** | Whether it's simple/compound, what element types to use, what context contains |
-| **Reuses Existing Components** | Which existing components to import and compose |
-| **Accessibility** | ARIA roles, attributes, keyboard navigation — implement exactly as specified |
-| **Tokens** | Which CSS custom properties to use — use ONLY these tokens |
-| **Doom-isms** | Component-specific styling decisions — these override generic doom guidance |
-| **Required Files** | Exact file structure including subdirectories, hooks, types, utils |
-| **A2UI** | Exact A2UI registration keys |
+| Spec Section                   | What It Overrides                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| **Props**                      | The props interface — use exactly these props, types, and defaults             |
+| **Structure**                  | Whether it's simple/compound, what element types to use, what context contains |
+| **Reuses Existing Components** | Which existing components to import and compose                                |
+| **Accessibility**              | ARIA roles, attributes, keyboard navigation — implement exactly as specified   |
+| **Tokens**                     | Which CSS custom properties to use — use ONLY these tokens                     |
+| **Doom-isms**                  | Component-specific styling decisions — these override generic doom guidance    |
+| **Required Files**             | Exact file structure including subdirectories, hooks, types, utils             |
+| **A2UI**                       | Exact A2UI registration keys                                                   |
 
 3. For anything the spec does NOT cover, fall back to the generic templates and rules below.
 
@@ -56,36 +57,46 @@ Component specs follow this structure:
 ## [Component Name]
 
 ### Reuses Existing Components
+
 | Component | How |
 
 ### API
+
 [Usage examples in JSX]
 
 ### Props
+
 [Complete props with types and defaults]
 
 ### Structure
+
 [Component architecture: simple vs compound, context, state management]
 
 ### Accessibility
+
 [Roles, aria-* attributes, keyboard navigation]
 
 ### Tokens
+
 [Every CSS custom property the component uses, organized by category]
 
 ### Doom-isms
+
 [Component-specific styling decisions that override generic patterns]
 
 ### A2UI
+
 [A2UI registration keys]
 
 ### Required Files
+
 [Exact file listing with subdirectories]
 ```
 
 ### Critical: Spec overrides templates
 
 When the spec says something different from the generic template, **the spec wins**. Examples:
+
 - Spec says "no offset shadow" → don't add `--shadow-md` even though the mixin enforcement table says surfaces need shadows
 - Spec says 5 sizes (xs-xl) → don't use `ControlSize` (sm/md/lg)
 - Spec says use `<div>` with `role="button"` → don't use `<button>` element
@@ -106,16 +117,19 @@ Create all 10 artifacts in order. Replace `[Name]` with the PascalCase component
 import clsx from "clsx";
 import React from "react";
 
+import { useThemeParts, type ThemeClassNames } from "../../styles/theming/parts";
 import styles from "./[Name].module.scss";
 
 export interface [Name]Props {
+  classNames?: ThemeClassNames<"[Name]">;
   className?: string;
   children?: React.ReactNode;
 }
 
-export function [Name]({ className, children }: [Name]Props) {
+export function [Name]({ className, classNames, children }: [Name]Props) {
+  const part = useThemeParts("[Name]", classNames);
   return (
-    <div className={clsx(styles.root, className)}>
+    <div {...part("root", { className: clsx(styles.root, className) })}>
       {children}
     </div>
   );
@@ -257,6 +271,7 @@ Only use this pattern when the component genuinely has multiple composable parts
 ### 4. `components/[Name]/[Name].stories.tsx`
 
 Minimum required stories:
+
 - **Default** — base usage with args
 - **One story per variant** (if applicable)
 - **Sizes** — sm/md/lg side by side (if applicable)
@@ -298,12 +313,13 @@ export const Default: Story = {
 ### 5. `components/[Name]/[Name].test.tsx`
 
 Use role-based assertions (query by role, not text). Minimum required test coverage:
+
 - Renders correctly (by role, not text)
 - Every variant renders distinct styles (if applicable)
 - Controlled and uncontrolled modes work
 - Disabled state prevents interaction
 - Keyboard navigation (if interactive)
-- Accessibility attributes present (roles, aria-*)
+- Accessibility attributes present (roles, aria-\*)
 - Compound components: child throws when used outside parent context
 - Callbacks fire with correct arguments
 
@@ -353,10 +369,10 @@ import { [Name] } from "doom-design-system";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `className` | `string` | — | Additional CSS classes |
-| `children` | `ReactNode` | — | Content |
+| Prop        | Type        | Default | Description            |
+| ----------- | ----------- | ------- | ---------------------- |
+| `className` | `string`    | —       | Additional CSS classes |
+| `children`  | `ReactNode` | —       | Content                |
 
 ## Usage
 
@@ -387,24 +403,19 @@ After completing all 10 steps, list every file created or modified and confirm t
 
 Every interactive surface MUST use the appropriate mixins. This is non-negotiable:
 
-| Surface Type | Required |
-|---|---|
-| Clickable control (button, toggle, nav arrow) | `@include control`, `@include hover`, `@include focus`, `@include press` |
+| Surface Type                                    | Required                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
+| Clickable control (button, toggle, nav arrow)   | `@include control`, `@include hover`, `@include focus`, `@include press` |
 | Container/surface (panel, card, tree container) | `@include surface` or manual `--shadow-md`, `--card-bg`, `--card-border` |
-| Open/expanded control (dropdown, combobox) | `@include active-ring` (compose with `@include focus`) |
-| Size variants | `@include control-sm` / `@include control-lg` |
-| Disableable element | `@include disabled-state` |
-| Focusable element | `@include focus` on `:focus-visible` |
-| Error state | `@include error` |
+| Open/expanded control (dropdown, combobox)      | `@include active-ring` (compose with `@include focus`)                   |
+| Size variants                                   | `@include control-sm` / `@include control-lg`                            |
+| Disableable element                             | `@include disabled-state`                                                |
+| Focusable element                               | `@include focus` on `:focus-visible`                                     |
+| Error state                                     | `@include error`                                                         |
 
-## Doom Design Judgment (what mixins don't cover)
+## Public theming contract
 
-- Surfaces with a border and background probably need an offset shadow
-- Dense repeated elements (tree rows, table rows) do NOT lift on hover — use flat `--muted` background
-- Today/current indicators use bold markers (dots, thick borders), not subtle highlights
-- Transitions are fast (`--duration-fast`) or instant — no slow fades, no slides
-- Disabled items get a visual strike-through or hatched overlay, not just opacity
-- Range/selection bands use `--primary` at 10% opacity with hard edges, not gradients
+Register the component, parts, variants and sizes in `styles/theming/registry.ts` before using the typed hooks. Mark every styled part, including compound descendants and icons. Keep functional geometry separate from visual transforms. Provide real state adapters for native, keyboard and ARIA states. Use ThemeSurface and ThemedPortal for surfaces and overlays. Verify the default preset, a neutral-derived identity, and the public CSS or recipe override in a browser. Regenerate the [theme reference](../THEME-REFERENCE.md) after registry or token changes.
 
 ## Rules
 

@@ -4,8 +4,8 @@
   .window {
     background-color: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--surface-radius, var(--radius-md));
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -36,12 +36,12 @@
     &.void {
       border-color: transparent;
       box-shadow: 0 0 0 var(--space-1) var(--foreground);
-      transform: scale(1.01);
+      transform: var(--upload-busy-transform, scale(1.01));
       cursor: wait;
 
       .header {
-        background-color: var(--common-black);
-        color: var(--background);
+        background-color: var(--upload-busy-background, var(--common-black));
+        color: var(--upload-busy-foreground, var(--background));
         border-bottom: none;
 
         & > * {
@@ -51,7 +51,7 @@
       }
 
       .body {
-        background-color: var(--common-black);
+        background-color: var(--upload-busy-background, var(--common-black));
         cursor: wait;
         margin-top: -1px;
         position: relative;
@@ -63,7 +63,7 @@
         // Positions are in px relative to the 200% oversized container.
         &::before,
         &::after {
-          content: "";
+          content: var(--upload-decoration-content, "");
           position: absolute;
           top: 50%;
           left: 50%;
@@ -72,14 +72,30 @@
           background: transparent;
           border-radius: 50%;
           box-shadow:
-            -80px -120px #fff, 40px -60px #fff, -150px 80px #fff,
-            120px 40px #fff, -30px -180px #fff, 90px 130px #fff,
-            -170px -20px #fff, 60px -140px #fff, 180px -80px #fff,
-            -100px 160px #fff, 140px 100px #fff, -50px -40px #fff,
-            30px 170px #fff, -140px -150px #fff, 170px 60px #fff,
-            -60px 100px #fff, 100px -170px #fff, -180px 140px #fff,
-            50px 50px #fff, -120px -90px #fff, 160px -30px #fff,
-            -20px 130px #fff, 80px -100px #fff, -160px 40px #fff;
+            -80px -120px #fff,
+            40px -60px #fff,
+            -150px 80px #fff,
+            120px 40px #fff,
+            -30px -180px #fff,
+            90px 130px #fff,
+            -170px -20px #fff,
+            60px -140px #fff,
+            180px -80px #fff,
+            -100px 160px #fff,
+            140px 100px #fff,
+            -50px -40px #fff,
+            30px 170px #fff,
+            -140px -150px #fff,
+            170px 60px #fff,
+            -60px 100px #fff,
+            100px -170px #fff,
+            -180px 140px #fff,
+            50px 50px #fff,
+            -120px -90px #fff,
+            160px -30px #fff,
+            -20px 130px #fff,
+            80px -100px #fff,
+            -160px 40px #fff;
           opacity: 0.6;
           z-index: 0;
           animation: consume-stars 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -88,12 +104,24 @@
 
         &::after {
           box-shadow:
-            -70px -90px #fff, 50px -130px #fff, -130px 60px #fff,
-            110px 70px #fff, -20px -160px #fff, 80px 150px #fff,
-            -160px -50px #fff, 70px -110px #fff, 160px -60px #fff,
-            -90px 140px #fff, 130px 120px #fff, -40px -30px #fff,
-            20px 160px #fff, -150px -130px #fff, 150px 40px #fff,
-            -50px 80px #fff, 90px -150px #fff, -170px 120px #fff;
+            -70px -90px #fff,
+            50px -130px #fff,
+            -130px 60px #fff,
+            110px 70px #fff,
+            -20px -160px #fff,
+            80px 150px #fff,
+            -160px -50px #fff,
+            70px -110px #fff,
+            160px -60px #fff,
+            -90px 140px #fff,
+            130px 120px #fff,
+            -40px -30px #fff,
+            20px 160px #fff,
+            -150px -130px #fff,
+            150px 40px #fff,
+            -50px 80px #fff,
+            90px -150px #fff,
+            -170px 120px #fff;
           animation-name: consume-stars-alt;
           animation-delay: -3s;
           opacity: 0.35;
@@ -108,7 +136,7 @@
 
           &::before,
           &::after {
-            content: "";
+            content: var(--upload-decoration-content, "");
             position: absolute;
             top: 50%;
             left: 50%;
@@ -117,14 +145,30 @@
             background: transparent;
             border-radius: 50%;
             box-shadow:
-              -95px -105px #fff, 55px -75px #fff, -140px 95px #fff,
-              105px 55px #fff, -45px -170px #fff, 75px 145px #fff,
-              -155px -35px #fff, 45px -125px #fff, 165px -70px #fff,
-              -85px 155px #fff, 125px 85px #fff, -35px -55px #fff,
-              15px 175px #fff, -125px -140px #fff, 155px 50px #fff,
-              -75px 90px #fff, 85px -160px #fff, -165px 130px #fff,
-              35px 65px #fff, -110px -80px #fff, 145px -15px #fff,
-              -15px 115px #fff, 65px -85px #fff, -145px 55px #fff;
+              -95px -105px #fff,
+              55px -75px #fff,
+              -140px 95px #fff,
+              105px 55px #fff,
+              -45px -170px #fff,
+              75px 145px #fff,
+              -155px -35px #fff,
+              45px -125px #fff,
+              165px -70px #fff,
+              -85px 155px #fff,
+              125px 85px #fff,
+              -35px -55px #fff,
+              15px 175px #fff,
+              -125px -140px #fff,
+              155px 50px #fff,
+              -75px 90px #fff,
+              85px -160px #fff,
+              -165px 130px #fff,
+              35px 65px #fff,
+              -110px -80px #fff,
+              145px -15px #fff,
+              -15px 115px #fff,
+              65px -85px #fff,
+              -145px 55px #fff;
             opacity: 0.5;
             animation: consume-stars 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
             animation-delay: -1.5s;
@@ -132,10 +176,18 @@
 
           &::after {
             box-shadow:
-              -65px -80px #fff, 45px -140px #fff, -120px 70px #fff,
-              100px 80px #fff, -35px -150px #fff, 70px 160px #fff,
-              -150px -40px #fff, 55px -100px #fff, 150px -50px #fff,
-              -80px 130px #fff, 120px 110px #fff, -55px -45px #fff;
+              -65px -80px #fff,
+              45px -140px #fff,
+              -120px 70px #fff,
+              100px 80px #fff,
+              -35px -150px #fff,
+              70px 160px #fff,
+              -150px -40px #fff,
+              55px -100px #fff,
+              150px -50px #fff,
+              -80px 130px #fff,
+              120px 110px #fff,
+              -55px -45px #fff;
             animation-name: consume-stars-alt;
             animation-delay: -4.5s;
             opacity: 0.3;
@@ -145,24 +197,24 @@
 
       .headerContent,
       .headerTitle {
-        opacity: 0;
-        visibility: hidden;
+        opacity: var(--upload-busy-label-opacity, 0);
+        visibility: var(--upload-busy-label-visibility, hidden);
       }
 
       .voidIconWrapper,
       .voidText,
       .secondary,
       .helperText {
-        opacity: 0;
-        transform: scale(0.9);
+        opacity: var(--upload-busy-label-opacity, 0);
+        transform: var(--upload-busy-label-transform, scale(0.9));
         pointer-events: none;
       }
     }
   }
 
   .header {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+    background-color: var(--doom-base-roles-brand, var(--primary));
+    color: var(--doom-base-roles-on-brand, var(--primary-foreground));
     padding: var(--space-2) var(--space-4);
     border-bottom: var(--surface-border-width) solid var(--border-strong);
     user-select: none;
@@ -202,10 +254,10 @@
 
   .headerTitle {
     font-family: var(--font-heading);
-    font-weight: 800;
+    font-weight: var(--font-extrabold, 800);
     font-size: var(--text-sm);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    letter-spacing: var(--label-letter-spacing, 0.05em);
+    text-transform: var(--label-text-transform, uppercase);
     line-height: 1.2;
     display: block; // Ensures it takes full width of content area
   }
@@ -255,7 +307,7 @@
     width: 100%;
     cursor: pointer;
     outline: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     transition: background-color 0.2s ease;
 
     &:focus-visible {
@@ -307,7 +359,7 @@
   .removeButton {
     width: var(--space-8);
     height: var(--space-8);
-    padding: 0 !important;
+    padding: 0;
     flex-shrink: 0;
   }
 
@@ -348,7 +400,7 @@
   .previewWrapper {
     width: var(--space-16);
     height: var(--space-16);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     overflow: hidden;
     border: var(--surface-border-width) solid var(--border-strong);
     position: relative;

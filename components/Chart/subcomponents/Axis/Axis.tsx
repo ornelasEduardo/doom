@@ -3,6 +3,7 @@
 import type { AxisScale } from "d3-axis";
 import { useEffect, useRef } from "react";
 
+import { useThemeParts } from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { d3 } from "../../utils/d3";
 import { yTickCount } from "../../utils/scales";
@@ -12,7 +13,9 @@ import { renderAxisTicks } from "./axisTicks";
 const X_LABEL_OFFSET = 40;
 
 export function Axis() {
-  const { chartStore, config, requestLayoutAdjustment, isMobile } =
+  const doomPart = useThemeParts("Chart", undefined, {});
+
+  const { chartStore, config, requestLayoutAdjustment, isMobile, stylePart } =
     useChartContext();
   const dimensions = chartStore.useStore((s) => s.dimensions);
   const scales = chartStore.useStore((s) => s.scales);
@@ -61,6 +64,18 @@ export function Axis() {
       d3.select(gy.current).select(".domain").remove();
     }
 
+    for (const axis of [gx.current, gy.current]) {
+      axis
+        .querySelectorAll(".domain")
+        .forEach((node) => stylePart?.(node, "domain"));
+      axis
+        .querySelectorAll(".tick line")
+        .forEach((node) => stylePart?.(node, "tickLine"));
+      axis
+        .querySelectorAll(".tick text")
+        .forEach((node) => stylePart?.(node, "tickLabel"));
+    }
+
     try {
       const yBBox = gy.current.getBBox();
       if (yBBox.x < 0) {
@@ -91,6 +106,7 @@ export function Axis() {
   }, [
     xScale,
     yScale,
+    stylePart,
     config.hideYAxisDomain,
     config.yAxisLabel,
     config.xAxisLabel,
@@ -111,7 +127,7 @@ export function Axis() {
   }
 
   return (
-    <g aria-hidden="true" className={styles.axes}>
+    <g aria-hidden="true" {...doomPart("axes", { className: styles.axes })}>
       <g
         ref={gx}
         aria-label="X Axis"
@@ -121,7 +137,7 @@ export function Axis() {
       {config.xAxisLabel && (
         <text
           ref={xLabelRef}
-          className={styles.label}
+          {...doomPart("label", { className: styles.label })}
           style={{ textAnchor: "middle" }}
           transform={`translate(${innerWidth / 2}, ${innerHeight + X_LABEL_OFFSET})`}
         >
@@ -130,7 +146,7 @@ export function Axis() {
       )}
       {config.yAxisLabel && (
         <text
-          className={styles.label}
+          {...doomPart("label", { className: styles.label })}
           style={{ textAnchor: "middle" }}
           transform={`rotate(-90)`}
           x={-innerHeight / 2}

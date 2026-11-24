@@ -1,11 +1,11 @@
 @layer doom.components {
   .label {
     font-family: var(--font-heading);
-    font-weight: var(--font-bold);
+    font-weight: var(--label-font-weight, var(--font-bold));
     font-size: var(--text-sm);
     color: var(--foreground);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     display: flex;
     align-items: center;
     gap: var(--space-1);

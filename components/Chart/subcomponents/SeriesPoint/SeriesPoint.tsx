@@ -1,8 +1,13 @@
 import React, { memo } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import styles from "./SeriesPoint.module.scss";
 
 export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
+  classNames?: ThemeClassNames<"Chart">;
   /**
    * Accessible name for this mark. The parent series owns the accessors, so it
    * builds the name — the point itself stays presentational.
@@ -20,6 +25,7 @@ export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
 
 export const SeriesPoint = memo(
   ({
+    classNames,
     x,
     y,
     color,
@@ -33,6 +39,8 @@ export const SeriesPoint = memo(
     datum,
     ...props
   }: SeriesPointProps) => {
+    const doomPart = useThemeParts("Chart", classNames, {});
+
     if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) {
       return null;
     }
@@ -59,7 +67,9 @@ export const SeriesPoint = memo(
         }}
         aria-label={description || "Data point"}
         aria-roledescription="data point"
-        className={`${styles.point} ${className || ""}`}
+        {...doomPart("point", {
+          className: `${styles.point} ${className || ""}`,
+        })}
         cx={x}
         cy={y}
         r={isHovered ? hoverRadius : radius}

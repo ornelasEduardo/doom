@@ -1,9 +1,13 @@
 "use client";
-
 import clsx from "clsx";
 import { Check, Copy } from "lucide-react";
 import React, { useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Button } from "../Button/Button";
 import styles from "./CopyButton.module.scss";
 
@@ -20,6 +24,7 @@ interface CopyButtonProps extends Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "onClick"
 > {
+  classNames?: ThemeClassNames<"CopyButton">;
   value: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -28,6 +33,7 @@ interface CopyButtonProps extends Omit<
 }
 
 export function CopyButton({
+  classNames,
   value,
   children,
   variant = "secondary",
@@ -37,6 +43,11 @@ export function CopyButton({
   className,
   ...props
 }: CopyButtonProps) {
+  const doomPart = useThemeParts("CopyButton", classNames, {
+    variant: variant,
+    size: size,
+  });
+
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -56,37 +67,64 @@ export function CopyButton({
 
   return (
     <Button
-      className={clsx(
-        styles.copyButton,
-        styles[variant],
-        copied && styles.copied,
-        className,
-      )}
+      {...doomPart("root", {
+        className: clsx(
+          styles.copyButton,
+          styles[variant],
+          copied && styles.copied,
+          className,
+        ),
+      })}
       size={size}
       type="button"
       variant={variant}
       onClick={handleCopy}
       {...props}
     >
-      <span className={styles.labelContainer}>
-        <span className={styles.defaultLabel}>
-          <Copy size={iconSize} strokeWidth={2.5} />
+      <span
+        {...doomPart("labelContainer", { className: styles.labelContainer })}
+      >
+        <span {...doomPart("defaultLabel", { className: styles.defaultLabel })}>
+          <ThemedIcon
+            icon={Copy}
+            iconName="copy"
+            size={iconSize}
+            strokeWidth={2.5}
+          />
           <span>{children}</span>
         </span>
 
-        <span className={styles.successLabel}>
-          <Check size={iconSize} strokeWidth={2.5} />
+        <span {...doomPart("successLabel", { className: styles.successLabel })}>
+          <ThemedIcon
+            icon={Check}
+            iconName="check"
+            size={iconSize}
+            strokeWidth={2.5}
+          />
           <span>{copiedText}</span>
         </span>
       </span>
 
-      <span aria-hidden="true" className={styles.widthPreserver}>
-        <span className={styles.measureItem}>
-          <Copy size={iconSize} strokeWidth={2.5} />
+      <span
+        aria-hidden="true"
+        {...doomPart("widthPreserver", { className: styles.widthPreserver })}
+      >
+        <span {...doomPart("measureItem", { className: styles.measureItem })}>
+          <ThemedIcon
+            icon={Copy}
+            iconName="copy"
+            size={iconSize}
+            strokeWidth={2.5}
+          />
           <span>{children}</span>
         </span>
-        <span className={styles.measureItem}>
-          <Check size={iconSize} strokeWidth={2.5} />
+        <span {...doomPart("measureItem", { className: styles.measureItem })}>
+          <ThemedIcon
+            icon={Check}
+            iconName="check"
+            size={iconSize}
+            strokeWidth={2.5}
+          />
           <span>{copiedText}</span>
         </span>
       </span>

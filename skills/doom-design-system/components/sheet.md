@@ -1,6 +1,7 @@
 # Sheet
 
 ## Import
+
 ```tsx
 import { Sheet } from "doom-design-system";
 ```
@@ -9,23 +10,23 @@ import { Sheet } from "doom-design-system";
 
 ### Sheet (root)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `isOpen` | `boolean` | required | Controls visibility |
-| `onClose` | `() => void` | required | Close callback |
-| `title` | `ReactNode` | — | Header title (shorthand API) |
-| `footer` | `ReactNode` | — | Footer content (shorthand API) |
-| `variant` | `"default" \| "solid"` | `"default"` | Visual style |
-| `children` | `ReactNode` | required | Sheet content |
-| `className` | `string` | — | CSS class name |
+| Prop        | Type                   | Default     | Description                    |
+| ----------- | ---------------------- | ----------- | ------------------------------ |
+| `isOpen`    | `boolean`              | required    | Controls visibility            |
+| `onClose`   | `() => void`           | required    | Close callback                 |
+| `title`     | `ReactNode`            | —           | Header title (shorthand API)   |
+| `footer`    | `ReactNode`            | —           | Footer content (shorthand API) |
+| `variant`   | `"default" \| "solid"` | `"default"` | Visual style                   |
+| `children`  | `ReactNode`            | required    | Sheet content                  |
+| `className` | `string`               | —           | CSS class name                 |
 
 ### Subcomponents
 
-| Component | Props | Description |
-|-----------|-------|-------------|
+| Component      | Props                    | Description                                          |
+| -------------- | ------------------------ | ---------------------------------------------------- |
 | `Sheet.Header` | `children`, `className?` | Header with visible drag handle bar and close button |
-| `Sheet.Body` | `children`, `className?` | Scrollable content area |
-| `Sheet.Footer` | `children`, `className?` | Action buttons area |
+| `Sheet.Body`   | `children`, `className?` | Scrollable content area                              |
+| `Sheet.Footer` | `children`, `className?` | Action buttons area                                  |
 
 ## Usage
 
@@ -59,6 +60,7 @@ import { Sheet } from "doom-design-system";
 ```
 
 ## Notes
+
 - Slides up from bottom; fixed height of 85vh
 - **Drag-to-dismiss**: drag the header down 150px+ to close; transitions disabled during drag, snap-back on incomplete gesture
 - Header renders a visible drag handle bar (12px wide, pill-shaped); opacity adjusts in solid variant
@@ -66,3 +68,7 @@ import { Sheet } from "doom-design-system";
 - Renders via portal to `document.body`; locks body scroll when open
 - Use for bottom sheets on mobile or compact overlays
 - `variant="solid"` for high-emphasis content
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Sheet theme contract](../../../THEME-REFERENCE.md#component-sheet).

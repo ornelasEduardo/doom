@@ -1,0 +1,53 @@
+@layer doom.reset, doom.utilities, doom.components, doom.theme;
+
+@layer doom.reset {
+  :where([data-doom-component]) {
+    box-sizing: border-box;
+  }
+  :where(button, input, textarea, select)[data-doom-component] {
+    font: inherit;
+  }
+}
+@layer doom.components {
+  :where([data-doom-scope]) {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    color: var(--foreground);
+    font-size: var(--text-base, 1rem);
+    line-height: 1.5;
+  }
+  :where([data-doom-background]) {
+    background: var(--background);
+  }
+  .doom-portal-scope,
+  .doom-legacy-scope {
+    display: contents;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-doom-component]),
+  :where([data-doom-component])::before,
+  :where([data-doom-component])::after {
+    // Retain completion events used by overlays when skipping movement.
+    animation-delay: 0s !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :where([data-doom-component]):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  :where([data-doom-component]):is(
+    :disabled,
+    [aria-disabled="true"],
+    [data-disabled]
+  ) {
+    border-color: GrayText;
+  }
+}

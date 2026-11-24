@@ -1,20 +1,21 @@
 # ProgressBar
 
 ## Import
+
 ```tsx
 import { ProgressBar } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `number` | required | Current value (0–max) |
-| `max` | `number` | `100` | Maximum value |
-| `height` | `string \| number` | `"24px"` | Bar height |
-| `color` | `string` | `"var(--primary)"` | Fill color (any CSS color) |
-| `showStripes` | `boolean` | `true` | Show animated diagonal stripes |
-| `label` | `ReactNode` | — | Label rendered above the bar |
+| Prop          | Type               | Default            | Description                    |
+| ------------- | ------------------ | ------------------ | ------------------------------ |
+| `value`       | `number`           | required           | Current value (0–max)          |
+| `max`         | `number`           | `100`              | Maximum value                  |
+| `height`      | `string \| number` | `"24px"`           | Bar height                     |
+| `color`       | `string`           | `"var(--primary)"` | Fill color (any CSS color)     |
+| `showStripes` | `boolean`          | `true`             | Show animated diagonal stripes |
+| `label`       | `ReactNode`        | —                  | Label rendered above the bar   |
 
 ## Usage
 
@@ -30,6 +31,11 @@ import { ProgressBar } from "doom-design-system";
 ```
 
 ## Notes
+
 - Value is automatically clamped to `0`–`max` range
 - Animated stripes signal in-progress state — set `showStripes={false}` for static/completed bars
 - `color` accepts any CSS value (hex, `var()`, etc.)
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [ProgressBar theme contract](../../../THEME-REFERENCE.md#component-progressbar).

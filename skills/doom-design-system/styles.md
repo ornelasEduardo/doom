@@ -1,87 +1,19 @@
 # Doom Styles Reference
 
-## Aesthetic Principles
+## Public styling contract
 
-- **Bold borders** — 2px solid, always
-- **Hard shadows** — No blur, offset only
-- **High contrast** — Meets WCAG AAA
-- **Geometric** — 4px border-radius, clean lines
+Use the [theme guide](../../THEME.md) and [token and part reference](../../THEME-REFERENCE.md) when building a theme or adding parts. Component structure, keyboard behavior, and dynamic geometry belong in the component. Shared presentation belongs in theme tokens, defaults, and recipes. Each styled part needs a stable name and a class attachment point. Document compound elements and portal ownership alongside their component props.
 
-### 1. Borders
-
-Every interactive element has a 2px solid border.
-
-```scss
-// Correct
-border: var(--surface-border-width) solid var(--card-border);
-
-// Wrong
-border: 1px solid #ccc;
-border: none;
-```
-
-### 2. Shadows
-
-Hard offset shadows only. No blur.
-
-```scss
-// Correct
-box-shadow: var(--shadow-md);
-
-// Wrong
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-```
-
-### 3. Hover States
-
-Elements lift on hover. Shadow compensates.
-
-```scss
-// Correct — use the hover mixin
-@include hover;
-
-// Or manually:
-&:hover {
-  transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
-  box-shadow: var(--shadow-lg);
-}
-
-// Wrong
-&:hover {
-  opacity: 0.8;
-}
-```
-
-### 4. Colors
-
-Use CSS variables. Never hardcode hex values.
-
-```tsx
-// Correct
-style={{ background: "var(--card-bg)" }}
-
-// Wrong
-style={{ background: "#ffffff" }}
-```
-
-### 5. Typography
-
-Headings are bold and uppercase.
-
-```scss
-font-family: var(--font-heading);
-font-weight: var(--heading-weight); // 800
-text-transform: var(--heading-transform); // uppercase
-```
+The examples and measurements below describe the legacy neubrutalist preset. Its hard shadows, uppercase headings, thick borders, and lift/press effects are choices of that preset. Neutral and custom themes may change each of these values.
 
 ### Color Usage
 
-| Purpose         | Variable    |
-| --------------- | ----------- |
-| Primary actions | `--primary` |
-| Success         | `--success` |
-| Errors          | `--error`   |
-| Warnings        | `--warning` |
+| Purpose         | Variable             |
+| --------------- | -------------------- |
+| Primary actions | `--primary`          |
+| Success         | `--success`          |
+| Errors          | `--error`            |
+| Warnings        | `--warning`          |
 | Muted text      | `--muted-foreground` |
 
 Use color sparingly. Most UI should be black/white/gray with one accent.
@@ -126,9 +58,9 @@ transition: all var(--duration-fast) var(--ease-in-out);
 
 .component {
   @include control; // height, padding, border, shadow, transition
-  @include hover;   // lift + shadow grow
-  @include focus;   // focus-visible ring
-  @include press;   // active press state
+  @include hover; // lift + shadow grow
+  @include focus; // focus-visible ring
+  @include press; // active press state
 
   background: var(--card-bg);
   color: var(--foreground);
@@ -197,7 +129,7 @@ Intentionally gapped scale (no --space-5, --space-7, etc.):
 ### Structural
 
 ```
---surface-border-width: 2px   (never change — neubrutalism requires it)
+--surface-border-width: 2px   (default preset)
 --radius-sm:    2px
 --radius-md:    4px
 --radius-lg:    8px
@@ -264,6 +196,7 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 ```
 
 #### Prose (reading widths)
+
 ```
 --width-prose-narrow: 45ch   (captions, side notes)
 --width-prose:        65ch   (standard reading)
@@ -271,6 +204,7 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 ```
 
 #### Layout
+
 ```
 --width-sidebar:           240px
 --width-sidebar-collapsed: 64px
@@ -283,6 +217,7 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 ```
 
 #### Modals
+
 ```
 --width-modal-sm: 400px
 --width-modal-md: 600px
@@ -355,19 +290,19 @@ Source: `styles/palettes.ts`
 
 Colors available via `palette.{color}[{shade}]` (e.g., `palette.purple[500]`).
 
-| Color  | Shades    | Notes                     |
-| ------ | --------- | ------------------------- |
-| black  | 50-950    | Opacity scales (rgba)     |
-| white  | 50-950    | Opacity scales (rgba)     |
-| slate  | 50-950    | Full range                |
-| purple | 50-900    | Primary for default theme |
-| navy   | 50-900    | —                         |
-| blue   | 50-900    | Primary for captain theme |
-| indigo | 50-900    | —                         |
-| yellow | 50-900    | Primary for vigilante     |
-| green  | 50-900    | Primary for doom theme    |
-| red    | 50-900    | Error states              |
-| gray   | 50-990    | Extended range (975, 990) |
+| Color  | Shades | Notes                     |
+| ------ | ------ | ------------------------- |
+| black  | 50-950 | Opacity scales (rgba)     |
+| white  | 50-950 | Opacity scales (rgba)     |
+| slate  | 50-950 | Full range                |
+| purple | 50-900 | Primary for default theme |
+| navy   | 50-900 | —                         |
+| blue   | 50-900 | Primary for captain theme |
+| indigo | 50-900 | —                         |
+| yellow | 50-900 | Primary for vigilante     |
+| green  | 50-900 | Primary for doom theme    |
+| red    | 50-900 | Error states              |
+| gray   | 50-990 | Extended range (975, 990) |
 
 ## CSS Custom Properties (Theme-Dependent)
 
@@ -423,22 +358,22 @@ Source: `styles/themes/solid-tokens.ts`
 
 Used by `variant="solid"` on Modal, Sheet, Drawer, etc. Generated via `createSolidTokens(bg, fg, semantics)`.
 
-| Variable           | Description                |
-| ------------------ | -------------------------- |
-| `--solid-bg`       | Solid variant background   |
-| `--solid-fg`       | Solid variant text         |
-| `--solid-success`  | Success on solid bg        |
-| `--solid-error`    | Error on solid bg          |
-| `--solid-warning`  | Warning on solid bg        |
+| Variable          | Description              |
+| ----------------- | ------------------------ |
+| `--solid-bg`      | Solid variant background |
+| `--solid-fg`      | Solid variant text       |
+| `--solid-success` | Success on solid bg      |
+| `--solid-error`   | Error on solid bg        |
+| `--solid-warning` | Warning on solid bg      |
 
 ### Theme Values
 
-| Theme       | `--primary`   | `--background`  | `--shadow-base` | Mode  |
-| ----------- | ------------- | --------------- | --------------- | ----- |
-| `default`   | Purple 500    | Indigo 100      | Black 950       | Light |
-| `doom`      | Green 600     | Slate 950       | Black 950       | Dark  |
-| `captain`   | Blue 500      | Slate 50        | Black 950       | Light |
-| `vigilante` | Yellow 600    | Gray 950        | Black 950       | Dark  |
+| Theme       | `--primary` | `--background` | `--shadow-base` | Mode  |
+| ----------- | ----------- | -------------- | --------------- | ----- |
+| `default`   | Purple 500  | Indigo 100     | Black 950       | Light |
+| `doom`      | Green 600   | Slate 950      | Black 950       | Dark  |
+| `captain`   | Blue 500    | Slate 50       | Black 950       | Light |
+| `vigilante` | Yellow 600  | Gray 950       | Black 950       | Dark  |
 
 Each theme defines all color variables, surface variables, shadow variables, and solid tokens. See `styles/themes/definitions.ts` for exact values.
 
@@ -536,8 +471,12 @@ Base styles for container elements (Card, Modal, Drawer, Sheet): padding, border
 Size overrides for controls. Apply as a class modifier to override semantic control variables locally.
 
 ```scss
-.sm { @include control-sm; }  // --size-7 (32px) height, smaller padding/font
-.lg { @include control-lg; }  // --size-10 (48px) height, larger padding/font
+.sm {
+  @include control-sm;
+} // --size-7 (32px) height, smaller padding/font
+.lg {
+  @include control-lg;
+} // --size-10 (48px) height, larger padding/font
 ```
 
 ### `invert-theme`

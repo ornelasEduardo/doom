@@ -4,9 +4,9 @@
   .container {
     width: 100%;
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     background: var(--surface-accent);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -82,7 +82,8 @@
     background: var(--background);
     border-top: var(--surface-border-width) solid var(--card-border);
     border-bottom: var(--surface-border-width) solid var(--card-border);
-    box-shadow: inset 0 var(--surface-border-width) var(--space-1) rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 var(--surface-border-width) var(--space-1)
+      rgba(0, 0, 0, 0.06);
     padding: var(--space-4);
     gap: var(--space-2);
 
@@ -121,9 +122,9 @@
     padding: var(--space-4);
     background: var(--secondary);
     border-bottom: var(--surface-border-width) solid var(--card-border);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--font-bold, 700);
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     user-select: none;
     white-space: nowrap;
     color: var(--secondary-foreground);
@@ -141,7 +142,7 @@
     &.sortable {
       cursor: pointer;
       &:hover {
-        filter: brightness(0.95);
+        filter: var(--control-hover-filter, brightness(0.95));
         color: var(--secondary-foreground);
       }
     }
@@ -236,7 +237,7 @@
     background: none;
     cursor: pointer;
     color: var(--on-surface-muted);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     transition: all var(--duration-fast) var(--ease-in-out);
 
     &:hover {
@@ -263,6 +264,6 @@
 
   .expandCol {
     width: 40px;
-    padding: var(--space-2) !important;
+    padding: var(--space-2);
   }
 }

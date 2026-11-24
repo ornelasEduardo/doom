@@ -47,7 +47,7 @@
 
   .fallback {
     font-family: var(--font-heading);
-    font-weight: 700;
+    font-weight: var(--font-bold, 700);
     color: var(--primary-foreground);
     background-color: var(--primary);
     width: 100%;
@@ -55,7 +55,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    text-transform: uppercase;
+    text-transform: var(--label-text-transform, uppercase);
 
     /* Font sizes mapped to parent sizes */
     &.sm {

@@ -1,6 +1,7 @@
 # Drawer
 
 ## Import
+
 ```tsx
 import { Drawer } from "doom-design-system";
 ```
@@ -9,24 +10,24 @@ import { Drawer } from "doom-design-system";
 
 ### Drawer (root)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `isOpen` | `boolean` | required | Controls visibility |
-| `onClose` | `() => void` | required | Close callback |
-| `side` | `"left" \| "right"` | `"right"` | Slide direction |
-| `title` | `ReactNode` | — | Header title (shorthand API) |
-| `footer` | `ReactNode` | — | Footer content (shorthand API) |
-| `variant` | `"default" \| "solid"` | `"default"` | Visual style |
-| `children` | `ReactNode` | required | Drawer content |
-| `className` | `string` | — | CSS class name |
+| Prop        | Type                   | Default     | Description                    |
+| ----------- | ---------------------- | ----------- | ------------------------------ |
+| `isOpen`    | `boolean`              | required    | Controls visibility            |
+| `onClose`   | `() => void`           | required    | Close callback                 |
+| `side`      | `"left" \| "right"`    | `"right"`   | Slide direction                |
+| `title`     | `ReactNode`            | —           | Header title (shorthand API)   |
+| `footer`    | `ReactNode`            | —           | Footer content (shorthand API) |
+| `variant`   | `"default" \| "solid"` | `"default"` | Visual style                   |
+| `children`  | `ReactNode`            | required    | Drawer content                 |
+| `className` | `string`               | —           | CSS class name                 |
 
 ### Subcomponents
 
-| Component | Props | Description |
-|-----------|-------|-------------|
+| Component       | Props                    | Description                                                  |
+| --------------- | ------------------------ | ------------------------------------------------------------ |
 | `Drawer.Header` | `children`, `className?` | Header with built-in close button (hardcoded danger variant) |
-| `Drawer.Body` | `children`, `className?` | Scrollable content area |
-| `Drawer.Footer` | `children`, `className?` | Action buttons area |
+| `Drawer.Body`   | `children`, `className?` | Scrollable content area                                      |
+| `Drawer.Footer` | `children`, `className?` | Action buttons area                                          |
 
 ## Usage
 
@@ -57,9 +58,14 @@ import { Drawer } from "doom-design-system";
 ```
 
 ## Notes
+
 - Closes on Escape key and overlay click automatically
 - Renders via portal to `document.body`; locks body scroll when open
 - Animation: slides in from the specified side; directional shadow matches `side`
 - Border radius only on the non-screen-edge side
 - Use `side="left"` for navigation drawers, `side="right"` for detail/action panels
 - `variant="solid"` for high-emphasis content
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Drawer theme contract](../../../THEME-REFERENCE.md#component-drawer).

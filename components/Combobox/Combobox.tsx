@@ -3,6 +3,11 @@ import clsx from "clsx";
 import { ChevronDown, Search, X } from "lucide-react";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { ControlSize } from "../../styles/types";
 import { Card } from "../Card/Card";
 import { Checkbox } from "../Checkbox/Checkbox";
@@ -17,6 +22,7 @@ export interface ComboboxOption {
 }
 
 interface ComboboxProps {
+  classNames?: ThemeClassNames<"Combobox">;
   options: ComboboxOption[];
   value?: string | string[];
   onChange: (value: string | string[] | undefined) => void;
@@ -30,6 +36,7 @@ interface ComboboxProps {
 }
 
 export function Combobox({
+  classNames,
   options,
   value,
   onChange,
@@ -41,6 +48,11 @@ export function Combobox({
   className,
   inline = false,
 }: ComboboxProps) {
+  const doomPart = useThemeParts("Combobox", classNames, {
+    size: size,
+    disabled: disabled,
+  });
+
   const instanceId = useId();
   const selectAllId = `${instanceId}-select-all`;
 
@@ -63,7 +75,12 @@ export function Combobox({
     return Array.isArray(value) ? value : [value];
   }, [value]);
 
+  const getOptionKey = React.useCallback(
+    (index: number) => filteredOptions[index].value,
+    [filteredOptions],
+  );
   const rowVirtualizer = useVirtualizer({
+    getItemKey: getOptionKey,
     count: filteredOptions.length,
     getScrollElement: () => optionsListRef.current,
     estimateSize: () => 36,
@@ -236,15 +253,24 @@ export function Combobox({
 
   const dropdownContent = (
     <Card.Root
-      className={clsx(styles.dropdown, inline && styles.inlineDropdown)}
+      {...doomPart(inline ? "root" : "dropdown", {
+        className: clsx(styles.dropdown, inline && styles.inlineDropdown),
+      })}
       onClick={(e) => e.stopPropagation()}
     >
       {searchable && (
-        <div className={styles.searchWrapper}>
-          <Search className={styles.searchIcon} size={20} />
+        <div
+          {...doomPart("searchWrapper", { className: styles.searchWrapper })}
+        >
+          <ThemedIcon
+            icon={Search}
+            iconName="search"
+            {...doomPart("searchIcon", { className: styles.searchIcon })}
+            size={20}
+          />
           <input
             ref={inputRef}
-            className={styles.searchInput}
+            {...doomPart("searchInput", { className: styles.searchInput })}
             placeholder="Search..."
             type="text"
             value={searchQuery}
@@ -255,9 +281,13 @@ export function Combobox({
       )}
 
       {multiple && options.length > 0 && (
-        <div className={styles.stickyOption}>
+        <div {...doomPart("stickyOption", { className: styles.stickyOption })}>
           <button
-            className={clsx(styles.option, allSelected && styles.selected)}
+            {...doomPart("option", {
+              className: clsx(styles.option, allSelected && styles.selected),
+            })}
+            aria-pressed={allSelected}
+            data-selected={allSelected || undefined}
             id={selectAllId}
             type="button"
             onClick={(e) => {
@@ -269,17 +299,29 @@ export function Combobox({
             <div style={{ pointerEvents: "none" }}>
               <Checkbox readOnly checked={allSelected} />
             </div>
-            <Text as="span" className={styles.optionLabel}>
+            <Text
+              as="span"
+              {...doomPart("optionLabel", { className: styles.optionLabel })}
+            >
               All
             </Text>
           </button>
         </div>
       )}
 
-      <div ref={optionsListRef} className={styles.optionsList}>
+      <div
+        ref={optionsListRef}
+        {...doomPart("optionsList", { className: styles.optionsList })}
+      >
         {filteredOptions.length === 0 ? (
-          <div className={styles.noResults}>
-            <Text className={styles.noResultsText}>No results</Text>
+          <div {...doomPart("noResults", { className: styles.noResults })}>
+            <Text
+              {...doomPart("noResultsText", {
+                className: styles.noResultsText,
+              })}
+            >
+              No results
+            </Text>
           </div>
         ) : (
           <div
@@ -294,11 +336,16 @@ export function Combobox({
               return (
                 <button
                   key={option.value}
-                  className={clsx(
-                    styles.option,
-                    isSelected(option.value) && styles.selected,
-                  )}
+                  ref={rowVirtualizer.measureElement}
+                  {...doomPart("option", {
+                    className: clsx(
+                      styles.option,
+                      isSelected(option.value) && styles.selected,
+                    ),
+                  })}
+                  aria-pressed={isSelected(option.value)}
                   data-index={virtualRow.index}
+                  data-selected={isSelected(option.value) || undefined}
                   style={{
                     position: "absolute",
                     top: 0,
@@ -318,7 +365,12 @@ export function Combobox({
                       <Checkbox readOnly checked={isSelected(option.value)} />
                     </div>
                   )}
-                  <Text as="span" className={styles.optionLabel}>
+                  <Text
+                    as="span"
+                    {...doomPart("optionLabel", {
+                      className: styles.optionLabel,
+                    })}
+                  >
                     {option.label}
                   </Text>
                 </button>
@@ -342,24 +394,31 @@ export function Combobox({
       trigger={
         <button
           aria-expanded={isOpen}
-          className={clsx(
-            styles.trigger,
-            styles[size],
-            hasValue && styles.hasValue,
-            disabled && styles.disabled,
-            className,
-          )}
+          {...doomPart("root", {
+            className: clsx(
+              styles.trigger,
+              styles[size],
+              hasValue && styles.hasValue,
+              disabled && styles.disabled,
+              className,
+            ),
+          })}
           disabled={disabled}
           type="button"
           onClick={handleOpen}
         >
-          <Text as="span" className={styles.triggerText}>
+          <Text
+            as="span"
+            {...doomPart("triggerText", { className: styles.triggerText })}
+          >
             {displayText}
           </Text>
-          <span className={styles.triggerIcons}>
+          <span
+            {...doomPart("triggerIcons", { className: styles.triggerIcons })}
+          >
             {hasValue && !disabled && (
               <span
-                className={styles.clearButton}
+                {...doomPart("clearButton", { className: styles.clearButton })}
                 role="button"
                 tabIndex={0}
                 onClick={handleClear}
@@ -369,10 +428,15 @@ export function Combobox({
                   }
                 }}
               >
-                <X size={12} />
+                <ThemedIcon icon={X} iconName="close" size={12} />
               </span>
             )}
-            <ChevronDown className={styles.chevron} size={20} />
+            <ThemedIcon
+              icon={ChevronDown}
+              iconName="chevronDown"
+              {...doomPart("chevron", { className: styles.chevron })}
+              size={20}
+            />
           </span>
         </button>
       }

@@ -49,7 +49,7 @@
     background: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
     color: var(--foreground);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     padding: var(--space-4);
     display: flex;
     align-items: center;
@@ -58,7 +58,7 @@
     position: relative;
     overflow: hidden;
     pointer-events: auto; /* Re-enable pointer events for the toast itself */
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
 
     &.exiting {
       animation: slideOut var(--duration-slow) var(--ease-in) forwards;

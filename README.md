@@ -4,14 +4,14 @@
 [![npm version](https://img.shields.io/npm/v/doom-design-system.svg)](https://www.npmjs.com/package/doom-design-system)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern, premium, neubrutalist and comic book inspired design system built with React and SASS Modules.
+A themeable React component library with a neubrutalist default preset, typed design tokens, component recipes, and scoped CSS.
 
 ## Features
 
 - 🎨 **Distinctive Aesthetic**: Bold, high-contrast, and playful design.
-- 🚀 **Server Components Ready**: Fully compatible with Next.js App Router and React Server Components (RSC) with zero-runtime CSS.
+- 🚀 **Server Components Ready**: Render scoped theme styles with server HTML, or compile static CSS at build time.
 - 🧩 **Framework Agnostic**: Works with any React framework (Next.js, Vite, Remix).
-- 🌙 **Theming**: Built-in dark mode and theming support via CSS Variables.
+- 🌙 **Theming**: Define themes, switch modes and customize public component parts.
 - ♿ **Accessible**: Built with accessibility in mind.
 - 📦 **TypeScript**: Fully typed for excellent developer experience.
 
@@ -57,7 +57,7 @@ export default function RootLayout({ children }) {
 
 ### 2. Use Components
 
-Import and use components in your application. They are now fully tree-shakeable and lightweight.
+Import and use components in your application. Use named imports for the components you need.
 
 ```tsx
 import { Button, Card, Text, Link } from "doom-design-system";
@@ -79,13 +79,18 @@ function MyComponent() {
 
 ### 3. Theming
 
-The Design System uses CSS Variables for theming. You can control the theme using the `DesignSystemProvider`.
+Use the object provider to apply a preset or an application-defined theme.
 
 ```tsx
-<DesignSystemProvider initialTheme="doom">
-  {/* The entire app will be themed automatically */}
-</DesignSystemProvider>
+import { DesignSystemProvider } from "doom-design-system";
+import { captainTheme } from "doom-design-system/themes";
+
+<DesignSystemProvider theme={captainTheme} withBackground>
+  <App />
+</DesignSystemProvider>;
 ```
+
+The [theming guide](THEME.md) covers custom themes, modes, portals, CSS Modules, server rendering and migration from string theme names. The [generated reference](THEME-REFERENCE.md) lists parts, variants, sizes, tokens, and legacy aliases.
 
 ## Requirements
 
@@ -100,12 +105,12 @@ This system uses **CSS Modules** (`.module.scss`) for component styling, ensurin
 
 ## Testing
 
-| Suite | Location | Command |
-| --- | --- | --- |
-| Unit | Beside source | `npm test` |
-| Browser regressions | `tests/browser/<Component>/` | `npm run test:browser` |
-| Story interactions | Story `play` functions | `npm run test:storybook` |
-| Package imports | `tests/package/` | `npm run build && npm run test:package` |
+| Suite               | Location                     | Command                                 |
+| ------------------- | ---------------------------- | --------------------------------------- |
+| Unit                | Beside source                | `npm test`                              |
+| Browser regressions | `tests/browser/<Component>/` | `npm run test:browser`                  |
+| Story interactions  | Story `play` functions       | `npm run test:storybook`                |
+| Package imports     | `tests/package/`             | `npm run build && npm run test:package` |
 
 Storybook tests target the running server on port 6006. Add `-- --includeTags interaction`
 to run only interaction examples. Install Chromium with `npx playwright install chromium`.

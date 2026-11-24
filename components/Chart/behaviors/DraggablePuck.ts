@@ -86,7 +86,7 @@ export function DraggablePuck<T = unknown>(
       .attr("stroke-width", 2)
       .style("opacity", 0)
       .style("cursor", "grabbing")
-      .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.2))")
+      .attr("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.2))")
       .style("pointer-events", "none");
 
     // Connection line between ghost and puck
@@ -98,6 +98,17 @@ export function DraggablePuck<T = unknown>(
       .attr("stroke-dasharray", "2,2")
       .style("opacity", 0)
       .style("pointer-events", "none");
+
+    for (const [selection, part] of [
+      [ghost, "dragGhost"],
+      [puck, "dragPuck"],
+      [line, "dragLine"],
+    ] as const) {
+      const element = selection.node();
+      if (element) {
+        getChartContext().stylePart?.(element, part);
+      }
+    }
 
     const update = () => {
       const interaction = (

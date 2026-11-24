@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import type { ControlSize } from "../../styles/types";
 import { Button } from "../Button/Button";
 import { Popover } from "../Popover/Popover";
@@ -14,6 +17,7 @@ interface DropdownItemType {
 }
 
 interface DropdownProps {
+  classNames?: ThemeClassNames<"Dropdown">;
   triggerLabel: string;
   items: DropdownItemType[];
   variant?: "primary" | "secondary";
@@ -22,22 +26,32 @@ interface DropdownProps {
 }
 
 export function Dropdown({
+  classNames,
   triggerLabel,
   items,
   variant = "primary",
   size = "md",
   className,
 }: DropdownProps) {
+  const doomPart = useThemeParts("Dropdown", classNames, {
+    variant: variant,
+    size: size,
+  });
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Popover
       content={
-        <div className={clsx(styles.menu, size !== "md" && styles[size])}>
+        <div
+          {...doomPart("menu", {
+            className: clsx(styles.menu, size !== "md" && styles[size]),
+          })}
+        >
           {items.map((item, index) => (
             <button
               key={index}
-              className={styles.item}
+              {...doomPart("item", { className: styles.item })}
               onClick={() => {
                 item.onClick();
                 setIsOpen(false);
@@ -53,7 +67,7 @@ export function Dropdown({
       trigger={
         <Button
           aria-expanded={isOpen}
-          className={clsx(styles.trigger, className)}
+          {...doomPart("root", { className: clsx(styles.trigger, className) })}
           size={size}
           variant={variant}
           onClick={() => setIsOpen(!isOpen)}
