@@ -2,8 +2,8 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import ts from "typescript";
 import { format, resolveConfig } from "prettier";
+import ts from "typescript";
 
 // The contract files contain immutable data and types and have no runtime imports.
 async function readContract(file) {
