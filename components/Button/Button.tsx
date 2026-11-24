@@ -84,7 +84,9 @@ export function Button({
         ) : (
           <Spinner {...indicatorProps} size="sm" />
         ))}
-      <span {...doomPart("label")}>{children}</span>
+      <span {...doomPart("label", { className: styles.label })}>
+        {children}
+      </span>
     </button>
   );
 }

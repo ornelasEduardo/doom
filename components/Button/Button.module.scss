@@ -32,6 +32,14 @@
     }
   }
 
+  .label {
+    display: inline-flex;
+    align-items: inherit;
+    justify-content: inherit;
+    gap: inherit;
+    min-inline-size: 0;
+  }
+
   /* Variants */
   .primary {
     --btn-focus-border: var(--card-border);

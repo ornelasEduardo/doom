@@ -67,6 +67,7 @@ export function AccordionItem({
         <Button
           aria-controls={contentId}
           aria-expanded={isOpen}
+          classNames={{ label: styles.triggerLabel }}
           {...doomPart("trigger", { className: styles.trigger })}
           id={triggerId}
           variant="ghost"
