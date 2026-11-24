@@ -234,6 +234,12 @@
       @include invert-theme;
     }
 
+    // Text defaults to a foreground token; this title belongs to the header
+    // surface, including its error and disabled foreground/background pair.
+    .headerTitle {
+      color: inherit;
+    }
+
     &.errorHeader {
       background-color: var(--error);
       color: var(--error-foreground);
