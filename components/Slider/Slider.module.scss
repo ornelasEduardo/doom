@@ -18,7 +18,8 @@
   .valueDisplay {
     background-color: var(--card-bg);
     padding: var(--space-half) var(--space-2);
-    border: var(--surface-border-width) solid var(--card-border);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
     border-radius: var(--radius-md);
     display: inline-flex;
     align-items: center;
@@ -36,7 +37,8 @@
     position: absolute;
     inset: 0;
     background: var(--card-bg);
-    border: var(--surface-border-width) solid var(--card-border);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
     border-radius: var(--radius-md);
     overflow: hidden;
     box-sizing: border-box;
@@ -83,7 +85,8 @@
       height: var(--toggle-size);
       width: var(--toggle-size);
       background: var(--primary);
-      border: var(--surface-border-width) solid var(--border-strong);
+      border: var(--control-border-width, var(--surface-border-width)) solid
+        var(--border-strong);
       border-radius: 50%;
       margin-top: calc(-1 * var(--space-1\.5)); /* Center thumb on track */
       position: relative;
@@ -94,7 +97,8 @@
       height: var(--toggle-size);
       width: var(--toggle-size);
       background: var(--primary);
-      border: var(--surface-border-width) solid var(--border-strong);
+      border: var(--control-border-width, var(--surface-border-width)) solid
+        var(--border-strong);
       border-radius: 50%;
     }
 

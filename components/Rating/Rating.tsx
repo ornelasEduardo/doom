@@ -1,15 +1,20 @@
 "use client";
-
 import clsx from "clsx";
 import type { LucideIcon } from "lucide-react";
 import { Star } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import type { ControlSize } from "../../styles/types";
 import { Tooltip } from "../Tooltip";
 import styles from "./Rating.module.scss";
 
 export interface RatingProps {
+  classNames?: ThemeClassNames<"Rating">;
   value?: number;
   defaultValue?: number;
   onValueChange?: (value: number) => void;
@@ -32,11 +37,12 @@ const iconSizeMap: Record<ControlSize, number> = {
 export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
   function Rating(
     {
+      classNames,
       value: controlledValue,
       defaultValue = 0,
       onValueChange,
       count = 5,
-      icon: IconComponent = Star,
+      icon: CustomIcon,
       allowHalf = false,
       size = "md",
       readOnly = false,
@@ -46,6 +52,11 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
     },
     ref,
   ) {
+    const doomPart = useThemeParts("Rating", classNames, {
+      size: size,
+      disabled: disabled,
+    });
+
     const [internalValue, setInternalValue] = useState(defaultValue);
     const [hoverValue, setHoverValue] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +80,19 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
       hoverValue !== null && !readOnly && !disabled ? hoverValue : currentValue;
 
     const iconSize = iconSizeMap[size];
+
+    const renderIcon = (fill: string) =>
+      CustomIcon ? (
+        <CustomIcon fill={fill} size={iconSize} strokeWidth={2.5} />
+      ) : (
+        <ThemedIcon
+          fill={fill}
+          icon={Star}
+          iconName="star"
+          size={iconSize}
+          strokeWidth={2.5}
+        />
+      );
 
     const setValue = useCallback(
       (next: number) => {
@@ -132,7 +156,9 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
         <div
           ref={ref}
           aria-label={ariaLabel ?? `${currentValue} out of ${count}`}
-          className={clsx(styles.rating, styles[size], className)}
+          {...doomPart("root", {
+            className: clsx(styles.rating, styles[size], className),
+          })}
           role="img"
         >
           {Array.from({ length: count }, (_, i) => {
@@ -141,42 +167,41 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
             const isHalf = !isFilled && currentValue >= position - 0.5;
 
             return (
-              <span key={position} className={styles.iconWrapper}>
+              <span
+                key={position}
+                {...doomPart("iconWrapper", { className: styles.iconWrapper })}
+              >
                 {isHalf ? (
                   <>
-                    <span className={clsx(styles.icon, styles.unfilled)}>
-                      {React.createElement(IconComponent, {
-                        size: iconSize,
-                        strokeWidth: 2.5,
-                        fill: "none",
+                    <span
+                      {...doomPart("icon", {
+                        className: clsx(styles.icon, styles.unfilled),
                       })}
+                    >
+                      {renderIcon("none")}
                     </span>
                     <span
-                      className={clsx(
-                        styles.icon,
-                        styles.filled,
-                        styles.halfClip,
-                      )}
-                    >
-                      {React.createElement(IconComponent, {
-                        size: iconSize,
-                        strokeWidth: 2.5,
-                        fill: "currentColor",
+                      {...doomPart("icon", {
+                        className: clsx(
+                          styles.icon,
+                          styles.filled,
+                          styles.halfClip,
+                        ),
                       })}
+                    >
+                      {renderIcon("currentColor")}
                     </span>
                   </>
                 ) : (
                   <span
-                    className={clsx(
-                      styles.icon,
-                      isFilled ? styles.filled : styles.unfilled,
-                    )}
-                  >
-                    {React.createElement(IconComponent, {
-                      size: iconSize,
-                      strokeWidth: 2.5,
-                      fill: isFilled ? "currentColor" : "none",
+                    {...doomPart("icon", {
+                      className: clsx(
+                        styles.icon,
+                        isFilled ? styles.filled : styles.unfilled,
+                      ),
                     })}
+                  >
+                    {renderIcon(isFilled ? "currentColor" : "none")}
                   </span>
                 )}
               </span>
@@ -190,12 +215,14 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
       <div
         ref={mergedRef}
         aria-label={ariaLabel}
-        className={clsx(
-          styles.rating,
-          styles[size],
-          disabled && styles.disabled,
-          className,
-        )}
+        {...doomPart("root", {
+          className: clsx(
+            styles.rating,
+            styles[size],
+            disabled && styles.disabled,
+            className,
+          ),
+        })}
         role="radiogroup"
         onMouseLeave={() => setHoverValue(null)}
       >
@@ -206,33 +233,36 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
               const fullValue = position;
 
               return (
-                <span key={position} className={styles.iconWrapper}>
+                <span
+                  key={position}
+                  {...doomPart("iconWrapper", {
+                    className: styles.iconWrapper,
+                  })}
+                >
                   <span
                     aria-hidden="true"
-                    className={clsx(styles.icon, styles.unfilled)}
-                  >
-                    {React.createElement(IconComponent, {
-                      size: iconSize,
-                      strokeWidth: 2.5,
-                      fill: "none",
+                    {...doomPart("icon", {
+                      className: clsx(styles.icon, styles.unfilled),
                     })}
+                  >
+                    {renderIcon("none")}
                   </span>
 
                   {displayValue >= halfValue && (
                     <span
                       aria-hidden="true"
-                      className={clsx(
-                        styles.icon,
-                        styles.filled,
-                        styles.filledOverlay,
-                        displayValue >= fullValue ? undefined : styles.halfClip,
-                      )}
-                    >
-                      {React.createElement(IconComponent, {
-                        size: iconSize,
-                        strokeWidth: 2.5,
-                        fill: "currentColor",
+                      {...doomPart("icon", {
+                        className: clsx(
+                          styles.icon,
+                          styles.filled,
+                          styles.filledOverlay,
+                          displayValue >= fullValue
+                            ? undefined
+                            : styles.halfClip,
+                        ),
                       })}
+                    >
+                      {renderIcon("currentColor")}
                     </span>
                   )}
 
@@ -243,11 +273,13 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
                     <button
                       aria-checked={currentValue >= halfValue}
                       aria-label={`Rate ${halfValue} out of ${count}`}
-                      className={clsx(
-                        styles.radioButton,
-                        styles.halfButton,
-                        styles.halfLeft,
-                      )}
+                      {...doomPart("radioButton", {
+                        className: clsx(
+                          styles.radioButton,
+                          styles.halfButton,
+                          styles.halfLeft,
+                        ),
+                      })}
                       data-value={halfValue}
                       disabled={disabled}
                       role="radio"
@@ -271,11 +303,13 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
                     <button
                       aria-checked={currentValue >= fullValue}
                       aria-label={`Rate ${fullValue} out of ${count}`}
-                      className={clsx(
-                        styles.radioButton,
-                        styles.halfButton,
-                        styles.halfRight,
-                      )}
+                      {...doomPart("radioButton", {
+                        className: clsx(
+                          styles.radioButton,
+                          styles.halfButton,
+                          styles.halfRight,
+                        ),
+                      })}
                       data-value={fullValue}
                       disabled={disabled}
                       role="radio"
@@ -300,11 +334,13 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
                   <button
                     aria-checked={currentValue >= position}
                     aria-label={`Rate ${position} out of ${count}`}
-                    className={clsx(
-                      styles.iconButton,
-                      isFilled && styles.filled,
-                      !isFilled && styles.unfilled,
-                    )}
+                    {...doomPart("iconButton", {
+                      className: clsx(
+                        styles.iconButton,
+                        isFilled && styles.filled,
+                        !isFilled && styles.unfilled,
+                      ),
+                    })}
                     data-value={position}
                     disabled={disabled}
                     role="radio"
@@ -319,11 +355,7 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
                     onKeyDown={handleKeyDown}
                     onMouseEnter={() => setHoverValue(position)}
                   >
-                    {React.createElement(IconComponent, {
-                      size: iconSize,
-                      strokeWidth: 2.5,
-                      fill: isFilled ? "currentColor" : "none",
-                    })}
+                    {renderIcon(isFilled ? "currentColor" : "none")}
                   </button>
                 </Tooltip>
               );

@@ -26,12 +26,12 @@
       margin-left: var(--space-1);
       color: var(--muted-foreground);
       opacity: 0.5;
-      font-weight: 700;
+      font-weight: var(--font-bold, 700);
     }
   }
 
   .currentPage {
-    font-weight: 700;
+    font-weight: var(--font-bold, 700);
     color: var(--foreground);
   }
 }

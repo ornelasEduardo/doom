@@ -1,8 +1,13 @@
 "use client";
-
 import clsx from "clsx";
 import React, { createContext, useContext } from "react";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import styles from "./RadioGroup.module.scss";
 
 interface RadioGroupContextValue {
@@ -17,6 +22,7 @@ const RadioGroupContext = createContext<RadioGroupContextValue | undefined>(
 );
 
 interface RadioGroupProps {
+  classNames?: ThemeClassNames<"RadioGroup">;
   name?: string;
   value?: string;
   defaultValue?: string;
@@ -27,6 +33,7 @@ interface RadioGroupProps {
 }
 
 export function RadioGroup({
+  classNames,
   name,
   value: controlledValue,
   defaultValue,
@@ -35,6 +42,10 @@ export function RadioGroup({
   children,
   className,
 }: RadioGroupProps) {
+  const doomPart = useOwnedThemeParts("RadioGroup", classNames, {
+    disabled: disabled,
+  });
+
   const [internalValue, setInternalValue] = React.useState(defaultValue || "");
 
   const isControlled = controlledValue !== undefined;
@@ -48,17 +59,34 @@ export function RadioGroup({
   };
 
   return (
-    <RadioGroupContext.Provider
-      value={{ name, value: currentValue, onChange: handleChange, disabled }}
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="RadioGroup"
+      visual={{ disabled }}
     >
-      <div className={clsx(styles.group, className)} role="radiogroup">
-        {children}
-      </div>
-    </RadioGroupContext.Provider>
+      {
+        <RadioGroupContext.Provider
+          value={{
+            name,
+            value: currentValue,
+            onChange: handleChange,
+            disabled,
+          }}
+        >
+          <div
+            {...doomPart("root", { className: clsx(styles.group, className) })}
+            role="radiogroup"
+          >
+            {children}
+          </div>
+        </RadioGroupContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }
 
 interface RadioGroupItemProps {
+  classNames?: ThemeClassNames<"RadioGroup">;
   value: string;
   children: React.ReactNode;
   disabled?: boolean;
@@ -66,11 +94,16 @@ interface RadioGroupItemProps {
 }
 
 export function RadioGroupItem({
+  classNames,
   value,
   children,
   disabled,
   className,
 }: RadioGroupItemProps) {
+  const doomPart = useThemeParts("RadioGroup", classNames, {
+    disabled: disabled,
+  });
+
   const context = useContext(RadioGroupContext);
   if (!context) {
     throw new Error("RadioGroupItem must be used within RadioGroup");
@@ -82,15 +115,17 @@ export function RadioGroupItem({
   return (
     <label
       aria-disabled={isDisabled}
-      className={clsx(
-        styles.itemLabel,
-        isDisabled && styles.disabled,
-        className,
-      )}
+      {...doomPart("itemLabel", {
+        className: clsx(
+          styles.itemLabel,
+          isDisabled && styles.disabled,
+          className,
+        ),
+      })}
     >
       <input
         checked={checked}
-        className={styles.hiddenInput}
+        {...doomPart("hiddenInput", { className: styles.hiddenInput })}
         disabled={isDisabled}
         name={context.name}
         type="radio"
@@ -99,11 +134,17 @@ export function RadioGroupItem({
       />
       <div
         aria-hidden="true"
-        className={clsx(styles.radioCircle, checked && styles.checked)}
+        {...doomPart("radioCircle", {
+          className: clsx(styles.radioCircle, checked && styles.checked),
+        })}
       >
-        {checked && <div className={styles.innerDot} />}
+        {checked && (
+          <div {...doomPart("innerDot", { className: styles.innerDot })} />
+        )}
       </div>
-      <span className={styles.labelText}>{children}</span>
+      <span {...doomPart("labelText", { className: styles.labelText })}>
+        {children}
+      </span>
     </label>
   );
 }

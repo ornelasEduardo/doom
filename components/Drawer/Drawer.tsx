@@ -1,10 +1,16 @@
 "use client";
-
 import clsx from "clsx";
 import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
+import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Drawer.module.scss";
@@ -19,21 +25,32 @@ const DrawerContext = React.createContext<{
 });
 
 interface DrawerHeaderProps {
+  classNames?: ThemeClassNames<"Drawer">;
   children: React.ReactNode;
   className?: string;
   id?: string;
 }
 
-export function DrawerHeader({ children, className, id }: DrawerHeaderProps) {
+export function DrawerHeader({
+  classNames,
+  children,
+  className,
+  id,
+}: DrawerHeaderProps) {
+  const doomPart = useThemeParts("Drawer", classNames, {});
+
   const { onClose, titleId } = React.useContext(DrawerContext);
 
   return (
     <Flex
       align="center"
-      className={clsx(styles.header, className)}
+      {...doomPart("header", { className: clsx(styles.header, className) })}
       justify="space-between"
     >
-      <div className={styles.headerContent} id={id || titleId}>
+      <div
+        {...doomPart("headerContent", { className: styles.headerContent })}
+        id={id || titleId}
+      >
         {children}
       </div>
       <Button
@@ -42,33 +59,47 @@ export function DrawerHeader({ children, className, id }: DrawerHeaderProps) {
         variant="danger"
         onClick={onClose}
       >
-        <X size={24} />
+        <ThemedIcon icon={X} iconName="close" size={24} />
       </Button>
     </Flex>
   );
 }
 
 export function DrawerBody({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Drawer">;
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={clsx(styles.content, className)}>{children}</div>;
+  const doomPart = useThemeParts("Drawer", classNames, {});
+
+  return (
+    <div
+      {...doomPart("content", { className: clsx(styles.content, className) })}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function DrawerFooter({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Drawer">;
   children: React.ReactNode;
   className?: string;
 }) {
+  const doomPart = useThemeParts("Drawer", classNames, {});
+
   return (
     <Flex
       align="center"
-      className={clsx(styles.footer, className)}
+      {...doomPart("footer", { className: clsx(styles.footer, className) })}
       gap={4}
       justify="flex-end"
     >
@@ -78,6 +109,7 @@ export function DrawerFooter({
 }
 
 interface DrawerProps {
+  classNames?: ThemeClassNames<"Drawer">;
   isOpen: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -89,6 +121,7 @@ interface DrawerProps {
 }
 
 function DrawerInternal({
+  classNames,
   isOpen,
   onClose,
   title,
@@ -98,6 +131,10 @@ function DrawerInternal({
   className,
   variant = "default",
 }: DrawerProps) {
+  const doomPart = useOwnedThemeParts("Drawer", classNames, {
+    variant: variant,
+  });
+
   const reactId = React.useId();
   const titleId = `drawer-title-${reactId}`;
   const [mounted, setMounted] = useState(false);
@@ -130,38 +167,53 @@ function DrawerInternal({
     return null;
   }
 
-  return createPortal(
-    <DrawerContext.Provider value={{ onClose, titleId, variant }}>
-      <div
-        aria-hidden="true"
-        className={clsx(styles.overlay, isOpen && styles.isOpen)}
-        onClick={onClose}
-      />
-      <div
-        aria-label={!title ? "Drawer" : undefined}
-        aria-labelledby={title ? titleId : undefined}
-        aria-modal="true"
-        className={clsx(
-          styles.panel,
-          styles[side],
-          styles[variant],
-          isOpen && styles.isOpen,
-          className,
-        )}
-        role="dialog"
-      >
-        {title ? (
-          <>
-            <DrawerHeader>{title}</DrawerHeader>
-            <DrawerBody>{children}</DrawerBody>
-            {footer && <DrawerFooter>{footer}</DrawerFooter>}
-          </>
-        ) : (
-          children
-        )}
-      </div>
-    </DrawerContext.Provider>,
-    document.body,
+  return (
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Drawer"
+      visual={{ variant }}
+    >
+      {
+        <ThemedPortal surface={variant === "solid" ? "solid" : undefined}>
+          {
+            <DrawerContext.Provider value={{ onClose, titleId, variant }}>
+              <div
+                aria-hidden="true"
+                {...doomPart("root", {
+                  className: clsx(styles.overlay, isOpen && styles.isOpen),
+                })}
+                onClick={onClose}
+              />
+              <div
+                aria-label={!title ? "Drawer" : undefined}
+                aria-labelledby={title ? titleId : undefined}
+                aria-modal="true"
+                {...doomPart("panel", {
+                  className: clsx(
+                    styles.panel,
+                    styles[side],
+                    styles[variant],
+                    isOpen && styles.isOpen,
+                    className,
+                  ),
+                })}
+                role="dialog"
+              >
+                {title ? (
+                  <>
+                    <DrawerHeader>{title}</DrawerHeader>
+                    <DrawerBody>{children}</DrawerBody>
+                    {footer && <DrawerFooter>{footer}</DrawerFooter>}
+                  </>
+                ) : (
+                  children
+                )}
+              </div>
+            </DrawerContext.Provider>
+          }
+        </ThemedPortal>
+      }
+    </ThemePartsBoundary>
   );
 }
 

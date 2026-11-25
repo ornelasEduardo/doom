@@ -6,12 +6,12 @@
 
   .tooltipBody {
     padding: var(--space-2) var(--space-3);
-    background-color: var(--foreground);
-    color: var(--background);
+    background-color: var(--surface-readout, var(--foreground));
+    color: var(--on-readout, var(--background));
     font-size: var(--text-sm);
-    font-weight: 500;
+    font-weight: var(--font-medium, 500);
     white-space: nowrap;
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     border: var(--surface-border-width) solid var(--card-border);
     box-shadow: var(--shadow-sm);
     z-index: var(--z-tooltip);

@@ -4,7 +4,10 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, var(--overlay-opacity));
+    background-color: var(
+      --overlay-color,
+      rgba(0, 0, 0, var(--overlay-opacity))
+    );
     backdrop-filter: blur(var(--blur-standard));
     opacity: 0;
     visibility: hidden;
@@ -28,7 +31,8 @@
     bottom: 0;
     width: var(--width-sidebar);
     max-width: 85vw;
-    background-color: var(--card-bg);
+    background-color: var(--surface-navigation, var(--card-bg));
+    color: var(--on-navigation, var(--foreground));
     z-index: var(--z-drawer);
     transform: translateX(calc(-100% - 20px));
     transition:

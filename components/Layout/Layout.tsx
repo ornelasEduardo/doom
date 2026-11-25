@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Box, BoxProps } from "./Box";
 import styles from "./Layout.module.scss";
 
@@ -26,15 +29,17 @@ function resolveGap(gap?: Spacing): string | undefined {
   if (gap === undefined) {
     return undefined;
   }
-  return SPACING_MAP[gap];
+  return `var(--doom-spacing-${gap}, ${SPACING_MAP[gap]})`;
 }
 
 export interface LayoutProps extends BoxProps {
+  classNames?: ThemeClassNames<"Box">;
   /** The content to be rendered inside the layout container. */
   children?: React.ReactNode;
 }
 
 export interface GridProps extends LayoutProps {
+  classNames?: ThemeClassNames<"Box">;
   /**
    * Defines the columns of the grid.
    * Accepts a number (e.g., `3` for 3 equal columns) or a CSS string
@@ -56,6 +61,7 @@ export interface GridProps extends LayoutProps {
  * grid placements.
  */
 export function Grid({
+  classNames,
   children,
   columns = "1fr",
   gap = 4,
@@ -64,6 +70,8 @@ export function Grid({
   as = "div",
   ...props
 }: GridProps) {
+  const doomPart = useThemeParts("Grid", classNames, {});
+
   const gridTemplateColumns =
     typeof columns === "number" ? `repeat(${columns}, 1fr)` : columns;
 
@@ -72,7 +80,7 @@ export function Grid({
   return (
     <Box
       as={as}
-      className={gridClasses}
+      {...doomPart("root", { className: gridClasses })}
       style={{
         gridTemplateColumns,
         gap: resolveGap(gap),
@@ -86,6 +94,7 @@ export function Grid({
 }
 
 export interface FlexProps extends LayoutProps {
+  classNames?: ThemeClassNames<"Box">;
   /**
    * The direction in which flex items are placed in the flex container.
    * @default "row"
@@ -127,6 +136,7 @@ export interface FlexProps extends LayoutProps {
  * distributing space, and handling wrapping.
  */
 export function Flex({
+  classNames,
   children,
   direction = "row",
   justify = "flex-start",
@@ -138,6 +148,8 @@ export function Flex({
   as = "div",
   ...props
 }: FlexProps) {
+  const doomPart = useThemeParts("Flex", classNames, {});
+
   const flexWrap =
     typeof wrap === "boolean" ? (wrap ? "wrap" : "nowrap") : wrap;
 
@@ -152,7 +164,7 @@ export function Flex({
   return (
     <Box
       as={as}
-      className={flexClasses}
+      {...doomPart("root", { className: flexClasses })}
       style={{
         gap: resolveGap(gap),
         flexWrap,
@@ -166,6 +178,7 @@ export function Flex({
 }
 
 export interface StackProps extends Omit<FlexProps, "direction"> {
+  classNames?: ThemeClassNames<"Box">;
   /**
    * The direction to stack items. Defaults to vertical ("column").
    * Can be overridden to "row" for semantic or responsive adjustments.
@@ -182,20 +195,30 @@ export interface StackProps extends Omit<FlexProps, "direction"> {
  * semantic overrides.
  */
 export function Stack({
+  classNames,
+  className,
   children,
   direction = "column",
   gap = 4,
   align = "stretch",
   ...props
 }: StackProps) {
+  const doomPart = useThemeParts("Stack", classNames);
   return (
-    <Flex align={align} direction={direction} gap={gap} {...props}>
+    <Flex
+      align={align}
+      direction={direction}
+      gap={gap}
+      {...doomPart("root", { className })}
+      {...props}
+    >
       {children}
     </Flex>
   );
 }
 
 export interface SwitcherProps extends FlexProps {
+  classNames?: ThemeClassNames<"Box">;
   /**
    * The breakpoint threshold at which the layout switches from horizontal to
    * vertical. e.g., "xs" means it will be horizontal on screens larger than
@@ -212,11 +235,14 @@ export interface SwitcherProps extends FlexProps {
  * to stack on smaller screens but sit side-by-side on larger ones.
  */
 export function Switcher({
+  classNames,
   children,
   threshold = "xs",
   className,
   ...props
 }: SwitcherProps) {
+  const doomPart = useThemeParts("Switcher", classNames, {});
+
   const switcherClasses = clsx(
     styles.switcher,
     styles[`switch-${threshold}`],
@@ -224,13 +250,14 @@ export function Switcher({
   );
 
   return (
-    <Flex className={switcherClasses} {...props}>
+    <Flex {...doomPart("root", { className: switcherClasses })} {...props}>
       {children}
     </Flex>
   );
 }
 
 export interface ContainerProps extends LayoutProps {
+  classNames?: ThemeClassNames<"Box">;
   /**
    * The maximum width of the container.
    * - `sm`: 640px
@@ -249,16 +276,23 @@ export interface ContainerProps extends LayoutProps {
  * ensuring consistent margins and readability on large screens.
  */
 export function Container({
+  classNames,
   children,
   maxWidth = "xl",
   className,
   as = "div",
   ...props
 }: ContainerProps) {
+  const doomPart = useThemeParts("Container", classNames, {});
+
   const containerClasses = clsx(styles.container, styles[maxWidth], className);
 
   return (
-    <Box as={as} className={containerClasses} {...props}>
+    <Box
+      as={as}
+      {...doomPart("root", { className: containerClasses })}
+      {...props}
+    >
       {children}
     </Box>
   );

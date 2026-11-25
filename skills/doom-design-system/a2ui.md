@@ -231,11 +231,11 @@ export const componentCatalog: ComponentDescriptor[] = [
   // PRIMITIVES  (or whichever category applies)
   // ─────────────────────────────────────────────────────────────
   {
-    type: "my-new-component",        // must match the key in mapping.tsx
+    type: "my-new-component", // must match the key in mapping.tsx
     name: "My New Component",
-    category: "primitives",          // "primitives" | "layout" | "navigation" | "feedback" | "data-display" | "actions"
+    category: "primitives", // "primitives" | "layout" | "navigation" | "feedback" | "data-display" | "actions"
     description: "Short description of what the component does.",
-    usesTextProp: false,             // set true if text prop maps to children
+    usesTextProp: false, // set true if text prop maps to children
     props: [
       {
         name: "label",
@@ -531,3 +531,7 @@ After adding both entries, confirm the component renders correctly by passing a 
   ]
 }
 ```
+
+## Themed rendering
+
+Place the renderer inside the application’s DesignSystemProvider or ThemeScope. JSON can select the visual variants supported by each catalog entry. Define tokens, recipes, and part classes in trusted application code. Keep CSS and React callbacks outside A2UI documents. See the [theme guide](../../THEME.md).

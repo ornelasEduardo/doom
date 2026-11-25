@@ -1,15 +1,20 @@
 "use client";
-
 import { Column } from "@tanstack/react-table";
 import { Filter } from "lucide-react";
 import React, { useMemo, useRef, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Button } from "../Button/Button";
 import { Combobox } from "../Combobox/Combobox";
 import { Popover } from "../Popover/Popover";
 import styles from "./TableHeaderFilter.module.scss";
 
 interface TableHeaderFilterProps<T> {
+  classNames?: ThemeClassNames<"Table">;
   column: Column<T, unknown>;
   options?: { value: string; label: string }[];
 }
@@ -95,6 +100,8 @@ export function TableHeaderFilter<T>({
   column,
   options,
 }: TableHeaderFilterProps<T>) {
+  const doomPart = useThemeParts("Table", undefined, {});
+
   const {
     sortedOptions,
     selectedValues,
@@ -148,9 +155,16 @@ export function TableHeaderFilter<T>({
             setIsOpen(!isOpen);
           }}
         >
-          <Filter size={20} strokeWidth={2.5} />
+          <ThemedIcon
+            icon={Filter}
+            iconName="filter"
+            size={20}
+            strokeWidth={2.5}
+          />
           {selectedValues.length > 0 && (
-            <span className={styles.filterCount}>
+            <span
+              {...doomPart("filterCount", { className: styles.filterCount })}
+            >
               ({selectedValues.length})
             </span>
           )}

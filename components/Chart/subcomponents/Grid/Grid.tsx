@@ -1,11 +1,14 @@
 "use strict";
 
+import { useThemeParts } from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { yTickCount } from "../../utils/scales";
 import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Grid.module.scss";
 
 export function Grid() {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const { chartStore, config, isMobile } = useChartContext();
   const dimensions = chartStore.useStore((s) => s.dimensions);
   const scales = chartStore.useStore((s) => s.scales);
@@ -30,10 +33,15 @@ export function Grid() {
   );
 
   return (
-    <g data-chart-grid aria-hidden="true" className={styles.grid}>
+    <g
+      data-chart-grid
+      aria-hidden="true"
+      {...doomPart("grid", { className: styles.grid })}
+    >
       {ticks.map((t, i) =>
         horizontal ? (
           <line
+            {...doomPart("gridLine")}
             key={i}
             x1={numeric(t)}
             x2={numeric(t)}
@@ -42,6 +50,7 @@ export function Grid() {
           />
         ) : (
           <line
+            {...doomPart("gridLine")}
             key={i}
             x1={0}
             x2={innerWidth}

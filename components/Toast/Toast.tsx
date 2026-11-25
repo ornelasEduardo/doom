@@ -1,5 +1,4 @@
 "use client";
-
 import clsx from "clsx";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import React, {
@@ -10,8 +9,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
+import { useThemeParts } from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
+import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import styles from "./Toast.module.scss";
 
 // Types
@@ -78,6 +79,8 @@ function useAnnouncement() {
 
 // Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const doomPart = useThemeParts("Toast", undefined, {});
+
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [politeMessage, announcePolite] = useAnnouncement();
@@ -140,61 +143,96 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       value={{ toast, toastSuccess, toastError, toastWarning, toastInfo }}
     >
       {children}
-      {isMounted &&
-        createPortal(
-          <>
-            <div aria-atomic="true" className={styles.announcer} role="status">
-              {politeMessage}
-            </div>
-            <div aria-atomic="true" className={styles.announcer} role="alert">
-              {assertiveMessage}
-            </div>
-            <div className={styles.container}>
-              {toasts.map((t) => (
-                <div
-                  key={t.id}
-                  aria-label={t.message}
-                  className={clsx(
-                    styles.toast,
-                    styles[t.type],
-                    t.isExiting && styles.exiting,
-                  )}
-                  role="group"
-                >
-                  {t.type === "success" && (
-                    <CheckCircle2
-                      color="var(--success)"
-                      size={20}
-                      strokeWidth={2.5}
-                    />
-                  )}
-                  {t.type === "error" && (
-                    <XCircle color="var(--error)" size={20} strokeWidth={2.5} />
-                  )}
-                  {t.type === "warning" && (
-                    <AlertTriangle
-                      color="var(--warning)"
-                      size={20}
-                      strokeWidth={2.5}
-                    />
-                  )}
-                  {t.type === "info" && (
-                    <Info color="var(--primary)" size={20} strokeWidth={2.5} />
-                  )}
-                  <span className="font-semibold">{t.message}</span>
-                  <button
-                    aria-label="Close notification"
-                    className={styles.closeButton}
-                    onClick={() => removeToast(t.id)}
+      {isMounted && (
+        <ThemedPortal>
+          {
+            <>
+              <div
+                aria-atomic="true"
+                {...doomPart("announcer", { className: styles.announcer })}
+                role="status"
+              >
+                {politeMessage}
+              </div>
+              <div
+                aria-atomic="true"
+                {...doomPart("announcer", { className: styles.announcer })}
+                role="alert"
+              >
+                {assertiveMessage}
+              </div>
+              <div {...doomPart("root", { className: styles.container })}>
+                {toasts.map((t) => (
+                  <div
+                    key={t.id}
+                    aria-label={t.message}
+                    {...doomPart("toast", {
+                      className: clsx(
+                        styles.toast,
+                        styles[t.type],
+                        t.isExiting && styles.exiting,
+                      ),
+                    })}
+                    role="group"
                   >
-                    <X size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>,
-          document.body,
-        )}
+                    {t.type === "success" && (
+                      <ThemedIcon
+                        color="var(--success)"
+                        icon={CheckCircle2}
+                        iconName="checkCircle2"
+                        size={20}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                    {t.type === "error" && (
+                      <ThemedIcon
+                        color="var(--error)"
+                        icon={XCircle}
+                        iconName="xCircle"
+                        size={20}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                    {t.type === "warning" && (
+                      <ThemedIcon
+                        color="var(--warning)"
+                        icon={AlertTriangle}
+                        iconName="alertTriangle"
+                        size={20}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                    {t.type === "info" && (
+                      <ThemedIcon
+                        color="var(--primary)"
+                        icon={Info}
+                        iconName="info"
+                        size={20}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                    <span className="font-semibold">{t.message}</span>
+                    <button
+                      aria-label="Close notification"
+                      {...doomPart("closeButton", {
+                        className: styles.closeButton,
+                      })}
+                      onClick={() => removeToast(t.id)}
+                    >
+                      <ThemedIcon
+                        icon={X}
+                        iconName="close"
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          }
+        </ThemedPortal>
+      )}
     </ToastContext.Provider>
   );
 }

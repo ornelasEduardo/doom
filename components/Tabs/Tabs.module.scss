@@ -46,14 +46,15 @@
     flex-shrink: 0;
     padding: var(--space-3) var(--space-6);
     font-size: var(--text-sm);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--font-bold, 700);
+    text-transform: var(--label-text-transform, uppercase);
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     background-color: var(--card-bg);
     color: var(--foreground);
     border: var(--surface-border-width) solid var(--card-border);
     border-bottom: none;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-radius: var(--surface-radius, var(--radius-md))
+      var(--surface-radius, var(--radius-md)) 0 0;
     cursor: pointer;
     position: relative;
     transition: background-color 0.2s ease;
@@ -72,7 +73,7 @@
       color: var(--primary-foreground);
 
       &:hover {
-        filter: brightness(1.05);
+        filter: var(--control-hover-filter, brightness(1.05));
       }
     }
   }
@@ -80,9 +81,9 @@
   .tabsBody {
     background: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     padding: 2.5rem;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     position: relative;
     margin-top: -3px;
 

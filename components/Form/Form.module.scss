@@ -18,14 +18,14 @@
 
   .message {
     font-size: var(--text-xs);
-    font-weight: 500;
+    font-weight: var(--font-medium, 500);
   }
 
   .error {
     color: var(--error);
-    font-weight: 700;
-    text-transform: uppercase;
-    animation: shake 0.3s ease-in-out;
+    font-weight: var(--font-bold, 700);
+    text-transform: var(--label-text-transform, uppercase);
+    animation: shake var(--field-error-motion-duration, 0.3s) ease-in-out;
   }
 
   .description {

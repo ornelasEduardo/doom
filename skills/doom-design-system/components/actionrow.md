@@ -1,18 +1,19 @@
 # ActionRow
 
 ## Import
+
 ```tsx
 import { ActionRow } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `title` | `string` | required | Main label |
-| `icon` | `ReactNode` | — | Icon on the left |
-| `description` | `string` | — | Optional secondary text |
-| `onClick` | `() => void` | — | Click handler |
+| Prop          | Type         | Default  | Description             |
+| ------------- | ------------ | -------- | ----------------------- |
+| `title`       | `string`     | required | Main label              |
+| `icon`        | `ReactNode`  | —        | Icon on the left        |
+| `description` | `string`     | —        | Optional secondary text |
+| `onClick`     | `() => void` | —        | Click handler           |
 
 ## Usage
 
@@ -34,6 +35,11 @@ import { ActionRow } from "doom-design-system";
 ```
 
 ## Notes
+
 - Renders a chevron indicator on the right side automatically
 - Always provide an `icon` for visual consistency across lists
 - Suited for settings menus, navigation lists, and action item lists
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [ActionRow theme contract](../../../THEME-REFERENCE.md#component-actionrow).

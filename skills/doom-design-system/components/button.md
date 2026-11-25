@@ -1,18 +1,19 @@
 # Button
 
 ## Import
+
 ```tsx
 import { Button } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"primary" \| "secondary" \| "ghost" \| "outline" \| "success" \| "danger"` | `"primary"` | Visual style |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Button size |
-| `loading` | `boolean` | `false` | Show loading spinner and disable button |
-| `disabled` | `boolean` | `false` | Disable the button |
+| Prop       | Type                                                                        | Default     | Description                             |
+| ---------- | --------------------------------------------------------------------------- | ----------- | --------------------------------------- |
+| `variant`  | `"primary" \| "secondary" \| "ghost" \| "outline" \| "success" \| "danger"` | `"primary"` | Visual style                            |
+| `size`     | `"sm" \| "md" \| "lg"`                                                      | `"md"`      | Button size                             |
+| `loading`  | `boolean`                                                                   | `false`     | Show loading spinner and disable button |
+| `disabled` | `boolean`                                                                   | `false`     | Disable the button                      |
 
 Extends all standard `<button>` HTML attributes.
 
@@ -31,15 +32,20 @@ Extends all standard `<button>` HTML attributes.
 
 ## Variants
 
-| Variant | Use case |
-|---------|----------|
-| `primary` | Main actions — submit, save, confirm |
-| `secondary` | Secondary actions |
-| `ghost` | Tertiary and cancel actions |
-| `outline` | Mid-emphasis alternative to secondary |
-| `danger` | Destructive actions — delete, remove |
-| `success` | Positive confirmation — use sparingly |
+| Variant     | Use case                              |
+| ----------- | ------------------------------------- |
+| `primary`   | Main actions — submit, save, confirm  |
+| `secondary` | Secondary actions                     |
+| `ghost`     | Tertiary and cancel actions           |
+| `outline`   | Mid-emphasis alternative to secondary |
+| `danger`    | Destructive actions — delete, remove  |
+| `success`   | Positive confirmation — use sparingly |
 
 ## Notes
+
 - Use `loading` prop instead of manually disabling the button and adding a spinner — it handles both automatically
 - `loading` sets `disabled` internally — they combine with OR logic (`disabled={disabled || loading}`), so passing both is safe but redundant
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Button theme contract](../../../THEME-REFERENCE.md#component-button).

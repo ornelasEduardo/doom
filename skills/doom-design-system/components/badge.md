@@ -1,17 +1,18 @@
 # Badge
 
 ## Import
+
 ```tsx
 import { Badge } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"primary" \| "success" \| "warning" \| "error" \| "secondary" \| "outline"` | `"primary"` | Visual style |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Badge size |
-| `children` | `ReactNode` | required | Badge content |
+| Prop       | Type                                                                         | Default     | Description   |
+| ---------- | ---------------------------------------------------------------------------- | ----------- | ------------- |
+| `variant`  | `"primary" \| "success" \| "warning" \| "error" \| "secondary" \| "outline"` | `"primary"` | Visual style  |
+| `size`     | `"sm" \| "md" \| "lg"`                                                       | `"md"`      | Badge size    |
+| `children` | `ReactNode`                                                                  | required    | Badge content |
 
 ## Usage
 
@@ -24,15 +25,20 @@ import { Badge } from "doom-design-system";
 
 ## Variants
 
-| Variant | Use case |
-|---------|----------|
-| `primary` | Default/active states |
-| `success` | Positive/complete states |
-| `warning` | Caution/pending states |
-| `error` | Negative/failed states |
-| `secondary` | Neutral/inactive states |
-| `outline` | Subtle/draft states |
+| Variant     | Use case                 |
+| ----------- | ------------------------ |
+| `primary`   | Default/active states    |
+| `success`   | Positive/complete states |
+| `warning`   | Caution/pending states   |
+| `error`     | Negative/failed states   |
+| `secondary` | Neutral/inactive states  |
+| `outline`   | Subtle/draft states      |
 
 ## Notes
+
 - Keep content short — 1–2 words max
 - Use semantic colors: `success` for positive, `error` for negative
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Badge theme contract](../../../THEME-REFERENCE.md#component-badge).

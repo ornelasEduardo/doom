@@ -1,5 +1,5 @@
 "use client";
-
+import { useThemeParts } from "../../../../styles/theming/parts";
 import { CursorOptions } from "../../behaviors/Cursor";
 import { useChartContext } from "../../context";
 import { HoverInteraction, InteractionChannel } from "../../types/interaction";
@@ -25,6 +25,8 @@ export function CursorLine() {
 }
 
 function CursorInstance({ cursorConfig }: { cursorConfig: CursorOptions }) {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const { chartStore } = useChartContext();
   const series = chartStore.useStore((s) => s.processedSeries);
   const dimensions = chartStore.useStore((s) => s.dimensions);
@@ -68,7 +70,7 @@ function CursorInstance({ cursorConfig }: { cursorConfig: CursorOptions }) {
       {cursorConfig.showX !== false && (
         <line
           data-chart-cursor
-          className={styles.cursorLine}
+          {...doomPart("cursorLine", { className: styles.cursorLine })}
           x1={point.x}
           x2={point.x}
           y1={0}
@@ -78,7 +80,7 @@ function CursorInstance({ cursorConfig }: { cursorConfig: CursorOptions }) {
       {cursorConfig.showY && (
         <line
           data-chart-cursor
-          className={styles.cursorLine}
+          {...doomPart("cursorLine", { className: styles.cursorLine })}
           x1={0}
           x2={innerWidth}
           y1={point.y}

@@ -699,3 +699,7 @@ Compare runs on the same machine and browser; these timings are informational.
 Normal browser CI retains deterministic bounds on spatial query counts and
 mark-style writes. It also runs custom brush, multi-pointer, keyboard, linked
 streaming, geometry, and behavior-ownership regressions.
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Chart theme contract](../../../THEME-REFERENCE.md#component-chart).

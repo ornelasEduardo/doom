@@ -1,5 +1,4 @@
 "use client";
-
 import clsx from "clsx";
 import { Check, ChevronDown } from "lucide-react";
 import React, {
@@ -10,6 +9,11 @@ import React, {
   useState,
 } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import { Popover } from "../Popover/Popover";
@@ -19,6 +23,7 @@ interface SelectProps extends Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "onChange" | "value" | "defaultValue"
 > {
+  classNames?: ThemeClassNames<"Select">;
   options: { value: string | number; label: string }[];
   label?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -31,6 +36,7 @@ interface SelectProps extends Omit<
 }
 
 export function Select({
+  classNames,
   options,
   className,
   label,
@@ -47,6 +53,11 @@ export function Select({
   size = "md",
   ...props
 }: SelectProps) {
+  const doomPart = useThemeParts("Select", classNames, {
+    size: size,
+    disabled: disabled,
+  });
+
   const [isOpen, setIsOpen] = useState(false);
   const [internalValue, setInternalValue] = useState(defaultValue || "");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -140,9 +151,12 @@ export function Select({
   };
 
   return (
-    <div className={clsx(styles.container, className)} style={style}>
+    <div
+      {...doomPart("root", { className: clsx(styles.container, className) })}
+      style={style}
+    >
       {label && (
-        <Label htmlFor={selectId} required={required}>
+        <Label {...doomPart("label")} htmlFor={selectId} required={required}>
           {label}
         </Label>
       )}
@@ -150,7 +164,7 @@ export function Select({
         content={
           <ul
             aria-labelledby={label ? labelId : selectId}
-            className={styles.optionsList}
+            {...doomPart("optionsList", { className: styles.optionsList })}
             id={listboxId}
             role="listbox"
             style={{ width: triggerRef.current?.offsetWidth }}
@@ -163,11 +177,13 @@ export function Select({
                 <li
                   key={opt.value}
                   aria-selected={isSelected}
-                  className={clsx(
-                    styles.optionItem,
-                    isSelected && styles.selected,
-                    isHighlighted && styles.highlighted,
-                  )}
+                  {...doomPart("option", {
+                    className: clsx(
+                      styles.optionItem,
+                      isSelected && styles.selected,
+                      isHighlighted && styles.highlighted,
+                    ),
+                  })}
                   id={`${listboxId}-option-${index}`}
                   role="option"
                   onClick={() => handleSelect(opt.value)}
@@ -175,7 +191,13 @@ export function Select({
                 >
                   <span>{opt.label}</span>
                   {isSelected && (
-                    <Check aria-hidden="true" size={14} strokeWidth={3} />
+                    <ThemedIcon
+                      aria-hidden="true"
+                      icon={Check}
+                      iconName="check"
+                      size={14}
+                      strokeWidth={3}
+                    />
                   )}
                 </li>
               );
@@ -198,7 +220,9 @@ export function Select({
             aria-labelledby={label ? labelId : undefined}
             aria-required={required}
             autoFocus={autoFocus}
-            className={clsx(styles.trigger, size !== "md" && styles[size])}
+            {...doomPart("trigger", {
+              className: clsx(styles.trigger, size !== "md" && styles[size]),
+            })}
             disabled={disabled}
             id={selectId}
             role="combobox"
@@ -212,8 +236,10 @@ export function Select({
                 ? selectedOption.label
                 : placeholder || "Select..."}
             </span>
-            <ChevronDown
+            <ThemedIcon
               aria-hidden="true"
+              icon={ChevronDown}
+              iconName="chevronDown"
               size={20}
               strokeWidth={2.5}
               style={{ marginLeft: "var(--space-2)" }}

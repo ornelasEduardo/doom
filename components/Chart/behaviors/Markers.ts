@@ -81,13 +81,16 @@ export function Markers<T = unknown>(
       circles
         .enter()
         .append("circle")
+        .each(function () {
+          getChartContext().stylePart?.(this, "marker");
+        })
         .attr("r", radius)
         .attr("fill", (d) => d.seriesColor || options.color || "currentColor")
         .attr("stroke", "var(--card-border)")
         .attr("stroke-width", 2)
         .attr("cx", (d) => d.coordinate.x - margin.left)
         .attr("cy", (d) => d.coordinate.y - margin.top)
-        .style("opacity", 1);
+        .attr("opacity", 1);
 
       // Update
       circles

@@ -6,10 +6,14 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-md);
-    font-weight: 700;
-    text-transform: uppercase;
+    font-weight: var(--control-font-weight, 700);
+    text-transform: var(--label-text-transform, uppercase);
     border: var(--surface-border-width) solid var(--card-border);
-    box-shadow: var(--surface-border-width) var(--surface-border-width) 0px 0px var(--card-border);
+    box-shadow: var(
+      --badge-shadow,
+      var(--surface-border-width) var(--surface-border-width) 0px 0px
+        var(--card-border)
+    );
     line-height: 1;
 
     &.sm {

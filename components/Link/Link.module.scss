@@ -29,24 +29,24 @@
       text-underline-offset: var(--space-0\.5);
 
       &:hover {
-        filter: brightness(1.2);
+        filter: var(--control-hover-filter, brightness(1.2));
       }
 
       &:visited {
         color: var(--primary-dark, var(--primary));
-        filter: brightness(0.8);
+        filter: var(--control-hover-filter, brightness(0.8));
       }
 
       &:active {
-        filter: brightness(0.9);
+        filter: var(--control-hover-filter, brightness(0.9));
       }
     }
 
     &.subtle {
       color: var(--muted-foreground);
       font-size: var(--text-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      text-transform: var(--control-text-transform, uppercase);
+      letter-spacing: var(--control-letter-spacing, 0.05em);
 
       &:hover {
         color: var(--foreground);
@@ -57,18 +57,19 @@
     &.button {
       background-color: var(--primary);
       color: var(--primary-foreground);
-      border: var(--surface-border-width) solid var(--card-border);
-      border-radius: var(--radius-md);
+      border: var(--control-border-width, var(--surface-border-width)) solid
+        var(--card-border);
+      border-radius: var(--control-radius, var(--radius-md));
       padding: var(--space-3) var(--space-6);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      box-shadow: var(--shadow-md);
+      text-transform: var(--control-text-transform, uppercase);
+      letter-spacing: var(--control-letter-spacing, 0.05em);
+      box-shadow: var(--control-shadow, var(--shadow-md));
       font-size: var(--text-xs);
 
       @include hover;
 
       &:hover {
-        filter: brightness(1.1);
+        filter: var(--control-hover-filter, brightness(1.1));
       }
 
       &:active {

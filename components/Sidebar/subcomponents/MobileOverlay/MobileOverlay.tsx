@@ -1,9 +1,9 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
+import { useThemeParts } from "../../../../styles/theming/parts";
+import { ThemedPortal } from "../../../../styles/theming/ThemedPortal";
 import { MobileOverlayProps } from "../../types";
 import styles from "./MobileOverlay.module.scss";
 
@@ -12,6 +12,8 @@ export function MobileOverlay({
   isOpen,
   onClose,
 }: MobileOverlayProps) {
+  const doomPart = useThemeParts("Sidebar", undefined, {});
+
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -45,22 +47,29 @@ export function MobileOverlay({
     return null;
   }
 
-  return createPortal(
-    <>
-      <div
-        aria-hidden="true"
-        className={clsx(styles.overlay, isOpen && styles.isOpen)}
-        onClick={onClose}
-      />
-      <aside
-        aria-label="Sidebar navigation"
-        aria-modal="true"
-        className={clsx(styles.mobilePanel, isOpen && styles.isOpen)}
-        role="dialog"
-      >
-        {children}
-      </aside>
-    </>,
-    document.body,
+  return (
+    <ThemedPortal>
+      {
+        <>
+          <div
+            aria-hidden="true"
+            {...doomPart("overlay", {
+              className: clsx(styles.overlay, isOpen && styles.isOpen),
+            })}
+            onClick={onClose}
+          />
+          <aside
+            aria-label="Sidebar navigation"
+            aria-modal="true"
+            {...doomPart("mobilePanel", {
+              className: clsx(styles.mobilePanel, isOpen && styles.isOpen),
+            })}
+            role="dialog"
+          >
+            {children}
+          </aside>
+        </>
+      }
+    </ThemedPortal>
   );
 }

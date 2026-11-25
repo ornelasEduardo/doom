@@ -33,7 +33,10 @@
 
   .trigger {
     &[aria-expanded="true"] {
-      transform: translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)));
+      transform: var(
+        --control-hover-transform,
+        translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)))
+      );
       box-shadow: var(--shadow-lg);
       border-color: var(--card-border);
     }

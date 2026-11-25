@@ -11,8 +11,8 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--foreground);
+    font-weight: var(--font-medium, 500);
+    color: var(--on-navigation, var(--foreground));
     text-decoration: none;
     gap: var(--space-3);
     margin-bottom: var(--space-1);

@@ -1,10 +1,16 @@
 "use client";
-
 import clsx from "clsx";
 import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
+import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Sheet.module.scss";
@@ -21,27 +27,38 @@ const SheetContext = React.createContext<{
 });
 
 interface SheetHeaderProps {
+  classNames?: ThemeClassNames<"Sheet">;
   children: React.ReactNode;
   className?: string;
   id?: string;
 }
 
-export function SheetHeader({ children, className, id }: SheetHeaderProps) {
+export function SheetHeader({
+  classNames,
+  children,
+  className,
+  id,
+}: SheetHeaderProps) {
+  const doomPart = useThemeParts("Sheet", classNames, {});
+
   const { onClose, titleId, handlePointerDown } =
     React.useContext(SheetContext);
 
   return (
     <div
-      className={clsx(styles.header, className)}
+      {...doomPart("header", { className: clsx(styles.header, className) })}
       onPointerDown={handlePointerDown}
     >
-      <div className={styles.handleBar} />
+      <div {...doomPart("handleBar", { className: styles.handleBar })} />
       <Flex
         align="center"
-        className={styles.headerBody}
+        {...doomPart("headerBody", { className: styles.headerBody })}
         justify="space-between"
       >
-        <div className={styles.headerContent} id={id || titleId}>
+        <div
+          {...doomPart("headerContent", { className: styles.headerContent })}
+          id={id || titleId}
+        >
           {children}
         </div>
         <Button
@@ -50,7 +67,7 @@ export function SheetHeader({ children, className, id }: SheetHeaderProps) {
           variant="danger"
           onClick={onClose}
         >
-          <X size={24} />
+          <ThemedIcon icon={X} iconName="close" size={24} />
         </Button>
       </Flex>
     </div>
@@ -58,26 +75,40 @@ export function SheetHeader({ children, className, id }: SheetHeaderProps) {
 }
 
 export function SheetBody({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Sheet">;
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={clsx(styles.content, className)}>{children}</div>;
+  const doomPart = useThemeParts("Sheet", classNames, {});
+
+  return (
+    <div
+      {...doomPart("content", { className: clsx(styles.content, className) })}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function SheetFooter({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Sheet">;
   children: React.ReactNode;
   className?: string;
 }) {
+  const doomPart = useThemeParts("Sheet", classNames, {});
+
   return (
     <Flex
       align="center"
-      className={clsx(styles.footer, className)}
+      {...doomPart("footer", { className: clsx(styles.footer, className) })}
       gap={4}
       justify="flex-end"
     >
@@ -87,6 +118,7 @@ export function SheetFooter({
 }
 
 interface SheetProps {
+  classNames?: ThemeClassNames<"Sheet">;
   isOpen: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -97,6 +129,7 @@ interface SheetProps {
 }
 
 function SheetInternal({
+  classNames,
   isOpen,
   onClose,
   title,
@@ -105,6 +138,10 @@ function SheetInternal({
   variant = "default",
   className,
 }: SheetProps) {
+  const doomPart = useOwnedThemeParts("Sheet", classNames, {
+    variant: variant,
+  });
+
   const reactId = React.useId();
   const titleId = `sheet-title-${reactId}`;
   const [mounted, setMounted] = useState(false);
@@ -209,40 +246,55 @@ function SheetInternal({
     return null;
   }
 
-  return createPortal(
-    <SheetContext.Provider
-      value={{ onClose, titleId, variant, handlePointerDown }}
+  return (
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Sheet"
+      visual={{ variant }}
     >
-      <div
-        aria-hidden="true"
-        className={clsx(styles.overlay, isOpen && styles.isOpen)}
-        onClick={onClose}
-      />
-      <div
-        ref={panelRef}
-        aria-label={!title ? "Sheet" : undefined}
-        aria-labelledby={title ? titleId : undefined}
-        aria-modal="true"
-        className={clsx(
-          styles.panel,
-          styles[variant],
-          isOpen && styles.isOpen,
-          className,
-        )}
-        role="dialog"
-      >
-        {title ? (
-          <>
-            <SheetHeader>{title}</SheetHeader>
-            <SheetBody>{children}</SheetBody>
-            {footer && <SheetFooter>{footer}</SheetFooter>}
-          </>
-        ) : (
-          children
-        )}
-      </div>
-    </SheetContext.Provider>,
-    document.body,
+      {
+        <ThemedPortal surface={variant === "solid" ? "solid" : undefined}>
+          {
+            <SheetContext.Provider
+              value={{ onClose, titleId, variant, handlePointerDown }}
+            >
+              <div
+                aria-hidden="true"
+                {...doomPart("root", {
+                  className: clsx(styles.overlay, isOpen && styles.isOpen),
+                })}
+                onClick={onClose}
+              />
+              <div
+                ref={panelRef}
+                aria-label={!title ? "Sheet" : undefined}
+                aria-labelledby={title ? titleId : undefined}
+                aria-modal="true"
+                {...doomPart("panel", {
+                  className: clsx(
+                    styles.panel,
+                    styles[variant],
+                    isOpen && styles.isOpen,
+                    className,
+                  ),
+                })}
+                role="dialog"
+              >
+                {title ? (
+                  <>
+                    <SheetHeader>{title}</SheetHeader>
+                    <SheetBody>{children}</SheetBody>
+                    {footer && <SheetFooter>{footer}</SheetFooter>}
+                  </>
+                ) : (
+                  children
+                )}
+              </div>
+            </SheetContext.Provider>
+          }
+        </ThemedPortal>
+      }
+    </ThemePartsBoundary>
   );
 }
 

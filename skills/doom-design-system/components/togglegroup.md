@@ -10,26 +10,26 @@ import { ToggleGroup, ToggleGroupItem } from "doom-design-system";
 
 ### ToggleGroup
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `type` | `"single" \| "multiple"` | — | Selection mode (required) |
-| `value` | `string \| string[]` | — | Controlled value |
-| `defaultValue` | `string \| string[]` | — | Uncontrolled initial value |
-| `onValueChange` | `(value: string \| string[]) => void` | — | Callback when value changes |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Control size |
-| `disabled` | `boolean` | `false` | Disable all items |
-| `className` | `string` | — | Additional CSS classes |
-| `aria-label` | `string` | — | Accessible group label |
+| Prop            | Type                                  | Default | Description                 |
+| --------------- | ------------------------------------- | ------- | --------------------------- |
+| `type`          | `"single" \| "multiple"`              | —       | Selection mode (required)   |
+| `value`         | `string \| string[]`                  | —       | Controlled value            |
+| `defaultValue`  | `string \| string[]`                  | —       | Uncontrolled initial value  |
+| `onValueChange` | `(value: string \| string[]) => void` | —       | Callback when value changes |
+| `size`          | `"sm" \| "md" \| "lg"`                | `"md"`  | Control size                |
+| `disabled`      | `boolean`                             | `false` | Disable all items           |
+| `className`     | `string`                              | —       | Additional CSS classes      |
+| `aria-label`    | `string`                              | —       | Accessible group label      |
 
 ### ToggleGroupItem
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `string` | — | Item value (required) |
-| `disabled` | `boolean` | — | Disable this item |
-| `aria-label` | `string` | — | Accessible label (use when children are icons) |
-| `className` | `string` | — | Additional CSS classes |
-| `children` | `ReactNode` | — | Item content |
+| Prop         | Type        | Default | Description                                    |
+| ------------ | ----------- | ------- | ---------------------------------------------- |
+| `value`      | `string`    | —       | Item value (required)                          |
+| `disabled`   | `boolean`   | —       | Disable this item                              |
+| `aria-label` | `string`    | —       | Accessible label (use when children are icons) |
+| `className`  | `string`    | —       | Additional CSS classes                         |
+| `children`   | `ReactNode` | —       | Item content                                   |
 
 ## Usage
 
@@ -69,3 +69,7 @@ const [value, setValue] = useState("left");
 - Keyboard navigation uses roving tabindex: arrow keys move focus, Space/Enter toggles
 - Disabled items are skipped in keyboard navigation
 - When using icon-only items, always provide `aria-label` on each `ToggleGroupItem`
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [ToggleGroup theme contract](../../../THEME-REFERENCE.md#component-togglegroup).

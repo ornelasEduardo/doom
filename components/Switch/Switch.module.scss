@@ -30,13 +30,17 @@
   .toggle {
     // Inset: gap between track border and thumb edge
     --_switch-inset: var(--space-0\.5);
-    --_thumb-size: calc(var(--switch-height) - 2 * var(--_switch-inset) - 2 * var(--surface-border-width));
+    --_thumb-size: calc(
+      var(--switch-height) - 2 * var(--_switch-inset) - 2 *
+        var(--surface-border-width)
+    );
 
     position: relative;
     width: var(--switch-width);
     height: var(--switch-height);
     background-color: var(--card-bg);
-    border: var(--surface-border-width) solid var(--card-border);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
     border-radius: var(--radius-pill);
     transition:
       background-color var(--duration-normal) var(--ease-in-out),
@@ -54,7 +58,8 @@
       width: var(--_thumb-size);
       height: var(--_thumb-size);
       background-color: var(--muted);
-      border: var(--surface-border-width) solid var(--card-border);
+      border: var(--control-border-width, var(--surface-border-width)) solid
+        var(--card-border);
       border-radius: 50%;
       transform: translateY(-50%) translateX(0);
       transition:
@@ -69,7 +74,12 @@
       &::after {
         background-color: var(--primary-foreground);
         transform: translateY(-50%)
-          translateX(calc(var(--switch-width) - var(--_thumb-size) - 2 * var(--_switch-inset) - 2 * var(--surface-border-width)));
+          translateX(
+            calc(
+              var(--switch-width) - var(--_thumb-size) - 2 *
+                var(--_switch-inset) - 2 * var(--surface-border-width)
+            )
+          );
       }
     }
   }

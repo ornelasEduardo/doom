@@ -4,7 +4,8 @@
   .toggleGroup {
     display: inline-flex;
     align-items: stretch;
-    border: var(--surface-border-width) solid var(--card-border);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
     border-radius: var(--control-radius);
     box-shadow: var(--shadow-sm);
   }
@@ -14,9 +15,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--control-gap);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: var(--control-font-weight, 700);
+    text-transform: var(--control-text-transform, uppercase);
+    letter-spacing: var(--control-letter-spacing, 0.05em);
     cursor: pointer;
     background: var(--card-bg);
     color: var(--foreground);

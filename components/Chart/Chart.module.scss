@@ -27,7 +27,7 @@
           fill: var(--foreground);
           font-size: var(--text-xs);
           font-weight: var(--font-bold);
-          text-transform: uppercase;
+          text-transform: var(--label-text-transform, uppercase);
         }
       }
     }
@@ -66,7 +66,7 @@
 
     &:hover {
       cursor: crosshair;
-      filter: brightness(1.1);
+      filter: var(--control-hover-filter, brightness(1.1));
     }
   }
 
@@ -104,8 +104,8 @@
     position: relative;
     background-color: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--surface-radius, var(--radius-md));
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     padding: var(--space-6);
     overflow: visible;
 
@@ -175,9 +175,9 @@
 
   .tooltipLabel {
     color: var(--muted-foreground);
-    text-transform: uppercase;
+    text-transform: var(--label-text-transform, uppercase);
     font-size: var(--text-2xs);
-    letter-spacing: 0.05em;
+    letter-spacing: var(--label-letter-spacing, 0.05em);
     margin-bottom: var(--space-1);
   }
 
@@ -186,7 +186,7 @@
 
     font-size: var(--text-xs);
     font-weight: var(--font-bold);
-    text-transform: uppercase;
+    text-transform: var(--label-text-transform, uppercase);
     text-anchor: middle;
   }
 
@@ -215,7 +215,7 @@
   .legendDot {
     width: var(--space-4);
     height: var(--space-2);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     flex-shrink: 0;
     border: var(--surface-border-width) solid var(--border-strong);
   }
@@ -238,7 +238,8 @@
 @layer doom.components {
   /* WCAG 2.3.3 — honour a stated preference for reduced motion. */
   @media (prefers-reduced-motion: reduce) {
-    * {
+    .chart,
+    .chart * {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;

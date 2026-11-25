@@ -17,7 +17,7 @@
 
   .input {
     width: 100%;
-    background: var(--card-bg);
+    background: var(--input, var(--card-bg));
     color: var(--foreground);
     box-sizing: border-box;
 
@@ -95,8 +95,9 @@
     &.error {
       color: var(--error);
       font-weight: var(--font-bold);
-      text-transform: uppercase;
-      animation: input-shake 0.3s ease-in-out;
+      text-transform: var(--control-text-transform, uppercase);
+      animation: input-shake var(--field-error-motion-duration, 0.3s)
+        ease-in-out;
     }
 
     @keyframes input-shake {
