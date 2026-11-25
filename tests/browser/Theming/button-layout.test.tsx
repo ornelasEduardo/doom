@@ -8,6 +8,7 @@ import {
   AccordionItem,
 } from "../../../components/Accordion/Accordion";
 import { Button } from "../../../components/Button/Button";
+import { CopyButton } from "../../../components/CopyButton/CopyButton";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 import { captainTheme } from "../../../styles/themes/presets";
 
@@ -17,6 +18,28 @@ for (const legacy of [true, false]) {
   const props = legacy
     ? { initialTheme: "captain" as const }
     : { theme: captainTheme };
+
+  it(`keeps copy labels centered without adding measuring width (${legacy ? "legacy" : "object"})`, () => {
+    render(
+      <DesignSystemProvider {...props}>
+        <CopyButton copiedText="Copied!" value="example">
+          Copy
+        </CopyButton>
+      </DesignSystemProvider>,
+    );
+    const button = screen.getByRole("button");
+    const bounds = button.getBoundingClientRect();
+    const label = button
+      .querySelector('[data-doom-part="defaultLabel"]')!
+      .getBoundingClientRect();
+    const measurement = button
+      .querySelector('[data-doom-part="widthPreserver"]')!
+      .getBoundingClientRect();
+    expect(
+      Math.abs(label.left + label.width / 2 - bounds.left - bounds.width / 2),
+    ).toBeLessThan(1);
+    expect(Math.abs(measurement.left - label.left)).toBeLessThan(1);
+  });
 
   it(`keeps button icons beside their label (${legacy ? "legacy" : "object"})`, () => {
     render(

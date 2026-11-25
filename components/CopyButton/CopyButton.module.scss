@@ -40,6 +40,12 @@
     }
   }
 
+  .buttonLabel {
+    display: grid;
+    grid-template-areas: "stack";
+    place-items: center;
+  }
+
   .labelContainer {
     grid-area: stack;
     display: grid;

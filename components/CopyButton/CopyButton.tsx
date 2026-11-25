@@ -75,6 +75,7 @@ export function CopyButton({
           className,
         ),
       })}
+      classNames={{ label: styles.buttonLabel }}
       size={size}
       type="button"
       variant={variant}
