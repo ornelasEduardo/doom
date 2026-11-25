@@ -5,14 +5,14 @@
     min-width: 20ch;
     max-width: 30ch;
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--surface-radius, var(--radius-md));
+    box-shadow: var(--surface-shadow, var(--shadow-md));
   }
 
   .filterCount {
     color: currentColor; // Inherit from parent (handles active/inactive contrast)
     font-size: var(--text-xs);
-    font-weight: 700; // Bold per spec
+    font-weight: var(--font-bold, 700); // Bold per spec
     line-height: 1;
   }
 
@@ -38,7 +38,7 @@
 
   .filterOption {
     padding: var(--space-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
 
     &:hover {
       background: var(--surface-accent);

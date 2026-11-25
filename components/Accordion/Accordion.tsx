@@ -1,9 +1,15 @@
 "use client";
-
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Button } from "../Button/Button";
 import { Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
@@ -16,6 +22,7 @@ const AccordionContext = React.createContext<{
 } | null>(null);
 
 interface AccordionItemProps {
+  classNames?: ThemeClassNames<"Accordion">;
   value: string;
   trigger: string;
   children: React.ReactNode;
@@ -23,11 +30,14 @@ interface AccordionItemProps {
 }
 
 export function AccordionItem({
+  classNames,
   value,
   trigger,
   children,
   className,
 }: AccordionItemProps) {
+  const doomPart = useThemeParts("Accordion", classNames, {});
+
   const context = React.useContext(AccordionContext);
   if (!context) {
     throw new Error("AccordionItem must be used within Accordion");
@@ -41,34 +51,66 @@ export function AccordionItem({
     : context.value === value;
 
   return (
-    <div className={clsx(styles.item, isOpen && styles.isOpen, className)}>
-      <Text className={styles.header} variant="h3">
+    <div
+      {...doomPart("item", {
+        "data-expanded": isOpen || undefined,
+        className: clsx(styles.item, isOpen && styles.isOpen, className),
+      })}
+    >
+      <Text
+        {...doomPart("header", {
+          "data-expanded": isOpen || undefined,
+          className: styles.header,
+        })}
+        variant="h3"
+      >
         <Button
           aria-controls={contentId}
           aria-expanded={isOpen}
-          className={styles.trigger}
+          classNames={{ label: styles.triggerLabel }}
+          {...doomPart("trigger", { className: styles.trigger })}
           id={triggerId}
           variant="ghost"
           onClick={() => context.onToggle(value)}
         >
           {trigger}
-          <ChevronDown className={styles.icon} size={20} strokeWidth={2.5} />
+          <ThemedIcon
+            icon={ChevronDown}
+            iconName="chevronDown"
+            {...doomPart("icon", {
+              "data-expanded": isOpen || undefined,
+              className: styles.icon,
+            })}
+            size={20}
+            strokeWidth={2.5}
+          />
         </Button>
       </Text>
       <div
         aria-hidden={!isOpen}
         aria-labelledby={triggerId}
-        className={styles.contentWrapper}
+        {...doomPart("contentWrapper", {
+          "data-expanded": isOpen || undefined,
+          className: styles.contentWrapper,
+        })}
         id={contentId}
         role="region"
       >
-        <div className={styles.contentBody}>{children}</div>
+        <div
+          {...doomPart("contentBody", {
+            "data-expanded": isOpen || undefined,
+            className: styles.contentBody,
+          })}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
 }
 
 interface AccordionProps {
+  classNames?: ThemeClassNames<"Accordion">;
   type?: "single" | "multiple";
   children: React.ReactNode;
   defaultValue?: string | string[];
@@ -78,6 +120,7 @@ interface AccordionProps {
 }
 
 export function Accordion({
+  classNames,
   type = "single",
   children,
   defaultValue,
@@ -85,6 +128,8 @@ export function Accordion({
   onValueChange,
   className,
 }: AccordionProps) {
+  const doomPart = useOwnedThemeParts("Accordion", classNames, {});
+
   const [internalValue, setInternalValue] = useState<string | string[]>(
     defaultValue || (type === "multiple" ? [] : ""),
   );
@@ -110,12 +155,23 @@ export function Accordion({
   };
 
   return (
-    <AccordionContext.Provider
-      value={{ value: currentValue, onToggle: handleToggle, type }}
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Accordion"
+      visual={{}}
     >
-      <Stack className={clsx(styles.root, className)} gap={0}>
-        {children}
-      </Stack>
-    </AccordionContext.Provider>
+      {
+        <AccordionContext.Provider
+          value={{ value: currentValue, onToggle: handleToggle, type }}
+        >
+          <Stack
+            {...doomPart("root", { className: clsx(styles.root, className) })}
+            gap={0}
+          >
+            {children}
+          </Stack>
+        </AccordionContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }

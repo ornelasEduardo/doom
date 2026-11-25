@@ -8,19 +8,19 @@ import { Rating } from "doom-design-system";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `number` | -- | Controlled value |
-| `defaultValue` | `number` | `0` | Uncontrolled initial value |
-| `onValueChange` | `(value: number) => void` | -- | Change callback |
-| `count` | `number` | `5` | Number of icons |
-| `icon` | `LucideIcon` | `Star` | Icon component to render |
-| `allowHalf` | `boolean` | `false` | Enable half-value selection |
-| `size` | `ControlSize` | `"md"` | Icon size (`"sm"`, `"md"`, `"lg"`) |
-| `readOnly` | `boolean` | `false` | Display-only mode |
-| `disabled` | `boolean` | `false` | Disabled state |
-| `className` | `string` | -- | Additional CSS classes |
-| `aria-label` | `string` | -- | Accessible label |
+| Prop            | Type                      | Default | Description                        |
+| --------------- | ------------------------- | ------- | ---------------------------------- |
+| `value`         | `number`                  | --      | Controlled value                   |
+| `defaultValue`  | `number`                  | `0`     | Uncontrolled initial value         |
+| `onValueChange` | `(value: number) => void` | --      | Change callback                    |
+| `count`         | `number`                  | `5`     | Number of icons                    |
+| `icon`          | `LucideIcon`              | `Star`  | Icon component to render           |
+| `allowHalf`     | `boolean`                 | `false` | Enable half-value selection        |
+| `size`          | `ControlSize`             | `"md"`  | Icon size (`"sm"`, `"md"`, `"lg"`) |
+| `readOnly`      | `boolean`                 | `false` | Display-only mode                  |
+| `disabled`      | `boolean`                 | `false` | Disabled state                     |
+| `className`     | `string`                  | --      | Additional CSS classes             |
+| `aria-label`    | `string`                  | --      | Accessible label                   |
 
 ## Usage
 
@@ -52,3 +52,7 @@ import { Rating } from "doom-design-system";
 - Keyboard: ArrowLeft/Right to change value, Home/End for min/max, steps by 0.5 when `allowHalf`
 - Icons are rendered via `React.createElement(icon, { size, strokeWidth: 2.5 })` matching lucide-react convention
 - Filled icons use `--warning` color, unfilled use `--muted`
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Rating theme contract](../../../THEME-REFERENCE.md#component-rating).

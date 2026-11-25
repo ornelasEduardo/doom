@@ -1,10 +1,16 @@
 "use client";
-
 import clsx from "clsx";
 import { X } from "lucide-react";
 import React, { useEffect, useId, useRef } from "react";
-import { createPortal } from "react-dom";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
+import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
 import { Flex, Stack } from "../Layout/Layout";
@@ -14,6 +20,7 @@ interface ModalProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
   "title"
 > {
+  classNames?: ThemeClassNames<"Modal">;
   isOpen: boolean;
   onClose: () => void;
   title?: React.ReactNode;
@@ -32,57 +39,80 @@ const ModalContext = React.createContext<{
 });
 
 interface ModalHeaderProps {
+  classNames?: ThemeClassNames<"Modal">;
   children: React.ReactNode;
   className?: string;
   id?: string;
 }
 
-function ModalHeader({ children, className, id }: ModalHeaderProps) {
+function ModalHeader({
+  classNames,
+  children,
+  className,
+  id,
+}: ModalHeaderProps) {
+  const doomPart = useThemeParts("Modal", classNames, {});
+
   const { onClose, titleId } = React.useContext(ModalContext);
 
   return (
     <Flex
       align="center"
-      className={clsx(styles.header, className)}
+      {...doomPart("header", { className: clsx(styles.header, className) })}
       justify="space-between"
     >
-      <div className={styles.headerContent} id={id || titleId}>
+      <div
+        {...doomPart("headerContent", { className: styles.headerContent })}
+        id={id || titleId}
+      >
         {children}
       </div>
       <Button
         aria-label="Close modal"
-        className={styles.closeButton}
+        {...doomPart("closeButton", { className: styles.closeButton })}
         size="sm"
         variant="danger"
         onClick={onClose}
       >
-        <X size={20} strokeWidth={2.5} />
+        <ThemedIcon icon={X} iconName="close" size={20} strokeWidth={2.5} />
       </Button>
     </Flex>
   );
 }
 
 function ModalBody({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Modal">;
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={clsx(styles.body, className)}>{children}</div>;
+  const doomPart = useThemeParts("Modal", classNames, {});
+
+  return (
+    <div {...doomPart("body", { className: clsx(styles.body, className) })}>
+      {children}
+    </div>
+  );
 }
 
 function ModalFooter({
+  classNames,
   children,
   className,
 }: {
+  classNames?: ThemeClassNames<"Modal">;
   children: React.ReactNode;
   className?: string;
 }) {
+  const doomPart = useThemeParts("Modal", classNames, {});
+
   return (
     <Flex
       align="center"
-      className={clsx(styles.footer, className)}
+      {...doomPart("footer", { className: clsx(styles.footer, className) })}
       gap={4}
       justify="flex-end"
     >
@@ -92,6 +122,7 @@ function ModalFooter({
 }
 
 function ModalInternal({
+  classNames,
   isOpen,
   onClose,
   title,
@@ -102,6 +133,10 @@ function ModalInternal({
   variant = "default",
   ...props
 }: ModalProps) {
+  const doomPart = useOwnedThemeParts("Modal", classNames, {
+    variant: variant,
+  });
+
   const overlayRef = useRef<HTMLDivElement>(null);
   const reactId = useId();
   const titleId = `modal-title-${reactId}`;
@@ -141,46 +176,76 @@ function ModalInternal({
     }
   };
 
-  return createPortal(
-    <ModalContext.Provider value={{ onClose, titleId, variant }}>
-      <div
-        ref={overlayRef}
-        className={clsx(styles.overlay, isOpen && styles.isOpen, className)}
-        style={style}
-        onClick={handleOverlayClick}
-      >
-        <div className={styles.contentContainer}>
-          <div
-            aria-label={
-              props["aria-label"] ||
-              (!title && !props["aria-labelledby"] ? "Modal Window" : undefined)
-            }
-            aria-labelledby={title ? titleId : props["aria-labelledby"]}
-            aria-modal="true"
-            role="dialog"
-            {...props}
-          >
-            <Card
-              className={clsx(styles.modalCard, styles[variant])}
-              style={{ padding: 0, overflow: "hidden" }}
-            >
-              {title ? (
-                <>
-                  <ModalHeader>{title}</ModalHeader>
-                  <Stack className={styles.modalContent} gap={0}>
-                    <ModalBody>{children}</ModalBody>
-                    {footer && <ModalFooter>{footer}</ModalFooter>}
-                  </Stack>
-                </>
-              ) : (
-                children
-              )}
-            </Card>
-          </div>
-        </div>
-      </div>
-    </ModalContext.Provider>,
-    document.body,
+  return (
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Modal"
+      visual={{ variant }}
+    >
+      {
+        <ThemedPortal surface={variant === "solid" ? "solid" : undefined}>
+          {
+            <ModalContext.Provider value={{ onClose, titleId, variant }}>
+              <div
+                ref={overlayRef}
+                {...doomPart("root", {
+                  className: clsx(
+                    styles.overlay,
+                    isOpen && styles.isOpen,
+                    className,
+                  ),
+                })}
+                style={style}
+                onClick={handleOverlayClick}
+              >
+                <div
+                  {...doomPart("contentContainer", {
+                    className: styles.contentContainer,
+                  })}
+                >
+                  <div
+                    aria-label={
+                      props["aria-label"] ||
+                      (!title && !props["aria-labelledby"]
+                        ? "Modal Window"
+                        : undefined)
+                    }
+                    aria-labelledby={title ? titleId : props["aria-labelledby"]}
+                    aria-modal="true"
+                    role="dialog"
+                    {...props}
+                  >
+                    <Card
+                      {...doomPart("modalCard", {
+                        className: clsx(styles.modalCard, styles[variant]),
+                      })}
+                      style={{ padding: 0, overflow: "hidden" }}
+                    >
+                      {title ? (
+                        <>
+                          <ModalHeader>{title}</ModalHeader>
+                          <Stack
+                            {...doomPart("modalContent", {
+                              className: styles.modalContent,
+                            })}
+                            gap={0}
+                          >
+                            <ModalBody>{children}</ModalBody>
+                            {footer && <ModalFooter>{footer}</ModalFooter>}
+                          </Stack>
+                        </>
+                      ) : (
+                        children
+                      )}
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </ModalContext.Provider>
+          }
+        </ThemedPortal>
+      }
+    </ThemePartsBoundary>
   );
 }
 

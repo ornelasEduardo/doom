@@ -4,7 +4,7 @@
   .slat {
     background-color: var(--card-bg);
     border: var(--surface-border-width) solid var(--border-strong);
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius, var(--radius-md));
     padding: var(--space-2) var(--space-4);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
@@ -25,6 +25,8 @@
 
       & > * {
         @include invert-theme;
+        --foreground: var(--error-foreground);
+        --muted-foreground: var(--error-foreground);
       }
     }
 
@@ -35,6 +37,8 @@
 
       & > * {
         @include invert-theme;
+        --foreground: var(--success-foreground);
+        --muted-foreground: var(--success-foreground);
       }
     }
 
@@ -43,11 +47,14 @@
       &:hover {
         background-color: var(--surface-accent);
         color: var(--foreground);
-        transform: translate(
-          calc(-1 * var(--space-0\.5)),
-          calc(-1 * var(--space-0\.5))
+        transform: var(
+          --control-hover-transform,
+          translate(calc(-1 * var(--space-0\.5)), calc(-1 * var(--space-0\.5)))
         );
-        box-shadow: var(--space-1) var(--space-1) 0px 0px var(--border-strong);
+        box-shadow: var(
+          --shadow-md,
+          var(--space-1) var(--space-1) 0 0 var(--border-strong)
+        );
       }
 
       &:active {
@@ -57,18 +64,18 @@
 
       &.danger:hover {
         background-color: var(--error);
-        filter: brightness(1.1);
+        filter: var(--control-hover-filter, brightness(1.1));
       }
 
       &.success:hover {
         background-color: var(--success);
-        filter: brightness(1.1);
+        filter: var(--control-hover-filter, brightness(1.1));
       }
     }
   }
 
   .label {
-    font-weight: 500;
+    font-weight: var(--font-medium, 500);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     white-space: nowrap;

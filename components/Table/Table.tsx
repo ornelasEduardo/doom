@@ -28,6 +28,13 @@ import {
   type FilterOperatorKey,
   FilterSheetNested,
 } from "../../lib/filter";
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Button } from "../Button/Button";
 import { Chip } from "../Chip/Chip";
 import { Input } from "../Input/Input";
@@ -44,6 +51,7 @@ const filteredRowModel = getFilteredRowModel();
 const expandedRowModel = getExpandedRowModel();
 
 export interface TableProps<T> {
+  classNames?: ThemeClassNames<"Table">;
   data: T[];
   /**
    * Column definitions. Can be:
@@ -79,6 +87,7 @@ export interface TableProps<T> {
 }
 
 interface BodyProps<T> {
+  classNames?: ThemeClassNames<"Table">;
   table: ReactTableInstance<T>;
   columns: ColumnDef<T>[];
   striped: boolean;
@@ -89,12 +98,12 @@ interface BodyProps<T> {
 }
 
 interface VirtualBodyProps<T> extends BodyProps<T> {
+  classNames?: ThemeClassNames<"Table">;
   scrollElement: HTMLDivElement | null;
 }
 
 function VirtualTableBody<T>({
   table,
-  columns,
   striped,
   density,
   scrollElement,
@@ -102,79 +111,88 @@ function VirtualTableBody<T>({
   renderExpandedRow,
   totalColumns,
 }: VirtualBodyProps<T>) {
+  const doomPart = useThemeParts("Table", undefined, {});
+
   const { rows } = table.getRowModel();
 
+  const getItemKey = React.useCallback(
+    (index: number) => rows[index].id,
+    [rows],
+  );
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
+    getItemKey,
     getScrollElement: () => scrollElement,
     estimateSize: () => 50,
     overscan: 5,
   });
 
-  return (
-    <tbody>
-      {rowVirtualizer.getVirtualItems().length > 0 && (
-        <tr
-          style={{
-            height: `${rowVirtualizer.getVirtualItems()[0].start}px`,
-          }}
-        >
-          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
+  const items = rowVirtualizer.getVirtualItems();
+  function spacer(height: number) {
+    if (height <= 0) {
+      return null;
+    }
+    return (
+      <tbody aria-hidden="true">
+        <tr style={{ height }}>
+          <td colSpan={totalColumns} style={{ border: 0, padding: 0 }} />
         </tr>
-      )}
-      {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+      </tbody>
+    );
+  }
+
+  return (
+    <>
+      {items.length > 0 && spacer(items[0].start)}
+      {items.map((virtualRow) => {
         const row = rows[virtualRow.index];
         const expandedContent =
           row.getIsExpanded() && renderExpandedRow
             ? renderExpandedRow(row)
             : null;
         return (
-          <React.Fragment key={row.id}>
+          <tbody
+            key={row.id}
+            ref={rowVirtualizer.measureElement}
+            data-index={virtualRow.index}
+          >
             <tr
-              ref={rowVirtualizer.measureElement}
-              className={clsx(styles.tr, {
-                [styles.striped]: striped && virtualRow.index % 2 !== 0,
-                [styles.clickable]: !!onRowClick,
+              {...doomPart("tr", {
+                className: clsx(styles.tr, {
+                  [styles.striped]: striped && virtualRow.index % 2 !== 0,
+                  [styles.clickable]: !!onRowClick,
+                }),
               })}
-              data-index={virtualRow.index}
               onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
             >
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className={clsx(
-                    styles.td,
-                    styles[`density-${density}`],
-                    cell.column.id === "__expand" && styles.expandCol,
-                  )}
+                  {...doomPart("td", {
+                    className: clsx(
+                      styles.td,
+                      styles[density],
+                      cell.column.id === "__expand" && styles.expandCol,
+                    ),
+                  })}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>
             {expandedContent && (
-              <tr className={styles.expandedRow}>
+              <tr
+                {...doomPart("expandedRow", { className: styles.expandedRow })}
+              >
                 <td colSpan={totalColumns}>{expandedContent}</td>
               </tr>
             )}
-          </React.Fragment>
+          </tbody>
         );
       })}
-      {rowVirtualizer.getVirtualItems().length > 0 && (
-        <tr
-          style={{
-            height: `${
-              rowVirtualizer.getTotalSize() -
-              rowVirtualizer.getVirtualItems()[
-                rowVirtualizer.getVirtualItems().length - 1
-              ].end
-            }px`,
-          }}
-        >
-          <td colSpan={columns.length} style={{ border: 0, padding: 0 }} />
-        </tr>
-      )}
-    </tbody>
+      {items.length > 0 &&
+        spacer(rowVirtualizer.getTotalSize() - items[items.length - 1].end)}
+    </>
   );
 }
 
@@ -186,6 +204,8 @@ function StandardTableBody<T>({
   renderExpandedRow,
   totalColumns,
 }: BodyProps<T>) {
+  const doomPart = useThemeParts("Table", undefined, {});
+
   return (
     <tbody>
       {table.getRowModel().rows.map((row) => {
@@ -196,29 +216,35 @@ function StandardTableBody<T>({
         return (
           <React.Fragment key={row.id}>
             <tr
-              className={clsx(
-                styles.tr,
-                striped && styles.striped,
-                onRowClick && styles.clickable,
-                "group",
-              )}
+              {...doomPart("tr", {
+                className: clsx(
+                  styles.tr,
+                  striped && styles.striped,
+                  onRowClick && styles.clickable,
+                  "group",
+                ),
+              })}
               onClick={onRowClick ? (e) => onRowClick(row, e) : undefined}
             >
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className={clsx(
-                    styles.td,
-                    styles[density],
-                    cell.column.id === "__expand" && styles.expandCol,
-                  )}
+                  {...doomPart("td", {
+                    className: clsx(
+                      styles.td,
+                      styles[density],
+                      cell.column.id === "__expand" && styles.expandCol,
+                    ),
+                  })}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>
             {expandedContent && (
-              <tr className={styles.expandedRow}>
+              <tr
+                {...doomPart("expandedRow", { className: styles.expandedRow })}
+              >
                 <td colSpan={totalColumns}>{expandedContent}</td>
               </tr>
             )}
@@ -230,6 +256,7 @@ function StandardTableBody<T>({
 }
 
 export function Table<T>({
+  classNames,
   data,
   columns,
   enablePagination = true,
@@ -252,6 +279,10 @@ export function Table<T>({
   onRowClick,
   renderExpandedRow,
 }: TableProps<T>) {
+  const doomPart = useOwnedThemeParts("Table", classNames, {
+    variant: variant,
+  });
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [globalFilter, setGlobalFilter] = useState("");
@@ -341,18 +372,24 @@ export function Table<T>({
         }
         return (
           <button
+            aria-expanded={row.getIsExpanded()}
             aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
-            className={styles.expandToggle}
+            {...doomPart("expandToggle", { className: styles.expandToggle })}
             onClick={(e) => {
               e.stopPropagation();
               row.toggleExpanded();
             }}
           >
-            <ChevronRight
-              className={clsx(
-                styles.expandToggleIcon,
-                row.getIsExpanded() && styles.expanded,
-              )}
+            <ThemedIcon
+              icon={ChevronRight}
+              iconName="chevronRight"
+              {...doomPart("expandToggleIcon", {
+                "data-expanded": row.getIsExpanded() || undefined,
+                className: clsx(
+                  styles.expandToggleIcon,
+                  row.getIsExpanded() && styles.expanded,
+                ),
+              })}
               size={20}
             />
           </button>
@@ -361,7 +398,7 @@ export function Table<T>({
     };
 
     return [expandColumn, ...normalizedColumns];
-  }, [normalizedColumns, renderExpandedRow]);
+  }, [normalizedColumns, renderExpandedRow, doomPart]);
 
   const table = useReactTable<T>({
     data: filteredData,
@@ -405,248 +442,318 @@ export function Table<T>({
     : 0;
 
   return (
-    <div
-      className={clsx(
-        styles.container,
-        variant === "flat" && styles.flat,
-        className,
-      )}
-      style={style}
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="Table"
+      visual={{ variant }}
     >
-      {(enableFiltering ||
-        toolbarContent ||
-        enableAdvancedFiltering ||
-        (filters && filters.length > 0)) && (
-        <div className={styles.headerGroup}>
-          {(enableFiltering || toolbarContent || enableAdvancedFiltering) && (
-            <div className={styles.searchBar}>
-              {enableFiltering && (
-                <div className={styles.searchWrapper}>
-                  <Input
-                    endAdornment={
-                      enableAdvancedFiltering ? (
+      {
+        <div
+          {...doomPart("root", {
+            className: clsx(
+              styles.container,
+              variant === "flat" && styles.flat,
+              className,
+            ),
+          })}
+          style={style}
+        >
+          {(enableFiltering ||
+            toolbarContent ||
+            enableAdvancedFiltering ||
+            (filters && filters.length > 0)) && (
+            <div
+              {...doomPart("headerGroup", { className: styles.headerGroup })}
+            >
+              {(enableFiltering ||
+                toolbarContent ||
+                enableAdvancedFiltering) && (
+                <div
+                  {...doomPart("searchBar", { className: styles.searchBar })}
+                >
+                  {enableFiltering && (
+                    <div
+                      {...doomPart("searchWrapper", {
+                        className: styles.searchWrapper,
+                      })}
+                    >
+                      <Input
+                        endAdornment={
+                          enableAdvancedFiltering ? (
+                            <Button
+                              aria-label="Filter builder"
+                              size="sm"
+                              style={{
+                                height: "24px",
+                                padding: "0 4px",
+                                marginRight: "-4px",
+                              }}
+                              variant="ghost"
+                              onClick={() => setIsFilterBuilderOpen(true)}
+                            >
+                              <ThemedIcon
+                                icon={Filter}
+                                iconName="filter"
+                                size={20}
+                                strokeWidth={2.5}
+                              />
+                            </Button>
+                          ) : undefined
+                        }
+                        placeholder="Search..."
+                        startAdornment={
+                          <ThemedIcon
+                            icon={Search}
+                            iconName="search"
+                            size={20}
+                          />
+                        }
+                        value={globalFilter ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setGlobalFilter(e.target.value)
+                        }
+                      />
+                    </div>
+                  )}
+
+                  <div
+                    {...doomPart("actionsWrapper", {
+                      className: styles.actionsWrapper,
+                    })}
+                  >
+                    {filters &&
+                      filters.length > 0 &&
+                      !enableAdvancedFiltering && (
                         <Button
-                          aria-label="Filter builder"
-                          size="sm"
-                          style={{
-                            height: "24px",
-                            padding: "0 4px",
-                            marginRight: "-4px",
-                          }}
-                          variant="ghost"
-                          onClick={() => setIsFilterBuilderOpen(true)}
+                          variant="outline"
+                          onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                         >
-                          <Filter size={20} strokeWidth={2.5} />
+                          <ThemedIcon
+                            icon={ListFilter}
+                            iconName="listFilter"
+                            size={20}
+                          />
+                          FILTERS
                         </Button>
-                      ) : undefined
-                    }
-                    placeholder="Search..."
-                    startAdornment={<Search size={20} />}
-                    value={globalFilter ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setGlobalFilter(e.target.value)
-                    }
-                  />
+                      )}
+                    {toolbarContent && (
+                      <div
+                        {...doomPart("controls", {
+                          className: styles.controls,
+                        })}
+                      >
+                        {toolbarContent}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              <div className={styles.actionsWrapper}>
-                {filters && filters.length > 0 && !enableAdvancedFiltering && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              {enableAdvancedFiltering && activeAdvancedCount > 0 && (
+                <div
+                  {...doomPart("filterBar", { className: styles.filterBar })}
+                >
+                  <Chip
+                    onClick={() => setIsFilterBuilderOpen(true)}
+                    onDismiss={() => {
+                      setAdvancedFilterValue(null);
+                      onAdvancedFilterChange?.(
+                        null as unknown as FilterDraftGroup,
+                      );
+                    }}
                   >
-                    <ListFilter size={20} />
-                    FILTERS
-                  </Button>
-                )}
-                {toolbarContent && (
-                  <div className={styles.controls}>{toolbarContent}</div>
-                )}
-              </div>
-            </div>
-          )}
+                    {activeAdvancedCount} Filter
+                    {activeAdvancedCount > 1 ? "s" : ""}
+                  </Chip>
+                </div>
+              )}
 
-          {enableAdvancedFiltering && activeAdvancedCount > 0 && (
-            <div className={styles.filterBar}>
-              <Chip
-                onClick={() => setIsFilterBuilderOpen(true)}
-                onDismiss={() => {
-                  setAdvancedFilterValue(null);
-                  onAdvancedFilterChange?.(null as unknown as FilterDraftGroup);
-                }}
-              >
-                {activeAdvancedCount} Filter
-                {activeAdvancedCount > 1 ? "s" : ""}
-              </Chip>
-            </div>
-          )}
-
-          {!enableAdvancedFiltering &&
-            filters &&
-            filters.length > 0 &&
-            isFilterExpanded && (
-              <div className={styles.filterBar}>
-                {filters.map((filter) => (
-                  <div key={filter.columnId} className={styles.filterItem}>
-                    <Select
-                      options={filter.options ?? []}
-                      placeholder={filter.label}
-                      size="sm"
-                      value={
-                        (table
-                          .getColumn(filter.columnId)
-                          ?.getFilterValue() as string) ?? ""
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn(filter.columnId)
-                          ?.setFilterValue(e.target.value)
-                      }
-                    />
+              {!enableAdvancedFiltering &&
+                filters &&
+                filters.length > 0 &&
+                isFilterExpanded && (
+                  <div
+                    {...doomPart("filterBar", { className: styles.filterBar })}
+                  >
+                    {filters.map((filter) => (
+                      <div
+                        key={filter.columnId}
+                        {...doomPart("filterItem", {
+                          className: styles.filterItem,
+                        })}
+                      >
+                        <Select
+                          options={filter.options ?? []}
+                          placeholder={filter.label}
+                          size="sm"
+                          value={
+                            (table
+                              .getColumn(filter.columnId)
+                              ?.getFilterValue() as string) ?? ""
+                          }
+                          onChange={(e) =>
+                            table
+                              .getColumn(filter.columnId)
+                              ?.setFilterValue(e.target.value)
+                          }
+                        />
+                      </div>
+                    ))}
                   </div>
+                )}
+            </div>
+          )}
+
+          <div
+            ref={setScrollElement}
+            {...doomPart("tableWrapper", { className: styles.tableWrapper })}
+            style={{
+              height: effectiveHeight ?? "auto",
+              maxHeight: maxHeight ?? "none",
+              overflow: effectiveHeight || maxHeight ? "auto" : "visible",
+              overflowX: "auto",
+              width: "100%",
+            }}
+            tabIndex={0}
+          >
+            <table {...doomPart("table", { className: styles.table })}>
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      const canSort = header.column.getCanSort();
+                      return (
+                        <th
+                          key={header.id}
+                          {...doomPart("th", {
+                            className: clsx(
+                              styles.th,
+                              styles[density],
+                              canSort && styles.sortable,
+                            ),
+                          })}
+                          style={{ width: header.getSize() }}
+                          onClick={
+                            canSort
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
+                        >
+                          <div
+                            {...doomPart("headerContent", {
+                              className: styles.headerContent,
+                            })}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                            {canSort &&
+                              ({
+                                asc: " ▲",
+                                desc: " ▼",
+                              }[header.column.getIsSorted() as string] ??
+                                null)}
+                            {enableColumnFilters &&
+                              !enableAdvancedFiltering &&
+                              header.column.getCanFilter() && (
+                                <TableHeaderFilter column={header.column} />
+                              )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
                 ))}
+              </thead>
+
+              {isVirtual ? (
+                <VirtualTableBody<T>
+                  columns={finalColumns}
+                  density={density}
+                  renderExpandedRow={renderExpandedRow}
+                  scrollElement={scrollElement}
+                  striped={striped}
+                  table={table}
+                  totalColumns={finalColumns.length}
+                  onRowClick={onRowClick}
+                />
+              ) : (
+                <StandardTableBody<T>
+                  columns={finalColumns}
+                  density={density}
+                  renderExpandedRow={renderExpandedRow}
+                  striped={striped}
+                  table={table}
+                  totalColumns={finalColumns.length}
+                  onRowClick={onRowClick}
+                />
+              )}
+            </table>
+
+            {table.getRowModel().rows.length === 0 && (
+              <div {...doomPart("noResults", { className: styles.noResults })}>
+                No results found.
               </div>
             )}
-        </div>
-      )}
+          </div>
 
-      <div
-        ref={setScrollElement}
-        className={styles.tableWrapper}
-        style={{
-          height: effectiveHeight ?? "auto",
-          maxHeight: maxHeight ?? "none",
-          overflow: effectiveHeight || maxHeight ? "auto" : "visible",
-          overflowX: "auto",
-          width: "100%",
-        }}
-        tabIndex={0}
-      >
-        <table className={styles.table}>
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort();
-                  return (
-                    <th
-                      key={header.id}
-                      className={clsx(
-                        styles.th,
-                        styles[density],
-                        canSort && styles.sortable,
-                      )}
-                      style={{ width: header.getSize() }}
-                      onClick={
-                        canSort
-                          ? header.column.getToggleSortingHandler()
-                          : undefined
-                      }
-                    >
-                      <div className={styles.headerContent}>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        {canSort &&
-                          ({
-                            asc: " ▲",
-                            desc: " ▼",
-                          }[header.column.getIsSorted() as string] ??
-                            null)}
-                        {enableColumnFilters &&
-                          !enableAdvancedFiltering &&
-                          header.column.getCanFilter() && (
-                            <TableHeaderFilter column={header.column} />
-                          )}
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
+          {enablePagination && !isVirtual && (
+            <div
+              {...doomPart("paginationContainer", {
+                className: styles.paginationContainer,
+              })}
+            >
+              <Flex
+                align="center"
+                gap={4}
+                style={{ width: "100%", justifyContent: "space-between" }}
+              >
+                <div style={{ flexShrink: 0 }}>
+                  <Select
+                    options={[
+                      { value: 10, label: "10 rows" },
+                      { value: 20, label: "20 rows" },
+                      { value: 50, label: "50 rows" },
+                      { value: 100, label: "100 rows" },
+                    ]}
+                    value={table.getState().pagination.pageSize}
+                    onChange={(e) => {
+                      table.setPageSize(Number(e.target.value));
+                    }}
+                  />
+                </div>
+                <Pagination
+                  currentPage={table.getState().pagination.pageIndex + 1}
+                  totalPages={table.getPageCount()}
+                  onPageChange={(page) => table.setPageIndex(page - 1)}
+                />
+              </Flex>
+            </div>
+          )}
 
-          {isVirtual ? (
-            <VirtualTableBody<T>
-              columns={finalColumns}
-              density={density}
-              renderExpandedRow={renderExpandedRow}
-              scrollElement={scrollElement}
-              striped={striped}
-              table={table}
-              totalColumns={finalColumns.length}
-              onRowClick={onRowClick}
-            />
-          ) : (
-            <StandardTableBody<T>
-              columns={finalColumns}
-              density={density}
-              renderExpandedRow={renderExpandedRow}
-              striped={striped}
-              table={table}
-              totalColumns={finalColumns.length}
-              onRowClick={onRowClick}
+          {enableAdvancedFiltering && (
+            <FilterSheetNested
+              fields={
+                filters?.map((f) => ({
+                  key: f.columnId,
+                  label: f.label,
+                  type: f.type ?? "text",
+                  operators: f.operators ?? ["eq", "neq", "contains"],
+                  options: f.options,
+                })) ?? []
+              }
+              initialValue={advancedFilterValue}
+              isOpen={isFilterBuilderOpen}
+              onApply={(val) => {
+                setAdvancedFilterValue(val);
+                onAdvancedFilterChange?.(val);
+              }}
+              onClose={() => setIsFilterBuilderOpen(false)}
             />
           )}
-        </table>
-
-        {table.getRowModel().rows.length === 0 && (
-          <div className={styles.noResults}>No results found.</div>
-        )}
-      </div>
-
-      {enablePagination && !isVirtual && (
-        <div className={styles.paginationContainer}>
-          <Flex
-            align="center"
-            gap={4}
-            style={{ width: "100%", justifyContent: "space-between" }}
-          >
-            <div style={{ flexShrink: 0 }}>
-              <Select
-                options={[
-                  { value: 10, label: "10 rows" },
-                  { value: 20, label: "20 rows" },
-                  { value: 50, label: "50 rows" },
-                  { value: 100, label: "100 rows" },
-                ]}
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => {
-                  table.setPageSize(Number(e.target.value));
-                }}
-              />
-            </div>
-            <Pagination
-              currentPage={table.getState().pagination.pageIndex + 1}
-              totalPages={table.getPageCount()}
-              onPageChange={(page) => table.setPageIndex(page - 1)}
-            />
-          </Flex>
         </div>
-      )}
-
-      {enableAdvancedFiltering && (
-        <FilterSheetNested
-          fields={
-            filters?.map((f) => ({
-              key: f.columnId,
-              label: f.label,
-              type: f.type ?? "text",
-              operators: f.operators ?? ["eq", "neq", "contains"],
-              options: f.options,
-            })) ?? []
-          }
-          initialValue={advancedFilterValue}
-          isOpen={isFilterBuilderOpen}
-          onApply={(val) => {
-            setAdvancedFilterValue(val);
-            onAdvancedFilterChange?.(val);
-          }}
-          onClose={() => setIsFilterBuilderOpen(false)}
-        />
-      )}
-    </div>
+      }
+    </ThemePartsBoundary>
   );
 }

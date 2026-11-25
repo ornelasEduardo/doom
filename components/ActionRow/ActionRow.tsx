@@ -1,14 +1,19 @@
 "use client";
-
 import clsx from "clsx";
 import { ChevronRight } from "lucide-react";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Flex } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 import styles from "./ActionRow.module.scss";
 
 interface ActionRowProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"ActionRow">;
   icon: React.ReactNode;
   title: string;
   description?: string;
@@ -16,6 +21,7 @@ interface ActionRowProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function ActionRow({
+  classNames,
   icon,
   title,
   description,
@@ -23,16 +29,20 @@ export function ActionRow({
   className,
   ...props
 }: ActionRowProps) {
+  const doomPart = useThemeParts("ActionRow", classNames, {});
+
   return (
     <Flex
       align="center"
-      className={clsx(styles.actionRow, className)}
+      {...doomPart("root", { className: clsx(styles.actionRow, className) })}
       gap={6}
       width="100%"
       onClick={onClick}
       {...props}
     >
-      <div className={styles.iconWrapper}>{icon}</div>
+      <div {...doomPart("iconWrapper", { className: styles.iconWrapper })}>
+        {icon}
+      </div>
       <Flex direction="column" gap={1} style={{ flex: 1, minWidth: 0 }}>
         <Text variant="h6" weight="bold">
           {title}
@@ -43,7 +53,9 @@ export function ActionRow({
           </Text>
         )}
       </Flex>
-      <ChevronRight
+      <ThemedIcon
+        icon={ChevronRight}
+        iconName="chevronRight"
         size={20}
         strokeWidth={2.5}
         style={{ color: "var(--muted-foreground)", flexShrink: 0 }}

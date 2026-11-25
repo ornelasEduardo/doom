@@ -1,15 +1,20 @@
 "use client";
-
 import clsx from "clsx";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import { Text } from "../Text/Text";
 import styles from "./Alert.module.scss";
 
 export type AlertVariant = "info" | "success" | "warning" | "error";
 
 interface AlertProps {
+  classNames?: ThemeClassNames<"Alert">;
   variant?: AlertVariant;
   title: string;
   description?: React.ReactNode;
@@ -18,35 +23,52 @@ interface AlertProps {
 }
 
 const icons = {
-  info: Info,
-  success: CheckCircle,
-  warning: AlertCircle,
-  error: XCircle,
-};
+  info: { icon: Info, iconName: "info" },
+  success: { icon: CheckCircle, iconName: "checkCircle2" },
+  warning: { icon: AlertCircle, iconName: "alertTriangle" },
+  error: { icon: XCircle, iconName: "xCircle" },
+} as const;
 
 export function Alert({
+  classNames,
   variant = "info",
   title,
   description,
   icon,
   className,
 }: AlertProps) {
-  const IconComponent = icons[variant];
+  const doomPart = useThemeParts("Alert", classNames, { variant: variant });
+
+  const statusIcon = icons[variant];
 
   return (
     <div
-      className={clsx(styles.alert, styles[variant], className)}
+      {...doomPart("root", {
+        className: clsx(styles.alert, styles[variant], className),
+      })}
       role="alert"
     >
-      <div className={clsx(styles.iconWrapper, styles[variant])}>
-        {icon || <IconComponent size={20} strokeWidth={2.5} />}
+      <div
+        {...doomPart("iconWrapper", {
+          className: clsx(styles.iconWrapper, styles[variant]),
+        })}
+      >
+        {icon || <ThemedIcon {...statusIcon} size={20} strokeWidth={2.5} />}
       </div>
-      <div className={styles.content}>
-        <Text as="h1" className={styles.title} variant="h5">
+      <div {...doomPart("content", { className: styles.content })}>
+        <Text
+          as="h1"
+          {...doomPart("title", { className: styles.title })}
+          variant="h5"
+        >
           {title}
         </Text>
         {description && (
-          <Text as="p" className={styles.description} variant="body">
+          <Text
+            as="p"
+            {...doomPart("description", { className: styles.description })}
+            variant="body"
+          >
             {description}
           </Text>
         )}

@@ -1,18 +1,19 @@
 # Card
 
 ## Import
+
 ```tsx
 import { Card } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `as` | `ElementType` | `"div"` | HTML element to render |
-| `disabled` | `boolean` | `false` | Disabled visual state |
-| `children` | `ReactNode` | required | Card content |
-| `className` | `string` | — | Additional CSS classes |
+| Prop        | Type          | Default  | Description            |
+| ----------- | ------------- | -------- | ---------------------- |
+| `as`        | `ElementType` | `"div"`  | HTML element to render |
+| `disabled`  | `boolean`     | `false`  | Disabled visual state  |
+| `children`  | `ReactNode`   | required | Card content           |
+| `className` | `string`      | —        | Additional CSS classes |
 
 Extends all standard `<div>` HTML attributes.
 
@@ -32,6 +33,11 @@ Extends all standard `<div>` HTML attributes.
 ```
 
 ## Notes
+
 - Default `<Card>` includes padding — use `Card.Root` for an unpadded container
 - Provides background (`--card-bg`), border (`--card-border`), and hard shadow (`--shadow-hard`)
 - Use `as="article"` or `as="section"` for semantic HTML
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Card theme contract](../../../THEME-REFERENCE.md#component-card).

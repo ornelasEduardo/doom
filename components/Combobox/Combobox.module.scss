@@ -6,10 +6,10 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    background: var(--card-bg);
-    font-weight: var(--font-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    background: var(--input, var(--card-bg));
+    font-weight: var(--control-font-weight, var(--font-bold));
+    text-transform: var(--control-text-transform, uppercase);
+    letter-spacing: var(--control-letter-spacing, 0.05em);
     text-align: left;
     cursor: pointer;
     box-sizing: border-box;
@@ -27,7 +27,7 @@
     &.disabled {
       @include disabled-state;
       transform: none;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--control-shadow, var(--shadow-md));
     }
   }
 
@@ -182,14 +182,14 @@
     }
 
     &.selected {
-      background: var(--primary);
-      color: var(--primary-foreground);
+      background: var(--surface-selection, var(--primary));
+      color: var(--on-selection, var(--primary-foreground));
       font-weight: var(--font-bold);
 
       &:hover {
-        background-color: var(--primary);
-        color: var(--primary-foreground);
-        filter: brightness(1.1);
+        background-color: var(--surface-selection, var(--primary));
+        color: var(--on-selection, var(--primary-foreground));
+        filter: var(--control-hover-filter, brightness(1.1));
       }
     }
   }

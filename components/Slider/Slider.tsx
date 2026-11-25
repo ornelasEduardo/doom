@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Label } from "../Label/Label";
 import { Text } from "../Text/Text";
 import styles from "./Slider.module.scss";
@@ -11,6 +14,7 @@ interface SliderProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "onChange" | "value" | "defaultValue"
 > {
+  classNames?: ThemeClassNames<"Slider">;
   label?: string;
   showValue?: boolean;
   value?: number | [number, number];
@@ -19,6 +23,7 @@ interface SliderProps extends Omit<
 }
 
 export function Slider({
+  classNames,
   label,
   showValue,
   value,
@@ -31,6 +36,8 @@ export function Slider({
   id,
   ...props
 }: SliderProps) {
+  const doomPart = useThemeParts("Slider", classNames, {});
+
   const reactId = React.useId();
   const inputId = id || `slider-${reactId}`;
 
@@ -97,21 +104,31 @@ export function Slider({
   const widthPercent = endPercent - startPercent;
 
   return (
-    <div className={clsx(styles.container, className)}>
+    <div
+      {...doomPart("root", { className: clsx(styles.container, className) })}
+    >
       {(label || showValue) && (
-        <div className={styles.labelRow}>
-          {label && <Label htmlFor={inputId}>{label}</Label>}
+        <div {...doomPart("labelRow", { className: styles.labelRow })}>
+          {label && (
+            <Label {...doomPart("label")} htmlFor={inputId}>
+              {label}
+            </Label>
+          )}
           {showValue && (
-            <Text className={styles.valueDisplay} variant="small" weight="bold">
+            <Text
+              {...doomPart("valueDisplay", { className: styles.valueDisplay })}
+              variant="small"
+              weight="bold"
+            >
               {isRange ? `${valArray[0]} - ${valArray[1]}` : valArray[0]}
             </Text>
           )}
         </div>
       )}
-      <div className={styles.trackWrapper}>
-        <div className={styles.trackInner}>
+      <div {...doomPart("trackWrapper", { className: styles.trackWrapper })}>
+        <div {...doomPart("trackInner", { className: styles.trackInner })}>
           <div
-            className={styles.progressFill}
+            {...doomPart("progressFill", { className: styles.progressFill })}
             style={
               {
                 left: `${startPercent}%`,
@@ -127,7 +144,7 @@ export function Slider({
             aria-valuemax={maxLimit}
             aria-valuemin={minLimit}
             aria-valuenow={valArray[0]}
-            className={styles.rangeInput}
+            {...doomPart("rangeInput", { className: styles.rangeInput })}
             id={inputId}
             max={max}
             min={min}
@@ -142,7 +159,9 @@ export function Slider({
             {/* Min Thumb */}
             <input
               aria-label="Minimum value"
-              className={styles.multiRangeInput}
+              {...doomPart("multiRangeInput", {
+                className: styles.multiRangeInput,
+              })}
               id={`${inputId}-min`}
               max={max}
               min={min}
@@ -155,7 +174,9 @@ export function Slider({
             {/* Max Thumb */}
             <input
               aria-label="Maximum value"
-              className={styles.multiRangeInput}
+              {...doomPart("multiRangeInput", {
+                className: styles.multiRangeInput,
+              })}
               id={`${inputId}-max`}
               max={max}
               min={min}

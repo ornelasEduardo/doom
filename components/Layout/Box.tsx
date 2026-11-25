@@ -1,4 +1,10 @@
+"use client";
 import React, { ElementType, forwardRef } from "react";
+
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 
 // Map semantic keys to CSS variables
 const SIZING_MAP = {
@@ -52,6 +58,7 @@ function resolveSize(size?: SizingProp): string | undefined {
 }
 
 export interface BoxProps extends React.HTMLAttributes<HTMLElement> {
+  classNames?: ThemeClassNames<"Box">;
   as?: ElementType;
   width?: SizingProp;
   minWidth?: SizingProp;
@@ -69,6 +76,7 @@ export interface BoxProps extends React.HTMLAttributes<HTMLElement> {
 export const Box = forwardRef<HTMLElement, BoxProps>(
   (
     {
+      classNames,
       as: Component = "div",
       width,
       minWidth,
@@ -86,6 +94,7 @@ export const Box = forwardRef<HTMLElement, BoxProps>(
     },
     ref,
   ) => {
+    const doomPart = useThemeParts("Box", classNames);
     // Build base style, filtering out undefined values
     const baseStyle: React.CSSProperties = {};
 
@@ -136,7 +145,7 @@ export const Box = forwardRef<HTMLElement, BoxProps>(
     return (
       <Component
         ref={ref}
-        className={className}
+        {...doomPart("root", { className })}
         style={resolvedStyle}
         {...props}
       >

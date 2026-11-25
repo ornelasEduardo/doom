@@ -1,18 +1,20 @@
 @layer doom.reset {
-  *,
-  *::before,
-  *::after {
+  :where(html:has([data-doom-legacy])) *,
+  :where(html:has([data-doom-legacy])) *::before,
+  :where(html:has([data-doom-legacy])) *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
   }
 
-  html,
-  body {
+  html:has([data-doom-legacy]),
+  body:has([data-doom-legacy]),
+  body[data-doom-legacy] {
     height: 100%;
   }
 
-  body {
+  body:has([data-doom-legacy]),
+  body[data-doom-legacy] {
     font-size: var(--text-sm);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -21,29 +23,16 @@
     font-family: var(--font-sans, system-ui, sans-serif);
   }
 
-  img,
-  picture,
-  video,
-  canvas,
-  svg {
+  :where(html:has([data-doom-legacy])) :is(img, picture, video, canvas, svg) {
     display: block;
     max-width: 100%;
   }
 
-  input,
-  button,
-  textarea,
-  select {
+  :where(html:has([data-doom-legacy])) :is(input, button, textarea, select) {
     font: inherit;
   }
 
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  :where(html:has([data-doom-legacy])) :is(p, h1, h2, h3, h4, h5, h6) {
     overflow-wrap: break-word;
   }
 }

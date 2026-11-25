@@ -1,5 +1,4 @@
 "use client";
-
 import clsx from "clsx";
 import React, {
   createContext,
@@ -9,6 +8,12 @@ import React, {
   useState,
 } from "react";
 
+import {
+  type ThemeClassNames,
+  ThemePartsBoundary,
+  useOwnedThemeParts,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import type { ControlSize } from "../../styles/types";
 import styles from "./ToggleGroup.module.scss";
 
@@ -36,6 +41,7 @@ interface ToggleGroupContextType {
 const ToggleGroupContext = createContext<ToggleGroupContextType | null>(null);
 
 export interface ToggleGroupProps {
+  classNames?: ThemeClassNames<"ToggleGroup">;
   type: "single" | "multiple";
   value?: string | string[];
   defaultValue?: string | string[];
@@ -48,6 +54,7 @@ export interface ToggleGroupProps {
 }
 
 export function ToggleGroup({
+  classNames,
   type,
   value: controlledValue,
   defaultValue,
@@ -58,6 +65,11 @@ export function ToggleGroup({
   children,
   "aria-label": ariaLabel,
 }: ToggleGroupProps) {
+  const doomPart = useOwnedThemeParts("ToggleGroup", classNames, {
+    size: size,
+    disabled: disabled,
+  });
+
   const [internalValue, setInternalValue] = useState<string | string[]>(
     defaultValue ?? (type === "multiple" ? [] : ""),
   );
@@ -190,31 +202,42 @@ export function ToggleGroup({
   );
 
   return (
-    <ToggleGroupContext.Provider
-      value={{
-        activeValue,
-        toggle,
-        type,
-        size,
-        disabled,
-        registerItem,
-        unregisterItem,
-        handleKeyDown,
-        tabbableValue,
-      }}
+    <ThemePartsBoundary
+      classNames={classNames}
+      component="ToggleGroup"
+      visual={{ size, disabled }}
     >
-      <div
-        aria-label={ariaLabel}
-        className={clsx(styles.toggleGroup, className)}
-        role="group"
-      >
-        {children}
-      </div>
-    </ToggleGroupContext.Provider>
+      {
+        <ToggleGroupContext.Provider
+          value={{
+            activeValue,
+            toggle,
+            type,
+            size,
+            disabled,
+            registerItem,
+            unregisterItem,
+            handleKeyDown,
+            tabbableValue,
+          }}
+        >
+          <div
+            aria-label={ariaLabel}
+            {...doomPart("root", {
+              className: clsx(styles.toggleGroup, className),
+            })}
+            role="group"
+          >
+            {children}
+          </div>
+        </ToggleGroupContext.Provider>
+      }
+    </ThemePartsBoundary>
   );
 }
 
 export interface ToggleGroupItemProps {
+  classNames?: ThemeClassNames<"ToggleGroup">;
   value: string;
   disabled?: boolean;
   "aria-label"?: string;
@@ -223,12 +246,15 @@ export interface ToggleGroupItemProps {
 }
 
 export function ToggleGroupItem({
+  classNames,
   value,
   disabled: itemDisabled,
   "aria-label": ariaLabel,
   className,
   children,
 }: ToggleGroupItemProps) {
+  const doomPart = useThemeParts("ToggleGroup", classNames, {});
+
   const context = useContext(ToggleGroupContext);
   if (!context) {
     throw new Error("ToggleGroupItem must be used within <ToggleGroup>");
@@ -275,13 +301,15 @@ export function ToggleGroupItem({
       ref={refCallback}
       aria-label={ariaLabel}
       aria-pressed={isPressed}
-      className={clsx(
-        styles.toggleGroupItem,
-        styles[context.size],
-        isPressed && styles.pressed,
-        isDisabled && styles.disabled,
-        className,
-      )}
+      {...doomPart("toggleGroupItem", {
+        className: clsx(
+          styles.toggleGroupItem,
+          styles[context.size],
+          isPressed && styles.pressed,
+          isDisabled && styles.disabled,
+          className,
+        ),
+      })}
       data-value={value}
       disabled={isDisabled}
       tabIndex={context.tabbableValue === value ? 0 : -1}

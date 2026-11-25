@@ -1,18 +1,24 @@
 "use client";
-
 import React, { useEffect, useRef } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { updateChartDimensions } from "../../state/store/chart.store";
 import styles from "../Root/Root.module.scss";
 
 export interface PlotProps {
+  classNames?: ThemeClassNames<"Chart">;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
 }
 
-export function Plot({ children, className, style }: PlotProps) {
+export function Plot({ classNames, children, className, style }: PlotProps) {
+  const doomPart = useThemeParts("Chart", classNames, {});
+
   const { chartStore } = useChartContext();
   const dimensions = chartStore.useStore((s) => s.dimensions);
 
@@ -56,7 +62,9 @@ export function Plot({ children, className, style }: PlotProps) {
 
   return (
     <div
-      className={`${styles.responsiveWrapper} ${className || ""}`}
+      {...doomPart("responsiveWrapper", {
+        className: `${styles.responsiveWrapper} ${className || ""}`,
+      })}
       style={{ flex: 1, position: "relative", minHeight: 0, ...style }}
     >
       <svg

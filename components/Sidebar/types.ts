@@ -1,5 +1,7 @@
 import React from "react";
 
+import type { ThemeClassNames } from "../../styles/theming/parts";
+
 export interface SidebarContextValue {
   withRail: boolean;
   activeSection: string | null;
@@ -15,6 +17,7 @@ export interface SidebarContextValue {
 }
 
 export interface SidebarProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   withRail?: boolean;
   activeSection?: string;
@@ -27,16 +30,19 @@ export interface SidebarProps {
 }
 
 export interface SidebarHeaderProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   className?: string;
 }
 
 export interface SidebarNavProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   className?: string;
 }
 
 export interface SidebarSectionProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   id: string;
   icon: React.ReactNode;
@@ -46,6 +52,7 @@ export interface SidebarSectionProps {
 }
 
 export interface SidebarItemProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   href?: string;
   onClick?: (e?: React.MouseEvent) => void;
@@ -55,17 +62,20 @@ export interface SidebarItemProps {
 }
 
 export interface SidebarFooterProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   className?: string;
 }
 
 export interface MobileOverlayProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export interface RailProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   sections: Array<{ id: string; icon: React.ReactNode; label: string }>;
   activeSection: string | null;
   onSectionClick: (id: string) => void;
@@ -75,11 +85,13 @@ export interface RailProps {
 }
 
 export interface SidebarMobileTriggerProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children?: React.ReactNode;
   className?: string;
 }
 
 export interface SidebarGroupProps {
+  classNames?: ThemeClassNames<"Sidebar">;
   children: React.ReactNode;
   id: string;
   label: string;

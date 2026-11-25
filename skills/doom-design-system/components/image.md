@@ -1,22 +1,23 @@
 # Image
 
 ## Import
+
 ```tsx
 import { Image } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `src` | `string` | — | Image source URL |
-| `alt` | `string` | — | Alt text |
-| `fit` | `"cover" \| "contain" \| "fill" \| "none" \| "scale-down"` | — | CSS object-fit |
-| `fallbackSrc` | `string` | — | Fallback image URL on load error |
-| `aspectRatio` | `string \| number` | — | CSS aspect-ratio value |
-| `rounded` | `boolean` | `true` | Apply border-radius |
-| `width` | `string \| number` | — | Image width |
-| `height` | `string \| number` | — | Image height |
+| Prop          | Type                                                       | Default | Description                      |
+| ------------- | ---------------------------------------------------------- | ------- | -------------------------------- |
+| `src`         | `string`                                                   | —       | Image source URL                 |
+| `alt`         | `string`                                                   | —       | Alt text                         |
+| `fit`         | `"cover" \| "contain" \| "fill" \| "none" \| "scale-down"` | —       | CSS object-fit                   |
+| `fallbackSrc` | `string`                                                   | —       | Fallback image URL on load error |
+| `aspectRatio` | `string \| number`                                         | —       | CSS aspect-ratio value           |
+| `rounded`     | `boolean`                                                  | `true`  | Apply border-radius              |
+| `width`       | `string \| number`                                         | —       | Image width                      |
+| `height`      | `string \| number`                                         | —       | Image height                     |
 
 Extends all standard `<img>` HTML attributes.
 
@@ -31,7 +32,12 @@ Extends all standard `<img>` HTML attributes.
 ```
 
 ## Notes
+
 - Automatically shows a skeleton loader while the image is loading
 - Smooth crossfade transition plays when image finishes loading
 - `aspectRatio` is auto-computed from `width`/`height` if not explicitly set
 - `fallbackSrc` displays if the primary `src` fails to load
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Image theme contract](../../../THEME-REFERENCE.md#component-image).

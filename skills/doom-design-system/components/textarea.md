@@ -1,19 +1,20 @@
 # Textarea
 
 ## Import
+
 ```tsx
 import { Textarea } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `label` | `string` | — | Label text |
-| `error` | `string` | — | Error message — displayed in red below |
-| `helperText` | `string` | — | Helper text below textarea |
-| `showCount` | `boolean` | — | Show character count |
-| `maxLength` | `number` | — | Max characters — auto-enables character counter |
+| Prop         | Type      | Default | Description                                     |
+| ------------ | --------- | ------- | ----------------------------------------------- |
+| `label`      | `string`  | —       | Label text                                      |
+| `error`      | `string`  | —       | Error message — displayed in red below          |
+| `helperText` | `string`  | —       | Helper text below textarea                      |
+| `showCount`  | `boolean` | —       | Show character count                            |
+| `maxLength`  | `number`  | —       | Max characters — auto-enables character counter |
 
 Extends all standard `<textarea>` HTML attributes.
 
@@ -31,6 +32,11 @@ Extends all standard `<textarea>` HTML attributes.
 ```
 
 ## Notes
+
 - Same API pattern as `Input` — `label`, `error`, `helperText`, `maxLength`, `showCount` behave identically
 - Character count auto-shows when `maxLength` is set; `showCount` is redundant in that case
 - Use `rows` attribute to control the initial rendered height
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Textarea theme contract](../../../THEME-REFERENCE.md#component-textarea).

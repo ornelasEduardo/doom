@@ -1,17 +1,18 @@
 # Pagination
 
 ## Import
+
 ```tsx
 import { Pagination } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `currentPage` | `number` | required | Current active page (1-indexed) |
-| `totalPages` | `number` | required | Total number of pages |
-| `onPageChange` | `(page: number) => void` | required | Page change callback |
+| Prop           | Type                     | Default  | Description                     |
+| -------------- | ------------------------ | -------- | ------------------------------- |
+| `currentPage`  | `number`                 | required | Current active page (1-indexed) |
+| `totalPages`   | `number`                 | required | Total number of pages           |
+| `onPageChange` | `(page: number) => void` | required | Page change callback            |
 
 ## Usage
 
@@ -25,7 +26,12 @@ import { Pagination } from "doom-design-system";
 ```
 
 ## Notes
+
 - Pages are 1-indexed — first page is `1`, not `0`
 - Prev/Next buttons are automatically disabled at boundaries (page 1 and last page)
 - Automatically truncates with ellipsis for large page counts (max 7 visible pages); ellipsis elements are non-interactive
 - Used internally by `Table` when `enablePagination` is true — avoid double-rendering
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Pagination theme contract](../../../THEME-REFERENCE.md#component-pagination).

@@ -1,9 +1,14 @@
 import React, { memo, useEffect, useRef } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { registerGpuMark } from "../../rendering/scene";
 import styles from "./SeriesPoint.module.scss";
 
 export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
+  classNames?: ThemeClassNames<"Chart">;
   /**
    * Accessible name for this mark. The parent series owns the accessors, so it
    * builds the name — the point itself stays presentational.
@@ -21,6 +26,7 @@ export interface SeriesPointProps extends React.SVGProps<SVGCircleElement> {
 
 export const SeriesPoint = memo(
   ({
+    classNames,
     x,
     y,
     color,
@@ -34,6 +40,8 @@ export const SeriesPoint = memo(
     datum,
     ...props
   }: SeriesPointProps) => {
+    const doomPart = useThemeParts("Chart", classNames, {});
+
     const point = useRef<SVGCircleElement>(null);
     const renderedRadius = isHovered ? hoverRadius : radius;
     useEffect(() => {
@@ -74,7 +82,9 @@ export const SeriesPoint = memo(
         }}
         aria-label={description || "Data point"}
         aria-roledescription="data point"
-        className={`${styles.point} ${className || ""}`}
+        {...doomPart("point", {
+          className: `${styles.point} ${className || ""}`,
+        })}
         cx={x}
         cy={y}
         data-chart-gpu-mark="point"

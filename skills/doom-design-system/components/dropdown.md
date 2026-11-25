@@ -1,17 +1,18 @@
 # Dropdown
 
 ## Import
+
 ```tsx
 import { Dropdown } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `triggerLabel` | `string` | required | Button text |
-| `items` | `{ label: string; onClick: () => void }[]` | required | Menu items |
-| `variant` | `"primary" \| "secondary"` | `"primary"` | Button style |
+| Prop           | Type                                       | Default     | Description  |
+| -------------- | ------------------------------------------ | ----------- | ------------ |
+| `triggerLabel` | `string`                                   | required    | Button text  |
+| `items`        | `{ label: string; onClick: () => void }[]` | required    | Menu items   |
+| `variant`      | `"primary" \| "secondary"`                 | `"primary"` | Button style |
 
 ## Usage
 
@@ -33,6 +34,11 @@ import { Dropdown } from "doom-design-system";
 ```
 
 ## Notes
+
 - Menu closes automatically after an item is clicked
 - For split primary/secondary actions, use `SplitButton` instead
 - Built on top of `Popover` internally
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Dropdown theme contract](../../../THEME-REFERENCE.md#component-dropdown).

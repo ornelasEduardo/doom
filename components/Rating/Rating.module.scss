@@ -30,7 +30,8 @@
 
   .icon {
     display: inline-flex;
-    transition: transform var(--duration-fast) var(--ease-in-out),
+    transition:
+      transform var(--duration-fast) var(--ease-in-out),
       color var(--duration-fast) var(--ease-in-out);
   }
 
@@ -63,12 +64,13 @@
     border: none;
     background: none;
     cursor: pointer;
-    transition: transform var(--duration-fast) var(--ease-in-out),
+    transition:
+      transform var(--duration-fast) var(--ease-in-out),
       color var(--duration-fast) var(--ease-in-out);
 
     &:focus-visible {
       @include focus;
-      border-radius: var(--radius-md);
+      border-radius: var(--control-radius, var(--radius-md));
     }
 
     &:focus {
@@ -76,11 +78,11 @@
     }
 
     &:hover {
-      transform: scale(1.15);
+      transform: var(--rating-hover-transform, scale(1.15));
     }
 
     &:active {
-      transform: scale(0.85);
+      transform: var(--rating-press-transform, scale(0.85));
     }
 
     &:disabled {
@@ -101,7 +103,7 @@
 
     &:focus-visible {
       @include focus;
-      border-radius: var(--radius-md);
+      border-radius: var(--control-radius, var(--radius-md));
     }
 
     &:focus {
@@ -125,10 +127,10 @@
   }
 
   .iconWrapper:hover .icon {
-    transform: scale(1.15);
+    transform: var(--rating-hover-transform, scale(1.15));
   }
 
   .iconWrapper:active .icon {
-    transform: scale(0.85);
+    transform: var(--rating-press-transform, scale(0.85));
   }
 }

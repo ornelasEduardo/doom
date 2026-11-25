@@ -1,6 +1,7 @@
 # Breadcrumbs
 
 ## Import
+
 ```tsx
 import { Breadcrumbs, BreadcrumbItem } from "doom-design-system";
 ```
@@ -13,11 +14,11 @@ Extends all standard `<nav>` HTML attributes.
 
 ### BreadcrumbItem
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `href` | `string` | — | Link destination (omit for current page item) |
-| `isCurrent` | `boolean` | — | Marks item as current page — renders as text, not a link |
-| `children` | `ReactNode` | required | Item label |
+| Prop        | Type        | Default  | Description                                              |
+| ----------- | ----------- | -------- | -------------------------------------------------------- |
+| `href`      | `string`    | —        | Link destination (omit for current page item)            |
+| `isCurrent` | `boolean`   | —        | Marks item as current page — renders as text, not a link |
+| `children`  | `ReactNode` | required | Item label                                               |
 
 ## Usage
 
@@ -31,6 +32,11 @@ Extends all standard `<nav>` HTML attributes.
 ```
 
 ## Notes
+
 - Last item should always use `isCurrent` — it renders as non-interactive text
 - Separators between items are rendered automatically; do not add them manually
 - `href` on the current item is ignored when `isCurrent` is set
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Breadcrumbs theme contract](../../../THEME-REFERENCE.md#component-breadcrumbs).

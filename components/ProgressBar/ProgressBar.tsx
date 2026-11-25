@@ -1,12 +1,16 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Label } from "../Label/Label";
 import styles from "./ProgressBar.module.scss";
 
 interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"ProgressBar">;
   value: number; // 0 to 100
   max?: number;
   height?: string | number;
@@ -16,6 +20,7 @@ interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function ProgressBar({
+  classNames,
   value,
   max = 100,
   height = "24px",
@@ -27,6 +32,8 @@ export function ProgressBar({
   id,
   ...props
 }: ProgressBarProps) {
+  const doomPart = useThemeParts("ProgressBar", classNames, {});
+
   const reactId = React.useId();
   const barId = id || `progress-${reactId}`;
   const labelId = `label-${reactId}`;
@@ -36,7 +43,7 @@ export function ProgressBar({
   const heightStyle = typeof height === "number" ? `${height}px` : height;
 
   return (
-    <div className={clsx(styles.wrapper, className)}>
+    <div {...doomPart("root", { className: clsx(styles.wrapper, className) })}>
       {label && <Label id={labelId}>{label}</Label>}
       <div
         aria-label={!label ? props["aria-label"] || "Progress" : undefined}
@@ -44,7 +51,7 @@ export function ProgressBar({
         aria-valuemax={max}
         aria-valuemin={0}
         aria-valuenow={clampedValue}
-        className={styles.container}
+        {...doomPart("container", { className: styles.container })}
         id={barId}
         role="progressbar"
         style={
@@ -56,7 +63,7 @@ export function ProgressBar({
         {...props}
       >
         <div
-          className={styles.fill}
+          {...doomPart("fill", { className: styles.fill })}
           data-complete={percentage >= 100}
           style={
             {
@@ -65,7 +72,9 @@ export function ProgressBar({
             } as React.CSSProperties
           }
         />
-        {showStripes && <div className={styles.stripes} />}
+        {showStripes && (
+          <div {...doomPart("stripes", { className: styles.stripes })} />
+        )}
       </div>
     </div>
   );

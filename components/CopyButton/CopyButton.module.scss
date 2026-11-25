@@ -18,23 +18,32 @@
       box-shadow var(--duration-fast) var(--ease-out);
 
     &:not(.ghost):active {
-      transform: translate(var(--space-0\.5), var(--space-0\.5));
-      box-shadow: var(--space-0\.5) var(--space-0\.5) 0px 0px var(--shadow-base) !important;
+      transform: var(
+        --control-press-transform,
+        translate(var(--space-0\.5), var(--space-0\.5))
+      );
+      box-shadow: var(--shadow-sm);
     }
   }
 
   .ghost {
-    box-shadow: none !important;
+    box-shadow: none;
 
     &:active {
-      box-shadow: none !important;
-      transform: scale(0.95);
+      box-shadow: none;
+      transform: var(--control-ghost-press-transform, scale(0.95));
     }
 
     &:hover:not(:disabled) {
       transform: none;
-      box-shadow: none !important;
+      box-shadow: none;
     }
+  }
+
+  .buttonLabel {
+    display: grid;
+    grid-template-areas: "stack";
+    place-items: center;
   }
 
   .labelContainer {

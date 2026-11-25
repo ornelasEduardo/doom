@@ -5,19 +5,27 @@
     background-color: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
     border-radius: var(--surface-radius);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     min-width: 0;
     display: flex;
     flex-direction: column;
 
     > *:first-child {
-      border-top-left-radius: calc(var(--surface-radius) - var(--surface-border-width));
-      border-top-right-radius: calc(var(--surface-radius) - var(--surface-border-width));
+      border-top-left-radius: calc(
+        var(--surface-radius) - var(--surface-border-width)
+      );
+      border-top-right-radius: calc(
+        var(--surface-radius) - var(--surface-border-width)
+      );
     }
 
     > *:last-child {
-      border-bottom-left-radius: calc(var(--surface-radius) - var(--surface-border-width));
-      border-bottom-right-radius: calc(var(--surface-radius) - var(--surface-border-width));
+      border-bottom-left-radius: calc(
+        var(--surface-radius) - var(--surface-border-width)
+      );
+      border-bottom-right-radius: calc(
+        var(--surface-radius) - var(--surface-border-width)
+      );
     }
   }
 

@@ -14,7 +14,7 @@
     cursor: pointer;
     position: relative;
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
+    border-radius: var(--control-radius, var(--radius-md));
     transition: all 0.15s ease;
     opacity: 1;
 
@@ -32,7 +32,8 @@
   .radioCircle {
     width: var(--toggle-size);
     height: var(--toggle-size);
-    border: var(--surface-border-width) solid var(--foreground);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--foreground);
     border-radius: 50%;
     background: var(--background);
     display: flex;
@@ -83,7 +84,7 @@
 
   .labelText {
     font-family: var(--font-body);
-    font-weight: 500;
+    font-weight: var(--font-medium, 500);
     font-size: var(--text-base);
     color: var(--foreground);
     user-select: none;

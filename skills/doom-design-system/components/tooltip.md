@@ -1,18 +1,19 @@
 # Tooltip
 
 ## Import
+
 ```tsx
 import { Tooltip } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `content` | `string` | required | Tooltip text |
-| `children` | `ReactNode` | required | Trigger element |
-| `delay` | `number` | `200` | Show delay in ms |
-| `placement` | `"top" \| "bottom"` | `"top"` | Position relative to trigger |
+| Prop        | Type                | Default  | Description                  |
+| ----------- | ------------------- | -------- | ---------------------------- |
+| `content`   | `string`            | required | Tooltip text                 |
+| `children`  | `ReactNode`         | required | Trigger element              |
+| `delay`     | `number`            | `200`    | Show delay in ms             |
+| `placement` | `"top" \| "bottom"` | `"top"`  | Position relative to trigger |
 
 ## Usage
 
@@ -29,6 +30,11 @@ import { Tooltip } from "doom-design-system";
 ```
 
 ## Notes
+
 - Shows on both hover and focus — keyboard accessible by default
 - Keep `content` brief — 1 sentence max
 - Increase `delay` to prevent tooltip flicker during fast mouse movement
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Tooltip theme contract](../../../THEME-REFERENCE.md#component-tooltip).

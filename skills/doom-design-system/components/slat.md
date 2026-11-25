@@ -1,20 +1,21 @@
 # Slat
 
 ## Import
+
 ```tsx
 import { Slat } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `label` | `ReactNode` | required | Primary label |
-| `secondaryLabel` | `ReactNode` | — | Secondary/supporting text |
-| `prependContent` | `ReactNode` | — | Left slot (icon, thumbnail) |
-| `appendContent` | `ReactNode` | — | Right slot (actions, badges) |
-| `variant` | `"default" \| "danger" \| "success"` | `"default"` | Visual style |
-| `onClick` | `(e: React.MouseEvent) => void` | — | Makes slat clickable |
+| Prop             | Type                                 | Default     | Description                  |
+| ---------------- | ------------------------------------ | ----------- | ---------------------------- |
+| `label`          | `ReactNode`                          | required    | Primary label                |
+| `secondaryLabel` | `ReactNode`                          | —           | Secondary/supporting text    |
+| `prependContent` | `ReactNode`                          | —           | Left slot (icon, thumbnail)  |
+| `appendContent`  | `ReactNode`                          | —           | Right slot (actions, badges) |
+| `variant`        | `"default" \| "danger" \| "success"` | `"default"` | Visual style                 |
+| `onClick`        | `(e: React.MouseEvent) => void`      | —           | Makes slat clickable         |
 
 ## Usage
 
@@ -38,6 +39,11 @@ import { Slat } from "doom-design-system";
 ```
 
 ## Notes
+
 - When `onClick` is provided, the slat becomes focusable and keyboard-accessible
 - Used internally by `FileUpload` for its file list — do not re-implement manually
 - `variant="danger"` applies red styling to signal destructive/error states
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Slat theme contract](../../../THEME-REFERENCE.md#component-slat).

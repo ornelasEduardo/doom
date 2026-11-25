@@ -12,15 +12,16 @@
     width: 100%;
     padding: var(--control-padding-y) var(--control-padding-x);
     font-size: var(--control-font-size);
-    background: var(--card-bg);
+    background: var(--input, var(--card-bg));
     color: var(--foreground);
     font-family: inherit;
     resize: vertical;
     min-height: 120px;
     box-sizing: border-box;
-    border: var(--surface-border-width) solid var(--card-border);
+    border: var(--control-border-width, var(--surface-border-width)) solid
+      var(--card-border);
     border-radius: var(--control-radius);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--control-shadow, var(--shadow-md));
     transition: all var(--duration-fast) var(--ease-in-out);
     outline: none;
 
@@ -75,8 +76,9 @@
     &.error {
       color: var(--error);
       font-weight: var(--font-bold);
-      text-transform: uppercase;
-      animation: textarea-shake 0.3s ease-in-out;
+      text-transform: var(--control-text-transform, uppercase);
+      animation: textarea-shake var(--field-error-motion-duration, 0.3s)
+        ease-in-out;
     }
 
     @keyframes textarea-shake {

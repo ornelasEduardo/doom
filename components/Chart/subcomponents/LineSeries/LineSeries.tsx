@@ -3,6 +3,10 @@
 import { CurveFactory } from "d3-shape";
 import React, { useEffect, useId, useMemo } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { CHART_DATA_ATTRS } from "../../engine";
 import { GpuPath } from "../../rendering/GpuPath";
@@ -21,6 +25,7 @@ import { SeriesPoint } from "../SeriesPoint/SeriesPoint";
 import styles from "./LineSeries.module.scss";
 
 interface LineSeriesProps<T> {
+  classNames?: ThemeClassNames<"Chart">;
   data?: T[];
   x?: Accessor<T, AxisValue>;
   y?: Accessor<T, AxisValue>;
@@ -47,6 +52,8 @@ const LineSeriesComponent = <T,>({
   type,
   hideCursor,
 }: LineSeriesProps<T>) => {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const {
     chartStore,
     config,
@@ -230,7 +237,7 @@ const LineSeriesComponent = <T,>({
 
       {showGradient && (
         <GpuPath
-          className={styles.area}
+          {...doomPart("area", { className: styles.area })}
           contours={paths.areaContours}
           d={paths.area || ""}
           gradient={{ startOpacity: 0.4, endOpacity: 0 }}
@@ -242,7 +249,7 @@ const LineSeriesComponent = <T,>({
       <GpuPath
         aria-label={label || "Line Series"}
         aria-roledescription="line"
-        className={styles.path}
+        {...doomPart("path", { className: styles.path })}
         contours={paths.lineContours}
         d={paths.line || ""}
         role="graphics-object"

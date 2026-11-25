@@ -18,10 +18,41 @@
       "types": "./dist/lib/filter/index.d.ts",
       "import": "./dist/lib/filter/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./theme": {
+      "types": "./dist/styles/theming/index.d.ts",
+      "import": "./dist/styles/theming/index.js"
+    },
+    "./themes": {
+      "types": "./dist/styles/themes/presets.d.ts",
+      "import": "./dist/styles/themes/presets.js"
+    },
+    "./themes/neubrutalist": {
+      "types": "./dist/styles/themes/presets/neubrutalist.d.ts",
+      "import": "./dist/styles/themes/presets/neubrutalist.js"
+    },
+    "./themes/doomsday": {
+      "types": "./dist/styles/themes/presets/doomsday.d.ts",
+      "import": "./dist/styles/themes/presets/doomsday.js"
+    },
+    "./themes/captain": {
+      "types": "./dist/styles/themes/presets/captain.d.ts",
+      "import": "./dist/styles/themes/presets/captain.js"
+    },
+    "./themes/vigilante": {
+      "types": "./dist/styles/themes/presets/vigilante.d.ts",
+      "import": "./dist/styles/themes/presets/vigilante.js"
+    },
+    "./themes/orbital": {
+      "types": "./dist/styles/themes/presets/orbital.d.ts",
+      "import": "./dist/styles/themes/presets/orbital.js"
+    },
+    "./theme/scope.css": "./dist/styles/theming/scope.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "THEME.md",
+    "THEME-REFERENCE.md"
   ],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles lib:dist/lib --no-source-map && node scripts/fix-imports.cjs",
@@ -128,6 +159,7 @@
     "@types/d3-selection": "^3.0.11",
     "@types/d3-shape": "^3.1.7",
     "clsx": "^2.1.1",
+    "csstype": "^3.2.3",
     "d3-array": "^3.2.4",
     "d3-axis": "^3.0.0",
     "d3-format": "^3.1.0",

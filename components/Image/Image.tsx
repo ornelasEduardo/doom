@@ -1,5 +1,4 @@
 "use client";
-
 import clsx from "clsx";
 import React, {
   useCallback,
@@ -9,10 +8,15 @@ import React, {
   useState,
 } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Skeleton } from "../Skeleton/Skeleton";
 import styles from "./Image.module.scss";
 
 export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  classNames?: ThemeClassNames<"Image">;
   fit?: "cover" | "contain" | "fill" | "none" | "scale-down";
   fallbackSrc?: string;
   aspectRatio?: string | number;
@@ -51,6 +55,7 @@ const ImageStatus = {
 type ImageStatusType = (typeof ImageStatus)[keyof typeof ImageStatus];
 
 export function Image({
+  classNames,
   src,
   alt,
   className,
@@ -65,6 +70,8 @@ export function Image({
   height,
   ...props
 }: ImageProps) {
+  const doomPart = useThemeParts("Image", classNames, {});
+
   const [status, setStatus] = useState<ImageStatusType>(ImageStatus.Loading);
   const [showSkeleton, setShowSkeleton] = useState(true);
 
@@ -139,7 +146,9 @@ export function Image({
 
   return (
     <div
-      className={clsx(styles.wrapper, rounded && styles.rounded, className)}
+      {...doomPart("root", {
+        className: clsx(styles.wrapper, rounded && styles.rounded, className),
+      })}
       style={{
         aspectRatio: computedAspectRatio,
         width: toCssValue(width),
@@ -150,10 +159,12 @@ export function Image({
       {/* Skeleton Layer */}
       <div
         aria-hidden="true"
-        className={clsx(
-          styles.skeletonLayer,
-          status === ImageStatus.Loaded && styles.fadeOut,
-        )}
+        {...doomPart("skeletonLayer", {
+          className: clsx(
+            styles.skeletonLayer,
+            status === ImageStatus.Loaded && styles.fadeOut,
+          ),
+        })}
       >
         {showSkeleton && (
           <Skeleton
@@ -170,11 +181,13 @@ export function Image({
         <img
           ref={imgRef}
           alt={alt}
-          className={clsx(
-            styles.image,
-            fit && styles[`fit-${fit}`],
-            status === ImageStatus.Loaded ? styles.visible : styles.hidden,
-          )}
+          {...doomPart("image", {
+            className: clsx(
+              styles.image,
+              fit && styles[`fit-${fit}`],
+              status === ImageStatus.Loaded ? styles.visible : styles.hidden,
+            ),
+          })}
           height={height}
           src={src}
           width={width}

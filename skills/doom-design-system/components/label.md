@@ -1,17 +1,18 @@
 # Label
 
 ## Import
+
 ```tsx
 import { Label } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `ReactNode` | required | Label content |
-| `required` | `boolean` | — | Show required indicator (*) |
-| `htmlFor` | `string` | — | ID of the associated input |
+| Prop       | Type        | Default  | Description                  |
+| ---------- | ----------- | -------- | ---------------------------- |
+| `children` | `ReactNode` | required | Label content                |
+| `required` | `boolean`   | —        | Show required indicator (\*) |
+| `htmlFor`  | `string`    | —        | ID of the associated input   |
 
 Extends all standard `<label>` HTML attributes.
 
@@ -26,6 +27,11 @@ Extends all standard `<label>` HTML attributes.
 ```
 
 ## Notes
+
 - Prefer `Input`'s built-in `label` prop for standard single-input cases — it auto-binds the association
 - Use `Label` directly when you need custom label layouts, composite inputs, or a label for a non-Doom input element
 - Works with all form components: `Input`, `Select`, `Textarea`, `Checkbox`, etc.
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Label theme contract](../../../THEME-REFERENCE.md#component-label).

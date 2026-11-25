@@ -1,6 +1,7 @@
 # Toast
 
 ## Import
+
 ```tsx
 import { ToastProvider, useToast } from "doom-design-system";
 ```
@@ -21,13 +22,13 @@ Wrap your app root with `ToastProvider` once:
 const { toast, toastSuccess, toastError, toastWarning, toastInfo } = useToast();
 ```
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `toast()` | `toast(message: string, type?: "success" \| "error" \| "warning" \| "info") => void` | Generic toast with optional type (default: `"info"`) |
-| `toastSuccess()` | `toastSuccess(message: string) => void` | Green success toast |
-| `toastError()` | `toastError(message: string) => void` | Red error toast |
-| `toastWarning()` | `toastWarning(message: string) => void` | Yellow warning toast |
-| `toastInfo()` | `toastInfo(message: string) => void` | Blue info toast |
+| Method           | Signature                                                                            | Description                                          |
+| ---------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `toast()`        | `toast(message: string, type?: "success" \| "error" \| "warning" \| "info") => void` | Generic toast with optional type (default: `"info"`) |
+| `toastSuccess()` | `toastSuccess(message: string) => void`                                              | Green success toast                                  |
+| `toastError()`   | `toastError(message: string) => void`                                                | Red error toast                                      |
+| `toastWarning()` | `toastWarning(message: string) => void`                                              | Yellow warning toast                                 |
+| `toastInfo()`    | `toastInfo(message: string) => void`                                                 | Blue info toast                                      |
 
 ## Usage
 
@@ -59,7 +60,12 @@ function MyComponent() {
 - The X button has the accessible name `Close notification` and retains native button keyboard behavior.
 
 ## Notes
+
 - `ToastProvider` must be an ancestor — `useToast()` throws if used outside it
 - Toasts auto-dismiss after 5 seconds (hardcoded, not configurable)
 - Users can manually dismiss via the X button
 - Toasts stack from the bottom-right of the screen
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Toast theme contract](../../../THEME-REFERENCE.md#component-toast).

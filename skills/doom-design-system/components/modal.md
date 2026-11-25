@@ -1,6 +1,7 @@
 # Modal
 
 ## Import
+
 ```tsx
 import { Modal } from "doom-design-system";
 ```
@@ -9,24 +10,24 @@ import { Modal } from "doom-design-system";
 
 ### Modal (root)
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `isOpen` | `boolean` | required | Controls visibility |
-| `onClose` | `() => void` | required | Called on close (Escape, overlay click, close button) |
-| `title` | `ReactNode` | — | Title content (shorthand API) |
-| `footer` | `ReactNode` | — | Footer content (shorthand API) |
-| `variant` | `"default" \| "solid"` | `"default"` | Visual style |
-| `children` | `ReactNode` | required | Modal body content |
-| `className` | `string` | — | CSS class name |
-| `style` | `CSSProperties` | — | Inline styles |
+| Prop        | Type                   | Default     | Description                                           |
+| ----------- | ---------------------- | ----------- | ----------------------------------------------------- |
+| `isOpen`    | `boolean`              | required    | Controls visibility                                   |
+| `onClose`   | `() => void`           | required    | Called on close (Escape, overlay click, close button) |
+| `title`     | `ReactNode`            | —           | Title content (shorthand API)                         |
+| `footer`    | `ReactNode`            | —           | Footer content (shorthand API)                        |
+| `variant`   | `"default" \| "solid"` | `"default"` | Visual style                                          |
+| `children`  | `ReactNode`            | required    | Modal body content                                    |
+| `className` | `string`               | —           | CSS class name                                        |
+| `style`     | `CSSProperties`        | —           | Inline styles                                         |
 
 ### Subcomponents
 
-| Component | Props | Description |
-|-----------|-------|-------------|
+| Component      | Props                    | Description                                                  |
+| -------------- | ------------------------ | ------------------------------------------------------------ |
 | `Modal.Header` | `children`, `className?` | Header with built-in close button (hardcoded danger variant) |
-| `Modal.Body` | `children`, `className?` | Scrollable content area |
-| `Modal.Footer` | `children`, `className?` | Action buttons area |
+| `Modal.Body`   | `children`, `className?` | Scrollable content area                                      |
+| `Modal.Footer` | `children`, `className?` | Action buttons area                                          |
 
 ## Usage
 
@@ -63,9 +64,14 @@ import { Modal } from "doom-design-system";
 ```
 
 ## Notes
+
 - Closes on Escape key and overlay click automatically
 - Renders via portal to `document.body`; locks body scroll when open
 - Title auto-generates `aria-labelledby` linking; use `aria-label` when no title provided
 - Animation: content slides up with fade-in; overlay has backdrop blur
 - Use `variant="solid"` for critical alerts or high-impact announcements
 - Use composition API when you need custom header content (icons, status badges, etc.)
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Modal theme contract](../../../THEME-REFERENCE.md#component-modal).

@@ -1,16 +1,17 @@
 # Spinner
 
 ## Import
+
 ```tsx
 import { Spinner } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `size` | `"sm" \| "md" \| "lg" \| "xl"` | `"md"` | Spinner size |
-| `strokeWidth` | `number` | `2` | Line thickness |
+| Prop          | Type                           | Default | Description    |
+| ------------- | ------------------------------ | ------- | -------------- |
+| `size`        | `"sm" \| "md" \| "lg" \| "xl"` | `"md"`  | Spinner size   |
+| `strokeWidth` | `number`                       | `2`     | Line thickness |
 
 Extends all Lucide icon props.
 
@@ -28,5 +29,10 @@ Extends all Lucide icon props.
 ```
 
 ## Notes
+
 - Has `role="status"` and `aria-label="Loading"` built in for accessibility
 - Prefer `Button`'s `loading` prop over manually placing a `Spinner` inside a button
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Spinner theme contract](../../../THEME-REFERENCE.md#component-spinner).

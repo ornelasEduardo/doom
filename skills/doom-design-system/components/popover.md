@@ -1,20 +1,21 @@
 # Popover
 
 ## Import
+
 ```tsx
 import { Popover } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `trigger` | `ReactNode` | required | Element that opens the popover |
-| `content` | `ReactNode` | required | Popover content |
-| `isOpen` | `boolean` | required | Controlled open state |
-| `onClose` | `() => void` | required | Close callback |
-| `placement` | `"bottom-start" \| "bottom-end" \| "bottom-center" \| "top-start" \| "top-end" \| "top-center"` | `"bottom-start"` | Position relative to trigger |
-| `offset` | `number` | `8` | Distance from trigger in px |
+| Prop        | Type                                                                                            | Default          | Description                    |
+| ----------- | ----------------------------------------------------------------------------------------------- | ---------------- | ------------------------------ |
+| `trigger`   | `ReactNode`                                                                                     | required         | Element that opens the popover |
+| `content`   | `ReactNode`                                                                                     | required         | Popover content                |
+| `isOpen`    | `boolean`                                                                                       | required         | Controlled open state          |
+| `onClose`   | `() => void`                                                                                    | required         | Close callback                 |
+| `placement` | `"bottom-start" \| "bottom-end" \| "bottom-center" \| "top-start" \| "top-end" \| "top-center"` | `"bottom-start"` | Position relative to trigger   |
+| `offset`    | `number`                                                                                        | `8`              | Distance from trigger in px    |
 
 ## Usage
 
@@ -33,11 +34,16 @@ const [isOpen, setIsOpen] = useState(false);
   }
   isOpen={isOpen}
   onClose={() => setIsOpen(false)}
-/>
+/>;
 ```
 
 ## Notes
+
 - Fully controlled — you manage open state externally
 - Automatically repositions to stay within viewport bounds
 - Closes on click outside the popover content
 - Used as the base for `Dropdown`, `Select`, `Tooltip`, and `Combobox` internally
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Popover theme contract](../../../THEME-REFERENCE.md#component-popover).

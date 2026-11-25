@@ -1,14 +1,18 @@
 "use client";
-
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import styles from "./Text.module.scss";
 
 // Use ComponentPropsWithoutRef for better type safety with HTML attributes
 type BaseProps = Omit<React.ComponentPropsWithoutRef<"span">, "color">;
 
 interface CustomTextProps {
+  classNames?: ThemeClassNames<"Text">;
   variant?:
     | "h1"
     | "h2"
@@ -27,9 +31,12 @@ interface CustomTextProps {
 }
 
 // Merge types
-export interface TextProps extends BaseProps, CustomTextProps {}
+export interface TextProps extends BaseProps, CustomTextProps {
+  classNames?: ThemeClassNames<"Text">;
+}
 
 export function Text({
+  classNames,
   variant = "body",
   weight,
   color,
@@ -40,6 +47,8 @@ export function Text({
   as,
   ...props
 }: TextProps) {
+  const doomPart = useThemeParts("Text", classNames, { variant: variant });
+
   // Determine the HTML element to use
   const Component =
     as ||
@@ -49,16 +58,18 @@ export function Text({
 
   return (
     <Component
-      className={clsx(
-        styles.text,
-        styles[variant],
-        weight && styles[`weight-${weight}`],
-        color
-          ? styles[`color-${color}`]
-          : !variant?.startsWith("caption") && styles["color-foreground"],
-        align && styles[`align-${align}`],
-        className,
-      )}
+      {...doomPart("root", {
+        className: clsx(
+          styles.text,
+          styles[variant],
+          weight && styles[`weight-${weight}`],
+          color
+            ? styles[`color-${color}`]
+            : !variant?.startsWith("caption") && styles["color-foreground"],
+          align && styles[`align-${align}`],
+          className,
+        ),
+      })}
       style={style}
       {...props}
     >

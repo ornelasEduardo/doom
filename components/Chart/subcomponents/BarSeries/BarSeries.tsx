@@ -1,7 +1,10 @@
 "use client";
-
 import React, { useEffect, useId, useMemo } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { CHART_DATA_ATTRS } from "../../engine";
 import { GpuPath } from "../../rendering/GpuPath";
@@ -19,6 +22,7 @@ import { createBarPath } from "../../utils/shapes";
 import styles from "./BarSeries.module.scss";
 
 interface BarSeriesProps<T> {
+  classNames?: ThemeClassNames<"Chart">;
   data?: T[];
   x?: Accessor<T, AxisValue>;
   y?: Accessor<T, AxisValue>;
@@ -41,6 +45,8 @@ const BarSeriesComponent = <T,>({
   barWidth = "auto",
   stackId,
 }: BarSeriesProps<T>) => {
+  const doomPart = useThemeParts("Chart", undefined, {});
+
   const { chartStore, config, x: contextX, y: contextY } = useChartContext<T>();
 
   const data = chartStore.useStore((s) => localData || s.data);
@@ -189,7 +195,7 @@ const BarSeriesComponent = <T,>({
                   ) || "Bar"
             }
             aria-roledescription="bar"
-            className={`${styles.bar} chart-bar`}
+            {...doomPart("bar", { className: `${styles.bar} chart-bar` })}
             contours={contour ? [contour] : []}
             d={createBarPath(finalX, finalY, w, h, end, radius)}
             role="graphics-symbol"

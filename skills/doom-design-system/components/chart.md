@@ -742,3 +742,7 @@ point. Ordinary marks retain semantic SVG identities for accessibility and
 selector-based behaviors. GPU resource ownership, context restoration, and
 canvas cleanup are scoped to each chart. When WebGL2 is unavailable, the chart
 announces the rendering failure while retaining keyboard access to the data.
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Chart theme contract](../../../THEME-REFERENCE.md#component-chart).

@@ -10,7 +10,10 @@
     justify-content: center;
     padding: var(--space-4);
     backdrop-filter: blur(var(--blur-standard));
-    background-color: rgba(0, 0, 0, var(--overlay-opacity));
+    background-color: var(
+      --overlay-color,
+      rgba(0, 0, 0, var(--overlay-opacity))
+    );
     opacity: 0;
     visibility: hidden;
     transition:
@@ -48,15 +51,15 @@
       .body,
       .footer,
       .modalContent {
-        background-color: transparent !important;
+        background-color: transparent;
       }
 
       .closeButton {
         @include hover;
-        background-color: var(--error) !important;
-        color: var(--error-foreground) !important;
-        border-color: var(--border-strong) !important;
-        box-shadow: var(--shadow-md);
+        background-color: var(--error);
+        color: var(--error-foreground);
+        border-color: var(--border-strong);
+        box-shadow: var(--surface-shadow, var(--shadow-md));
       }
     }
   }

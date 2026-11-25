@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { type SVGProps, useEffect, useRef } from "react";
 
 import { registerGpuMark } from "./scene";
 
-interface GpuLineProps {
+interface GpuLineProps extends SVGProps<SVGLineElement> {
   x1: number;
   x2: number;
   y1: number;
@@ -12,7 +12,14 @@ interface GpuLineProps {
   strokeOpacity?: number;
 }
 
-export function GpuLine({ x1, x2, y1, y2, strokeOpacity = 1 }: GpuLineProps) {
+export function GpuLine({
+  x1,
+  x2,
+  y1,
+  y2,
+  strokeOpacity = 1,
+  ...props
+}: GpuLineProps) {
   const node = useRef<SVGLineElement>(null);
   useEffect(() => {
     if (!node.current) {
@@ -34,6 +41,7 @@ export function GpuLine({ x1, x2, y1, y2, strokeOpacity = 1 }: GpuLineProps) {
   }, [x1, x2, y1, y2, strokeOpacity]);
   return (
     <line
+      {...props}
       ref={node}
       data-chart-gpu-mark="path"
       fill="none"

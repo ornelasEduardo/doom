@@ -26,7 +26,7 @@ const walk = (dir: string, out: string[] = []): string[] => {
 const readAll = (dir: string, extensions: string[]) =>
   walk(dir)
     .filter((f) => extensions.some((e) => f.endsWith(e)))
-    .filter((f) => !f.includes(".test."))
+    .filter((f) => !/\.test(?:[ .])/.test(f))
     .map((f) => readFileSync(f, "utf8"))
     .join("\n");
 

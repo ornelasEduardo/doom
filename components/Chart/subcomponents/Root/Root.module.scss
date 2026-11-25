@@ -5,8 +5,8 @@
     position: relative;
     background-color: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: var(--surface-radius, var(--radius-md));
+    box-shadow: var(--surface-shadow, var(--shadow-md));
     padding: var(--space-6);
     overflow: visible;
     user-select: none;
@@ -29,23 +29,24 @@
       @include solid-variant;
       border-color: var(--border-strong);
 
-      /* solid-variant remaps --primary to --solid-fg (the axis colour) and
-       * --secondary to near-background, so the series palette is redefined
-       * here against the solid ground rather than inheriting those. */
-      --chart-series-1: var(--solid-fg);
-      --chart-series-2: var(--solid-success);
-      --chart-series-3: var(--solid-warning);
-      --chart-series-4: var(--solid-error);
-      --chart-series-5: color-mix(
-        in srgb,
-        var(--solid-fg) 65%,
-        var(--solid-bg)
-      );
-      --chart-series-6: color-mix(
-        in srgb,
-        var(--solid-fg) 40%,
-        var(--solid-bg)
-      );
+      // Legacy charts use a palette based on the solid ground. Object themes
+      // carry their explicit series roles into this surface context.
+      &:not(:where([data-doom-scope], [data-doom-scope] *)) {
+        --chart-series-1: var(--solid-fg);
+        --chart-series-2: var(--solid-success);
+        --chart-series-3: var(--solid-warning);
+        --chart-series-4: var(--solid-error);
+        --chart-series-5: color-mix(
+          in srgb,
+          var(--solid-fg) 65%,
+          var(--solid-bg)
+        );
+        --chart-series-6: color-mix(
+          in srgb,
+          var(--solid-fg) 40%,
+          var(--solid-bg)
+        );
+      }
 
       :global(.tick) text {
         fill: var(--solid-fg);

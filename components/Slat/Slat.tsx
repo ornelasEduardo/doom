@@ -1,11 +1,16 @@
 import clsx from "clsx";
 import React from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import { Flex, Stack } from "../Layout/Layout";
 import { Text } from "../Text/Text";
 import styles from "./Slat.module.scss";
 
 export interface SlatProps extends React.HTMLAttributes<HTMLDivElement> {
+  classNames?: ThemeClassNames<"Slat">;
   /** Main label (e.g. filename) */
   label: React.ReactNode;
   /** Secondary label (e.g. filesize) */
@@ -21,6 +26,7 @@ export interface SlatProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
   (
     {
+      classNames,
       label,
       secondaryLabel,
       prependContent,
@@ -32,15 +38,19 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
     },
     ref,
   ) => {
+    const doomPart = useThemeParts("Slat", classNames, { variant: variant });
+
     return (
       <div
         ref={ref}
-        className={clsx(
-          styles.slat,
-          styles[variant],
-          { [styles.hoverable]: onClick },
-          className,
-        )}
+        {...doomPart("root", {
+          className: clsx(
+            styles.slat,
+            styles[variant],
+            { [styles.hoverable]: onClick },
+            className,
+          ),
+        })}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
         onClick={onClick}
@@ -55,12 +65,21 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
         <Flex align="center" gap={2} justify="space-between">
           <Flex align="center" gap={2} style={{ flex: 1, minWidth: 0 }}>
             {prependContent && (
-              <div className={styles.prepend}>{prependContent}</div>
+              <div {...doomPart("prepend", { className: styles.prepend })}>
+                {prependContent}
+              </div>
             )}
             <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
-              <Text className={styles.label}>{label}</Text>
+              <Text {...doomPart("label", { className: styles.label })}>
+                {label}
+              </Text>
               {secondaryLabel && (
-                <Text className={styles.secondaryLabel} variant="small">
+                <Text
+                  {...doomPart("secondaryLabel", {
+                    className: styles.secondaryLabel,
+                  })}
+                  variant="small"
+                >
                   {secondaryLabel}
                 </Text>
               )}
@@ -69,7 +88,9 @@ export const Slat = React.forwardRef<HTMLDivElement, SlatProps>(
 
           <Flex align="center" gap={2}>
             {appendContent && (
-              <div className={styles.append}>{appendContent}</div>
+              <div {...doomPart("append", { className: styles.append })}>
+                {appendContent}
+              </div>
             )}
           </Flex>
         </Flex>

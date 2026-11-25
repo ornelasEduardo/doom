@@ -1,6 +1,7 @@
 # Layout
 
 ## Import
+
 ```tsx
 import { Flex, Stack, Grid, Container, Switcher } from "doom-design-system";
 ```
@@ -9,48 +10,48 @@ import { Flex, Stack, Grid, Container, Switcher } from "doom-design-system";
 
 ### Flex
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `direction` | `"row" \| "column" \| "row-reverse" \| "column-reverse"` | `"row"` | Flex direction |
-| `justify` | `"flex-start" \| "flex-end" \| "center" \| "space-between" \| "space-around" \| "space-evenly"` | `"flex-start"` | Main axis alignment |
-| `align` | `"flex-start" \| "flex-end" \| "center" \| "stretch" \| "baseline"` | `"stretch"` | Cross axis alignment |
-| `gap` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6 \| 8 \| 10 \| 12 \| 16` | `0` | Spacing token |
-| `wrap` | `boolean \| "wrap" \| "nowrap" \| "wrap-reverse"` | `false` | Wrap behavior |
+| Prop        | Type                                                                                            | Default        | Description          |
+| ----------- | ----------------------------------------------------------------------------------------------- | -------------- | -------------------- |
+| `direction` | `"row" \| "column" \| "row-reverse" \| "column-reverse"`                                        | `"row"`        | Flex direction       |
+| `justify`   | `"flex-start" \| "flex-end" \| "center" \| "space-between" \| "space-around" \| "space-evenly"` | `"flex-start"` | Main axis alignment  |
+| `align`     | `"flex-start" \| "flex-end" \| "center" \| "stretch" \| "baseline"`                             | `"stretch"`    | Cross axis alignment |
+| `gap`       | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6 \| 8 \| 10 \| 12 \| 16`                                        | `0`            | Spacing token        |
+| `wrap`      | `boolean \| "wrap" \| "nowrap" \| "wrap-reverse"`                                               | `false`        | Wrap behavior        |
 
 Extends all standard `<div>` HTML attributes.
 
 ### Stack
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `direction` | `"column" \| "column-reverse" \| "row" \| "row-reverse"` | `"column"` | Stack direction |
-| `gap` | `Spacing` | `4` | Default vertical gap |
-| `align` | `string` | `"stretch"` | Cross axis alignment |
+| Prop        | Type                                                     | Default     | Description          |
+| ----------- | -------------------------------------------------------- | ----------- | -------------------- |
+| `direction` | `"column" \| "column-reverse" \| "row" \| "row-reverse"` | `"column"`  | Stack direction      |
+| `gap`       | `Spacing`                                                | `4`         | Default vertical gap |
+| `align`     | `string`                                                 | `"stretch"` | Cross axis alignment |
 
 Extends all standard `<div>` HTML attributes.
 
 ### Grid
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+| Prop      | Type               | Default | Description                                                    |
+| --------- | ------------------ | ------- | -------------------------------------------------------------- |
 | `columns` | `string \| number` | `"1fr"` | Grid columns — number creates equal columns, string is raw CSS |
-| `gap` | `Spacing` | `4` | Spacing token |
+| `gap`     | `Spacing`          | `4`     | Spacing token                                                  |
 
 Extends all standard `<div>` HTML attributes.
 
 ### Container
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `maxWidth` | `"sm" \| "md" \| "lg" \| "xl" \| "fluid"` | `"xl"` | Max width: sm=640px, md=768px, lg=1024px, xl=1280px, fluid=100% |
+| Prop       | Type                                      | Default | Description                                                     |
+| ---------- | ----------------------------------------- | ------- | --------------------------------------------------------------- |
+| `maxWidth` | `"sm" \| "md" \| "lg" \| "xl" \| "fluid"` | `"xl"`  | Max width: sm=640px, md=768px, lg=1024px, xl=1280px, fluid=100% |
 
 Extends all standard `<div>` HTML attributes.
 
 ### Switcher
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `threshold` | `"xxs" \| "xs" \| "sm" \| "md"` | `"xs"` | Breakpoint at which layout switches from row to column |
+| Prop        | Type                            | Default | Description                                            |
+| ----------- | ------------------------------- | ------- | ------------------------------------------------------ |
+| `threshold` | `"xxs" \| "xs" \| "sm" \| "md"` | `"xs"`  | Breakpoint at which layout switches from row to column |
 
 Extends all standard `<div>` HTML attributes.
 
@@ -89,7 +90,12 @@ Extends all standard `<div>` HTML attributes.
 ```
 
 ## Notes
+
 - `Stack` is `Flex` with `direction="column"` and `gap=4` as defaults — prefer it for vertical layouts
 - `Grid columns={3}` compiles to `repeat(3, 1fr)`; pass a CSS string like `"200px 1fr"` for unequal columns
 - `Container` centers horizontally via `margin: auto` — it does not control vertical spacing
 - `Switcher` uses container queries or breakpoints; each child gets equal width in row mode
+
+## Theme parts
+
+Box, Container, Flex, Grid and Stack each expose a root part. See the [layout recipe targets](../../../THEME-REFERENCE.md#recipe-targets).

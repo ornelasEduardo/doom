@@ -1,14 +1,19 @@
 "use client";
-
 import clsx from "clsx";
 import { ExternalLink } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedIcon } from "../../styles/theming/ThemedIcon";
 import styles from "./Link.module.scss";
 
 export type LinkVariant = "default" | "button" | "subtle";
 
 interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  classNames?: ThemeClassNames<"Link">;
   children: React.ReactNode;
   variant?: LinkVariant;
   prefetch?: boolean;
@@ -18,6 +23,7 @@ interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
 }
 
 export function Link({
+  classNames,
   children,
   variant = "default",
   prefetch,
@@ -30,6 +36,11 @@ export function Link({
   rel,
   ...props
 }: LinkProps) {
+  const doomPart = useThemeParts("Link", classNames, {
+    variant: variant,
+    disabled: disabled,
+  });
+
   const [shouldPrefetch, setShouldPrefetch] = useState(false);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -87,12 +98,14 @@ export function Link({
   return (
     <a
       aria-disabled={disabled}
-      className={clsx(
-        styles.link,
-        styles[variant],
-        disabled && styles.disabled,
-        className,
-      )}
+      {...doomPart("root", {
+        className: clsx(
+          styles.link,
+          styles[variant],
+          disabled && styles.disabled,
+          className,
+        ),
+      })}
       rel={effectiveRel}
       target={effectiveTarget}
       onClick={handleClick}
@@ -100,7 +113,14 @@ export function Link({
       {...props}
     >
       {children}
-      {isExternal && <ExternalLink className="ml-1" size={14} />}
+      {isExternal && (
+        <ThemedIcon
+          className="ml-1"
+          icon={ExternalLink}
+          iconName="externalLink"
+          size={14}
+        />
+      )}
     </a>
   );
 }

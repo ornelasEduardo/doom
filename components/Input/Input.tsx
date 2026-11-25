@@ -1,8 +1,11 @@
 "use client";
-
 import clsx from "clsx";
 import React, { useId, useState } from "react";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
 import type { ControlSize } from "../../styles/types";
 import { Label } from "../Label/Label";
 import styles from "./Input.module.scss";
@@ -11,6 +14,7 @@ interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "title" | "size"
 > {
+  classNames?: ThemeClassNames<"Input">;
   size?: ControlSize;
   label?: string;
   error?: string;
@@ -25,6 +29,7 @@ interface InputProps extends Omit<
 }
 
 export function Input({
+  classNames,
   size = "md",
   label,
   error: errorProp,
@@ -46,6 +51,8 @@ export function Input({
   maxLength,
   ...props
 }: InputProps) {
+  const doomPart = useThemeParts("Input", classNames, { size: size });
+
   const [isFocused, setIsFocused] = useState(false);
   const [internalError, setInternalError] = useState<string | undefined>(
     undefined,
@@ -99,28 +106,41 @@ export function Input({
     clsx(helperText && helperId, error && errorId) || undefined;
 
   return (
-    <div className={clsx(styles.container, className)} style={style}>
+    <div
+      {...doomPart("root", { className: clsx(styles.container, className) })}
+      style={style}
+    >
       {label && (
-        <Label htmlFor={inputId} required={required}>
+        <Label {...doomPart("label")} htmlFor={inputId} required={required}>
           {label}
         </Label>
       )}
 
-      <div className={clsx(styles.wrapper, size !== "md" && styles[size])}>
+      <div
+        {...doomPart("wrapper", {
+          className: clsx(styles.wrapper, size !== "md" && styles[size]),
+        })}
+      >
         {startAdornment && (
-          <span className={clsx(styles.adornment, styles.start)}>
+          <span
+            {...doomPart("adornment", {
+              className: clsx(styles.adornment, styles.start),
+            })}
+          >
             {startAdornment}
           </span>
         )}
         <input
           aria-describedby={describedBy}
           aria-invalid={!!error}
-          className={clsx(
-            styles.input,
-            startAdornment && styles.hasStartAdornment,
-            endAdornment && styles.hasEndAdornment,
-            error && styles.error,
-          )}
+          {...doomPart("input", {
+            className: clsx(
+              styles.input,
+              startAdornment && styles.hasStartAdornment,
+              endAdornment && styles.hasEndAdornment,
+              error && styles.error,
+            ),
+          })}
           defaultValue={defaultValue}
           id={inputId}
           maxLength={maxLength}
@@ -132,18 +152,25 @@ export function Input({
           {...props}
         />
         {endAdornment && (
-          <span className={clsx(styles.adornment, styles.end)}>
+          <span
+            {...doomPart("adornment", {
+              className: clsx(styles.adornment, styles.end),
+            })}
+          >
             {endAdornment}
           </span>
         )}
       </div>
 
       {(error || helperText || (showCount ?? maxLength !== undefined)) && (
-        <div className={styles.bottomRow}>
-          <div className={styles.messageArea}>
+        <div {...doomPart("bottomRow", { className: styles.bottomRow })}>
+          <div {...doomPart("messageArea", { className: styles.messageArea })}>
             {error ? (
               <span
-                className={clsx(styles.helperText, styles.error)}
+                {...doomPart("helperText", {
+                  "data-invalid": true,
+                  className: clsx(styles.helperText, styles.error),
+                })}
                 id={errorId}
                 role="alert"
               >
@@ -151,7 +178,10 @@ export function Input({
               </span>
             ) : (
               helperText && (
-                <span className={styles.helperText} id={helperId}>
+                <span
+                  {...doomPart("helperText", { className: styles.helperText })}
+                  id={helperId}
+                >
                   {helperText}
                 </span>
               )
@@ -159,7 +189,7 @@ export function Input({
           </div>
 
           {(showCount ?? maxLength !== undefined) && (
-            <span className={styles.counter}>
+            <span {...doomPart("counter", { className: styles.counter })}>
               {charCount}
               {maxLength !== undefined ? ` / ${maxLength}` : ""}
             </span>

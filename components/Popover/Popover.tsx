@@ -1,5 +1,4 @@
 "use client";
-
 import React, {
   useCallback,
   useEffect,
@@ -7,11 +6,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
+import {
+  type ThemeClassNames,
+  useThemeParts,
+} from "../../styles/theming/parts";
+import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import styles from "./Popover.module.scss";
 
 interface PopoverProps {
+  classNames?: ThemeClassNames<"Popover">;
   trigger: React.ReactNode;
   content: React.ReactNode;
   isOpen: boolean;
@@ -40,6 +44,8 @@ export function Popover({
   placement = "bottom-start",
   offset = 8,
 }: PopoverProps) {
+  const doomPart = useThemeParts("Popover", undefined, {});
+
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -174,25 +180,29 @@ export function Popover({
 
   return (
     <>
-      <div ref={triggerRef} className={styles.triggerWrapper}>
+      <div
+        ref={triggerRef}
+        {...doomPart("triggerWrapper", { className: styles.triggerWrapper })}
+      >
         {trigger}
       </div>
-      {isOpen &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            ref={contentRef}
-            className={styles.popover}
-            style={{
-              top: position.top,
-              left: position.left,
-              transformOrigin: transformOrigin,
-            }}
-          >
-            {content}
-          </div>,
-          document.body,
-        )}
+      {isOpen && typeof document !== "undefined" && (
+        <ThemedPortal>
+          {
+            <div
+              ref={contentRef}
+              {...doomPart("root", { className: styles.popover })}
+              style={{
+                top: position.top,
+                left: position.left,
+                transformOrigin: transformOrigin,
+              }}
+            >
+              {content}
+            </div>
+          }
+        </ThemedPortal>
+      )}
     </>
   );
 }

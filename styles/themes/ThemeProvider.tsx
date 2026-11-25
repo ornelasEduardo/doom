@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+import { LegacyThemeBoundary } from "../theming/LegacyThemeBoundary";
+import { ThemeRuntimeContext } from "../theming/ThemeScope";
 import { ThemeKey, themes } from "./definitions";
 
 interface ThemeContextType {
@@ -16,9 +18,11 @@ export function ThemeProvider({
   children,
   initialTheme,
   onThemeChange,
+  nonce,
 }: {
   children: React.ReactNode;
   initialTheme: ThemeKey;
+  nonce?: string;
   onThemeChange?: (theme: ThemeKey) => void;
 }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeKey>(initialTheme);
@@ -52,15 +56,24 @@ export function ThemeProvider({
       }}
     >
       <style
-        dangerouslySetInnerHTML={{ __html: `:root { ${cssVariables} }` }}
+        dangerouslySetInnerHTML={{ __html: `:root:root { ${cssVariables} }` }}
+        nonce={nonce}
       />
-      {children}
+      <LegacyThemeBoundary nonce={nonce} theme={currentTheme}>
+        {children}
+      </LegacyThemeBoundary>
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
   const context = useContext(ThemeContext);
+  const runtime = useContext(ThemeRuntimeContext);
+  if (runtime && !runtime.legacy) {
+    throw new Error(
+      "Object themes use useResolvedTheme; migrate away from the legacy useTheme hook",
+    );
+  }
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }

@@ -1,18 +1,19 @@
 # Alert
 
 ## Import
+
 ```tsx
 import { Alert } from "doom-design-system";
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"info" \| "success" \| "warning" \| "error"` | `"info"` | Visual style |
-| `title` | `string` | required | Alert heading |
-| `description` | `ReactNode` | — | Additional detail content |
-| `icon` | `ReactNode` | — | Custom icon (defaults per variant) |
+| Prop          | Type                                          | Default  | Description                        |
+| ------------- | --------------------------------------------- | -------- | ---------------------------------- |
+| `variant`     | `"info" \| "success" \| "warning" \| "error"` | `"info"` | Visual style                       |
+| `title`       | `string`                                      | required | Alert heading                      |
+| `description` | `ReactNode`                                   | —        | Additional detail content          |
+| `icon`        | `ReactNode`                                   | —        | Custom icon (defaults per variant) |
 
 ## Usage
 
@@ -30,13 +31,18 @@ import { Alert } from "doom-design-system";
 
 ## Variants
 
-| Variant | Use case |
-|---------|----------|
-| `info` | General notices |
-| `success` | Confirmations, completions |
-| `warning` | Cautions, deprecations |
-| `error` | Form validation, API errors |
+| Variant   | Use case                    |
+| --------- | --------------------------- |
+| `info`    | General notices             |
+| `success` | Confirmations, completions  |
+| `warning` | Cautions, deprecations      |
+| `error`   | Form validation, API errors |
 
 ## Notes
+
 - Each variant has a default icon — override with `icon` prop only when needed
 - `description` accepts `ReactNode` so you can include links or formatted content
+
+## Theme parts
+
+For public parts, registered sizes and variants, see the [Alert theme contract](../../../THEME-REFERENCE.md#component-alert).
