@@ -137,6 +137,11 @@ function createSurface(canvas: HTMLCanvasElement, sampleCount: 1 | 4) {
           notify();
         });
       } catch (cause) {
+        // A released canvas may already belong to a new surface. Late failures
+        // from this initialization must not unconfigure its replacement.
+        if (disposed || version !== generation) {
+          return;
+        }
         context?.unconfigure();
         device?.destroy();
         device = undefined;

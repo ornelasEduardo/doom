@@ -846,7 +846,9 @@ export class SpatialMap<T = unknown> {
       if (!token) {
         return undefined;
       }
-      const coordinate = this.coordinates(point);
+      // A pinned owner remains authoritative even when registrations reuse
+      // the same point object with different transforms or clipping.
+      const coordinate = owned ? owned.project(point) : this.coordinates(point);
       if (!coordinate) {
         return null;
       }

@@ -300,3 +300,23 @@ it("recovers a cursor after source replacement and disposal with bounded hydrati
   expect(replacement.get).toHaveBeenCalledTimes(1);
   expect(other.get).toHaveBeenCalledTimes(1);
 });
+
+it("resolves pinned owner transforms when registrations share point objects", () => {
+  const map = new SpatialMap({ useDomHitTesting: false });
+  const shared = p(10, 20);
+  const first = map.registerGeometry([shared]);
+  const pinned = map.resolveTarget("s", 0)!;
+  const second = map.registerGeometry([shared]);
+  second.setViewport({ ...v, translateX: 100 });
+  expect(map.resolveTarget("s", 0)?.coordinate).toEqual({ x: 110, y: 20 });
+  expect(map.resolveTarget("s", 0, pinned.geometryOwner)?.coordinate).toEqual({
+    x: 10,
+    y: 20,
+  });
+  first.setViewport({
+    ...v,
+    clip: { x: 0, y: 0, width: 5, height: 5 },
+  });
+  expect(map.resolveTarget("s", 0, pinned.geometryOwner)).toBeNull();
+  expect(map.resolveTarget("s", 0)?.coordinate).toEqual({ x: 110, y: 20 });
+});

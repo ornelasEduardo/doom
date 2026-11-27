@@ -200,3 +200,62 @@ it("invalidates staged upload metadata when submission throws synchronously", as
     vi.unstubAllGlobals();
   }
 });
+
+it("ignores a retired surface's late initialization rejection after canvas reacquisition", async () => {
+  vi.stubGlobal("GPUTextureUsage", { RENDER_ATTACHMENT: 16, COPY_DST: 2 });
+  const devices = Array.from({ length: 2 }, () => ({
+    destroy: vi.fn(),
+    addEventListener: vi.fn(),
+    lost: new Promise(() => {}),
+  }));
+  let rejectRecovery!: (reason: Error) => void;
+  const recovery = new Promise<never>((_resolve, reject) => {
+    rejectRecovery = reject;
+  });
+  const requestDevice = vi
+    .fn()
+    .mockResolvedValueOnce(devices[0])
+    .mockReturnValueOnce(recovery)
+    .mockResolvedValueOnce(devices[1]);
+  vi.stubGlobal("navigator", {
+    gpu: {
+      requestAdapter: vi.fn(async () => ({ requestDevice })),
+      getPreferredCanvasFormat: () => "rgba8unorm",
+    },
+  });
+  const canvas = document.createElement("canvas");
+  const unconfigure = vi.fn();
+  vi.spyOn(canvas, "getContext").mockReturnValue({
+    configure: vi.fn(),
+    unconfigure,
+  } as unknown as GPUCanvasContext);
+  const retired = acquireWebGpuSurface(canvas);
+  let current: ReturnType<typeof acquireWebGpuSurface> | undefined;
+  try {
+    await retired.ready;
+    const onError = devices[0].addEventListener.mock.calls[0][1] as (event: {
+      error: { message: string };
+    }) => void;
+    onError({ error: { message: "transient failure" } });
+    retired.recover();
+    const pending = retired.ready;
+    await Promise.resolve();
+    expect(requestDevice).toHaveBeenCalledTimes(2);
+    retired.release();
+    current = acquireWebGpuSurface(canvas);
+    await current.ready;
+    expect(current.available).toBe(true);
+    unconfigure.mockClear();
+
+    rejectRecovery(new Error("late adapter failure"));
+    await pending;
+
+    expect(unconfigure).not.toHaveBeenCalled();
+    expect(current.available).toBe(true);
+    expect(current.device).toBe(devices[1]);
+  } finally {
+    retired.release();
+    current?.release();
+    vi.unstubAllGlobals();
+  }
+});
