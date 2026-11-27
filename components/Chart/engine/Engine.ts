@@ -164,6 +164,11 @@ export class Engine<T = unknown> {
     };
   }
 
+  /** Whether an extension owns this identity, including clipped geometry. */
+  hasGeometry(seriesId: string, dataIndex: number): boolean {
+    return this.spatialMap.hasGeometry(seriesId, dataIndex);
+  }
+
   resolveTarget(
     target: Pick<
       InteractionTarget<T>,

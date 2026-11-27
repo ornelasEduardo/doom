@@ -45,7 +45,8 @@ it("draws grid geometry behind opaque bars without painting a second SVG grid", 
       line.y1.baseVal.value < bounds.y + bounds.height - 5,
   )!;
   expect(grid.getAttribute("data-chart-gpu-mark")).toBe("path");
-  expect(getComputedStyle(grid).strokeOpacity).toBe("0");
+  expect(getComputedStyle(grid).strokeOpacity).toBe("0.5");
+  expect(getComputedStyle(grid).filter).toBe("opacity(0)");
   const svg = grid.ownerSVGElement!;
   const matrix = svg.getScreenCTM()!.inverse().multiply(grid.getScreenCTM()!);
   const canvas = container.querySelector("canvas")!;
@@ -104,7 +105,8 @@ it("keeps axis strokes behind boundary points while retaining SVG tick labels", 
     '[aria-label="Y Axis"] .domain',
   )!;
   expect(axis.getAttribute("data-chart-gpu-mark")).toBe("path");
-  expect(getComputedStyle(axis).strokeOpacity).toBe("0");
+  expect(getComputedStyle(axis).strokeOpacity).toBe("1");
+  expect(getComputedStyle(axis).filter).toBe("opacity(0)");
   expect(container.querySelectorAll(".tick text").length).toBeGreaterThan(0);
   const point = container.querySelector<SVGCircleElement>("circle")!;
   const svg = point.ownerSVGElement!;

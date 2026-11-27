@@ -45,6 +45,7 @@ void main() {
 const fragment = `#version 300 es
 precision mediump float;
 uniform vec4 color;
+uniform float opacity;
 uniform vec4 strokeColor;
 uniform highp float strokeWidth;
 uniform highp mat3 clipMatrix;
@@ -72,7 +73,7 @@ void main() {
   float strokeAlpha = strokeColor.a * strokeCoverage;
   float fillAlpha = color.a * fillCoverage * (1.0 - strokeAlpha);
   outputColor = vec4((color.rgb * fillAlpha + strokeColor.rgb * strokeAlpha) * intensity,
-                     fillAlpha + strokeAlpha) * pointOpacity;
+                     fillAlpha + strokeAlpha) * pointOpacity * opacity;
 }`;
 
 export function createGpuResources(context: WebGL2RenderingContext) {
@@ -148,6 +149,7 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         "framebuffer",
         "radiusRatio",
         "inactiveOpacity",
+        "opacity",
         "color",
         "strokeColor",
         "strokeWidth",

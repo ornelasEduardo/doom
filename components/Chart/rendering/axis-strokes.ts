@@ -45,7 +45,7 @@ export function registerAxisStrokes(root: SVGGElement) {
           : domainPoints(node.getAttribute("d") ?? "");
       const opacity = node.getAttribute("stroke-opacity");
       node.setAttribute("data-chart-gpu-mark", "path");
-      node.setAttribute("stroke-opacity", "0");
+
       const release = registerGpuMark(node, {
         kind: "path",
         contours: [{ points, closed: false }],

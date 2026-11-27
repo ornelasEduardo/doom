@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { useThemeParts } from "../../../styles/theming/parts";
 import { CHART_DATA_ATTRS } from "../engine";
 import styles from "../subcomponents/SeriesPoint/SeriesPoint.module.scss";
 import { registerGpuMark } from "./scene";
@@ -26,6 +27,7 @@ export function GpuPointCloud({
   seriesColor,
   label = "Scatter Series",
 }: GpuPointCloudProps) {
+  const doomPart = useThemeParts("Chart", undefined, {});
   const group = useRef<SVGGElement>(null);
   useEffect(() => {
     if (!group.current || !radii.length) {
@@ -47,7 +49,7 @@ export function GpuPointCloud({
       ref={group}
       aria-label={`${label}: ${radii.length} data points`}
       aria-roledescription="scatter plot"
-      className={styles.point}
+      {...doomPart("point", { className: styles.point })}
       data-chart-gpu-mark="cloud"
       role="graphics-object"
       style={{ fill: seriesColor }}

@@ -190,7 +190,10 @@ export class PreparedGrid<T> {
       previous: buffers.previous.slice(),
     };
     if (Array.isArray(points)) {
-      this.points = points.slice();
+      this.points = points.map((point, index) => ({
+        ...point,
+        ...this.coordinate(index),
+      }));
     }
   }
   get(seriesId: string, index: number) {
@@ -252,9 +255,9 @@ export class PreparedGrid<T> {
       const index = point.dataIndex;
       moveGridPoint(g, index, point.x, point.y);
       if (Array.isArray(this.points)) {
-        this.points[index] = point;
+        this.points[index] = { ...point };
       } else {
-        this.cache.set(index, point);
+        this.cache.set(index, { ...point });
       }
     }
   }

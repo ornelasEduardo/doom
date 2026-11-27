@@ -38,6 +38,10 @@ const axisParameters = (axis?: GpuAxis): [number, number, number] => {
 };
 
 export interface GpuView {
+  /** Opacity of each complete point, including its fill and stroke. */
+  opacity?: number;
+  /** Internal same-context opacity layer. Defaults to the canvas. */
+  target?: WebGLFramebuffer | null;
   /** Clear the shared framebuffer before drawing; defaults to true. */
   clear?: boolean;
   /** Additional clip in CSS canvas pixels; empty rectangles draw nothing. */
@@ -68,6 +72,12 @@ export interface GpuView {
 
 const gpuFinite = (value: number) => Number.isFinite(Math.fround(value));
 function validateView(view: GpuView) {
+  if (
+    view.opacity !== undefined &&
+    (!Number.isFinite(view.opacity) || view.opacity < 0 || view.opacity > 1)
+  ) {
+    throw new RangeError("GPU opacity must be in [0, 1]");
+  }
   const positive = [
     view.width,
     view.height,
@@ -543,7 +553,7 @@ export function createGpuPoints(
       density ? density.counts.length : data.length,
     );
     canvas.dataset.gpuDetail = density ? "density" : "exact";
-    context.bindFramebuffer(context.FRAMEBUFFER, null);
+    context.bindFramebuffer(context.FRAMEBUFFER, view.target ?? null);
     context.disable(context.SAMPLE_ALPHA_TO_COVERAGE);
     context.disable(context.SAMPLE_COVERAGE);
     context.disable(context.STENCIL_TEST);
@@ -591,6 +601,7 @@ export function createGpuPoints(
       1,
     ]);
     context.uniform1f(u.radiusRatio, view.ratio);
+    context.uniform1f(u.opacity, view.opacity ?? 1);
     context.uniform1f(u.inactiveOpacity, view.emphasis?.opacity ?? 1);
     context.uniform1f(u.maxWeight, density ? maxWeight : 0);
     context.uniform4fv(u.color, view.color);
@@ -628,7 +639,7 @@ export function createGpuPoints(
     }
     // Replay and subscriber errors are caller errors, not resource failures.
     // Resources already exist, so replay does not emit another notification.
-    if (recovered && latest) {
+    if (recovered && latest && !latest.view.target) {
       draw(latest.data, latest.view);
     }
     options.onStatusChange?.();

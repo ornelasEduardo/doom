@@ -1,4 +1,5 @@
 import { createGpuPoints, type GpuPointSource } from "./gpu";
+import { createGpuCompositor } from "./gpu-compositor";
 import { readGpuEmphasis, subscribeGpuEffects } from "./gpu-effects";
 import { createGpuVector, type VectorShape } from "./gpu-vector";
 import styles from "./scene.module.scss";
@@ -8,7 +9,6 @@ export type GpuMark =
   | {
       kind: "path";
       contours: readonly VectorContour[];
-      strokeOpacity?: number;
       gradient?: { startOpacity: number; endOpacity: number };
     }
   | { kind: "point"; x: number; y: number; radius: number }
@@ -39,6 +39,7 @@ function createScene(svg: SVGSVGElement) {
   const colors = document.createElement("canvas").getContext("2d");
   let vector: ReturnType<typeof createGpuVector> | undefined;
   let points: ReturnType<typeof createGpuPoints> | undefined;
+  let compositor: ReturnType<typeof createGpuCompositor> | undefined;
   let frame = 0;
   let disposed = false;
   let status: HTMLDivElement | undefined;
@@ -152,6 +153,10 @@ function createScene(svg: SVGSVGElement) {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     try {
+      if (typeof WebGL2RenderingContext === "undefined") {
+        unavailable();
+        return;
+      }
       vector ??= createGpuVector(canvas);
       points ??= createGpuPoints(canvas, { onStatusChange: schedule });
       if (!vector.available) {
@@ -165,6 +170,14 @@ function createScene(svg: SVGSVGElement) {
         return;
       }
       vector.draw([], { width, height, ratio });
+      compositor ??= createGpuCompositor(canvas.getContext("webgl2")!);
+      compositor.begin(w, h);
+      const layers: {
+        node: Element;
+        opacity: number;
+        target: WebGLFramebuffer;
+      }[] = [];
+      const target = () => layers.at(-1)?.target ?? null;
       const ordered = [...marks].sort(([a], [b]) =>
         a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
           ? -1
@@ -175,6 +188,7 @@ function createScene(svg: SVGSVGElement) {
         positions: number[];
         radii: number[];
         fill: number[];
+        opacity: number;
         stroke?: { color: number[]; width: number };
         clip?: Rect;
       };
@@ -202,13 +216,36 @@ function createScene(svg: SVGSVGElement) {
               y: { type: "linear", domain: [0, height] },
             },
             color: batch.fill,
+            opacity: batch.opacity,
             stroke: batch.stroke,
             radius: 6,
             clip: batch.clip,
             clear: false,
+            target: target(),
           },
         );
         batch = undefined;
+      };
+      const transition = (ancestry: { node: Element; opacity: number }[]) => {
+        let common = 0;
+        while (
+          common < layers.length &&
+          common < ancestry.length &&
+          layers[common].node === ancestry[common].node
+        ) {
+          common++;
+        }
+        if (common === layers.length && common === ancestry.length) {
+          return;
+        }
+        flush();
+        while (layers.length > common) {
+          const layer = layers.pop()!;
+          compositor!.close(layers.length, layer.opacity, target());
+        }
+        for (let i = common; i < ancestry.length; i++) {
+          layers.push({ ...ancestry[i], target: compositor!.open(i) });
+        }
       };
       for (const [node, mark] of ordered) {
         const css = getComputedStyle(node),
@@ -216,7 +253,8 @@ function createScene(svg: SVGSVGElement) {
         if (!matrix || css.display === "none" || css.visibility === "hidden") {
           continue;
         }
-        let opacity = 1;
+        let hidden = false;
+        const ancestry: { node: Element; opacity: number }[] = [];
         for (
           let ancestor: Element | null = node;
           ancestor;
@@ -224,22 +262,30 @@ function createScene(svg: SVGSVGElement) {
         ) {
           const ancestorStyle = getComputedStyle(ancestor);
           if (ancestorStyle.display === "none") {
-            opacity = 0;
+            hidden = true;
             break;
           }
-          opacity *= Number(ancestorStyle.opacity);
+          const alpha = Number(ancestorStyle.opacity);
+          if (alpha === 0) {
+            hidden = true;
+            break;
+          }
+          // A cloud collapses individual semantic points, so its own opacity
+          // remains per-point; actual SVG ancestors still isolate the group.
+          if (alpha < 1 && !(ancestor === node && mark.kind !== "path")) {
+            ancestry.unshift({ node: ancestor, opacity: alpha });
+          }
           if (ancestor === svg) {
             break;
           }
         }
-        if (opacity === 0) {
+        if (hidden) {
           continue;
         }
-        const fill = color(css.fill, opacity),
-          strokeColor = color(
-            css.stroke,
-            opacity * (mark.kind === "path" ? (mark.strokeOpacity ?? 1) : 1),
-          );
+        transition(ancestry);
+        const opacity = mark.kind !== "path" ? Number(css.opacity) : 1;
+        const fill = color(css.fill, Number(css.fillOpacity)),
+          strokeColor = color(css.stroke, Number(css.strokeOpacity));
         const strokeWidth =
           Number.parseFloat(css.strokeWidth) *
           Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c));
@@ -249,11 +295,12 @@ function createScene(svg: SVGSVGElement) {
             : undefined;
         const clip = clipFor(node);
         if (mark.kind === "point") {
-          const key = JSON.stringify([fill, stroke, clip]);
+          const key = JSON.stringify([fill, stroke, clip, opacity]);
           if (batch?.key !== key) {
             flush();
             batch = {
               key,
+              opacity,
               positions: [],
               radii: [],
               fill: fill ?? [0, 0, 0, 0],
@@ -301,7 +348,14 @@ function createScene(svg: SVGSVGElement) {
               : undefined,
             stroke,
           };
-          vector.draw([shape], { width, height, ratio, clip, clear: false });
+          vector.draw([shape], {
+            width,
+            height,
+            ratio,
+            clip,
+            clear: false,
+            target: target(),
+          });
         } else {
           const positions = mark.positions;
           const scale = Math.sqrt(
@@ -342,8 +396,10 @@ function createScene(svg: SVGSVGElement) {
               mark.radius *
               Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)),
             color: fill ?? [0, 0, 0, 0],
+            opacity,
             stroke,
             clear: false,
+            target: target(),
             clip,
             emphasis: readGpuEmphasis(
               node,
@@ -355,6 +411,8 @@ function createScene(svg: SVGSVGElement) {
         }
       }
       flush();
+      transition([]);
+      compositor.end();
       canvas.dataset.chartGpu = "ready";
       status?.remove();
       status = undefined;
@@ -413,6 +471,7 @@ function createScene(svg: SVGSVGElement) {
       ancestors.disconnect();
       window.removeEventListener("resize", schedule);
       canvas.removeEventListener("webglcontextrestored", schedule);
+      compositor?.dispose();
       points?.dispose();
       vector?.dispose();
       canvas
@@ -427,7 +486,7 @@ function createScene(svg: SVGSVGElement) {
 }
 export function registerGpuMark(node: SVGGraphicsElement, mark: GpuMark) {
   const svg = node.ownerSVGElement;
-  if (!svg || typeof WebGL2RenderingContext === "undefined") {
+  if (!svg) {
     return () => {};
   }
   let scene = scenes.get(svg);

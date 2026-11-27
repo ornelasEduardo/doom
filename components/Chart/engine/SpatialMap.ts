@@ -763,6 +763,12 @@ export class SpatialMap<T = unknown> {
     }));
   }
 
+  /** Whether an extension owns this identity, including clipped geometry. */
+  hasGeometry(seriesId: string, dataIndex: number): boolean {
+    const owner = this.identityOwner(seriesId, dataIndex);
+    return owner !== undefined && owner !== this;
+  }
+
   resolveTarget(
     seriesId: string,
     dataIndex: number,

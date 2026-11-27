@@ -88,10 +88,8 @@ export const SeriesPoint = memo(
         cx={x}
         cy={y}
         data-chart-gpu-mark="point"
-        fillOpacity={0}
         r={isHovered ? hoverRadius : radius}
         role="graphics-symbol"
-        strokeOpacity={0}
         style={{
           ...computedStyle,
           pointerEvents: "all",

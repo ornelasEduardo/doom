@@ -17,6 +17,8 @@ export interface VectorShape {
   opacity?: number;
 }
 export interface VectorView {
+  /** Internal same-context opacity layer. Defaults to the canvas. */
+  target?: WebGLFramebuffer | null;
   width: number;
   height: number;
   ratio: number;
@@ -286,7 +288,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
     if (canvas.height !== height) {
       canvas.height = height;
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, view.target ?? null);
     gl.viewport(0, 0, width, height);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
@@ -413,7 +415,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       current = resources(gl);
       lost = false;
       error = undefined;
-      if (latest) {
+      if (latest && !latest.view.target) {
         render(latest.shapes, latest.view);
       }
       return true;

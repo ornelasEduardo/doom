@@ -125,8 +125,8 @@ describe("BarSeries", () => {
     bars.forEach((bar, index) => {
       expect(bar.__data__).toEqual(defaultContext.data[index]);
       expect(bar).toHaveAttribute("data-chart-gpu-mark", "path");
-      expect(bar).toHaveAttribute("fill-opacity", "0");
-      expect(bar).toHaveAttribute("stroke-opacity", "0");
+      expect(bar).not.toHaveAttribute("fill-opacity", "0");
+      expect(bar).not.toHaveAttribute("stroke-opacity", "0");
       expect(bar.style.pointerEvents).toBe("all");
       expect(bar.getAttribute("d")).toBeTruthy();
     });

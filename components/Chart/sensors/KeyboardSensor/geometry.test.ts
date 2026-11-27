@@ -15,6 +15,7 @@ import {
 import type { SensorContext } from "../../types/events";
 import { createInteractionAccess } from "../../utils/interactionChannels";
 import { KeyboardSensor } from "./KeyboardSensor";
+import { buildNavigation } from "./navigation";
 
 it.each(["custom", "line"] as const)(
   "prefers owned %s coordinates and data before accessor eligibility",
@@ -343,5 +344,42 @@ it.each([false, true])(
       ["a", 0],
       ["b", 0],
     ]);
+  },
+);
+
+it.each(["line", "default"] as const)(
+  "excludes clipped owned %s targets but preserves ordinary reprojection",
+  (kind) => {
+    const data = [{ x: 1, y: 1 }];
+    const store = createChartStore({ width: 600, height: 400 }, "x", "y");
+    updateChartState(store, { data, dimensions: store.getState().dimensions });
+    const seriesId = kind === "default" ? "default" : "s";
+    if (kind === "line") {
+      registerSeries(store, seriesId, [
+        { id: seriesId, type: "line", x: "x", y: "y" },
+      ]);
+    }
+    const engine = new Engine({ useDomHitTesting: false });
+    const point = { x: 500, y: 100, data: data[0], seriesId, dataIndex: 0 };
+    expect(engine.resolveTargets([point])).toEqual([null]);
+    expect(buildNavigation(store.getState(), engine).slices).toHaveLength(1);
+    engine.updateData([point]);
+    expect(engine.resolveTargets([point])).toEqual([undefined]);
+    expect(buildNavigation(store.getState(), engine).slices).toHaveLength(1);
+    const owner = engine.registerGeometry([point]);
+    owner.setViewport({
+      scaleX: 1,
+      scaleY: 1,
+      translateX: 0,
+      translateY: 0,
+      clip: { x: 0, y: 0, width: 50, height: 50 },
+    });
+    expect(engine.resolveTargets([point])).toEqual([null]);
+    expect(buildNavigation(store.getState(), engine).slices).toEqual([]);
+    owner.setViewport(undefined);
+    expect(buildNavigation(store.getState(), engine).slices).toHaveLength(1);
+    owner.dispose();
+    expect(buildNavigation(store.getState(), engine).slices).toHaveLength(1);
+    engine.dispose();
   },
 );

@@ -94,3 +94,55 @@ it("uses explicit bounds while retaining finite-coordinate validation and edge q
     RangeError,
   );
 });
+
+it.each(["array", "numeric"] as const)(
+  "retains published and patched %s geometry independently of caller objects",
+  (kind) => {
+    const data = { value: 7 };
+    const point = { x: 10, y: 10, seriesId: "s", dataIndex: 0, data };
+    const map = new SpatialMap({ useDomHitTesting: false, magneticRadius: 1 });
+    const owner = map.registerGeometry();
+    owner.updatePrepared(
+      kind === "array"
+        ? [point]
+        : { length: 1, seriesId: "s", get: () => point },
+      buildGrid(new Float64Array([10, 10])),
+      { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0 },
+    );
+    point.x = 100;
+    if (kind === "array") {
+      point.seriesId = "changed";
+    }
+    expect(map.resolveTarget("s", 0)?.coordinate).toEqual({ x: 10, y: 10 });
+    expect(map.find(10, 10)[0]?.data).toBe(data);
+    expect(map.find(100, 10)).toEqual([]);
+    const patch = { ...point, seriesId: "s", x: 20 };
+    owner.patch([patch]);
+    patch.x = 200;
+    patch.seriesId = "changed";
+    expect(map.resolveTarget("s", 0)?.coordinate).toEqual({ x: 20, y: 10 });
+    expect(map.find(20, 10)[0]?.data).toBe(data);
+    expect(map.find(200, 10)).toEqual([]);
+  },
+);
+
+it.each(["array", "numeric"] as const)(
+  "uses grid coordinates instead of initial %s point coordinates",
+  (kind) => {
+    const data = { value: 7 };
+    const point = { x: 100, y: 100, seriesId: "s", dataIndex: 0, data };
+    const map = new SpatialMap({ useDomHitTesting: false, magneticRadius: 1 });
+    map
+      .registerGeometry()
+      .updatePrepared(
+        kind === "array"
+          ? [point]
+          : { length: 1, seriesId: "s", get: () => point },
+        buildGrid(new Float64Array([10, 20])),
+        { scaleX: 1, scaleY: 1, translateX: 0, translateY: 0 },
+      );
+    expect(map.resolveTarget("s", 0)?.coordinate).toEqual({ x: 10, y: 20 });
+    expect(map.find(10, 20)[0]?.data).toBe(data);
+    expect(map.find(100, 100)).toEqual([]);
+  },
+);

@@ -143,6 +143,9 @@ export function buildNavigation<T>(state: State<T>, engine?: Engine<T>) {
         if (owned) {
           return [owned];
         }
+        if (owned === null && engine?.hasGeometry(series.id, index)) {
+          return [];
+        }
         // Unpublished custom rows have no rendered keyboard target.
         if (series.type === "custom") {
           return [];
@@ -193,6 +196,12 @@ export function buildNavigation<T>(state: State<T>, engine?: Engine<T>) {
         : undefined;
       if (ownedPrimary) {
         return [ownedPrimary];
+      }
+      if (
+        ownedPrimary === null &&
+        engine?.hasGeometry("default", entry.index)
+      ) {
+        return [];
       }
       return targets.length || entry.series
         ? targets

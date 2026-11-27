@@ -27,7 +27,6 @@ export function GpuLine({
     }
     return registerGpuMark(node.current, {
       kind: "path",
-      strokeOpacity,
       contours: [
         {
           points: [
@@ -45,7 +44,7 @@ export function GpuLine({
       ref={node}
       data-chart-gpu-mark="path"
       fill="none"
-      strokeOpacity={0}
+      strokeOpacity={strokeOpacity}
       x1={x1}
       x2={x2}
       y1={y1}

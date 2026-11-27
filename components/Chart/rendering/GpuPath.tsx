@@ -41,8 +41,6 @@ export function GpuPath({ contours, gradient, ref, ...props }: GpuPathProps) {
         }
       }}
       data-chart-gpu-mark="path"
-      fillOpacity={0}
-      strokeOpacity={0}
     />
   );
 }

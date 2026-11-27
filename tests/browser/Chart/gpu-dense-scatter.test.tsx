@@ -8,6 +8,8 @@ import { Chart } from "../../../components/Chart/Chart";
 import { useChartContext } from "../../../components/Chart/context";
 import type { ContextValue } from "../../../components/Chart/types";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
+import { defineTheme } from "../../../styles/theming/defineTheme";
+import { ThemeScope } from "../../../styles/theming/ThemeScope";
 
 type Row = { x: number; y: number | null; size: number };
 const rows: Row[] = Array.from({ length: 5000 }, (_, index) => ({
@@ -191,4 +193,68 @@ it("replaces dense data, returns to small GPU circles, and releases only its own
   const remaining = view.container.querySelector("canvas")!;
   view.unmount();
   expect(remaining.isConnected).toBe(false);
+});
+
+it("preserves point theme recipes and classes across the dense threshold and theme updates", async () => {
+  const themed = (opacity: string) =>
+    defineTheme({
+      name: "Scatter theme",
+      components: {
+        Chart: {
+          classNames: { point: "themed-point" },
+          parts: {
+            point: { opacity, stroke: "rgb(20, 30, 40)", strokeWidth: "3px" },
+          },
+        },
+      },
+    });
+  const initial = themed("0.2");
+  const updated = themed("0.6");
+  const fixture = (count: number, theme = initial) => (
+    <ThemeScope theme={theme}>
+      <Chart.Root
+        classNames={{ point: "instance-point" }}
+        data={rows.slice(0, count)}
+        style={{ width: 600, height: 350 }}
+        type="scatter"
+        x="x"
+        y="y"
+      >
+        <Chart.Plot>
+          <Chart.Series type="scatter" />
+        </Chart.Plot>
+      </Chart.Root>
+    </ThemeScope>
+  );
+  const view = render(fixture(1000));
+  await ready(view.container);
+  const check = (kind: string, opacity: string) => {
+    const mark = view.container.querySelector(
+      `[data-chart-gpu-mark="${kind}"]`,
+    )!;
+    expect(getComputedStyle(mark).opacity).toBe(opacity);
+    expect(getComputedStyle(mark).stroke).toBe("rgb(20, 30, 40)");
+    expect(getComputedStyle(mark).strokeWidth).toBe("3px");
+    expect(mark.classList.contains("themed-point")).toBe(true);
+    expect(mark.classList.contains("instance-point")).toBe(true);
+  };
+  check("point", "0.2");
+  view.rerender(fixture(1001));
+  await expect
+    .poll(
+      () =>
+        view.container.querySelector('[data-chart-gpu-mark="cloud"]') !== null,
+    )
+    .toBe(true);
+  check("cloud", "0.2");
+  view.rerender(fixture(1001, updated));
+  check("cloud", "0.6");
+  view.rerender(fixture(1000, updated));
+  await expect
+    .poll(
+      () =>
+        view.container.querySelector('[data-chart-gpu-mark="point"]') !== null,
+    )
+    .toBe(true);
+  check("point", "0.6");
 });
