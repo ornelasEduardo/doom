@@ -95,8 +95,8 @@ it("keeps transformed custom handles in SVG space across header, scale, scroll, 
         {["left", "right"].map((id) => (
           <Chart.Root
             key={id}
-            data-testid={`custom-geometry-${id}`}
             data={data}
+            data-testid={`custom-geometry-${id}`}
             sensors={sensors.get(id)}
             style={{ width: 520, height: 380, flexShrink: 0 }}
             x="x"
@@ -465,9 +465,9 @@ it.each([false, true])(
     const tree = (rows: Row[]) => (
       <DesignSystemProvider>
         <Chart.Root
-          data-testid="standalone-geometry-chart"
           behaviors={[markers]}
           data={rows}
+          data-testid="standalone-geometry-chart"
           sensors={[sensor]}
           style={{ width: 600, height: 400 }}
           x="x"
