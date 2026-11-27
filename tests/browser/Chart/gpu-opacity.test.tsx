@@ -85,9 +85,12 @@ gpuIt(
 );
 it("reports unavailable rendering when WebGPU is absent and cleans up", async () => {
   const f = fixture();
-  vi.spyOn(navigator, "gpu", "get").mockReturnValue(
-    undefined as unknown as GPU,
-  );
+  // Some engines omit the API entirely; exercise that native absence as-is.
+  if ("gpu" in navigator) {
+    vi.spyOn(navigator, "gpu", "get").mockReturnValue(
+      undefined as unknown as GPU,
+    );
+  }
   f.point(45);
   try {
     await new Promise(requestAnimationFrame);
