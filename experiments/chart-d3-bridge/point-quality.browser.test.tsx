@@ -1,14 +1,19 @@
-import { expect, it } from "vitest";
+import { beforeEach, expect, it } from "vitest";
 
 import { createGpuPoints } from "../../components/Chart/rendering/gpu";
+import {
+  hasWebGpu,
+  readGpuPixels,
+  readGpuPixelsBottomUp,
+} from "../../tests/browser/Chart/webgpu-readback";
 
 it.each([1, 2])(
   "smooths only the circle boundary at pixel ratio %s",
-  (ratio) => {
+  async (ratio) => {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 32 * ratio;
     const gpu = createGpuPoints(canvas);
-    const gl = canvas.getContext("webgl2")!;
+    await gpu.ready;
     const positions = new Float32Array([0.5, 0.5]);
     try {
       gpu.draw(
@@ -27,16 +32,7 @@ it.each([1, 2])(
           color: [1, 0, 0, 1],
         },
       );
-      const pixels = new Uint8Array(canvas.width * canvas.height * 4);
-      gl.readPixels(
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        pixels,
-      );
+      const pixels = await readGpuPixelsBottomUp(canvas);
       let partial = 0;
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
@@ -60,18 +56,18 @@ it.each([1, 2])(
         }
       }
       expect(partial).toBeGreaterThan(0);
-      expect(gl.getError()).toBe(gl.NO_ERROR);
+      expect(gpu.error).toBeUndefined();
     } finally {
       gpu.dispose();
     }
   },
 );
 
-it("composites translucent overlapping dots without dark fringes", () => {
+it("composites translucent overlapping dots without dark fringes", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 32;
   const gpu = createGpuPoints(canvas);
-  const gl = canvas.getContext("webgl2")!;
+  await gpu.ready;
   const positions = new Float32Array([0.5, 0.5, 0.5, 0.5]);
   try {
     gpu.draw(
@@ -90,8 +86,7 @@ it("composites translucent overlapping dots without dark fringes", () => {
         color: [1, 0, 0, 0.5],
       },
     );
-    const pixel = new Uint8Array(4);
-    gl.readPixels(16, 16, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    const pixel = await readGpuPixels(canvas, 16, 15, 1, 1);
     expect(pixel[3]).toBeGreaterThanOrEqual(190);
     expect(pixel[3]).toBeLessThanOrEqual(193);
     expect(pixel[0]).toBe(pixel[3]);
@@ -99,5 +94,11 @@ it("composites translucent overlapping dots without dark fringes", () => {
     expect(pixel[2]).toBe(0);
   } finally {
     gpu.dispose();
+  }
+});
+
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
   }
 });

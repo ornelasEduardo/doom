@@ -1,5 +1,6 @@
-import type { ClipPolygon } from "./gpu-clip";
+import { type ClipPolygon, counterclockwise } from "./clip-geometry";
 import { createGpuResources } from "./gpu-resources";
+import { acquireWebGpuSurface, type GpuTarget } from "./webgpu-surface";
 
 /** A density frame is immutable; replace its identity when its buffers change. */
 export interface DensityFrame {
@@ -45,7 +46,7 @@ export interface GpuView {
   /** Opacity of each complete point, including its fill and stroke. */
   opacity?: number;
   /** Internal same-context opacity layer. Defaults to the canvas. */
-  target?: WebGLFramebuffer | null;
+  target?: GpuTarget | null;
   /** Clear the shared framebuffer before drawing; defaults to true. */
   clear?: boolean;
   /** Additional clip in CSS canvas pixels; empty rectangles draw nothing. */
@@ -211,48 +212,100 @@ export function createGpuPoints(
   canvas: HTMLCanvasElement,
   options: { onStatusChange?: () => void } = {},
 ) {
-  const gl = canvas.getContext("webgl2", {
-    antialias: false,
-    depth: false,
-    stencil: false,
-  });
-  if (!gl) {
-    throw new Error("WebGL2 is required for GPU point rendering.");
-  }
-  const context = gl;
-  const pointSizeRange = context.getParameter(
-    context.ALIASED_POINT_SIZE_RANGE,
-  ) as Float32Array | undefined;
-  const maxPointSize = pointSizeRange?.[1] ?? Infinity;
+  const surface = acquireWebGpuSurface(canvas, { sampleCount: 1 });
   let disposed = false;
   let uploadedDensity: DensityFrame | undefined;
   let uploaded: GpuPointSource | undefined;
   let positions: Float32Array = new Float32Array(0);
   let radii: Float32Array | undefined;
   let maxRadius = 0;
+  let maxWeight = 0;
   const dirty = new Set<number>();
   let emphasisSource: GpuPointSource | DensityFrame | undefined;
   let selected = new Map<number, number>();
-  const inactiveFlag = new Float32Array([0]);
   let latest: { data: GpuPointSource; view: GpuView } | undefined;
-  let owned: ReturnType<typeof createGpuResources> | undefined =
-    createGpuResources(context);
-  let restorationError: string | undefined;
-  function restoreResources() {
-    try {
-      owned ??= createGpuResources(context);
-    } catch (error) {
-      restorationError = error instanceof Error ? error.message : String(error);
-      canvas.dataset.gpuError = restorationError;
-      throw error;
-    }
-    restorationError = undefined;
-    delete canvas.dataset.gpuError;
+  let owned: ReturnType<typeof createGpuResources> | undefined;
+  let resourceError: string | undefined;
+  let queued = false;
+  let uploadRevision = surface.abortRevision;
+  function write(buffer: GPUBuffer, offset: number, data: Float32Array) {
+    surface.writeBuffer(buffer, offset, data);
   }
-  let maxWeight = 0;
+  function allocate(
+    data: Float32Array | number,
+    label: string,
+    usage = GPUBufferUsage.STORAGE,
+  ) {
+    const buffer = surface.device.createBuffer({
+      label,
+      size: Math.max(16, typeof data === "number" ? data : data.byteLength),
+      usage: usage | GPUBufferUsage.COPY_DST,
+    });
+    if (typeof data !== "number" && data.byteLength) {
+      try {
+        // A fresh buffer cannot be referenced by earlier commands in this frame.
+        surface.device.queue.writeBuffer(
+          buffer,
+          0,
+          data.buffer as ArrayBuffer,
+          data.byteOffset,
+          data.byteLength,
+        );
+      } catch (error) {
+        buffer.destroy();
+        throw error;
+      }
+    }
+    return buffer;
+  }
+  function replace(
+    key: "buffer" | "radii" | "weights" | "emphasis",
+    data: Float32Array | number,
+  ) {
+    const previous = owned![key];
+    owned![key] = allocate(
+      data,
+      `Chart point ${key}`,
+      key === "buffer" ? GPUBufferUsage.VERTEX : GPUBufferUsage.STORAGE,
+    );
+    if (previous) {
+      surface.defer(() => previous.destroy());
+    }
+  }
+  function reset() {
+    owned = undefined;
+    uploaded = undefined;
+    uploadedDensity = undefined;
+    emphasisSource = undefined;
+    selected.clear();
+  }
+  function initialize() {
+    if (!surface.available || surface.error || disposed) {
+      return;
+    }
+    try {
+      owned ??= createGpuResources(
+        surface.device,
+        surface.format,
+        surface.sampleCount,
+      );
+      resourceError = undefined;
+    } catch (error) {
+      resourceError = error instanceof Error ? error.message : String(error);
+    }
+  }
   const draw = (data: GpuPointSource, view: GpuView) => {
     if (disposed) {
       return;
+    }
+    if (uploadRevision !== surface.abortRevision) {
+      // Aborted command encoders discard staged patches. Rebuild retained
+      // buffers from the source before trusting any CPU upload metadata.
+      uploadRevision = surface.abortRevision;
+      uploaded = undefined;
+      uploadedDensity = undefined;
+      emphasisSource = undefined;
+      selected.clear();
     }
     validateView(view);
     const density = view.density;
@@ -347,22 +400,18 @@ export function createGpuPoints(
     if (!gpuFinite(diameter * basis.extent) || diameter < 0) {
       throw new RangeError("GPU point diameter must be finite and nonnegative");
     }
-    // WebGL implementations may cap native sprites at 64 pixels. Larger
-    // circles/ellipses use instanced quads with identical fragment coverage.
-    const pointQuads = diameter * basis.extent + 2 > maxPointSize;
+
     latest = { data, view };
-    if (context.isContextLost()) {
+    if (!surface.available) {
+      queued = true;
       return;
     }
-    const recovering = !owned;
-    if (recovering) {
-      try {
-        restoreResources();
-      } catch (error) {
-        options.onStatusChange?.();
-        throw error;
-      }
+    initialize();
+    if (!owned) {
+      queued = true;
+      return;
     }
+    queued = false;
     const m = view.matrix;
     const [a, b, c, d, e, f] = [m.a, m.b, m.c, m.d, m.e, m.f].map(Math.fround);
     const determinant = a * d - b * c;
@@ -397,93 +446,33 @@ export function createGpuPoints(
             (inverse[1] * view.width) / canvas.width,
             (inverse[4] * view.height) / canvas.height,
           );
-    const resources = owned!;
-    const { program, buffer, vao, uniforms: u } = resources;
-    context.useProgram(program);
-    resources.clip.set(
-      view.clipPolygon,
-      view.width,
-      view.height,
-      canvas.width,
-      canvas.height,
-    );
-    context.bindVertexArray(vao);
-    context.bindBuffer(context.ARRAY_BUFFER, buffer);
-    if (!density && nextRadii) {
-      resources.radii ??= context.createBuffer();
-      if (!resources.radii) {
-        throw new Error("GPU radius buffer allocation failed");
-      }
-      context.bindBuffer(context.ARRAY_BUFFER, resources.radii);
-      context.vertexAttribPointer(
-        resources.radiusAttribute,
-        1,
-        context.FLOAT,
-        false,
-        0,
-        0,
-      );
-      context.enableVertexAttribArray(resources.radiusAttribute);
-      if (uploaded !== data || !radii) {
-        radii = data.immutable ? nextRadii : nextRadii.slice();
-        context.bufferData(context.ARRAY_BUFFER, radii, context.STATIC_DRAW);
-      }
-      context.bindBuffer(context.ARRAY_BUFFER, buffer);
-      maxRadius = nextMaxRadius;
-    } else {
-      radii = undefined;
-      maxRadius = 0;
-      context.disableVertexAttribArray(resources.radiusAttribute);
-      context.vertexAttrib1f(
-        resources.radiusAttribute,
-        density
-          ? (Math.min(view.plotWidth, view.plotHeight) * view.k) /
-              density.cells /
-              2
-          : view.radius,
-      );
-    }
+
+    const resources = owned;
     if (density) {
       if (uploadedDensity !== density) {
-        context.bufferData(
-          context.ARRAY_BUFFER,
-          density.positions,
-          context.STATIC_DRAW,
-        );
-        context.bindBuffer(context.ARRAY_BUFFER, resources.weights);
-        context.bufferData(
-          context.ARRAY_BUFFER,
-          density.counts,
-          context.STATIC_DRAW,
-        );
-        context.vertexAttribPointer(
-          resources.weightAttribute,
-          1,
-          context.FLOAT,
-          false,
-          0,
-          0,
-        );
+        replace("buffer", density.positions);
+        replace("weights", density.counts);
         maxWeight = 0;
-        for (const count of density.counts) {
-          maxWeight = Math.max(maxWeight, count);
+        for (const weight of density.counts) {
+          maxWeight = Math.max(maxWeight, weight);
         }
         uploadedDensity = density;
         uploaded = undefined;
       }
-      context.enableVertexAttribArray(resources.weightAttribute);
+      radii = undefined;
     } else {
       uploadedDensity = undefined;
-      context.disableVertexAttribArray(resources.weightAttribute);
-      context.vertexAttrib1f(resources.weightAttribute, 1);
+      if (nextRadii && (uploaded !== data || !radii)) {
+        radii = data.immutable ? nextRadii : nextRadii.slice();
+        replace("radii", radii);
+      } else if (!nextRadii) {
+        radii = undefined;
+      }
+      maxRadius = nextMaxRadius;
       if (uploaded !== data) {
         positions = data.immutable ? compact! : compact!.slice();
         dirty.clear();
-        context.bufferData(
-          context.ARRAY_BUFFER,
-          positions,
-          context.STATIC_DRAW,
-        );
+        replace("buffer", positions);
         uploaded = data;
       }
       const overlaps = (
@@ -545,205 +534,210 @@ export function createGpuPoints(
         }
         const first = ready[start],
           last = ready[end - 1] + 1;
-        context.bufferSubData(
-          context.ARRAY_BUFFER,
+        write(
+          resources.buffer!,
           first * 8,
           positions.subarray(first * 2, last * 2),
         );
         if (radii) {
-          context.bindBuffer(context.ARRAY_BUFFER, resources.radii);
-          context.bufferSubData(
-            context.ARRAY_BUFFER,
-            first * 4,
-            radii.subarray(first, last),
-          );
-          context.bindBuffer(context.ARRAY_BUFFER, buffer);
+          write(resources.radii!, first * 4, radii.subarray(first, last));
         }
         for (let i = start; i < end; i++) {
           dirty.delete(ready[i]);
         }
         start = end;
       }
+
       canvas.dataset.gpuDirty = String(dirty.size);
       canvas.dataset.gpuPatched = String(ready.length);
     }
-    if (view.emphasis || resources.emphasis) {
-      resources.emphasis ??= context.createBuffer();
-      if (!resources.emphasis) {
-        throw new Error("GPU emphasis buffer allocation failed");
-      }
-      context.bindBuffer(context.ARRAY_BUFFER, resources.emphasis);
+    if (view.emphasis || emphasisSource) {
       if (emphasisSource !== (density ?? data)) {
-        // WebGL zero-initializes this GPU allocation without a row-sized CPU array.
-        context.bufferData(
-          context.ARRAY_BUFFER,
-          count * 4,
-          context.DYNAMIC_DRAW,
-        );
+        replace("emphasis", count * 4);
         emphasisSource = density ?? data;
         selected.clear();
       }
       for (const index of selected.keys()) {
         if (!nextSelected.has(index)) {
-          context.bufferSubData(context.ARRAY_BUFFER, index * 4, inactiveFlag);
+          write(resources.emphasis!, index * 4, new Float32Array([0]));
         }
       }
       for (const [index, opacity] of nextSelected) {
         if (selected.get(index) !== opacity) {
-          context.bufferSubData(
-            context.ARRAY_BUFFER,
+          write(
+            resources.emphasis!,
             index * 4,
             new Float32Array([1 + opacity]),
           );
         }
       }
       selected = nextSelected;
-      context.vertexAttribPointer(
-        resources.selectedAttribute,
-        1,
-        context.FLOAT,
-        false,
-        0,
-        0,
+    }
+    // Optional storage bindings use one zero element, never a point-sized CPU allocation.
+    resources.radii ??= allocate(4, "Chart default radius");
+    resources.weights ??= allocate(4, "Chart default weight");
+    resources.emphasis ??= allocate(4, "Chart default emphasis");
+    const polygon = view.clipPolygon;
+    if (
+      polygon?.some(
+        (p) =>
+          !Number.isFinite(p.x) ||
+          !Number.isFinite(p.y) ||
+          Math.abs(p.x) > 1e30 ||
+          Math.abs(p.y) > 1e30,
+      )
+    ) {
+      throw new RangeError(
+        "GPU clip coordinates must be finite and representable",
       );
-      context.enableVertexAttribArray(resources.selectedAttribute);
-      context.bindBuffer(context.ARRAY_BUFFER, buffer);
-    } else {
-      context.disableVertexAttribArray(resources.selectedAttribute);
-      context.vertexAttrib1f(resources.selectedAttribute, 0);
     }
-    canvas.dataset.gpuDrawn = String(
-      density ? density.counts.length : data.length,
-    );
-    canvas.dataset.gpuDetail = density ? "density" : "exact";
-    context.bindFramebuffer(context.FRAMEBUFFER, view.target ?? null);
-    context.disable(context.SAMPLE_ALPHA_TO_COVERAGE);
-    context.disable(context.SAMPLE_COVERAGE);
-    context.disable(context.STENCIL_TEST);
-    context.disable(context.DEPTH_TEST);
-    context.disable(context.CULL_FACE);
-    context.disable(context.SCISSOR_TEST);
-    context.disable(context.RASTERIZER_DISCARD);
-    context.colorMask(true, true, true, true);
-    context.enable(context.BLEND);
-    context.blendEquation(context.FUNC_ADD);
-    context.blendFunc(context.ONE, context.ONE_MINUS_SRC_ALPHA);
-    context.viewport(0, 0, canvas.width, canvas.height);
-    if (view.clear !== false) {
-      context.clearColor(0, 0, 0, 0);
-      context.clear(context.COLOR_BUFFER_BIT);
-    }
-    if (view.clip) {
-      const clip = view.clip;
-      // Intersect in CSS space before conversion; retain pixels whose centers lie inside.
-      const edge = (value: number, size: number, pixels: number) =>
-        Math.ceil((Math.max(0, Math.min(size, value)) / size) * pixels - 0.5);
-      const left = edge(clip.x, view.width, canvas.width);
-      const right = edge(clip.x + clip.width, view.width, canvas.width);
-      const top = edge(clip.y, view.height, canvas.height);
-      const bottom = edge(clip.y + clip.height, view.height, canvas.height);
-      context.enable(context.SCISSOR_TEST);
-      context.scissor(left, canvas.height - bottom, right - left, bottom - top);
-    }
-    context.uniform3fv(u.xAxis, xAxis);
-    context.uniform3fv(u.yAxis, yAxis);
-    context.uniform2f(u.viewport, view.width, view.height);
-    context.uniform2f(u.plot, view.plotWidth, view.plotHeight);
-    context.uniform3f(u.zoom, view.x, view.y, view.k);
-    context.uniform2f(u.framebuffer, canvas.width, canvas.height);
-    context.uniformMatrix3fv(u.clipMatrix, false, inverse);
-    context.uniform2f(u.clipPadding, padX, padY);
-    context.uniformMatrix3fv(u.matrix, false, [
-      m.a,
-      m.b,
-      0,
-      m.c,
-      m.d,
-      0,
-      m.e,
-      m.f,
-      1,
+    const points = polygon ? counterclockwise(polygon) : [];
+    const edges = new Float32Array(Math.max(1, points.length) * 4);
+    points.forEach((p, i) => {
+      const q = points[(i + 1) % points.length],
+        dx = q.x - p.x,
+        dy = q.y - p.y,
+        length = Math.hypot(dx, dy) || 1;
+      edges.set(
+        [-dy / length, dx / length, (dy * p.x - dx * p.y) / length, 0],
+        i * 4,
+      );
+    });
+    const values = new Float32Array(17 * 4);
+    const set = (index: number, data: readonly number[]) =>
+      values.set(data, index * 4);
+    set(0, [view.width, view.height, canvas.width, canvas.height]);
+    set(1, [view.plotWidth, view.plotHeight, view.k]);
+    set(2, xAxis);
+    set(3, yAxis);
+    set(4, [view.x, view.y]);
+    set(5, [m.a, m.c, m.e]);
+    set(6, [m.b, m.d, m.f]);
+    set(7, [inverse[0], inverse[3], inverse[6]]);
+    set(8, [inverse[1], inverse[4], inverse[7], inverse[8]]);
+    set(9, [
+      radiusRatio,
+      basis.extent,
+      strokeWidth,
+      view.emphasis?.opacity ?? 1,
     ]);
-    context.uniform1f(u.radiusRatio, radiusRatio);
-    context.uniform1f(u.pointExtent, basis.extent);
-    context.uniform1i(u.pointTransformed, Number(basis.transformed));
-    context.uniform1i(u.pointQuads, Number(pointQuads));
-    context.uniformMatrix2fv(u.pointInverse, false, basis.inverse);
-    context.uniform1f(u.opacity, view.opacity ?? 1);
-    context.uniform1f(u.inactiveOpacity, view.emphasis?.opacity ?? 1);
-    context.uniform1f(u.maxWeight, density ? maxWeight : 0);
-    context.uniform4fv(u.color, view.color);
-    context.uniform1f(u.strokeWidth, strokeWidth);
-    context.uniform4fv(u.strokeColor, view.stroke?.color ?? view.color);
-    for (const attribute of [
-      resources.positionAttribute,
-      resources.radiusAttribute,
-      resources.weightAttribute,
-      resources.selectedAttribute,
-    ]) {
-      context.vertexAttribDivisor(attribute, pointQuads ? 1 : 0);
-    }
-    if (pointQuads) {
-      context.drawArraysInstanced(context.TRIANGLES, 0, 6, count);
-    } else {
-      context.drawArrays(context.POINTS, 0, count);
-    }
-    if (recovering) {
-      options.onStatusChange?.();
-    }
-  };
-  const lost = (event: Event) => {
-    event.preventDefault();
-    // Lost-context handles are invalid and cannot be reused or deleted later.
-    owned = undefined;
-    emphasisSource = undefined;
-    selected.clear();
-    uploaded = undefined;
-    uploadedDensity = undefined;
-    options.onStatusChange?.();
-  };
-  const restored = () => {
-    if (disposed) {
-      return;
-    }
-    let recovered = false;
+    set(10, view.color);
+    set(11, view.stroke?.color ?? view.color);
+    set(12, [
+      density
+        ? (Math.min(view.plotWidth, view.plotHeight) * view.k) /
+          density.cells /
+          2
+        : view.radius,
+      Number(!density && !!radii),
+      density ? maxWeight : 0,
+      Number(!!emphasisSource),
+    ]);
+    set(13, basis.inverse);
+    set(14, [Number(basis.transformed), view.opacity ?? 1]);
+    set(15, [padX, padY]);
+    set(16, [polygon ? (points.length < 3 ? -1 : points.length) : 0]);
+    const uniform = allocate(
+      values,
+      "Chart point draw uniforms",
+      GPUBufferUsage.UNIFORM,
+    );
+    let clip: GPUBuffer | undefined;
     try {
-      restoreResources();
-      recovered = true;
-    } catch {
-      // Setup failures are retained for the getter and the next draw can retry.
+      clip = allocate(edges, "Chart point clip edges");
+      const group = surface.device.createBindGroup({
+        layout: resources.pipeline.getBindGroupLayout(0),
+        entries: [
+          uniform,
+          resources.radii,
+          resources.weights,
+          resources.emphasis,
+          clip,
+        ].map((buffer, index) => ({
+          binding: [0, 2, 3, 4, 5][index],
+          resource: { buffer },
+        })),
+      });
+      canvas.dataset.gpuDrawn = String(count);
+      canvas.dataset.gpuDetail = density ? "density" : "exact";
+      surface.run((encoder) => {
+        const pass = encoder.beginRenderPass(
+          surface.passDescriptor(view.target ?? null, {
+            clear: view.clear !== false,
+          }),
+        );
+        pass.setPipeline(resources.pipeline);
+        pass.setVertexBuffer(0, resources.buffer!);
+        pass.setBindGroup(0, group);
+        let visible = true;
+        if (view.clip) {
+          const edge = (value: number, size: number, pixels: number) =>
+            Math.max(
+              0,
+              Math.ceil(
+                (Math.max(0, Math.min(size, value)) / size) * pixels - 0.5,
+              ),
+            );
+          const left = edge(view.clip.x, view.width, canvas.width),
+            right = edge(
+              view.clip.x + view.clip.width,
+              view.width,
+              canvas.width,
+            );
+          const top = edge(view.clip.y, view.height, canvas.height),
+            bottom = edge(
+              view.clip.y + view.clip.height,
+              view.height,
+              canvas.height,
+            );
+          visible = right > left && bottom > top;
+          if (visible) {
+            pass.setScissorRect(left, top, right - left, bottom - top);
+          }
+        }
+        if (visible && count) {
+          pass.draw(4, count);
+        }
+        pass.end();
+      });
+    } finally {
+      surface.defer(() => {
+        uniform.destroy();
+        clip?.destroy();
+      });
     }
-    // Replay and subscriber errors are caller errors, not resource failures.
-    // Resources already exist, so replay does not emit another notification.
-    if (recovered && latest && !latest.view.target) {
+  };
+  const unsubscribe = surface.subscribe(() => {
+    reset();
+    initialize();
+    if (owned && latest && !latest.view.target) {
       draw(latest.data, latest.view);
     }
     options.onStatusChange?.();
-  };
-  canvas.addEventListener("webglcontextlost", lost);
-  canvas.addEventListener("webglcontextrestored", restored);
+  });
+  const ready = surface.ready.then(() => {
+    initialize();
+    if (queued && owned && latest && !latest.view.target) {
+      draw(latest.data, latest.view);
+    }
+  });
   return {
+    ready,
     get available() {
-      return !disposed && owned !== undefined && !context.isContextLost();
+      return !disposed && surface.available && !!owned;
     },
     get error() {
-      return restorationError;
+      return resourceError ?? surface.error;
     },
-    // A scheduled caller can retry before its availability guard. This is
-    // deliberately silent so persistent setup failure cannot schedule a loop.
-    recover(): boolean {
-      if (disposed || context.isContextLost()) {
+    recover() {
+      if (disposed) {
         return false;
       }
-      if (owned) {
-        return true;
+      if (!surface.available) {
+        return surface.recover();
       }
-      try {
-        restoreResources();
-        return true;
-      } catch {
-        return false;
-      }
+      initialize();
+      return !!owned;
     },
     patch(indices: number[]) {
       if (disposed) {
@@ -773,31 +767,25 @@ export function createGpuPoints(
         return;
       }
       disposed = true;
-      canvas.removeEventListener("webglcontextlost", lost);
-      canvas.removeEventListener("webglcontextrestored", restored);
+      unsubscribe();
       if (owned) {
-        owned.clip.dispose();
-        context.deleteBuffer(owned.buffer);
-        context.deleteBuffer(owned.weights);
-        if (owned.radii) {
-          context.deleteBuffer(owned.radii);
+        for (const buffer of [
+          owned.buffer,
+          owned.radii,
+          owned.weights,
+          owned.emphasis,
+        ]) {
+          if (buffer) {
+            surface.defer(() => buffer.destroy());
+          }
         }
-        if (owned.emphasis) {
-          context.deleteBuffer(owned.emphasis);
-        }
-        context.deleteVertexArray(owned.vao);
-        context.deleteProgram(owned.program);
-        owned = undefined;
       }
-
+      reset();
       dirty.clear();
-      selected.clear();
-      emphasisSource = undefined;
       positions = new Float32Array(0);
       radii = undefined;
       latest = undefined;
-      uploaded = undefined;
-      uploadedDensity = undefined;
+      surface.release();
     },
   };
 }

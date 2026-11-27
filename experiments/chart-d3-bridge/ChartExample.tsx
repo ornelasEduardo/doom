@@ -69,7 +69,7 @@ export function ChartExample({
       ref={container}
       className={styles.example}
       data-proof-chart={name}
-      data-proof-mode="webgl"
+      data-proof-mode="webgpu"
     >
       <div className={styles.heading}>
         <Text variant="h3">

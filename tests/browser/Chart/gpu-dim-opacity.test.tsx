@@ -5,6 +5,10 @@ import { Dim } from "../../../components/Chart/behaviors/Dim";
 import { registerGpuMark } from "../../../components/Chart/rendering/scene";
 import { createChartStore } from "../../../components/Chart/state/store/chart.store";
 import type { BehaviorContext } from "../../../components/Chart/types/events";
+import { hasWebGpu } from "./webgpu-readback";
+import { snapshotGpu } from "./webgpu-snapshot";
+
+const gpuIt = it.skipIf(!(await hasWebGpu()));
 
 const ns = "http://www.w3.org/2000/svg";
 // Attribute-based selection flags and uniform opacity can round either side
@@ -75,9 +79,9 @@ function fixture(baseline: number) {
     await Promise.resolve();
     window.dispatchEvent(new Event("resize"));
     return new Promise<number[]>((resolve) =>
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         const canvas = host.querySelector("canvas")!,
-          gl = canvas.getContext("webgl2")!;
+          gl = await snapshotGpu(canvas);
         resolve(
           [20, 40, 80, 100].map((x) => {
             const pixel = new Uint8Array(4);
@@ -98,7 +102,7 @@ function fixture(baseline: number) {
   };
 }
 
-it.each([0, 0.2, 0.8])(
+gpuIt.each([0, 0.2, 0.8])(
   "matches ordinary Dim opacity and restores baseline %s",
   async (baseline) => {
     const f = fixture(baseline);
@@ -121,26 +125,29 @@ it.each([0, 0.2, 0.8])(
   },
 );
 
-it("matches independent Dim owner precedence and out-of-order detach", async () => {
-  const f = fixture(0.2),
-    older = f.start(0, 0.3),
-    newer = f.start(1, 0.6);
-  try {
-    const both = await f.pixels();
-    expectMatchingPoints(both);
-    expect(both[0]).toBeCloseTo(0.6 * 255, 0);
-    expect(Math.abs(both[1] - 0.3 * 255)).toBeLessThanOrEqual(1);
-    older();
-    const remaining = await f.pixels();
-    expectMatchingPoints(remaining);
-    expect(remaining[1]).toBeCloseTo(0.2 * 255, 0);
-    newer();
-    const restored = await f.pixels();
-    expectMatchingPoints(restored);
-    expect(restored[0]).toBeCloseTo(0.2 * 255, 0);
-  } finally {
-    older();
-    newer();
-    f.cleanup();
-  }
-});
+gpuIt(
+  "matches independent Dim owner precedence and out-of-order detach",
+  async () => {
+    const f = fixture(0.2),
+      older = f.start(0, 0.3),
+      newer = f.start(1, 0.6);
+    try {
+      const both = await f.pixels();
+      expectMatchingPoints(both);
+      expect(both[0]).toBeCloseTo(0.6 * 255, 0);
+      expect(Math.abs(both[1] - 0.3 * 255)).toBeLessThanOrEqual(1);
+      older();
+      const remaining = await f.pixels();
+      expectMatchingPoints(remaining);
+      expect(remaining[1]).toBeCloseTo(0.2 * 255, 0);
+      newer();
+      const restored = await f.pixels();
+      expectMatchingPoints(restored);
+      expect(restored[0]).toBeCloseTo(0.2 * 255, 0);
+    } finally {
+      older();
+      newer();
+      f.cleanup();
+    }
+  },
+);

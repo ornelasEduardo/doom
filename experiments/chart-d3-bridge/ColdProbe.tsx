@@ -28,7 +28,7 @@ export function ColdProbe() {
     <details className={styles.lifecycle}>
       <summary>Compact cold-start probe</summary>
       <Text as="p">
-        Creates 1,000,000 synthetic XY points, a hover index, and a fresh WebGL
+        Creates 1,000,000 synthetic XY points, a hover index, and a fresh WebGPU
         context on each run. No cached dataset or row objects. This lower-bound
         probe excludes Chart, axes, full keyboard navigation, network transfer,
         and page/module loading.
@@ -64,7 +64,7 @@ export function ColdProbe() {
             }
             result.current = next;
             setMessage(
-              `Data + hover index: ${next.timings.preparationMs.toFixed(1)} ms\nGPU setup: ${next.timings.initializationMs.toFixed(1)} ms\nUpload + submission: ${next.timings.uploadAndSubmitMs.toFixed(1)} ms\nGPU complete at frame: ${next.timings.gpuCompletionAtFrameMs.toFixed(1)} ms\n${next.backend}`,
+              `Data + hover index: ${next.timings.preparationMs.toFixed(1)} ms\nGPU setup: ${next.timings.initializationMs.toFixed(1)} ms\nUpload + submission: ${next.timings.uploadAndSubmitMs.toFixed(1)} ms\nGPU work completed (wall time): ${next.timings.gpuCompletionAtFrameMs.toFixed(1)} ms\n${next.backend}`,
             );
           } catch (error) {
             if (active.current === controller) {
@@ -92,8 +92,8 @@ export function ColdProbe() {
         {message}
       </pre>
       <Text as="p">
-        Completion is checked with a GPU fence on an animation frame; it is not
-        an exact compositor paint timestamp.
+        Completion awaits the WebGPU queue; it is not an exact compositor paint
+        timestamp.
       </Text>
       <div
         ref={host}

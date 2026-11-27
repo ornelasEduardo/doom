@@ -31,7 +31,7 @@ interface ScatterOptions {
 export function scatterResource(
   frame: RenderFrame<Service>,
   {
-    invalidate,
+    invalidate: invalidateFrame,
     connect,
     report,
     getWorld,
@@ -40,9 +40,14 @@ export function scatterResource(
     getDetail,
   }: ScatterOptions,
 ): Resource<RenderFrame<Service>> {
+  let retryRequested = true;
+  const invalidate = () => {
+    retryRequested = true;
+    invalidateFrame();
+  };
   const group = frame.container;
   const surface = group.append("rect").attr("fill", "transparent");
-  const marks = createMarksSurface(frame, getWorld, getDetail, invalidate);
+  const marks = createMarksSurface(frame, getWorld, getDetail, invalidateFrame);
   const bottom = group.append("g").attr("data-proof-axis", "x");
   const left = group.append("g").attr("data-proof-axis", "y");
   let transform: ZoomTransform = zoomIdentity;
@@ -102,7 +107,9 @@ export function scatterResource(
   });
   return {
     draw(next) {
-      if (!marks.available && !marks.recover()) {
+      const retry = retryRequested;
+      retryRequested = false;
+      if (!marks.available && (!retry || !marks.recover())) {
         publishedWorld = undefined;
         drawnWorld = undefined;
         source = undefined;

@@ -24,7 +24,19 @@ export default defineConfig({
         port: Number(process.env.BROWSER_TEST_PORT || 63315),
         strictPort: true,
       },
-      provider: playwright(),
+      provider: playwright({
+        launchOptions: {
+          channel: "chromium",
+          args:
+            process.platform === "darwin"
+              ? ["--use-angle=metal"]
+              : [
+                  "--enable-unsafe-webgpu",
+                  "--use-angle=swiftshader",
+                  "--use-webgpu-adapter=swiftshader",
+                ],
+        },
+      }),
       headless: true,
       ui: false,
       commands: {

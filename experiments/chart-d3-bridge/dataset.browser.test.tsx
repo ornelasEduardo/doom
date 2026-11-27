@@ -1,9 +1,10 @@
 import "../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { hasWebGpu } from "../../tests/browser/Chart/webgpu-readback";
 import { Proof } from "./Proof";
 
 afterEach(() => {
@@ -158,4 +159,10 @@ it("draws before the worker index arrives and enables keyboard targets afterward
     )
     .toContain("80");
   vi.unstubAllGlobals();
+});
+
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
 });

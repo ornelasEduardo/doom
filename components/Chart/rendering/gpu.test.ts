@@ -1,45 +1,104 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import { createGpuPoints, type GpuView } from "./gpu";
 
-// WebGL is unavailable in the unit lane; record its resource and upload boundary.
+const state = vi.hoisted(() => ({ surface: undefined as unknown }));
+vi.mock("./webgpu-surface", () => ({
+  acquireWebGpuSurface: () => state.surface,
+}));
 function harness() {
-  const gl = {
-    VERTEX_SHADER: 1,
-    FRAGMENT_SHADER: 2,
-    LINK_STATUS: 3,
-    createProgram: vi.fn(() => ({})),
-    createShader: vi.fn(() => ({})),
-    createBuffer: vi.fn(() => ({})),
-    createTexture: vi.fn(() => ({})),
-    deleteTexture: vi.fn(),
-    getParameter: vi.fn(() => 4096),
-    createVertexArray: vi.fn(() => ({})),
-    deleteProgram: vi.fn(),
-    deleteShader: vi.fn(),
-    deleteBuffer: vi.fn(),
-    deleteVertexArray: vi.fn(),
-    getProgramParameter: vi.fn(() => true),
-    getProgramInfoLog: vi.fn(() => ""),
-    getShaderInfoLog: vi.fn(() => ""),
-    getAttribLocation: vi.fn(() => 0),
-    getUniformLocation: vi.fn(() => ({})),
-    isContextLost: vi.fn(() => false),
-    getExtension: vi.fn(() => null),
-    bufferData: vi.fn(),
-    bufferSubData: vi.fn(),
-    drawArrays: vi.fn(),
-  };
-  const context = new Proxy(gl, {
-    get(target, key) {
-      return key in target ? target[key as keyof typeof target] : vi.fn();
-    },
+  vi.stubGlobal("GPUBufferUsage", {
+    STORAGE: 128,
+    COPY_DST: 8,
+    UNIFORM: 64,
+    VERTEX: 32,
   });
+  const writes: {
+    label: string;
+    offset: number;
+    values: number[];
+    buffer: ArrayBuffer;
+  }[] = [];
+  const buffers: { label: string; destroy: ReturnType<typeof vi.fn> }[] = [];
+  const pass = {
+    setPipeline: vi.fn(),
+    setVertexBuffer: vi.fn(),
+    setBindGroup: vi.fn(),
+    setScissorRect: vi.fn(),
+    draw: vi.fn(),
+    end: vi.fn(),
+  };
+  const device = {
+    createShaderModule: vi.fn(),
+    createRenderPipeline: vi.fn(() => ({ getBindGroupLayout: vi.fn() })),
+    createBindGroup: vi.fn(),
+    createBuffer: vi.fn(({ label }: { label: string }) => {
+      const buffer = { label, destroy: vi.fn() };
+      buffers.push(buffer);
+      return buffer;
+    }),
+    queue: {
+      writeBuffer: vi.fn(
+        (
+          buffer: { label: string },
+          offset: number,
+          data: ArrayBuffer,
+          byteOffset: number,
+          byteLength: number,
+        ) =>
+          writes.push({
+            label: buffer.label,
+            offset,
+            values: Array.from(
+              new Float32Array(data, byteOffset, byteLength / 4),
+            ),
+            buffer: data,
+          }),
+      ),
+    },
+  };
+  let listener = () => {};
+  const surface = {
+    device,
+    writeBuffer: (
+      buffer: { label: string },
+      offset: number,
+      data: Float32Array,
+    ) =>
+      device.queue.writeBuffer(
+        buffer,
+        offset,
+        data.buffer as ArrayBuffer,
+        data.byteOffset,
+        data.byteLength,
+      ),
+    format: "rgba8unorm",
+    ready: Promise.resolve(),
+    available: true,
+    error: undefined as string | undefined,
+    subscribe: (fn: () => void) => {
+      listener = fn;
+      return vi.fn();
+    },
+    recover: vi.fn(() => false),
+    release: vi.fn(),
+    passDescriptor: vi.fn(),
+    defer: (fn: () => void) => fn(),
+    run: (fn: (encoder: unknown) => void) =>
+      fn({ beginRenderPass: () => pass }),
+  };
+  state.surface = surface;
   const canvas = document.createElement("canvas");
-  vi.spyOn(canvas, "getContext").mockReturnValue(
-    context as unknown as WebGL2RenderingContext,
-  );
-  return { gl, canvas };
+  canvas.width = canvas.height = 100;
+  return {
+    canvas,
+    device,
+    writes,
+    buffers,
+    pass,
+    surface,
+    notify: () => listener(),
+  };
 }
 const view: GpuView = {
   width: 100,
@@ -56,75 +115,137 @@ const view: GpuView = {
 };
 function source(values = [0.25, 0.25]) {
   const positions = new Float32Array(values);
-  return { length: positions.length / 2, buffers: () => ({ positions }) };
+  return {
+    length: positions.length / 2,
+    buffers: vi.fn(() => ({ positions })),
+  };
 }
-
-it.each([
-  "createProgram",
-  "createShader",
-  "createBuffer",
-  "createVertexArray",
-] as const)(
-  "rejects failed %s allocations and releases everything already allocated",
-  (method) => {
-    const { gl, canvas } = harness();
-    gl[method].mockReturnValueOnce(null as unknown as object);
-    expect(() => createGpuPoints(canvas)).toThrow(/GPU/);
-    for (const [create, remove] of [
-      ["createProgram", "deleteProgram"],
-      ["createShader", "deleteShader"],
-      ["createBuffer", "deleteBuffer"],
-      ["createVertexArray", "deleteVertexArray"],
-    ] as const) {
-      const allocated = gl[create].mock.results.filter(
-        (result) => result.value,
-      );
-      expect(gl[remove]).toHaveBeenCalledTimes(allocated.length);
-    }
-  },
-);
-it("cleans up a partially allocated second buffer and reports empty link logs", () => {
-  const { gl, canvas } = harness();
-  gl.createBuffer
-    .mockReturnValueOnce({})
-    .mockReturnValueOnce(null as unknown as object);
-  expect(() => createGpuPoints(canvas)).toThrow(/GPU/);
-  expect(gl.deleteBuffer).toHaveBeenCalledTimes(1);
-  expect(gl.deleteVertexArray).toHaveBeenCalledTimes(1);
-  gl.getProgramParameter.mockReturnValue(false);
-  expect(() => createGpuPoints(canvas)).toThrow(/linking failed/);
+beforeEach(() => vi.clearAllMocks());
+it("uses four-vertex instanced quads and per-draw uniforms without reuploading retained sources", async () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas),
+    data = source();
+  await gpu.ready;
+  gpu.draw(data, view);
+  gpu.draw(data, { ...view, x: 1 });
+  expect(h.pass.draw).toHaveBeenLastCalledWith(4, 1);
+  expect(h.writes.filter((w) => w.label === "Chart point buffer")).toHaveLength(
+    1,
+  );
+  expect(
+    h.buffers.filter((b) => b.label === "Chart point draw uniforms"),
+  ).toHaveLength(2);
+  expect(data.buffers).toHaveBeenCalledTimes(1);
+  gpu.dispose();
 });
-it("retries resource creation after failed restoration and reuploads the latest source", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  const data = source();
+it("borrows immutable buffers and rejects patching them", async () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas),
+    data = { ...source(), immutable: true as const };
+  await gpu.ready;
   gpu.draw(data, view);
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  gl.createProgram.mockReturnValueOnce(null as unknown as object);
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
+  expect(h.writes.find((w) => w.label === "Chart point buffer")!.buffer).toBe(
+    data.buffers().positions.buffer,
+  );
+  expect(() => gpu.patch([0])).toThrow(/Immutable/);
+  gpu.dispose();
+});
+it("coalesces visible patches and retains offscreen edits until they enter the viewport", async () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas),
+    data = source([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]);
+  await gpu.ready;
+  gpu.draw(data, { ...view, k: 2 });
+  data.buffers().positions.set([0.15, 0.15, 0.25, 0.25, 0.9, 0.9]);
+  gpu.patch([0, 1, 2]);
+  gpu.draw(data, { ...view, k: 2 });
+  expect(h.writes.filter((w) => w.label === "Chart point buffer")).toHaveLength(
+    2,
+  );
+  expect(
+    h.writes.filter((w) => w.label === "Chart point buffer")[1].values,
+  ).toEqual(Array.from(new Float32Array([0.15, 0.15, 0.25, 0.25])));
+  expect(h.canvas.dataset.gpuDirty).toBe("1");
   gpu.draw(data, view);
-  expect(gl.bufferData).toHaveBeenCalledTimes(2);
-  expect(gl.drawArrays).toHaveBeenCalledTimes(2);
+  expect(h.canvas.dataset.gpuDirty).toBe("0");
+  gpu.dispose();
+});
+it("uploads moved-out patches and sparse emphasis changes only", async () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas),
+    data = source([0.1, 0.1, 0.2, 0.2]);
+  await gpu.ready;
+  gpu.draw(data, { ...view, emphasis: { indices: [0], opacity: 0.1 } });
+  data.buffers().positions.set([3, 3]);
+  gpu.patch([0]);
+  gpu.draw(data, { ...view, emphasis: { indices: [1], opacity: 0.1 } });
+  expect(
+    h.writes.filter((w) => w.label === "Chart point buffer")[1].values,
+  ).toEqual([3, 3]);
+  expect(
+    h.writes
+      .filter((w) => w.label === "Chart point emphasis")
+      .map((w) => [w.offset, w.values]),
+  ).toEqual([
+    [0, [2]],
+    [0, [0]],
+    [4, [2]],
+  ]);
+  gpu.dispose();
+});
+it("retains density weights until the frame identity changes", async () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas),
+    data = source();
+  await gpu.ready;
+  const density = {
+    positions: new Float32Array([0.5, 0.5]),
+    counts: new Float32Array([4]),
+    cells: 10,
+  };
+  gpu.draw(data, { ...view, density });
+  gpu.draw(data, { ...view, density, x: 2 });
+  expect(
+    h.writes.filter((w) => w.label === "Chart point weights"),
+  ).toHaveLength(1);
+  expect(h.canvas.dataset.gpuDetail).toBe("density");
+  gpu.dispose();
+});
+it("queues the newest draw before initialization and reuploads after device recovery", async () => {
+  const h = harness();
+  h.surface.available = false;
+  const gpu = createGpuPoints(h.canvas),
+    data = source();
+  gpu.draw(data, view);
+  gpu.draw(data, { ...view, x: 7 });
+  expect(h.pass.draw).not.toHaveBeenCalled();
+  h.surface.available = true;
+  await gpu.ready;
+  expect(h.pass.draw).toHaveBeenCalledTimes(1);
+  h.surface.available = false;
+  h.notify();
+  expect(gpu.available).toBe(false);
+  h.surface.available = true;
+  h.notify();
+  expect(gpu.available).toBe(true);
+  expect(h.writes.filter((w) => w.label === "Chart point buffer")).toHaveLength(
+    2,
+  );
   gpu.dispose();
   gpu.dispose();
-  expect(gl.deleteBuffer).toHaveBeenCalledTimes(2);
+  expect(h.surface.release).toHaveBeenCalledTimes(1);
 });
 it.each([
-  {
-    axes: {
-      x: { type: "linear", domain: [-3e38, 3e38] },
-      y: { type: "linear", domain: [0, 1] },
-    },
-  },
   { width: 0 },
   { ratio: NaN },
   { radius: -1 },
   { color: [1, 0, 0] },
+  { opacity: 2 },
+  { pointTransform: [Infinity, 0, 0, 1] },
   {
-    density: {
-      positions: new Float32Array(2),
-      counts: new Float32Array(2),
-      cells: 1,
+    axes: {
+      x: { type: "linear", domain: [-3e38, 3e38] },
+      y: { type: "linear", domain: [0, 1] },
     },
   },
   {
@@ -134,239 +255,70 @@ it.each([
       cells: 1,
     },
   },
-])(
-  "rejects invalid draw input before uploading or changing the latest frame: %j",
-  (invalid) => {
-    const { gl, canvas } = harness();
-    const gpu = createGpuPoints(canvas);
-    expect(() =>
-      gpu.draw(source(), { ...view, ...invalid } as GpuView),
-    ).toThrow(RangeError);
-    expect(gl.bufferData).not.toHaveBeenCalled();
-    expect(() => gpu.patch([0])).toThrow(/existing slots/);
-    gpu.dispose();
-  },
-);
-it("rejects a source whose length exceeds its buffer", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
+  { emphasis: { indices: [2], opacity: 1 } },
+  { stroke: { width: -1, color: [0, 0, 0, 1] } },
+])("rejects invalid draw before upload: %j", (invalid) => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas);
+  expect(() => gpu.draw(source(), { ...view, ...invalid } as GpuView)).toThrow(
+    RangeError,
+  );
+  expect(h.writes).toHaveLength(0);
+  expect(() => gpu.patch([0])).toThrow(/existing slots/);
+  gpu.dispose();
+});
+it("rejects inconsistent source buffers and overflowing density diameter", () => {
+  const h = harness(),
+    gpu = createGpuPoints(h.canvas);
   expect(() => gpu.draw({ ...source(), length: 2 }, view)).toThrow(RangeError);
-  expect(gl.bufferData).not.toHaveBeenCalled();
-  gpu.dispose();
-});
-it("coalesces visible patches and retains offscreen patches until their viewport is shown", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  const data = source([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]);
-  gpu.draw(data, { ...view, k: 2 });
-  data.buffers().positions.set([0.15, 0.15, 0.25, 0.25, 0.9, 0.9]);
-  gpu.patch([0, 1, 2]);
-  gpu.draw(data, { ...view, k: 2 });
-  expect(gl.bufferSubData).toHaveBeenCalledTimes(1);
-  expect(gl.bufferSubData.mock.calls[0].slice(1)).toEqual([
-    0,
-    new Float32Array([0.15, 0.15, 0.25, 0.25]),
-  ]);
-  expect(canvas.dataset.gpuDirty).toBe("1");
-  gpu.draw(data, view);
-  expect(gl.bufferSubData).toHaveBeenCalledTimes(2);
-  expect(canvas.dataset.gpuDirty).toBe("0");
-  expect(gl.bufferData).toHaveBeenCalledTimes(1);
-  gpu.dispose();
-});
-
-it("replays the newest frame after context loss and releases restored resources once", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  gpu.draw(source(), view);
-  gl.isContextLost.mockReturnValue(true);
-  const lost = new Event("webglcontextlost", { cancelable: true });
-  canvas.dispatchEvent(lost);
-  expect(lost.defaultPrevented).toBe(true);
-  const newest = source([0.75, 0.75]);
-  gpu.draw(newest, view);
-  expect(gl.drawArrays).toHaveBeenCalledTimes(1);
-  gl.isContextLost.mockReturnValue(false);
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
-  expect(gl.bufferData.mock.calls[1][1]).toEqual(newest.buffers().positions);
-  expect(gl.drawArrays).toHaveBeenCalledTimes(2);
-  gpu.dispose();
-  gpu.dispose();
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
-  gpu.draw(newest, view);
-  expect(gl.createProgram).toHaveBeenCalledTimes(2);
-  expect(gl.deleteProgram).toHaveBeenCalledTimes(1);
-  expect(gl.deleteBuffer).toHaveBeenCalledTimes(2);
-});
-it("uploads patches moving out of view and reads the source buffer once per draw", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  const data = source([0.1, 0.1, 0.2, 0.2]);
-  const buffers = vi.spyOn(data, "buffers");
-  gpu.draw(data, view);
-  data.buffers().positions.set([2, 2, 3, 3]);
-  buffers.mockClear();
-  gpu.patch([0, 1]);
-  gpu.draw(data, view);
-  expect(buffers).toHaveBeenCalledTimes(1);
-  expect(gl.bufferSubData).toHaveBeenCalledTimes(1);
-  expect(canvas.dataset.gpuDirty).toBe("0");
-  gpu.dispose();
-});
-
-it("rejects a density point diameter that overflows GPU precision before upload", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
   expect(() =>
     gpu.draw(source(), {
       ...view,
-      ratio: 1e37,
+      plotWidth: 3e38,
+      plotHeight: 3e38,
+      ratio: 2,
       density: {
         positions: new Float32Array([0.5, 0.5]),
         counts: new Float32Array([1]),
         cells: 1,
       },
     }),
-  ).toThrow(RangeError);
-  expect(gl.bufferData).not.toHaveBeenCalled();
+  ).toThrow(/diameter/);
   gpu.dispose();
 });
 
-it("does not accept legacy object rows or perform implicit coordinate conversion", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  expect(() => {
-    // @ts-expect-error The renderer accepts compact numeric sources only.
-    gpu.draw([{ requests: 10, latency: 100 }], view);
-  }).toThrow(TypeError);
-  expect(gl.bufferData).not.toHaveBeenCalled();
-  gpu.dispose();
-});
-it("borrows immutable interleaved coordinates without conversion or copying", () => {
-  const { gl, canvas } = harness();
-  const gpu = createGpuPoints(canvas);
-  const data = { ...source([-5, 100, 5, 10]), immutable: true as const };
-  gpu.draw(data, {
-    ...view,
-    axes: {
-      x: { type: "linear", domain: [-10, 10] },
-      y: { type: "log", domain: [1000, 1] },
-    },
+it("exposes setup failure and recovers without scheduling a retry loop", async () => {
+  const h = harness();
+  h.device.createRenderPipeline.mockImplementationOnce(() => {
+    throw new Error("pipeline unavailable");
   });
-  expect(gl.bufferData.mock.calls[0][1]).toBe(data.buffers().positions);
-  expect(Array.from(data.buffers().positions)).toEqual([-5, 100, 5, 10]);
-  expect(() => gpu.patch([0])).toThrow(/immutable/i);
-  gpu.dispose();
+  const onStatusChange = vi.fn();
+  const renderer = createGpuPoints(h.canvas, { onStatusChange });
+  await renderer.ready;
+  expect(renderer.available).toBe(false);
+  expect(renderer.error).toBe("pipeline unavailable");
+  expect(renderer.recover()).toBe(true);
+  expect(renderer.error).toBeUndefined();
+  expect(onStatusChange).not.toHaveBeenCalled();
+  renderer.dispose();
 });
 
-it("reports loss and restoration without notifying during normal draws", () => {
-  const { gl, canvas } = harness();
-  const onStatusChange = vi.fn();
-  const gpu = createGpuPoints(canvas, { onStatusChange });
-  const data = source();
-  expect(gpu.available).toBe(true);
-  gpu.draw(data, view);
-  gpu.draw(data, view);
-  expect(onStatusChange).not.toHaveBeenCalled();
-  gl.isContextLost.mockReturnValue(true);
-  expect(gpu.available).toBe(false);
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  expect(onStatusChange).toHaveBeenCalledTimes(1);
-  gl.isContextLost.mockReturnValue(false);
-  expect(gpu.available).toBe(false);
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
-  expect(gpu.available).toBe(true);
-  expect(gpu.error).toBeUndefined();
-  expect(onStatusChange).toHaveBeenCalledTimes(2);
-  gpu.draw(data, view);
-  expect(onStatusChange).toHaveBeenCalledTimes(2);
-  gpu.dispose();
-  expect(gpu.available).toBe(false);
-});
-it("exposes restoration failure and clears it after successful draw retry", () => {
-  const { gl, canvas } = harness();
-  const onStatusChange = vi.fn();
-  const gpu = createGpuPoints(canvas, { onStatusChange });
-  gpu.draw(source(), view);
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  gl.createProgram.mockReturnValueOnce(null as unknown as object);
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
-  expect(gpu.available).toBe(false);
-  expect(gpu.error).toMatch(/GPU program allocation failed/);
-  expect(onStatusChange).toHaveBeenCalledTimes(2);
-  gpu.draw(source(), view);
-  expect(gpu.available).toBe(true);
-  expect(gpu.error).toBeUndefined();
-  expect(canvas.dataset.gpuError).toBeUndefined();
-  expect(onStatusChange).toHaveBeenCalledTimes(3);
-  gpu.dispose();
-});
-it("does not classify a restoration subscriber exception as a GPU failure", () => {
-  const { canvas } = harness();
-  const subscribe = vi.spyOn(canvas, "addEventListener");
-  const failure = new Error("subscriber failed");
-  const onStatusChange = vi.fn();
-  const gpu = createGpuPoints(canvas, { onStatusChange });
-  gpu.draw(source(), view);
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  onStatusChange.mockImplementation(() => {
-    throw failure;
+it("releases per-draw allocations if bind group creation fails", async () => {
+  const h = harness();
+  const renderer = createGpuPoints(h.canvas);
+  await renderer.ready;
+  h.device.createBindGroup.mockImplementationOnce(() => {
+    throw new Error("bind group unavailable");
   });
-  // Invoke the event boundary directly: DOM dispatch reports exceptions globally.
-  const restored = subscribe.mock.calls.find(
-    ([name]) => name === "webglcontextrestored",
-  )![1] as EventListener;
-  expect(() => restored(new Event("webglcontextrestored"))).toThrow(failure);
-  expect(gpu.available).toBe(true);
-  expect(gpu.error).toBeUndefined();
-  expect(canvas.dataset.gpuError).toBeUndefined();
-  gpu.dispose();
-});
-it("restores availability before the first frame exists", () => {
-  const { canvas } = harness();
-  const onStatusChange = vi.fn();
-  const gpu = createGpuPoints(canvas, { onStatusChange });
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  expect(gpu.available).toBe(false);
-  canvas.dispatchEvent(new Event("webglcontextrestored"));
-  expect(gpu.available).toBe(true);
-  expect(onStatusChange).toHaveBeenCalledTimes(2);
-  gpu.dispose();
-});
-
-it("explicitly recovers returned contexts once per call without scheduling notifications", () => {
-  const { gl, canvas } = harness();
-  const onStatusChange = vi.fn();
-  const gpu = createGpuPoints(canvas, { onStatusChange });
-  expect(gpu.recover()).toBe(true);
-  expect(gl.createProgram).toHaveBeenCalledTimes(1);
-  canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
-  gl.isContextLost.mockReturnValue(true);
-  expect(gpu.recover()).toBe(false);
-  expect(gl.createProgram).toHaveBeenCalledTimes(1);
-  gl.isContextLost.mockReturnValue(false);
-  onStatusChange.mockClear();
-  gl.createProgram.mockReturnValueOnce(null as unknown as object);
-  expect(gpu.recover()).toBe(false);
-  expect(gl.createProgram).toHaveBeenCalledTimes(2);
-  expect(gpu.available).toBe(false);
-  expect(gpu.error).toMatch(/allocation failed/);
-  gl.createProgram.mockReturnValueOnce(null as unknown as object);
-  expect(gpu.recover()).toBe(false);
-  expect(gl.createProgram).toHaveBeenCalledTimes(3);
-  expect(onStatusChange).not.toHaveBeenCalled();
-  expect(gpu.recover()).toBe(true);
-  expect(gl.createProgram).toHaveBeenCalledTimes(4);
-  expect(gpu.available).toBe(true);
-  expect(gpu.error).toBeUndefined();
-  expect(canvas.dataset.gpuError).toBeUndefined();
-  expect(onStatusChange).not.toHaveBeenCalled();
-  gpu.draw(source(), view);
-  expect(gl.drawArrays).toHaveBeenCalledTimes(1);
-  expect(gpu.recover()).toBe(true);
-  expect(gl.createProgram).toHaveBeenCalledTimes(4);
-  expect(onStatusChange).not.toHaveBeenCalled();
-  gpu.dispose();
-  expect(gpu.recover()).toBe(false);
-  expect(gl.createProgram).toHaveBeenCalledTimes(4);
+  expect(() => renderer.draw(source(), view)).toThrow("bind group unavailable");
+  const transient = h.buffers.filter((buffer) =>
+    ["Chart point draw uniforms", "Chart point clip edges"].includes(
+      buffer.label,
+    ),
+  );
+  expect(transient).toHaveLength(2);
+  transient.forEach((buffer) =>
+    expect(buffer.destroy).toHaveBeenCalledTimes(1),
+  );
+  renderer.dispose();
 });

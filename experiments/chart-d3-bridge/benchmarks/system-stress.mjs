@@ -1,3 +1,4 @@
+// Historical WebGL diagnostic. Run only against an archived WebGL checkout.
 import { writeFile } from "node:fs/promises";
 
 import {
@@ -6,6 +7,12 @@ import {
   proofUrl,
   reportPath,
 } from "./harness.mjs";
+
+if (process.env.BENCH_BACKEND !== "webgl2") {
+  throw new Error(
+    "This legacy diagnostic requires BENCH_BACKEND=webgl2 and an archived WebGL server. Use backend-comparison.mjs for the current WebGPU renderer.",
+  );
+}
 
 const browser = await launchBenchmark();
 try {

@@ -4,6 +4,7 @@ import base from "../../vitest.chart-browser.config";
 
 export default defineConfig({
   ...base,
+  cacheDir: ".cache/vitest-chart-proof",
   optimizeDeps: {
     include: ["d3-selection", "d3-transition", "d3-zoom", "react-dom"],
   },

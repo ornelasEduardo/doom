@@ -1,233 +1,124 @@
-import { createGpuClip, gpuClipFragment } from "./gpu-clip";
-
-const vertex = `#version 300 es
-in vec2 position;
-in float weight;
-in float pointRadius;
-in float selected;
-uniform float inactiveOpacity;
-flat out float pointOpacity;
-flat out highp float diameter;
-uniform highp float radiusRatio;
-uniform highp float pointExtent;
-uniform bool pointQuads;
-uniform vec2 framebuffer;
-flat out highp vec2 pointCenter;
-uniform highp float strokeWidth;
-out float intensity;
-uniform float maxWeight;
-uniform vec2 viewport;
-uniform vec2 plot;
-uniform vec2 clipPadding;
-uniform vec3 zoom;
-uniform mat3 matrix;
-uniform vec3 xAxis;
-uniform vec3 yAxis;
-float project(float value, vec3 axis) {
-  return ((axis.z > 0.5 ? log(value) / log(10.0) : value) - axis.x) / (axis.y - axis.x);
+/** All point geometry uses four-vertex instanced quads, including tiny circles. */
+const shader = `
+struct Uniforms { v: array<vec4f, 17> }
+@group(0) @binding(0) var<uniform> u: Uniforms;
+@group(0) @binding(2) var<storage, read> radii: array<f32>;
+@group(0) @binding(3) var<storage, read> weights: array<f32>;
+@group(0) @binding(4) var<storage, read> emphasis: array<f32>;
+@group(0) @binding(5) var<storage, read> edges: array<vec4f>;
+struct Output {
+ @builtin(position) position: vec4f,
+ @location(0) @interpolate(flat) center: vec2f,
+ @location(1) @interpolate(flat) diameter: f32,
+ @location(2) @interpolate(flat) intensity: f32,
+ @location(3) @interpolate(flat) opacity: f32,
 }
-void main() {
-  pointOpacity = selected > 0.0 ? selected - 1.0 : inactiveOpacity;
-  diameter = pointRadius * 2.0 * radiusRatio + strokeWidth;
-  intensity = maxWeight > 0.0 ? 0.15 + 0.85 * log(1.0 + weight) / log(1.0 + maxWeight) : 1.0;
-  // Invalid coordinates never enter projection or rasterization.
-  if (any(isnan(position)) || any(isinf(position))) {
-    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-    gl_PointSize = 1.0;
-    return;
-  }
-  if ((xAxis.z > 0.5 && position.x <= 0.0) || (yAxis.z > 0.5 && position.y <= 0.0)) {
-    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-    gl_PointSize = 1.0;
-    return;
-  }
-  vec2 projected = vec2(project(position.x, xAxis), project(position.y, yAxis));
-  vec2 local = projected * plot * zoom.z + zoom.xy;
-  vec2 pixel = (matrix * vec3(local, 1.0)).xy;
-  pointCenter = pixel;
-  gl_Position = vec4(pixel.x / viewport.x * 2.0 - 1.0, 1.0 - pixel.y / viewport.y * 2.0, 0.0, 1.0);
-  if (any(lessThan(local, -clipPadding)) || any(greaterThan(local, plot + clipPadding))) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-  if (pointExtent == 0.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-  gl_PointSize = diameter * pointExtent + 2.0;
-  if (pointQuads) {
-    const vec2 corners[6] = vec2[6](vec2(-1,-1), vec2(1,-1), vec2(1,1), vec2(-1,-1), vec2(1,1), vec2(-1,1));
-    gl_Position.xy += corners[gl_VertexID] * gl_PointSize / framebuffer * vec2(1.0,-1.0);
-  }
-}`;
-const fragment = `#version 300 es
-precision mediump float;
-uniform vec4 color;
-uniform float opacity;
-uniform vec4 strokeColor;
-uniform highp float strokeWidth;
-uniform highp mat3 clipMatrix;
-uniform highp vec2 framebuffer;
-uniform highp vec2 viewport;
-uniform highp vec2 plot;
-flat in highp float diameter;
-flat in highp vec2 pointCenter;
-uniform bool pointTransformed;
-uniform bool pointQuads;
-uniform highp mat2 pointInverse;
-in float intensity;
-flat in float pointOpacity;
-out vec4 outputColor;
-${gpuClipFragment}
-void main() {
-  if (outsideGpuClip()) discard;
-  highp vec2 pixel = vec2(gl_FragCoord.x, framebuffer.y - gl_FragCoord.y) * viewport / framebuffer;
-  highp vec3 local = clipMatrix * vec3(pixel, 1.0);
-  if (local.z == 0.0 || any(lessThan(local.xy, vec2(0.0))) || any(greaterThan(local.xy, plot))) discard;
-  // One device-pixel coverage ramp; output uses premultiplied alpha.
-  highp float distance = length((gl_PointCoord - vec2(0.5)) * (diameter + 2.0));
-  highp float ramp = 1.0;
-  if (pointQuads) distance = length((pixel - pointCenter) * framebuffer / viewport);
-  if (pointTransformed) {
-    highp vec2 delta = (pixel - pointCenter) * framebuffer / viewport;
-    highp vec2 circle = pointInverse * delta;
-    distance = length(circle);
-    highp vec2 normal = distance > 0.0 ? circle / distance : vec2(1.0, 0.0);
-    // Convert local signed distance into device pixels along the ellipse normal.
-    ramp = max(length(transpose(pointInverse) * normal), 0.000001);
-  }
-  float coverage = clamp((diameter * 0.5 - distance) / ramp + 0.5, 0.0, 1.0);
-  if (coverage == 0.0) discard;
-  highp float radius = (diameter - strokeWidth) * 0.5;
-  float fillCoverage = clamp((radius - distance) / ramp + 0.5, 0.0, 1.0);
-  float strokeCoverage = strokeWidth > 0.0
-    ? coverage - clamp((radius - strokeWidth * 0.5 - distance) / ramp + 0.5, 0.0, 1.0)
-    : 0.0;
-  // SVG paints the centered stroke over the fill, including translucent rings.
-  float strokeAlpha = strokeColor.a * strokeCoverage;
-  float fillAlpha = color.a * fillCoverage * (1.0 - strokeAlpha);
-  outputColor = vec4((color.rgb * fillAlpha + strokeColor.rgb * strokeAlpha) * intensity,
-                     fillAlpha + strokeAlpha) * pointOpacity * opacity;
+fn project(value: f32, axis: vec4f) -> f32 {
+ var x = value;
+ if (axis.z > 0.5) { x = log(value) / log(10.0); }
+ return (x - axis.x) / (axis.y - axis.x);
+}
+@vertex fn vertex(@builtin(vertex_index) vertex: u32, @builtin(instance_index) instance: u32, @location(0) p: vec2f) -> Output {
+ var out: Output;
+ var radius = u.v[12].x;
+ if (u.v[12].y > 0.5) { radius = radii[instance]; }
+ out.diameter = radius * 2.0 * u.v[9].x + u.v[9].z;
+ out.intensity = 1.0;
+ if (u.v[12].z > 0.0) { out.intensity = 0.15 + 0.85 * log(1.0 + weights[instance]) / log(1.0 + u.v[12].z); }
+ out.opacity = u.v[9].w;
+ if (u.v[12].w > 0.5 && emphasis[instance] > 0.0) { out.opacity = emphasis[instance] - 1.0; }
+ let local = vec2f(project(p.x,u.v[2]), project(p.y,u.v[3])) * u.v[1].xy * u.v[1].z + u.v[4].xy;
+ out.center = vec2f(dot(u.v[5].xyz, vec3f(local,1)), dot(u.v[6].xyz, vec3f(local,1)));
+ let corners = array<vec2f,4>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(1,1));
+ let delta = corners[vertex] * (out.diameter * u.v[9].y + 2.0) / u.v[0].zw;
+ out.position = vec4f(out.center / u.v[0].xy * vec2f(2,-2) + vec2f(-1,1) + delta * vec2f(1,-1),0,1);
+ // IEEE non-finite coordinates fail these comparisons without entering rasterization.
+ if (!(abs(p.x) <= 3.402823e38) || !(abs(p.y) <= 3.402823e38) ||
+     any(local < -u.v[15].xy) || any(local > u.v[1].xy + u.v[15].xy) ||
+     (u.v[2].z > 0.5 && p.x <= 0.0) || (u.v[3].z > 0.5 && p.y <= 0.0) || u.v[9].y == 0.0) {
+   out.position = vec4f(2,2,2,1);
+ }
+ return out;
+}
+@fragment fn fragment(in: Output) -> @location(0) vec4f {
+ let pixel = in.position.xy * u.v[0].xy / u.v[0].zw;
+ let local = vec2f(dot(u.v[7].xyz,vec3f(pixel,1)),dot(u.v[8].xyz,vec3f(pixel,1)));
+ if (u.v[8].w == 0.0 || any(local < vec2f(0)) || any(local > u.v[1].xy)) { discard; }
+ if (u.v[16].x < 0.0) { discard; }
+ for (var i = 0u; i < u32(u.v[16].x); i++) {
+   if (dot(edges[i].xy,pixel) + edges[i].z < -0.00001) { discard; }
+ }
+ let delta = (pixel - in.center) * u.v[0].zw / u.v[0].xy;
+ var distance = length(delta);
+ var ramp = 1.0;
+ if (u.v[14].x > 0.5) {
+   let inverse = mat2x2f(u.v[13].xy,u.v[13].zw);
+   let circle = inverse * delta;
+   distance = length(circle);
+   var normal = vec2f(1,0);
+   if (distance > 0.0) { normal = circle / distance; }
+   ramp = max(length(transpose(inverse) * normal),0.000001);
+ }
+ let coverage = clamp((in.diameter * 0.5 - distance) / ramp + 0.5,0.0,1.0);
+ if (coverage == 0.0) { discard; }
+ let radius = (in.diameter - u.v[9].z) * 0.5;
+ let fillCoverage = clamp((radius - distance) / ramp + 0.5,0.0,1.0);
+ var strokeCoverage = 0.0;
+ if (u.v[9].z > 0.0) { strokeCoverage = coverage - clamp((radius - u.v[9].z * 0.5 - distance) / ramp + 0.5,0.0,1.0); }
+ let strokeAlpha = u.v[11].a * strokeCoverage;
+ let fillAlpha = u.v[10].a * fillCoverage * (1.0 - strokeAlpha);
+ return vec4f((u.v[10].rgb * fillAlpha + u.v[11].rgb * strokeAlpha) * in.intensity,fillAlpha + strokeAlpha) * in.opacity * u.v[14].y;
 }`;
 
-export function createGpuResources(context: WebGL2RenderingContext) {
-  const program = context.createProgram();
-  if (!program) {
-    throw new Error("GPU program allocation failed");
-  }
-  const shaders: WebGLShader[] = [];
-  let buffer: WebGLBuffer | null = null;
-  let weights: WebGLBuffer | null = null;
-  let vao: WebGLVertexArrayObject | null = null;
-  let clip: ReturnType<typeof createGpuClip> | undefined;
-  try {
-    for (const [type, source] of [
-      [context.VERTEX_SHADER, vertex],
-      [context.FRAGMENT_SHADER, fragment],
-    ] as const) {
-      const shader = context.createShader(type);
-      if (!shader) {
-        throw new Error("GPU shader allocation failed");
-      }
-      shaders.push(shader);
-      context.shaderSource(shader, source);
-      context.compileShader(shader);
-      context.attachShader(program, shader);
-    }
-    // Query the linked program once instead of synchronizing per shader.
-    context.linkProgram(program);
-    if (!context.getProgramParameter(program, context.LINK_STATUS)) {
-      const detail = [
-        context.getProgramInfoLog(program),
-        ...shaders.map((shader) => context.getShaderInfoLog(shader)),
-      ]
-        .filter(Boolean)
-        .join("\n");
-      throw new Error(detail || "GPU program linking failed");
-    }
-    clip = createGpuClip(context, program);
-    buffer = context.createBuffer();
-    if (!buffer) {
-      throw new Error("GPU position buffer allocation failed");
-    }
-    vao = context.createVertexArray();
-    if (!vao) {
-      throw new Error("GPU vertex array allocation failed");
-    }
-    context.bindVertexArray(vao);
-    context.bindBuffer(context.ARRAY_BUFFER, buffer);
-    const attribute = context.getAttribLocation(program, "position");
-    const weightAttribute = context.getAttribLocation(program, "weight");
-    const radiusAttribute = context.getAttribLocation(program, "pointRadius");
-    const selectedAttribute = context.getAttribLocation(program, "selected");
-    if (
-      attribute < 0 ||
-      weightAttribute < 0 ||
-      radiusAttribute < 0 ||
-      selectedAttribute < 0
-    ) {
-      throw new Error("GPU program attributes are unavailable");
-    }
-    context.enableVertexAttribArray(attribute);
-    context.vertexAttribPointer(attribute, 2, context.FLOAT, false, 0, 0);
-    weights = context.createBuffer();
-    if (!weights) {
-      throw new Error("GPU weight buffer allocation failed");
-    }
-    const uniforms = Object.fromEntries(
-      [
-        "viewport",
-        "plot",
-        "zoom",
-        "matrix",
-        "clipMatrix",
-        "clipPadding",
-        "framebuffer",
-        "radiusRatio",
-        "pointExtent",
-        "pointInverse",
-        "pointTransformed",
-        "pointQuads",
-        "inactiveOpacity",
-        "opacity",
-        "color",
-        "strokeColor",
-        "strokeWidth",
-        "maxWeight",
-        "xAxis",
-        "yAxis",
-      ].map((name) => {
-        const location = context.getUniformLocation(program, name);
-        if (location === null) {
-          throw new Error(`GPU uniform ${name} is unavailable`);
-        }
-        return [name, location];
-      }),
-    );
-    return {
-      program,
-      clip,
-      buffer,
-      vao,
-      uniforms,
-      weights,
-      positionAttribute: attribute,
-      weightAttribute,
-      radiusAttribute,
-      radii: null as WebGLBuffer | null,
-      selectedAttribute,
-      emphasis: null as WebGLBuffer | null,
-    };
-  } catch (error) {
-    clip?.dispose();
-    if (buffer) {
-      context.deleteBuffer(buffer);
-    }
-    if (weights) {
-      context.deleteBuffer(weights);
-    }
-    if (vao) {
-      context.deleteVertexArray(vao);
-    }
-    context.deleteProgram(program);
-    throw error;
-  } finally {
-    for (const shader of shaders) {
-      context.deleteShader(shader);
-    }
-  }
+export function createGpuResources(
+  device: GPUDevice,
+  format: GPUTextureFormat,
+  sampleCount = 4,
+) {
+  const module = device.createShaderModule({
+    code: shader,
+    label: "Chart point quads",
+  });
+  const pipeline = device.createRenderPipeline({
+    label: "Chart point quads",
+    layout: "auto",
+    vertex: {
+      module,
+      entryPoint: "vertex",
+      buffers: [
+        {
+          arrayStride: 8,
+          stepMode: "instance",
+          attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
+        },
+      ],
+    },
+    fragment: {
+      module,
+      entryPoint: "fragment",
+      targets: [
+        {
+          format,
+          blend: {
+            color: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
+            alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
+          },
+        },
+      ],
+    },
+    primitive: { topology: "triangle-strip" },
+    depthStencil: {
+      format: "depth24plus-stencil8",
+      depthWriteEnabled: false,
+      depthCompare: "always",
+    },
+    multisample: { count: sampleCount },
+  });
+  return {
+    pipeline,
+    buffer: undefined as GPUBuffer | undefined,
+    radii: undefined as GPUBuffer | undefined,
+    weights: undefined as GPUBuffer | undefined,
+    emphasis: undefined as GPUBuffer | undefined,
+  };
 }

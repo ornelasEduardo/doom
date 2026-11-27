@@ -1,13 +1,20 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import { createGpuPoints } from "../../components/Chart/rendering/gpu";
+import { acquireWebGpuSurface } from "../../components/Chart/rendering/webgpu-surface";
+import {
+  hasWebGpu,
+  readGpuPixel,
+} from "../../tests/browser/Chart/webgpu-readback";
 
-it("projects supplied numeric data on the GPU and changes domains without reuploading", () => {
+it("projects supplied numeric data on the GPU and changes domains without reuploading", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 200;
   const gpu = createGpuPoints(canvas);
-  const gl = canvas.getContext("webgl2")!;
-  const upload = vi.spyOn(gl, "bufferData");
+  await gpu.ready;
+  const surface = acquireWebGpuSurface(canvas);
+  const upload = vi.spyOn(surface.device.queue, "writeBuffer");
+  surface.release();
   const positions = new Float32Array([-5, 100, 5, 10]);
   const source = { length: 2, buffers: () => ({ positions }) };
   const view = {
@@ -27,30 +34,30 @@ it("projects supplied numeric data on the GPU and changes domains without reuplo
       y: { type: "log" as const, domain: [1000, 1] as const },
     },
   };
-  const pixel = (x: number, y: number) => {
-    const rgba = new Uint8Array(4);
-    gl.readPixels(x, 199 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
-    return Array.from(rgba);
-  };
+  const pixel = (x: number, y: number) => readGpuPixel(canvas, x, y);
   try {
     gpu.draw(source, view);
-    expect(pixel(50, 67)).toEqual([255, 0, 0, 255]);
-    expect(pixel(150, 133)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(50, 67)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(150, 133)).toEqual([255, 0, 0, 255]);
     gpu.draw(source, {
       ...view,
       axes: { ...view.axes, x: { type: "linear", domain: [-20, 20] } },
     });
-    expect(pixel(75, 67)).toEqual([255, 0, 0, 255]);
-    expect(pixel(50, 67)[3]).toBe(0);
-    expect(upload).toHaveBeenCalledTimes(1);
-    expect(gl.getError()).toBe(gl.NO_ERROR);
+    expect(await pixel(75, 67)).toEqual([255, 0, 0, 255]);
+    expect((await pixel(50, 67))[3]).toBe(0);
+    expect(
+      upload.mock.calls.filter(
+        ([buffer]) => buffer.label === "Chart point buffer",
+      ),
+    ).toHaveLength(1);
+    expect(gpu.error).toBeUndefined();
   } finally {
     upload.mockRestore();
     gpu.dispose();
   }
 });
 
-it("shares immutable numeric storage across renderers without permitting stale patches", () => {
+it("shares immutable numeric storage across renderers without permitting stale patches", async () => {
   const positions = new Float32Array([0.25, 0.25]);
   const source = {
     length: 1,
@@ -70,21 +77,27 @@ it("shares immutable numeric storage across renderers without permitting stale p
     radius: 4,
     color: [1, 0, 0, 1],
   };
-  const renderers = [
-    document.createElement("canvas"),
-    document.createElement("canvas"),
-  ].map((canvas) => {
-    canvas.width = canvas.height = 100;
-    const renderer = createGpuPoints(canvas);
-    return {
-      renderer,
-      upload: vi.spyOn(canvas.getContext("webgl2")!, "bufferData"),
-    };
-  });
+  const renderers = await Promise.all(
+    [document.createElement("canvas"), document.createElement("canvas")].map(
+      async (canvas) => {
+        canvas.width = canvas.height = 100;
+        const renderer = createGpuPoints(canvas);
+        await renderer.ready;
+        const surface = acquireWebGpuSurface(canvas);
+        const upload = vi.spyOn(surface.device.queue, "writeBuffer");
+        surface.release();
+        return { renderer, upload };
+      },
+    ),
+  );
   try {
     for (const { renderer, upload } of renderers) {
       renderer.draw(source, view);
-      expect(upload.mock.calls[0][1]).toBe(positions);
+      expect(
+        upload.mock.calls.find(
+          ([buffer]) => buffer.label === "Chart point buffer",
+        )?.[2],
+      ).toBe(positions.buffer);
       expect(() => renderer.patch([0])).toThrow(/immutable/i);
     }
     expect(Array.from(positions)).toEqual([0.25, 0.25]);
@@ -96,26 +109,24 @@ it("shares immutable numeric storage across renderers without permitting stale p
   }
 });
 
-it("links shaders without synchronous per-shader status queries", () => {
+it("creates a ready WebGPU pipeline without synchronous shader polling", async () => {
   const canvas = document.createElement("canvas");
-  const gl = canvas.getContext("webgl2")!;
-  const status = vi.spyOn(gl, "getShaderParameter");
   const gpu = createGpuPoints(canvas);
   try {
-    expect(status).not.toHaveBeenCalled();
+    await gpu.ready;
+    expect(gpu.available).toBe(true);
+    expect(gpu.error).toBeUndefined();
   } finally {
-    status.mockRestore();
     gpu.dispose();
   }
 });
 
-it("restores real GPU resources and replays the newest frame after context loss", async () => {
+it("restores real GPU resources and replays the newest frame after device loss", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 100;
   const gpu = createGpuPoints(canvas);
-  const gl = canvas.getContext("webgl2")!;
-  const extension = gl.getExtension("WEBGL_lose_context");
-  expect(extension).not.toBeNull();
+  await gpu.ready;
+  const surface = acquireWebGpuSurface(canvas);
   const view = {
     width: 100,
     height: 100,
@@ -129,47 +140,30 @@ it("restores real GPU resources and replays the newest frame after context loss"
     radius: 4,
     color: [1, 0, 0, 1],
   };
-  let lost = false;
-  let restoredPixel: number[] | undefined;
-  canvas.addEventListener(
-    "webglcontextlost",
-    () => {
-      lost = true;
-    },
-    { once: true },
-  );
-  canvas.addEventListener(
-    "webglcontextrestored",
-    () => {
-      // Read in the restoration task before the default drawing buffer is cleared.
-      const pixel = new Uint8Array(4);
-      gl.readPixels(75, 24, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-      restoredPixel = Array.from(pixel);
-    },
-    { once: true },
-  );
+  const source = (value: number) => ({
+    length: 1,
+    buffers: () => ({ positions: new Float32Array([value, value]) }),
+  });
   try {
-    gpu.draw(
-      {
-        length: 1,
-        buffers: () => ({ positions: new Float32Array([0.25, 0.25]) }),
-      },
-      view,
-    );
-    extension!.loseContext();
-    await expect.poll(() => lost).toBe(true);
-    gpu.draw(
-      {
-        length: 1,
-        buffers: () => ({ positions: new Float32Array([0.75, 0.75]) }),
-      },
-      view,
-    );
-    extension!.restoreContext();
-    await expect.poll(() => restoredPixel).toEqual([255, 0, 0, 255]);
-    expect(canvas.dataset.gpuError).toBeUndefined();
-    expect(gl.getError()).toBe(gl.NO_ERROR);
+    gpu.draw(source(0.25), view);
+    expect(await readGpuPixel(canvas, 25, 25)).toEqual([255, 0, 0, 255]);
+    surface.device.destroy();
+    await expect.poll(() => gpu.available).toBe(false);
+    gpu.draw(source(0.75), view);
+    gpu.recover();
+    await expect.poll(() => gpu.available).toBe(true);
+    await expect
+      .poll(() => readGpuPixel(canvas, 75, 75))
+      .toEqual([255, 0, 0, 255]);
+    expect(gpu.error).toBeUndefined();
   } finally {
+    surface.release();
     gpu.dispose();
+  }
+});
+
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
   }
 });

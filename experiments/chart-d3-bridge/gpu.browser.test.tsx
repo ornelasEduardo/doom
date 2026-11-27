@@ -1,11 +1,17 @@
 import "../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 
 import { SpatialMap } from "../../components/Chart/engine/SpatialMap";
 import { createGpuPoints } from "../../components/Chart/rendering/gpu";
+import {
+  hasWebGpu,
+  readGpuPixel,
+  readGpuPixels,
+} from "../../tests/browser/Chart/webgpu-readback";
+import { trackPointUploads } from "./gpu-test-uploads";
 import { Proof } from "./Proof";
 
 afterEach(() => {
@@ -13,13 +19,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("renders actual GPU pixels, retains buffers across viewport changes, and releases resources", () => {
+it("renders actual GPU pixels, retains buffers across viewport changes, and releases resources", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = 200;
   canvas.height = 200;
   const gpu = createGpuPoints(canvas);
-  const gl = canvas.getContext("webgl2")!;
-  const upload = vi.spyOn(gl, "bufferData");
+  await gpu.ready;
+  const upload = trackPointUploads();
   const positions = new Float32Array([1 / 3, 1 / 3]);
   const data = { length: 1, buffers: () => ({ positions }) };
   const view = {
@@ -35,17 +41,13 @@ it("renders actual GPU pixels, retains buffers across viewport changes, and rele
     radius: 4,
     color: [1, 0, 0, 1],
   };
-  const pixel = (x: number, y: number) => {
-    const rgba = new Uint8Array(4);
-    gl.readPixels(x, 199 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
-    return Array.from(rgba);
-  };
+  const pixel = (x: number, y: number) => readGpuPixel(canvas, x, y);
   gpu.draw(data, view);
-  expect(pixel(70, 70)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(70, 70)).toEqual([255, 0, 0, 255]);
   gpu.draw(data, { ...view, x: 20 });
-  expect(pixel(90, 70)).toEqual([255, 0, 0, 255]);
-  expect(pixel(70, 70)[3]).toBe(0);
-  expect(upload).toHaveBeenCalledTimes(1);
+  expect(await pixel(90, 70)).toEqual([255, 0, 0, 255]);
+  expect((await pixel(70, 70))[3]).toBe(0);
+  expect(upload.calls).toHaveLength(1);
   gpu.draw(
     {
       length: 1,
@@ -53,20 +55,20 @@ it("renders actual GPU pixels, retains buffers across viewport changes, and rele
     },
     view,
   );
-  expect(pixel(130, 70)).toEqual([255, 0, 0, 255]);
-  expect(upload).toHaveBeenCalledTimes(2);
-  expect(gl.getError()).toBe(gl.NO_ERROR);
-  const release = vi.spyOn(gl, "deleteBuffer");
+  expect(await pixel(130, 70)).toEqual([255, 0, 0, 255]);
+  expect(upload.calls).toHaveLength(2);
+  expect(gpu.error).toBeUndefined();
+  const release = vi.spyOn(upload.calls[1].buffer, "destroy");
   gpu.dispose();
   gpu.dispose();
-  expect(release).toHaveBeenCalledTimes(2);
+  expect(release).toHaveBeenCalledTimes(1);
 });
 
 it("keeps the normal tooltip, keyboard targets, peer chart, and remount working with GPU marks", async () => {
   const view = render(<Proof initialCount={1000} />);
   const alpha = () =>
     view.container.querySelector("[data-proof-chart='Primary']")!;
-  const surface = () => alpha()?.querySelector("[data-proof-surface='webgl']");
+  const surface = () => alpha()?.querySelector("[data-proof-surface='webgpu']");
   await expect
     .poll(() => surface()?.getAttribute("data-proof-count"))
     .toBe("1000");
@@ -163,12 +165,12 @@ it("keeps the normal tooltip, keyboard targets, peer chart, and remount working 
     .toBe(0);
 });
 
-it("uploads changed visible slots only, defers offscreen slots, and flushes them when revealed", () => {
+it("uploads changed visible slots only, defers offscreen slots, and flushes them when revealed", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = 200;
   canvas.height = 200;
-  const gpu = createGpuPoints(canvas),
-    gl = canvas.getContext("webgl2")!;
+  const gpu = createGpuPoints(canvas);
+  await gpu.ready;
   const positions = new Float32Array([1 / 3, 1 / 3, 1, 1]);
   const data = { length: 2, buffers: () => ({ positions }) };
   const view = {
@@ -185,21 +187,19 @@ it("uploads changed visible slots only, defers offscreen slots, and flushes them
     color: [1, 0, 0, 1],
   };
   gpu.draw(data, view);
-  const full = vi.spyOn(gl, "bufferData"),
-    partial = vi.spyOn(gl, "bufferSubData");
+  const partial = trackPointUploads();
   positions[1] = 1 - Math.log10(200) / 3;
   positions[3] = 1 - Math.log10(2) / 3;
   gpu.patch([0, 1]);
   gpu.draw(data, view);
-  expect(full).not.toHaveBeenCalled();
-  expect(partial).toHaveBeenCalledTimes(1);
-  expect((partial.mock.calls[0][2] as Float32Array).byteLength).toBe(8);
-  const pixel = new Uint8Array(4);
-  gl.readPixels(120, 115, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+
+  expect(partial.calls).toHaveLength(1);
+  expect(partial.calls[0].values.byteLength).toBe(8);
+  const pixel = await readGpuPixels(canvas, 120, 84, 1, 1);
   expect(Array.from(pixel)).toEqual([255, 0, 0, 255]);
   gpu.draw(data, { ...view, k: 1 });
-  expect(partial).toHaveBeenCalledTimes(2);
-  expect(full).not.toHaveBeenCalled();
+  expect(partial.calls).toHaveLength(2);
+
   gpu.dispose();
 });
 
@@ -256,6 +256,7 @@ it("uploads compact patches without reading records or recomputing projections",
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 200;
   const gpu = createGpuPoints(canvas);
+  await gpu.ready;
   const view = {
     width: 200,
     height: 200,
@@ -335,4 +336,10 @@ it("switches to counted density bins, refines on zoom, and preserves exact keybo
     .poll(() => primary().querySelector("canvas")?.dataset.gpuDrawn)
     .toBe("10000");
   expect(primary().querySelector("output")?.textContent).toContain("2.00");
+});
+
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
 });

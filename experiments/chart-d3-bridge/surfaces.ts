@@ -16,7 +16,7 @@ export function createMarksSurface(
   onStatusChange?: () => void,
 ) {
   const group = frame.container;
-  const marks = group.append("g").attr("data-proof-surface", "webgl");
+  const marks = group.append("g").attr("data-proof-surface", "webgpu");
   const svg = group.node()!.ownerSVGElement!;
   const canvas = document.createElement("canvas");
   canvas.classList.add(styles.canvas);
@@ -24,8 +24,22 @@ export function createMarksSurface(
   svg.parentElement!.insertBefore(canvas, svg);
   let gpu: ReturnType<typeof createGpuPoints> | undefined;
   let unavailable: HTMLParagraphElement | undefined;
+  const statusChanged = () => {
+    if (gpu?.error) {
+      unavailable ??= document.createElement("p");
+      unavailable.setAttribute("role", "status");
+      unavailable.textContent = gpu.error;
+      svg.parentElement?.append(unavailable);
+      canvas.dataset.gpuUnavailable = "true";
+    } else if (gpu?.available) {
+      unavailable?.remove();
+      unavailable = undefined;
+      delete canvas.dataset.gpuUnavailable;
+    }
+    onStatusChange?.();
+  };
   try {
-    gpu = createGpuPoints(canvas, { onStatusChange });
+    gpu = createGpuPoints(canvas, { onStatusChange: statusChanged });
   } catch (error) {
     unavailable = document.createElement("p");
     unavailable.setAttribute("role", "status");

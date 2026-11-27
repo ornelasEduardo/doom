@@ -263,12 +263,8 @@ async function runStress() {
             framesOver50ms: frames.filter((n) => n > 50).length,
           };
         }
-        const details = await page.evaluate(() => {
-          const canvas = document.querySelector(
-            "[data-proof-chart='Primary'] canvas",
-          );
-          const gl = canvas?.getContext("webgl2");
-          const debug = gl?.getExtension("WEBGL_debug_renderer_info");
+        const details = await page.evaluate(async () => {
+          const adapter = await navigator.gpu?.requestAdapter();
           const phases = Array.from(
             document.querySelectorAll("[data-proof-geometry-ms]"),
           ).map((node) => ({
@@ -281,7 +277,14 @@ async function runStress() {
             geometryMs: Number(node.getAttribute("data-proof-geometry-ms")),
           }));
           return {
-            gpu: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : null,
+            gpu: adapter
+              ? {
+                  vendor: adapter.info.vendor,
+                  architecture: adapter.info.architecture,
+                  description: adapter.info.description,
+                  isFallbackAdapter: adapter.info.isFallbackAdapter,
+                }
+              : null,
             phases,
           };
         });

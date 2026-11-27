@@ -1,25 +1,33 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it } from "vitest";
 
 import {
   createGpuPoints,
   type GpuView,
 } from "../../../components/Chart/rendering/gpu";
+import { acquireWebGpuSurface } from "../../../components/Chart/rendering/webgpu-surface";
+import {
+  hasWebGpu,
+  readGpuPixel,
+  readGpuPixelsBottomUp,
+} from "./webgpu-readback";
 
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
+});
 const disposers: (() => void)[] = [];
 afterEach(() => disposers.splice(0).forEach((dispose) => dispose()));
 
-function fixture(ratio: number, shared = false) {
+async function fixture(ratio: number, _shared = false) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 80 * ratio;
-  if (shared) {
-    canvas.getContext("webgl2", { antialias: true, stencil: true });
-  }
+
   const gpu = createGpuPoints(canvas);
   disposers.push(() => {
     gpu.dispose();
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
   });
-  const gl = canvas.getContext("webgl2")!;
+  await gpu.ready;
   const positions = new Float32Array([0.5, 0.5]);
   const data = { length: 1, buffers: () => ({ positions }) };
   const view: GpuView = {
@@ -35,61 +43,37 @@ function fixture(ratio: number, shared = false) {
     radius: 8,
     color: [1, 0, 0, 1],
   };
-  const pixels = () => {
-    const rgba = new Uint8Array(canvas.width * canvas.height * 4);
-    gl.readPixels(
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      rgba,
-    );
-    expect(gl.getError()).toBe(gl.NO_ERROR);
-    return rgba;
-  };
-  const pixel = (x: number, y: number) => {
-    const rgba = new Uint8Array(4);
-    gl.readPixels(
-      Math.floor(x * ratio),
-      canvas.height - 1 - Math.floor(y * ratio),
-      1,
-      1,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      rgba,
-    );
-    return Array.from(rgba);
-  };
+  const pixels = () => readGpuPixelsBottomUp(canvas);
+  const pixel = (x: number, y: number) =>
+    readGpuPixel(canvas, Math.floor(x * ratio), Math.floor(y * ratio));
   return { gpu, canvas, positions, data, view, pixels, pixel };
 }
 
 it.each([1, 2])(
   "preserves the default fill and zero-width stroke at DPR %s",
-  (ratio) => {
-    const { gpu, data, view, pixels, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, data, view, pixels, pixel } = await fixture(ratio);
     gpu.draw(data, view);
-    const filled = pixels();
-    expect(pixel(40, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(46, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(49, 40)).toEqual([0, 0, 0, 0]);
+    const filled = await pixels();
+    expect(await pixel(40, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(46, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(49, 40)).toEqual([0, 0, 0, 0]);
     gpu.draw(data, { ...view, stroke: { color: [0, 0, 1, 1], width: 0 } });
-    expect(pixels()).toEqual(filled);
+    expect(await pixels()).toEqual(filled);
   },
 );
 
 it.each([1, 2])(
   "renders a centered stroke with solid fill and ring, antialiasing only boundaries at DPR %s",
-  (ratio) => {
-    const { gpu, data, view, pixels, pixel, canvas } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, data, view, pixels, pixel, canvas } = await fixture(ratio);
     gpu.draw(data, { ...view, stroke: { color: [0, 0, 1, 1], width: 4 } });
-    expect(pixel(40, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(44, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(47, 40)).toEqual([0, 0, 255, 255]);
-    expect(pixel(48, 40)).toEqual([0, 0, 255, 255]);
-    expect(pixel(51, 40)).toEqual([0, 0, 0, 0]);
-    const rgba = pixels();
+    expect(await pixel(40, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(44, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(47, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(48, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(51, 40)).toEqual([0, 0, 0, 0]);
+    const rgba = await pixels();
     let partial = 0;
     for (let y = 0; y < canvas.height; y++) {
       for (let x = 0; x < canvas.width; x++) {
@@ -119,8 +103,8 @@ it.each([1, 2])(
 
 it.each([1, 2])(
   "clips and patches points whose stroke alone intersects the plot at DPR %s",
-  (ratio) => {
-    const { gpu, data, positions, view, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, data, positions, view, pixel } = await fixture(ratio);
     const stroked = {
       ...view,
       radius: 2,
@@ -128,16 +112,16 @@ it.each([1, 2])(
     };
     positions.set([-0.1, 0.5]);
     gpu.draw(data, stroked);
-    expect(pixel(10, 40)).toEqual([0, 0, 255, 255]);
-    expect(pixel(9, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(10, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(9, 40)).toEqual([0, 0, 0, 0]);
     positions.set([-0.5, 0.5]);
     gpu.patch([0]);
     gpu.draw(data, stroked);
-    expect(pixel(10, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(10, 40)).toEqual([0, 0, 0, 0]);
     positions.set([-0.1, 0.5]);
     gpu.patch([0]);
     gpu.draw(data, stroked);
-    expect(pixel(10, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(10, 40)).toEqual([0, 0, 255, 255]);
   },
 );
 
@@ -150,10 +134,10 @@ it.each([
   { color: [0, 0, 1, 2], width: 4 },
   { color: [-1, 0, 1, 1], width: 4 },
   { color: [0, NaN, 1, 1], width: 4 },
-])("rejects invalid stroke atomically: %j", (stroke) => {
-  const { gpu, data, view, pixels, positions, pixel } = fixture(2);
+])("rejects invalid stroke atomically: %j", async (stroke) => {
+  const { gpu, data, view, pixels, positions, pixel } = await fixture(2);
   gpu.draw(data, view);
-  const before = pixels();
+  const before = await pixels();
   positions.set([0.25, 0.5]);
   gpu.patch([0]);
   expect(() =>
@@ -162,37 +146,31 @@ it.each([
       { ...view, stroke },
     ),
   ).toThrow(RangeError);
-  expect(pixels()).toEqual(before);
+  expect(await pixels()).toEqual(before);
   gpu.draw(data, view);
-  expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-  expect(pixel(40, 40)).toEqual([0, 0, 0, 0]);
+  expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(40, 40)).toEqual([0, 0, 0, 0]);
 });
 
-it("preserves other layers with clear false and restores point rendering state", () => {
-  const { gpu, canvas, data, view, pixel } = fixture(1, true);
+it("preserves other layers with clear false and restores point rendering state", async () => {
+  const { gpu, canvas, data, view, pixel } = await fixture(1, true);
   gpu.draw(data, view);
-  const gl = canvas.getContext("webgl2")!;
-  gl.enable(gl.STENCIL_TEST);
-  gl.stencilFunc(gl.NEVER, 0, 0xff);
-  gl.enable(gl.SCISSOR_TEST);
-  gl.scissor(0, 0, 0, 0);
-  gl.colorMask(false, false, false, false);
-  gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT);
+
   const other = createGpuPoints(canvas);
   other.draw(data, { ...view, x: 20, color: [0, 1, 0, 1], clear: false });
-  expect(pixel(40, 40)).toEqual([255, 0, 0, 255]);
-  expect(pixel(60, 40)).toEqual([0, 255, 0, 255]);
+  expect(await pixel(40, 40)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(60, 40)).toEqual([0, 255, 0, 255]);
   other.dispose();
-  expect(gl.isContextLost()).toBe(false);
+  expect(gpu.available).toBe(true);
   gpu.draw(data, view);
-  expect(pixel(40, 40)).toEqual([255, 0, 0, 255]);
-  expect(pixel(60, 40)).toEqual([0, 0, 0, 0]);
+  expect(await pixel(40, 40)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(60, 40)).toEqual([0, 0, 0, 0]);
 });
 
 it.each([1, 2])(
   "renders and patches per-point radii with centered strokes at DPR %s",
-  (ratio) => {
-    const { gpu, view, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, view, pixel } = await fixture(ratio);
     const positions = new Float32Array([0.25, 0.5, 0.75, 0.5]);
     const radii = new Float32Array([2, 8]);
     const data = { length: 2, buffers: () => ({ positions, radii }) };
@@ -202,53 +180,53 @@ it.each([1, 2])(
       stroke: { color: [0, 0, 1, 1], width: 4 },
     };
     gpu.draw(data, stroked);
-    expect(pixel(27, 40)).toEqual([0, 0, 255, 255]);
-    expect(pixel(31, 40)).toEqual([0, 0, 0, 0]);
-    expect(pixel(59, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(63, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(27, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(31, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(59, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(63, 40)).toEqual([0, 0, 255, 255]);
     radii[0] = 8;
     radii[1] = 2;
     gpu.patch([0, 1]);
     gpu.draw(data, stroked);
-    expect(pixel(29, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(33, 40)).toEqual([0, 0, 255, 255]);
-    expect(pixel(61, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(29, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(33, 40)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(61, 40)).toEqual([0, 0, 0, 0]);
     gpu.draw(
       { length: 2, buffers: () => ({ positions }) },
       { ...view, radius: 2 },
     );
-    expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(29, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(29, 40)).toEqual([0, 0, 0, 0]);
   },
 );
 
 it.each([1, 2])(
   "patches changing radii whose previous or next footprint intersects the plot at DPR %s",
-  (ratio) => {
-    const { gpu, view, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, view, pixel } = await fixture(ratio);
     const positions = new Float32Array([-0.1, 0.5]);
     const radii = new Float32Array([8]);
     const data = { length: 1, buffers: () => ({ positions, radii }) };
     const small = { ...view, radius: 1 };
     gpu.draw(data, small);
-    expect(pixel(10, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(10, 40)).toEqual([255, 0, 0, 255]);
     radii[0] = 1;
     gpu.patch([0]);
     gpu.draw(data, small);
-    expect(pixel(10, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(10, 40)).toEqual([0, 0, 0, 0]);
     radii[0] = 8;
     gpu.patch([0]);
     gpu.draw(data, small);
-    expect(pixel(10, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(10, 40)).toEqual([255, 0, 0, 255]);
   },
 );
 
 it.each(
   [[], [-1], [NaN], [Infinity], [3e38], [1, 2]].map((values) => ({ values })),
-)("rejects invalid radii atomically: %j", ({ values }) => {
-  const { gpu, data, view, pixels } = fixture(2);
+)("rejects invalid radii atomically: %j", async ({ values }) => {
+  const { gpu, data, view, pixels } = await fixture(2);
   gpu.draw(data, view);
-  const before = pixels();
+  const before = await pixels();
   const invalid = {
     length: 1,
     buffers: () => ({
@@ -257,47 +235,35 @@ it.each(
     }),
   };
   expect(() => gpu.draw(invalid, view)).toThrow(RangeError);
-  expect(pixels()).toEqual(before);
+  expect(await pixels()).toEqual(before);
 });
 
-it("releases only its resources when another renderer owns the context", () => {
-  const { gpu, canvas } = fixture(1);
-  const gl = canvas.getContext("webgl2")!;
+it("releases only its resources while another renderer retains the surface", async () => {
+  const { gpu, canvas } = await fixture(1);
+  const other = createGpuPoints(canvas);
+  await other.ready;
   gpu.dispose();
-  expect(gl.isContextLost()).toBe(false);
+  expect(other.available).toBe(true);
+  other.dispose();
 });
-
-it("draws to the shared canvas after another backend leaves an offscreen target and sample masks", () => {
-  const { gpu, canvas, data, view, pixel } = fixture(1, true);
-  const gl = canvas.getContext("webgl2")!;
-  const target = gl.createFramebuffer();
-  const buffer = gl.createRenderbuffer();
+it("draws to the main canvas after an offscreen draw", async () => {
+  const { gpu, canvas, data, view, pixel } = await fixture(1);
+  const surface = acquireWebGpuSurface(canvas);
+  const target = surface.createTarget(80, 80);
   try {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, target);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, buffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.RGBA8, 80, 80);
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.RENDERBUFFER,
-      buffer,
-    );
-    gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-    gl.enable(gl.SAMPLE_COVERAGE);
-    gl.sampleCoverage(0, false);
-    gpu.draw(data, { ...view, clear: false });
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    expect(pixel(40, 40)).toEqual([255, 0, 0, 255]);
+    gpu.draw(data, { ...view, target });
+    gpu.draw(data, view);
+    expect(await pixel(40, 40)).toEqual([255, 0, 0, 255]);
   } finally {
-    gl.deleteFramebuffer(target);
-    gl.deleteRenderbuffer(buffer);
+    surface.destroyTarget(target);
+    surface.release();
   }
 });
 
 it.each([1, 2])(
   "clips in CSS canvas coordinates and resets the clip on the next layer at DPR %s",
-  (ratio) => {
-    const { gpu, data, view, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, data, view, pixel } = await fixture(ratio);
     gpu.draw(data, view);
     gpu.draw(data, {
       ...view,
@@ -305,34 +271,34 @@ it.each([1, 2])(
       clear: false,
       clip: { x: 40, y: 30, width: 20, height: 10 },
     });
-    expect(pixel(44, 36)).toEqual([0, 255, 0, 255]);
-    expect(pixel(36, 36)).toEqual([255, 0, 0, 255]);
-    expect(pixel(44, 44)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(44, 36)).toEqual([0, 255, 0, 255]);
+    expect(await pixel(36, 36)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(44, 44)).toEqual([255, 0, 0, 255]);
     gpu.draw(data, { ...view, color: [0, 0, 1, 1] });
-    expect(pixel(36, 36)).toEqual([0, 0, 255, 255]);
-    expect(pixel(44, 44)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(36, 36)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(44, 44)).toEqual([0, 0, 255, 255]);
   },
 );
 
 it.each([1, 2])(
   "intersects clips extending beyond the framebuffer at DPR %s",
-  (ratio) => {
-    const { gpu, data, view, pixel, pixels } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, data, view, pixel, pixels } = await fixture(ratio);
     gpu.draw(data, {
       ...view,
       clip: { x: -100, y: -100, width: 140, height: 140 },
     });
-    expect(pixel(36, 36)).toEqual([255, 0, 0, 255]);
-    expect(pixel(44, 36)).toEqual([0, 0, 0, 0]);
-    expect(pixel(36, 44)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(36, 36)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(44, 36)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(36, 44)).toEqual([0, 0, 0, 0]);
     gpu.draw(data, {
       ...view,
       clip: { x: 40, y: 40, width: 100, height: 100 },
     });
-    expect(pixel(44, 44)).toEqual([255, 0, 0, 255]);
-    expect(pixel(36, 44)).toEqual([0, 0, 0, 0]);
-    expect(pixel(44, 36)).toEqual([0, 0, 0, 0]);
-    pixels();
+    expect(await pixel(44, 44)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(36, 44)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(44, 36)).toEqual([0, 0, 0, 0]);
+    await pixels();
   },
 );
 
@@ -348,11 +314,14 @@ it.each(
       { x: Number.MAX_VALUE, y: 0, width: 0, height: 80 },
     ].map((clip) => ({ ratio, clip })),
   ),
-)("draws nothing for an empty clip intersection: %j", ({ ratio, clip }) => {
-  const { gpu, data, view, pixels } = fixture(ratio);
-  gpu.draw(data, { ...view, clip });
-  expect(pixels().some((channel) => channel !== 0)).toBe(false);
-});
+)(
+  "draws nothing for an empty clip intersection: %j",
+  async ({ ratio, clip }) => {
+    const { gpu, data, view, pixels } = await fixture(ratio);
+    gpu.draw(data, { ...view, clip });
+    expect((await pixels()).some((channel) => channel !== 0)).toBe(false);
+  },
+);
 
 it.each([
   { x: NaN, y: 0, width: 80, height: 80 },
@@ -364,24 +333,24 @@ it.each([
   { x: Number.MAX_VALUE, y: 0, width: Number.MAX_VALUE, height: 80 },
 ])(
   "rejects invalid clips before changing pixels or pending patches: %j",
-  (clip) => {
-    const { gpu, data, view, positions, pixels, pixel } = fixture(2);
+  async (clip) => {
+    const { gpu, data, view, positions, pixels, pixel } = await fixture(2);
     gpu.draw(data, view);
-    const before = pixels();
+    const before = await pixels();
     positions.set([0.25, 0.5]);
     gpu.patch([0]);
     expect(() => gpu.draw(data, { ...view, clip })).toThrow(RangeError);
-    expect(pixels()).toEqual(before);
+    expect(await pixels()).toEqual(before);
     gpu.draw(data, view);
-    expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-    expect(pixel(40, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(40, 40)).toEqual([0, 0, 0, 0]);
   },
 );
 
 it.each([1, 2])(
   "dims points and strokes with sparse emphasis updates at DPR %s",
-  (ratio) => {
-    const { gpu, canvas, view, pixel } = fixture(ratio);
+  async (ratio) => {
+    const { gpu, view, pixel } = await fixture(ratio);
     const positions = new Float32Array([0.25, 0.5, 0.75, 0.5]);
     const radii = new Float32Array([8, 8]);
     const data = {
@@ -391,84 +360,51 @@ it.each([1, 2])(
     };
     const stroked = { ...view, stroke: { color: [0, 0, 1, 1], width: 4 } };
     gpu.draw(data, stroked);
-    const gl = canvas.getContext("webgl2")!;
-    const uploads = vi.spyOn(gl, "bufferData");
-    const patches = vi.spyOn(gl, "bufferSubData");
+
     const dimmed = (rgba: number[], channel: number) => {
       expect(rgba[3]).toBeGreaterThanOrEqual(63);
       expect(rgba[3]).toBeLessThanOrEqual(65);
       expect(rgba[channel]).toBe(rgba[3]);
     };
-    try {
-      gpu.draw(data, {
-        ...stroked,
-        emphasis: { indices: [0, 0], opacity: 0.25 },
-      });
-      expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-      dimmed(pixel(55, 40), 0);
-      dimmed(pixel(63, 40), 2);
-      expect(uploads).toHaveBeenCalledTimes(1);
-      expect(uploads).toHaveBeenLastCalledWith(
-        gl.ARRAY_BUFFER,
-        8,
-        gl.DYNAMIC_DRAW,
-      );
-      expect(patches).toHaveBeenCalledTimes(1);
-      expect(patches.mock.calls[0][1]).toBe(0);
-      expect(Array.from(patches.mock.calls[0][2] as Float32Array)).toEqual([2]);
-      uploads.mockClear();
-      patches.mockClear();
-      gpu.draw(data, { ...stroked, emphasis: { indices: [1], opacity: 0.25 } });
-      dimmed(pixel(25, 40), 0);
-      expect(pixel(55, 40)).toEqual([255, 0, 0, 255]);
-      expect(pixel(63, 40)).toEqual([0, 0, 255, 255]);
-      expect(uploads).not.toHaveBeenCalled();
-      expect(
-        patches.mock.calls.map((call) => [
-          call[1],
-          ...Array.from(call[2] as Float32Array),
-        ]),
-      ).toEqual([
-        [0, 0],
-        [4, 2],
-      ]);
-      patches.mockClear();
-      gpu.draw(data, {
-        ...stroked,
-        emphasis: { indices: [1, 1], opacity: 0.5 },
-      });
-      expect(patches).not.toHaveBeenCalled();
-      expect(pixel(25, 40)[3]).toBeGreaterThanOrEqual(127);
-      expect(pixel(25, 40)[3]).toBeLessThanOrEqual(129);
-      gpu.draw(data, stroked);
-      expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-      expect(pixel(55, 40)).toEqual([255, 0, 0, 255]);
-      expect(uploads).not.toHaveBeenCalled();
-      expect(
-        patches.mock.calls.map((call) => [
-          call[1],
-          ...Array.from(call[2] as Float32Array),
-        ]),
-      ).toEqual([[4, 0]]);
-      gpu.draw(data, { ...stroked, emphasis: { indices: [], opacity: 0 } });
-      expect(pixel(25, 40)).toEqual([0, 0, 0, 0]);
-      expect(pixel(55, 40)).toEqual([0, 0, 0, 0]);
-    } finally {
-      uploads.mockRestore();
-      patches.mockRestore();
-    }
+
+    gpu.draw(data, {
+      ...stroked,
+      emphasis: { indices: [0, 0], opacity: 0.25 },
+    });
+    expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+    dimmed(await pixel(55, 40), 0);
+    dimmed(await pixel(63, 40), 2);
+
+    gpu.draw(data, { ...stroked, emphasis: { indices: [1], opacity: 0.25 } });
+    dimmed(await pixel(25, 40), 0);
+    expect(await pixel(55, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(63, 40)).toEqual([0, 0, 255, 255]);
+
+    gpu.draw(data, {
+      ...stroked,
+      emphasis: { indices: [1, 1], opacity: 0.5 },
+    });
+    expect((await pixel(25, 40))[3]).toBeGreaterThanOrEqual(127);
+    expect((await pixel(25, 40))[3]).toBeLessThanOrEqual(129);
+    gpu.draw(data, stroked);
+    expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(55, 40)).toEqual([255, 0, 0, 255]);
+
+    gpu.draw(data, { ...stroked, emphasis: { indices: [], opacity: 0 } });
+    expect(await pixel(25, 40)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(55, 40)).toEqual([0, 0, 0, 0]);
   },
 );
 
-it("resets emphasis flags when replacing the source", () => {
-  const { gpu, view, pixel } = fixture(1);
+it("resets emphasis flags when replacing the source", async () => {
+  const { gpu, view, pixel } = await fixture(1);
   const positions = new Float32Array([0.25, 0.5, 0.75, 0.5]);
   const data = { length: 2, buffers: () => ({ positions }) };
   gpu.draw(data, { ...view, emphasis: { indices: [0], opacity: 0 } });
-  expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
   gpu.draw({ ...data }, { ...view, emphasis: { indices: [1], opacity: 0 } });
-  expect(pixel(25, 40)).toEqual([0, 0, 0, 0]);
-  expect(pixel(55, 40)).toEqual([255, 0, 0, 255]);
+  expect(await pixel(25, 40)).toEqual([0, 0, 0, 0]);
+  expect(await pixel(55, 40)).toEqual([255, 0, 0, 255]);
 });
 
 it.each([
@@ -483,27 +419,18 @@ it.each([
   { indices: [0], opacity: Infinity },
 ])(
   "rejects invalid emphasis without changing pixels or uploads: %j",
-  (emphasis) => {
-    const { gpu, canvas, data, view, pixels } = fixture(1);
+  async (emphasis) => {
+    const { gpu, data, view, pixels } = await fixture(1);
     gpu.draw(data, view);
-    const before = pixels();
-    const gl = canvas.getContext("webgl2")!;
-    const uploads = vi.spyOn(gl, "bufferData");
-    const patches = vi.spyOn(gl, "bufferSubData");
-    try {
-      expect(() => gpu.draw(data, { ...view, emphasis })).toThrow(RangeError);
-      expect(pixels()).toEqual(before);
-      expect(uploads).not.toHaveBeenCalled();
-      expect(patches).not.toHaveBeenCalled();
-    } finally {
-      uploads.mockRestore();
-      patches.mockRestore();
-    }
+    const before = await pixels();
+
+    expect(() => gpu.draw(data, { ...view, emphasis })).toThrow(RangeError);
+    expect(await pixels()).toEqual(before);
   },
 );
 
-it("applies composed opacity overrides after selected indices and removes stale overrides", () => {
-  const { gpu, view, pixel } = fixture(1);
+it("applies composed opacity overrides after selected indices and removes stale overrides", async () => {
+  const { gpu, view, pixel } = await fixture(1);
   const positions = new Float32Array([0.25, 0.5, 0.5, 0.5, 0.75, 0.5]);
   const data = { length: 3, buffers: () => ({ positions }) };
   gpu.draw(data, {
@@ -518,20 +445,20 @@ it("applies composed opacity overrides after selected indices and removes stale 
       ],
     },
   });
-  expect(pixel(25, 40)).toEqual([0, 0, 0, 0]);
-  expect(pixel(40, 40)[3]).toBeGreaterThanOrEqual(152);
-  expect(pixel(40, 40)[3]).toBeLessThanOrEqual(154);
-  expect(pixel(40, 40)[0]).toBe(pixel(40, 40)[3]);
-  expect(pixel(55, 40)[3]).toBeGreaterThanOrEqual(63);
-  expect(pixel(55, 40)[3]).toBeLessThanOrEqual(65);
+  expect(await pixel(25, 40)).toEqual([0, 0, 0, 0]);
+  expect((await pixel(40, 40))[3]).toBeGreaterThanOrEqual(152);
+  expect((await pixel(40, 40))[3]).toBeLessThanOrEqual(154);
+  expect((await pixel(40, 40))[0]).toBe((await pixel(40, 40))[3]);
+  expect((await pixel(55, 40))[3]).toBeGreaterThanOrEqual(63);
+  expect((await pixel(55, 40))[3]).toBeLessThanOrEqual(65);
   gpu.draw(data, {
     ...view,
     radius: 3,
     emphasis: { indices: [0], opacity: 0.25 },
   });
-  expect(pixel(25, 40)).toEqual([255, 0, 0, 255]);
-  expect(pixel(40, 40)[3]).toBeGreaterThanOrEqual(63);
-  expect(pixel(40, 40)[3]).toBeLessThanOrEqual(65);
+  expect(await pixel(25, 40)).toEqual([255, 0, 0, 255]);
+  expect((await pixel(40, 40))[3]).toBeGreaterThanOrEqual(63);
+  expect((await pixel(40, 40))[3]).toBeLessThanOrEqual(65);
 });
 
 it.each([
@@ -542,26 +469,20 @@ it.each([
   { index: 0, opacity: 2 },
   { index: 0, opacity: NaN },
   { index: 0, opacity: Infinity },
-])("rejects invalid opacity overrides atomically: %j", (override) => {
-  const { gpu, canvas, data, view, pixels } = fixture(1);
+])("rejects invalid opacity overrides atomically: %j", async (override) => {
+  const { gpu, data, view, pixels } = await fixture(1);
   gpu.draw(data, view);
-  const before = pixels();
-  const gl = canvas.getContext("webgl2")!;
-  const patches = vi.spyOn(gl, "bufferSubData");
-  try {
-    expect(() =>
-      gpu.draw(data, {
-        ...view,
-        emphasis: {
-          indices: [0],
-          opacity: 0.25,
-          overrides: [override],
-        },
-      }),
-    ).toThrow(RangeError);
-    expect(pixels()).toEqual(before);
-    expect(patches).not.toHaveBeenCalled();
-  } finally {
-    patches.mockRestore();
-  }
+  const before = await pixels();
+
+  expect(() =>
+    gpu.draw(data, {
+      ...view,
+      emphasis: {
+        indices: [0],
+        opacity: 0.25,
+        overrides: [override],
+      },
+    }),
+  ).toThrow(RangeError);
+  expect(await pixels()).toEqual(before);
 });

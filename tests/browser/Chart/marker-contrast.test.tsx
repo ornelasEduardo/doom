@@ -25,7 +25,11 @@ it("separates the active dense-scatter point with a non-intercepting contrast ri
     "[data-chart-container]",
   )!;
   await expect
-    .poll(() => chart.querySelector('[data-chart-gpu="ready"]'))
+    .poll(() =>
+      chart.querySelector(
+        '[data-chart-gpu="ready"], [data-chart-gpu="unavailable"]',
+      ),
+    )
     .not.toBeNull();
   chart.focus();
   await userEvent.keyboard("{ArrowRight}");

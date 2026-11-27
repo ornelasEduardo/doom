@@ -1,15 +1,21 @@
 import "../../styles/globals.scss";
 
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 
+import { hasWebGpu } from "../../tests/browser/Chart/webgpu-readback";
+import { trackPointUploads } from "./gpu-test-uploads";
 import { Proof } from "./Proof";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 it.each([8, 100000])(
   "keeps default GPU-projected Chart targets aligned through edits and zoom at %s points",
   async (count) => {
+    const uploads = trackPointUploads();
     const view = render(<Proof initialCount={count} />);
     const primary = () =>
       view.container.querySelector('[data-proof-chart="Primary"]')!;
@@ -27,10 +33,13 @@ it.each([8, 100000])(
             .length,
       )
       .toBe(2);
-    const gl = primary().querySelector("canvas")!.getContext("webgl2")!;
-    const uploaded = new Float32Array(2);
-    gl.getBufferSubData(gl.ARRAY_BUFFER, 0, uploaded);
-    expect(Array.from(uploaded)).toEqual([40, 80]);
+    await expect
+      .poll(() =>
+        uploads.calls.some(
+          (call) => call.values[0] === 40 && call.values[1] === 80,
+        ),
+      )
+      .toBe(true);
     primary().querySelector<HTMLElement>("[data-chart-container]")!.focus();
     await userEvent.keyboard("{ArrowRight}");
     await expect
@@ -69,8 +78,7 @@ it.each([8, 100000])(
     await userEvent.click(view.getByRole("button", { name: "Edit points" }));
     await expect
       .poll(() => {
-        gl.getBufferSubData(gl.ARRAY_BUFFER, 0, uploaded);
-        return uploaded[1];
+        return uploads.calls.findLast((call) => call.offset === 0)?.values[1];
       })
       .toBe(92);
     await userEvent.click(
@@ -84,6 +92,11 @@ it.each([8, 100000])(
     await expect
       .poll(() => primary().querySelector("[data-chart-tooltip]")?.textContent)
       .toContain("92");
-    expect(gl.getError()).toBe(gl.NO_ERROR);
   },
 );
+
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
+});

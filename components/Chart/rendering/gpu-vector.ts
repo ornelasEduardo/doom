@@ -1,5 +1,6 @@
-import { type ClipPolygon, createGpuClip, gpuClipFragment } from "./gpu-clip";
+import { type ClipPolygon, counterclockwise } from "./clip-geometry";
 import { strokeMesh } from "./vector-stroke";
+import { acquireWebGpuSurface, type GpuTarget } from "./webgpu-surface";
 /** Canvas CSS pixels, including chart margins; colors are straight RGBA in [0, 1]. */
 export interface VectorShape {
   contours: readonly {
@@ -36,7 +37,7 @@ export interface VectorShape {
 }
 export interface VectorView {
   /** Internal same-context opacity layer. Defaults to the canvas. */
-  target?: WebGLFramebuffer | null;
+  target?: GpuTarget | null;
   width: number;
   height: number;
   ratio: number;
@@ -44,99 +45,6 @@ export interface VectorView {
   clipPolygon?: ClipPolygon;
   /** False composites on an existing frame from another renderer sharing this context. */
   clear?: boolean;
-}
-
-const vertex = `#version 300 es
-in vec2 position;
-uniform vec2 viewport;
-out highp float pixelY;
-void main() {
-  pixelY = position.y;
-  gl_Position = vec4(position.x / viewport.x * 2.0 - 1.0, 1.0 - position.y / viewport.y * 2.0, 0.0, 1.0);
-}`;
-const fragment = `#version 300 es
-precision highp float;
-uniform vec4 color;
-uniform vec4 gradient;
-in highp float pixelY;
-out vec4 outputColor;
-${gpuClipFragment}
-void main() {
-  if (outsideGpuClip()) discard;
-  float t = gradient.x == gradient.y ? 0.0 : clamp((pixelY - gradient.x) / (gradient.y - gradient.x), 0.0, 1.0);
-  float alpha = color.a * mix(gradient.z, gradient.w, t);
-  outputColor = vec4(color.rgb * alpha, alpha);
-}`;
-
-function resources(gl: WebGL2RenderingContext) {
-  const program = gl.createProgram();
-  if (!program) {
-    throw new Error("GPU vector program allocation failed");
-  }
-  const shaders: WebGLShader[] = [];
-  let buffer: WebGLBuffer | null = null;
-  let vao: WebGLVertexArrayObject | null = null;
-  let clip: ReturnType<typeof createGpuClip> | undefined;
-  try {
-    for (const [type, source] of [
-      [gl.VERTEX_SHADER, vertex],
-      [gl.FRAGMENT_SHADER, fragment],
-    ] as const) {
-      const shader = gl.createShader(type);
-      if (!shader) {
-        throw new Error("GPU vector shader allocation failed");
-      }
-      shaders.push(shader);
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-      gl.attachShader(program, shader);
-    }
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      throw new Error(
-        gl.getProgramInfoLog(program) || "GPU vector program linking failed",
-      );
-    }
-    buffer = gl.createBuffer();
-    if (!buffer) {
-      throw new Error("GPU vector buffer allocation failed");
-    }
-    vao = gl.createVertexArray();
-    if (!vao) {
-      throw new Error("GPU vector vertex array allocation failed");
-    }
-    const position = gl.getAttribLocation(program, "position");
-    if (position < 0) {
-      throw new Error("GPU vector position unavailable");
-    }
-    const uniforms = Object.fromEntries(
-      ["viewport", "color", "gradient"].map((name) => {
-        const location = gl.getUniformLocation(program, name);
-        if (location === null) {
-          throw new Error(`GPU vector ${name} unavailable`);
-        }
-        return [name, location];
-      }),
-    );
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-    clip = createGpuClip(gl, program);
-    return { program, buffer, vao, uniforms, clip };
-  } catch (error) {
-    clip?.dispose();
-    if (vao) {
-      gl.deleteVertexArray(vao);
-    }
-    if (buffer) {
-      gl.deleteBuffer(buffer);
-    }
-    gl.deleteProgram(program);
-    throw error;
-  } finally {
-    shaders.forEach((shader) => gl.deleteShader(shader));
-  }
 }
 
 // Keep GPU arithmetic finite, including coordinate differences and stroke offsets.
@@ -242,263 +150,387 @@ function bounds(shape: VectorShape, pad: number): Bounds | undefined {
 function quad([x0, y0, x1, y1]: Bounds) {
   return new Float32Array([x0, y0, x1, y0, x1, y1, x0, y0, x1, y1, x0, y1]);
 }
-/** Owns its resources, never the shared canvas/context. Initial allocation failures throw. */
-export function createGpuVector(canvas: HTMLCanvasElement) {
-  const context = canvas.getContext("webgl2", {
-    alpha: true,
-    antialias: true,
-    stencil: true,
-    premultipliedAlpha: true,
-  });
-  if (!context || !context.getContextAttributes()?.stencil) {
-    throw new Error("GPU vector requires WebGL2 with stencil");
+const shader = `
+struct Params { viewport: vec4f, color: vec4f, gradient: vec4f, clip: vec4f }
+@group(0) @binding(0) var<uniform> params: Params;
+@group(0) @binding(1) var<storage, read> edges: array<vec4f>;
+struct Vertex { @builtin(position) position: vec4f, @location(0) pixelY: f32 }
+@vertex fn vertex(@location(0) position: vec2f) -> Vertex {
+  var out: Vertex;
+  out.position = vec4f(position.x / params.viewport.x * 2 - 1, 1 - position.y / params.viewport.y * 2, 0, 1);
+  out.pixelY = position.y;
+  return out;
+}
+@fragment fn fragment(in: Vertex) -> @location(0) vec4f {
+  let p = in.position.xy * params.viewport.xy / params.viewport.zw;
+  if (params.clip.x < 0) { discard; }
+  for (var i = 0u; i < u32(params.clip.x); i++) {
+    if (dot(edges[i].xy, p) + edges[i].z < -0.00001) { discard; }
   }
-  const gl: WebGL2RenderingContext = context;
-  const maxSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number;
-  let current: ReturnType<typeof resources> | undefined = resources(gl);
-  let disposed = false;
-  let lost = false;
-  let latest: { shapes: readonly VectorShape[]; view: VectorView } | undefined;
-  let error: string | undefined;
+  var t = 0.0;
+  if (params.gradient.x != params.gradient.y) {
+    t = clamp((in.pixelY - params.gradient.x) / (params.gradient.y - params.gradient.x), 0, 1);
+  }
+  let alpha = params.color.a * mix(params.gradient.z, params.gradient.w, t);
+  return vec4f(params.color.rgb * alpha, alpha);
+}`;
 
+function resources(
+  device: GPUDevice,
+  format: GPUTextureFormat,
+  sampleCount: number,
+) {
+  const module = device.createShaderModule({
+    code: shader,
+    label: "Chart vector",
+  });
+  const layout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        buffer: { type: "uniform" },
+      },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.FRAGMENT,
+        buffer: { type: "read-only-storage" },
+      },
+    ],
+  });
+  const pipelineLayout = device.createPipelineLayout({
+    bindGroupLayouts: [layout],
+  });
+  function pipeline(mode: "fill" | "stroke" | "paint") {
+    const paint = mode === "paint";
+    return device.createRenderPipeline({
+      label: `Chart vector ${mode}`,
+      layout: pipelineLayout,
+      vertex: {
+        module,
+        entryPoint: "vertex",
+        buffers: [
+          {
+            arrayStride: 8,
+            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
+          },
+        ],
+      },
+      fragment: {
+        module,
+        entryPoint: "fragment",
+        targets: [
+          {
+            format,
+            writeMask: paint ? GPUColorWrite.ALL : 0,
+            blend: paint
+              ? {
+                  color: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
+                  alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
+                }
+              : undefined,
+          },
+        ],
+      },
+      primitive: { topology: "triangle-list", cullMode: "none" },
+      multisample: { count: sampleCount },
+      depthStencil: {
+        format: "depth24plus-stencil8",
+        depthWriteEnabled: false,
+        depthCompare: "always",
+        stencilReadMask: 255,
+        stencilWriteMask: 255,
+        stencilFront: {
+          compare: paint ? "not-equal" : "always",
+          passOp: paint
+            ? "zero"
+            : mode === "fill"
+              ? "increment-wrap"
+              : "replace",
+        },
+        stencilBack: {
+          compare: paint ? "not-equal" : "always",
+          passOp: paint
+            ? "zero"
+            : mode === "fill"
+              ? "decrement-wrap"
+              : "replace",
+        },
+      },
+    });
+  }
+  return {
+    device,
+    layout,
+    fill: pipeline("fill"),
+    stroke: pipeline("stroke"),
+    paint: pipeline("paint"),
+  };
+}
+
+/** Shares the canvas device; geometry and opacity resources remain instance-owned. */
+export function createGpuVector(canvas: HTMLCanvasElement) {
+  const surface = acquireWebGpuSurface(canvas);
+  let current: ReturnType<typeof resources> | undefined;
+  let disposed = false;
+  let error: string | undefined;
+  let latest: { shapes: readonly VectorShape[]; view: VectorView } | undefined;
+  function setup() {
+    if (!disposed && surface.available && current?.device !== surface.device) {
+      current = resources(surface.device, surface.format, surface.sampleCount);
+      error = undefined;
+    }
+  }
   function render(shapes: readonly VectorShape[], view: VectorView) {
+    setup();
     const r = current!;
     const width = Math.max(1, Math.round(view.width * view.ratio));
     const height = Math.max(1, Math.round(view.height * view.ratio));
-    if (canvas.width !== width) {
-      canvas.width = width;
-    }
-    if (canvas.height !== height) {
-      canvas.height = height;
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, view.target ?? null);
-    gl.viewport(0, 0, width, height);
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    gl.disable(gl.SCISSOR_TEST);
-    gl.disable(gl.RASTERIZER_DISCARD);
-    gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-    gl.disable(gl.SAMPLE_COVERAGE);
-    gl.colorMask(true, true, true, true);
-    gl.stencilMask(0xff);
-    gl.clearStencil(0);
-    if (view.clear !== false) {
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-    }
-    if (view.clip) {
-      const sx = width / view.width,
-        sy = height / view.height;
-      const x0 = Math.max(0, Math.min(width, Math.round(view.clip.x * sx)));
-      const x1 = Math.max(
-        x0,
-        Math.min(width, Math.round((view.clip.x + view.clip.width) * sx)),
+    surface.resize(width, height);
+    const points = view.clipPolygon ? counterclockwise(view.clipPolygon) : [];
+    const edges = new Float32Array(Math.max(1, points.length) * 4);
+    points.forEach((p, i) => {
+      const q = points[(i + 1) % points.length],
+        dx = q.x - p.x,
+        dy = q.y - p.y;
+      const length = Math.hypot(dx, dy) || 1;
+      edges.set(
+        [-dy / length, dx / length, (dy * p.x - dx * p.y) / length, 0],
+        i * 4,
       );
-      const y0 = Math.max(0, Math.min(height, Math.round(view.clip.y * sy)));
-      const y1 = Math.max(
-        y0,
-        Math.min(height, Math.round((view.clip.y + view.clip.height) * sy)),
-      );
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(x0, height - y1, x1 - x0, y1 - y0);
-    }
-    gl.useProgram(r.program);
-    r.clip.set(view.clipPolygon, view.width, view.height, width, height);
-    gl.bindVertexArray(r.vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, r.buffer);
-    gl.uniform2f(r.uniforms.viewport, view.width, view.height);
-    gl.frontFace(gl.CCW);
-    gl.enable(gl.STENCIL_TEST);
-    gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    const upload = (data: Float32Array, mode: number = gl.TRIANGLES) => {
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STREAM_DRAW);
-      gl.drawArrays(mode, 0, data.length / 2);
-    };
-    const mask = () => {
-      gl.stencilMask(0xff);
-      gl.clear(gl.STENCIL_BUFFER_BIT);
-      gl.disable(gl.BLEND);
-      gl.colorMask(false, false, false, false);
-      gl.stencilFunc(gl.ALWAYS, 1, 0xff);
-    };
-    const paint = (
-      box: Bounds,
-      color: readonly number[],
-      opacity: number,
-      gradient?: NonNullable<VectorShape["fill"]>["gradient"],
-    ) => {
-      gl.colorMask(true, true, true, true);
-      gl.enable(gl.BLEND);
-      gl.stencilMask(0);
-      gl.stencilFunc(gl.NOTEQUAL, 0, 0xff);
-      gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
-      gl.uniform4f(
-        r.uniforms.color,
-        color[0],
-        color[1],
-        color[2],
-        color[3] * opacity,
-      );
-      gl.uniform4f(
-        r.uniforms.gradient,
-        gradient?.y0 ?? 0,
-        gradient?.y1 ?? 1,
-        gradient?.startOpacity ?? 1,
-        gradient?.endOpacity ?? 1,
-      );
-      upload(quad(box));
-    };
-    for (const shape of shapes) {
-      const transformed = shape.transform
-        ? {
-            ...shape,
-            contours: shape.contours.map((contour) => ({
-              ...contour,
-              points: contour.points.map((p) => ({
-                x:
-                  shape.transform!.a * p.x +
-                  shape.transform!.c * p.y +
-                  shape.transform!.e,
-                y:
-                  shape.transform!.b * p.x +
-                  shape.transform!.d * p.y +
-                  shape.transform!.f,
-              })),
-            })),
-          }
-        : shape;
-      const box = bounds(transformed, 0);
-      if (!box) {
-        continue;
-      }
-      if (shape.fill) {
-        mask();
-        gl.stencilOpSeparate(gl.FRONT, gl.KEEP, gl.KEEP, gl.INCR_WRAP);
-        gl.stencilOpSeparate(gl.BACK, gl.KEEP, gl.KEEP, gl.DECR_WRAP);
-        for (const contour of transformed.contours) {
-          if (contour.points.length < 3) {
-            continue;
-          }
-          const vertices = new Float32Array(contour.points.length * 2);
-          contour.points.forEach((p, i) => {
-            vertices[i * 2] = p.x;
-            vertices[i * 2 + 1] = p.y;
-          });
-          upload(vertices, gl.TRIANGLE_FAN);
-        }
-        paint(box, shape.fill.color, shape.opacity ?? 1, shape.fill.gradient);
-      }
-      if (shape.stroke && shape.stroke.width > 0) {
-        mask();
-        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
-        const scale = shape.transform
-          ? Math.hypot(
-              shape.transform.a,
-              shape.transform.b,
-              shape.transform.c,
-              shape.transform.d,
-            )
-          : 1;
-        const mesh = strokeMesh(shape, view.ratio * scale);
-        if (!mesh.length) {
-          continue;
-        }
-        upload(mesh);
-        const strokeBounds: Bounds = [Infinity, Infinity, -Infinity, -Infinity];
-        for (let i = 0; i < mesh.length; i += 2) {
-          strokeBounds[0] = Math.min(strokeBounds[0], mesh[i]);
-          strokeBounds[1] = Math.min(strokeBounds[1], mesh[i + 1]);
-          strokeBounds[2] = Math.max(strokeBounds[2], mesh[i]);
-          strokeBounds[3] = Math.max(strokeBounds[3], mesh[i + 1]);
-        }
-        paint(strokeBounds, shape.stroke.color, shape.opacity ?? 1);
-      }
-    }
-    gl.colorMask(true, true, true, true);
-    gl.stencilMask(0xff);
-    gl.disable(gl.STENCIL_TEST);
-    gl.disable(gl.SCISSOR_TEST);
-    gl.bindVertexArray(null);
-  }
-  function recover() {
-    if (disposed || gl.isContextLost()) {
-      return false;
-    }
-    if (current && !lost) {
-      return true;
+    });
+    const allocated: GPUBuffer[] = [];
+    function buffer(data: Float32Array, usage: GPUBufferUsageFlags) {
+      const result = r.device.createBuffer({
+        size: Math.max(4, data.byteLength),
+        usage,
+        mappedAtCreation: true,
+      });
+      allocated.push(result);
+      new Float32Array(result.getMappedRange()).set(data);
+      result.unmap();
+      return result;
     }
     try {
-      current = resources(gl);
-      lost = false;
-      error = undefined;
+      const edgeBuffer = buffer(edges, GPUBufferUsage.STORAGE);
+      surface.run((encoder) => {
+        const pass = encoder.beginRenderPass(
+          surface.passDescriptor(view.target ?? null, {
+            clear: view.clear !== false,
+            stencilClear: true,
+          }),
+        );
+        if (view.clip) {
+          const sx = width / view.width,
+            sy = height / view.height;
+          const x0 = Math.max(0, Math.min(width, Math.round(view.clip.x * sx)));
+          const x1 = Math.max(
+            x0,
+            Math.min(width, Math.round((view.clip.x + view.clip.width) * sx)),
+          );
+          const y0 = Math.max(
+            0,
+            Math.min(height, Math.round(view.clip.y * sy)),
+          );
+          const y1 = Math.max(
+            y0,
+            Math.min(height, Math.round((view.clip.y + view.clip.height) * sy)),
+          );
+          pass.setScissorRect(x0, y0, x1 - x0, y1 - y0);
+        }
+        function paint(
+          mesh: Float32Array,
+          box: Bounds,
+          mode: "fill" | "stroke",
+          color: readonly number[],
+          opacity: number,
+          gradient?: NonNullable<VectorShape["fill"]>["gradient"],
+        ) {
+          if (!mesh.length) {
+            return;
+          }
+          const params = buffer(
+            new Float32Array([
+              view.width,
+              view.height,
+              width,
+              height,
+              color[0],
+              color[1],
+              color[2],
+              color[3] * opacity,
+              gradient?.y0 ?? 0,
+              gradient?.y1 ?? 1,
+              gradient?.startOpacity ?? 1,
+              gradient?.endOpacity ?? 1,
+              view.clipPolygon ? (points.length < 3 ? -1 : points.length) : 0,
+              0,
+              0,
+              0,
+            ]),
+            GPUBufferUsage.UNIFORM,
+          );
+          const group = r.device.createBindGroup({
+            layout: r.layout,
+            entries: [
+              { binding: 0, resource: { buffer: params } },
+              { binding: 1, resource: { buffer: edgeBuffer } },
+            ],
+          });
+          const vertices = buffer(mesh, GPUBufferUsage.VERTEX);
+          const cover = buffer(quad(box), GPUBufferUsage.VERTEX);
+          // Painting also zeroes the covered nonzero stencil samples. Every
+          // mask is contained by its cover, so all shapes share one pass while
+          // retaining nonzero winding and unioned translucent stroke coverage.
+          pass.setBindGroup(0, group);
+          pass.setPipeline(r[mode]);
+          pass.setStencilReference(1);
+          pass.setVertexBuffer(0, vertices);
+          pass.draw(mesh.length / 2);
+          pass.setPipeline(r.paint);
+          pass.setStencilReference(0);
+          pass.setVertexBuffer(0, cover);
+          pass.draw(6);
+        }
+        for (const shape of shapes) {
+          const transform = shape.transform;
+          const transformed = transform
+            ? {
+                ...shape,
+                contours: shape.contours.map((c) => ({
+                  ...c,
+                  points: c.points.map((p) => ({
+                    x: transform.a * p.x + transform.c * p.y + transform.e,
+                    y: transform.b * p.x + transform.d * p.y + transform.f,
+                  })),
+                })),
+              }
+            : shape;
+          const box = bounds(transformed, 0);
+          if (!box) {
+            continue;
+          }
+          if (shape.fill) {
+            const vertices: number[] = [];
+            for (const c of transformed.contours) {
+              for (let i = 1; i + 1 < c.points.length; i++) {
+                for (const p of [c.points[0], c.points[i], c.points[i + 1]]) {
+                  vertices.push(p.x, p.y);
+                }
+              }
+            }
+            paint(
+              new Float32Array(vertices),
+              box,
+              "fill",
+              shape.fill.color,
+              shape.opacity ?? 1,
+              shape.fill.gradient,
+            );
+          }
+          if (shape.stroke && shape.stroke.width > 0) {
+            const scale = transform
+              ? Math.hypot(transform.a, transform.b, transform.c, transform.d)
+              : 1;
+            const mesh = strokeMesh(shape, view.ratio * scale);
+            const strokeBounds: Bounds = [
+              Infinity,
+              Infinity,
+              -Infinity,
+              -Infinity,
+            ];
+            for (let i = 0; i < mesh.length; i += 2) {
+              strokeBounds[0] = Math.min(strokeBounds[0], mesh[i]);
+              strokeBounds[1] = Math.min(strokeBounds[1], mesh[i + 1]);
+              strokeBounds[2] = Math.max(strokeBounds[2], mesh[i]);
+              strokeBounds[3] = Math.max(strokeBounds[3], mesh[i + 1]);
+            }
+            paint(
+              mesh,
+              strokeBounds,
+              "stroke",
+              shape.stroke.color,
+              shape.opacity ?? 1,
+            );
+          }
+        }
+        pass.end();
+      });
+    } finally {
+      surface.defer(() => allocated.forEach((b) => b.destroy()));
+    }
+  }
+  function restore() {
+    if (disposed) {
+      return;
+    }
+    if (!surface.available) {
+      current = undefined;
+      return;
+    }
+    try {
+      setup();
       if (latest && !latest.view.target) {
         render(latest.shapes, latest.view);
       }
-      return true;
     } catch (cause) {
-      if (current) {
-        current.clip.dispose();
-        gl.deleteBuffer(current.buffer);
-        gl.deleteVertexArray(current.vao);
-        gl.deleteProgram(current.program);
-        current = undefined;
-      }
+      current = undefined;
       error = cause instanceof Error ? cause.message : String(cause);
-      return false;
     }
   }
-  const onLost = (event: Event) => {
-    event.preventDefault();
-    lost = true;
-    current = undefined;
-  };
-  const onRestored = () => {
-    recover();
-  };
-  canvas.addEventListener("webglcontextlost", onLost);
-  canvas.addEventListener("webglcontextrestored", onRestored);
+  const unsubscribe = surface.subscribe(restore);
+  const ready = surface.ready.then(() => {
+    setup();
+  });
+  void ready.catch(() => {});
   return {
+    get ready() {
+      return surface.ready.then(() => {
+        setup();
+      });
+    },
     get available() {
-      return !disposed && !lost && !!current && !gl.isContextLost();
+      return !disposed && surface.available && !!current;
     },
     get error() {
-      return error;
+      return error ?? surface.error;
     },
     draw(shapes: readonly VectorShape[], view: VectorView) {
       if (disposed) {
         return;
       }
-      validate(shapes, view, maxSize);
+      validate(
+        shapes,
+        view,
+        surface.available ? surface.device.limits.maxTextureDimension2D : 8192,
+      );
       latest = {
         shapes,
         view: { ...view, clip: view.clip && { ...view.clip } },
       };
-      if (lost || gl.isContextLost()) {
-        return;
+      if (surface.available) {
+        render(shapes, view);
       }
-      if (!current) {
-        recover();
-        return;
-      }
-      render(shapes, view);
     },
-    recover,
+    recover() {
+      if (disposed) {
+        return false;
+      }
+      if (!surface.available) {
+        return surface.recover();
+      }
+      restore();
+      return !!current;
+    },
     dispose() {
       if (disposed) {
         return;
       }
       disposed = true;
-      canvas.removeEventListener("webglcontextlost", onLost);
-      canvas.removeEventListener("webglcontextrestored", onRestored);
-      if (current) {
-        current.clip.dispose();
-        gl.deleteBuffer(current.buffer);
-        gl.deleteVertexArray(current.vao);
-        gl.deleteProgram(current.program);
-      }
+      unsubscribe();
       current = undefined;
       latest = undefined;
+      surface.release();
     },
   };
 }

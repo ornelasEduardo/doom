@@ -1,11 +1,23 @@
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
 
 import {
   createGpuPoints,
   type GpuView,
 } from "../../../components/Chart/rendering/gpu";
 import { registerGpuMark } from "../../../components/Chart/rendering/scene";
+import { acquireWebGpuSurface } from "../../../components/Chart/rendering/webgpu-surface";
+import {
+  gpuReady,
+  hasWebGpu,
+  readGpuPixel,
+  readGpuPixelsBottomUp,
+} from "./webgpu-readback";
 
+beforeEach(async ({ skip }) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
+});
 const bases = [
   { name: "nonuniform scale", values: [2, 0, 0, 1] },
   { name: "shear", values: [1, 0.5, 1, 1] },
@@ -56,23 +68,9 @@ for (const kind of ["point", "cloud"] as const) {
             },
       );
       try {
-        const pixels = await new Promise<Uint8Array>((resolve) =>
-          requestAnimationFrame(() => {
-            const gl = host.querySelector("canvas")!.getContext("webgl2")!;
-            const pixels = new Uint8Array(120 * 120 * ratio * ratio * 4);
-            gl.readPixels(
-              0,
-              0,
-              120 * ratio,
-              120 * ratio,
-              gl.RGBA,
-              gl.UNSIGNED_BYTE,
-              pixels,
-            );
-            expect(gl.getError()).toBe(gl.NO_ERROR);
-            resolve(pixels);
-          }),
-        );
+        const canvas = host.querySelector("canvas")!;
+        await gpuReady(canvas);
+        const pixels = await readGpuPixelsBottomUp(canvas);
         const errors: string[] = [];
         let fills = 0,
           strokes = 0;
@@ -151,21 +149,13 @@ it("updates a retained cloud's affine basis without replacing its source", async
     radius: 10,
   });
   const read = async () => {
-    await Promise.resolve();
-    return new Promise<number[]>((resolve) =>
-      requestAnimationFrame(() => {
-        const gl = host.querySelector("canvas")!.getContext("webgl2")!;
-        resolve(
-          [
-            [77, 60],
-            [60, 77],
-          ].map(([x, y]) => {
-            const p = new Uint8Array(4);
-            gl.readPixels(x, 119 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
-            return p[3];
-          }),
-        );
-      }),
+    const canvas = host.querySelector("canvas")!;
+    await gpuReady(canvas);
+    return Promise.all(
+      [
+        [77, 60],
+        [60, 77],
+      ].map(async ([x, y]) => (await readGpuPixel(canvas, x, y))[3]),
     );
   };
   try {
@@ -178,20 +168,12 @@ it("updates a retained cloud's affine basis without replacing its source", async
   }
 });
 
-it("preserves large uniform/affine points through quad-to-sprite switches and restoration", async () => {
+it("preserves large uniform/affine points through radius changes and device recovery", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 120;
   document.body.append(canvas);
-  const gl = canvas.getContext("webgl2")!;
-  const getParameter = gl.getParameter.bind(gl);
-  const limits = vi
-    .spyOn(gl, "getParameter")
-    .mockImplementation((name) =>
-      name === gl.ALIASED_POINT_SIZE_RANGE
-        ? new Float32Array([1, 16])
-        : getParameter(name),
-    );
   const gpu = createGpuPoints(canvas);
+  await gpu.ready;
   const positions = new Float32Array([30.5, 60.5, 90.5, 60.5]);
   const large = {
     length: 2,
@@ -219,65 +201,51 @@ it("preserves large uniform/affine points through quad-to-sprite switches and re
       y: { type: "linear", domain: [0, 120] },
     },
   };
-  const pixel = (x: number, y: number) => {
-    const p = new Uint8Array(4);
-    gl.readPixels(x, 119 - y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
-    return [...p];
-  };
+  const pixel = (x: number, y: number) => readGpuPixel(canvas, x, y);
   const affine = { ...view, pointTransform: [2, 0, 0, 1] as const };
-  const checkAffine = () => {
-    expect(pixel(30, 60)).toEqual([255, 0, 0, 255]);
-    expect(pixel(90, 60)).toEqual([255, 0, 0, 255]);
-    expect(pixel(48, 60)).toEqual([0, 0, 255, 255]);
-    expect(pixel(116, 60)).toEqual([0, 0, 255, 255]);
-    expect(pixel(30, 78)).toEqual([0, 0, 0, 0]);
+  const checkAffine = async () => {
+    expect(await pixel(30, 60)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(90, 60)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(48, 60)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(116, 60)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(30, 78)).toEqual([0, 0, 0, 0]);
   };
   try {
     gpu.draw(large, { ...view, pointTransform: [2, 0, 0, 2] });
-    expect(pixel(48, 60)).toEqual([0, 0, 255, 255]);
-    expect(pixel(30, 78)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(48, 60)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(30, 78)).toEqual([0, 0, 255, 255]);
     gpu.draw(large, affine);
-    checkAffine();
+    await checkAffine();
     gpu.draw(small, { ...view, stroke: { color: [0, 0, 1, 1], width: 2 } });
-    expect(pixel(30, 60)).toEqual([255, 0, 0, 255]);
-    expect(pixel(90, 60)).toEqual([255, 0, 0, 255]);
-    expect(pixel(33, 60)).toEqual([0, 0, 255, 255]);
-    expect(pixel(94, 60)).toEqual([0, 0, 255, 255]);
-    expect(pixel(48, 60)).toEqual([0, 0, 0, 0]);
+    expect(await pixel(30, 60)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(90, 60)).toEqual([255, 0, 0, 255]);
+    expect(await pixel(33, 60)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(94, 60)).toEqual([0, 0, 255, 255]);
+    expect(await pixel(48, 60)).toEqual([0, 0, 0, 0]);
     gpu.draw(large, affine);
-    checkAffine();
-    const extension = gl.getExtension("WEBGL_lose_context")!;
-    const lost = new Promise((resolve) =>
-      canvas.addEventListener("webglcontextlost", resolve, { once: true }),
-    );
-    extension.loseContext();
-    await lost;
-    // Restore only after the loss dispatch has completed, including preventDefault.
-    await new Promise(requestAnimationFrame);
-    expect(gpu.available).toBe(false);
-    const restored = new Promise((resolve) =>
-      canvas.addEventListener("webglcontextrestored", resolve, { once: true }),
-    );
-    extension.restoreContext();
-    await restored;
+    await checkAffine();
+    const surface = acquireWebGpuSurface(canvas);
+    surface.device.destroy();
+    await vi.waitFor(() => expect(gpu.available).toBe(false));
+    gpu.recover();
+    await vi.waitFor(() => expect(gpu.available, gpu.error).toBe(true));
     gpu.draw(large, affine);
-    checkAffine();
-    expect(gl.getError()).toBe(gl.NO_ERROR);
+    await checkAffine();
+    surface.release();
   } finally {
     gpu.dispose();
-    limits.mockRestore();
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
+
     canvas.remove();
   }
 });
 
 it.each([undefined, [2, 0, 0, 1] as const])(
   "retains visible coverage when a point center lies outside the canvas (%s)",
-  (pointTransform) => {
+  async (pointTransform) => {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 120;
-    const gpu = createGpuPoints(canvas),
-      gl = canvas.getContext("webgl2")!;
+    const gpu = createGpuPoints(canvas);
+    await gpu.ready;
     const view: GpuView = {
       width: 120,
       height: 120,
@@ -304,12 +272,10 @@ it.each([undefined, [2, 0, 0, 1] as const])(
         },
         view,
       );
-      const pixel = new Uint8Array(4);
-      gl.readPixels(1, 59, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      const pixel = await readGpuPixel(canvas, 1, 60);
       expect([...pixel]).toEqual([255, 0, 0, 255]);
     } finally {
       gpu.dispose();
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
     }
   },
 );

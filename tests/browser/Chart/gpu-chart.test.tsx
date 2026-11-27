@@ -6,7 +6,12 @@ import { afterEach, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
+import { acquireWebGpuSurface } from "../../../components/Chart/rendering/webgpu-surface";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
+import { hasWebGpu } from "./webgpu-readback";
+import { snapshotGpu } from "./webgpu-snapshot";
+
+const gpuIt = it.skipIf(!(await hasWebGpu()));
 
 afterEach(() => {
   cleanup();
@@ -34,7 +39,7 @@ function Fixture({ type }: { type: "line" | "area" | "bar" | "scatter" }) {
     </DesignSystemProvider>
   );
 }
-it.each(["line", "area", "bar", "scatter"] as const)(
+gpuIt.each(["line", "area", "bar", "scatter"] as const)(
   "draws %s marks on the shared GPU surface and retains keyboard tooltips",
   async (type) => {
     const view = render(<Fixture type={type} />);
@@ -47,10 +52,10 @@ it.each(["line", "area", "bar", "scatter"] as const)(
       .toBe("ready");
     const canvas =
       view.container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")!;
-    const gl = canvas.getContext("webgl2")!;
+    const gl = await snapshotGpu(canvas);
     window.dispatchEvent(new Event("resize"));
     const pixels = await new Promise<Uint8Array>((resolve) =>
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         const buffer = new Uint8Array(canvas.width * canvas.height * 4);
         gl.readPixels(
           0,
@@ -76,66 +81,77 @@ it.each(["line", "area", "bar", "scatter"] as const)(
         () => view.container.querySelector("[data-chart-tooltip]")?.textContent,
       )
       .toContain("2");
-    expect(gl.getError()).toBe(gl.NO_ERROR);
   },
 );
-it("shares one context across series and releases its canvas on unmount", async () => {
-  const view = render(
-    <DesignSystemProvider>
-      <Chart.Root data={data} style={{ width: 600, height: 400 }} x="x" y="y">
-        <Chart.Plot>
-          <Chart.Series type="line" />
-          <Chart.Series type="bar" />
-          <Chart.Series type="scatter" />
-        </Chart.Plot>
-      </Chart.Root>
-    </DesignSystemProvider>,
-  );
-  await expect
-    .poll(
-      () => view.container.querySelectorAll('[data-chart-gpu="ready"]').length,
-    )
-    .toBe(1);
-  const canvas = view.container.querySelector("canvas")!;
-  view.unmount();
-  expect(canvas.isConnected).toBe(false);
-});
+gpuIt(
+  "shares one context across series and releases its canvas on unmount",
+  async () => {
+    const view = render(
+      <DesignSystemProvider>
+        <Chart.Root data={data} style={{ width: 600, height: 400 }} x="x" y="y">
+          <Chart.Plot>
+            <Chart.Series type="line" />
+            <Chart.Series type="bar" />
+            <Chart.Series type="scatter" />
+          </Chart.Plot>
+        </Chart.Root>
+      </DesignSystemProvider>,
+    );
+    await expect
+      .poll(
+        () =>
+          view.container.querySelectorAll('[data-chart-gpu="ready"]').length,
+      )
+      .toBe(1);
+    const canvas = view.container.querySelector("canvas")!;
+    view.unmount();
+    expect(canvas.isConnected).toBe(false);
+  },
+);
 
-it("keeps GPU output independent through context loss, restoration and a peer unmount", async () => {
-  const a = render(<Fixture type="bar" />),
-    b = render(<Fixture type="line" />);
-  await expect
-    .poll(
-      () =>
-        a.container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")
-          ?.dataset.chartGpu,
-    )
-    .toBe("ready");
-  await expect
-    .poll(
-      () =>
-        b.container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")
-          ?.dataset.chartGpu,
-    )
-    .toBe("ready");
-  const first = a.container.querySelector<HTMLCanvasElement>("canvas")!,
-    second = b.container.querySelector<HTMLCanvasElement>("canvas")!;
-  const gl = first.getContext("webgl2")!;
-  const loss = gl.getExtension("WEBGL_lose_context")!;
-  loss.loseContext();
-  await expect.poll(() => first.dataset.chartGpu).toBe("unavailable");
-  expect(second.dataset.chartGpu).toBe("ready");
-  loss.restoreContext();
-  await expect.poll(() => first.dataset.chartGpu).toBe("ready");
-  b.unmount();
-  first.closest<HTMLElement>("[data-chart-container]")!.focus();
-  await userEvent.keyboard("{ArrowRight}{ArrowRight}");
-  await expect
-    .poll(() => a.container.querySelector("[data-chart-tooltip]")?.textContent)
-    .toContain("8");
-});
+gpuIt(
+  "keeps GPU output independent through context loss, restoration and a peer unmount",
+  async () => {
+    const a = render(<Fixture type="bar" />),
+      b = render(<Fixture type="line" />);
+    await expect
+      .poll(
+        () =>
+          a.container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")
+            ?.dataset.chartGpu,
+      )
+      .toBe("ready");
+    await expect
+      .poll(
+        () =>
+          b.container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")
+            ?.dataset.chartGpu,
+      )
+      .toBe("ready");
+    const first = a.container.querySelector<HTMLCanvasElement>("canvas")!,
+      second = b.container.querySelector<HTMLCanvasElement>("canvas")!;
+    const surface = acquireWebGpuSurface(first);
+    const previous = surface.device;
+    previous.destroy();
+    await previous.lost;
+    expect(second.dataset.chartGpu).toBe("ready");
+    await expect
+      .poll(() => surface.available && surface.device !== previous)
+      .toBe(true);
+    await expect.poll(() => first.dataset.chartGpu).toBe("ready");
+    surface.release();
+    b.unmount();
+    first.closest<HTMLElement>("[data-chart-container]")!.focus();
+    await userEvent.keyboard("{ArrowRight}{ArrowRight}");
+    await expect
+      .poll(
+        () => a.container.querySelector("[data-chart-tooltip]")?.textContent,
+      )
+      .toContain("8");
+  },
+);
 
-it("batches adjacent scatter marks into one GPU draw", async () => {
+gpuIt("batches adjacent scatter marks into one GPU draw", async () => {
   const rows = Array.from({ length: 100 }, (_, i) => ({
     x: i,
     y: (i % 7) + 1,
@@ -162,20 +178,13 @@ it("batches adjacent scatter marks into one GPU draw", async () => {
           ?.dataset.chartGpu,
     )
     .toBe("ready");
-  const canvas = view.container.querySelector<HTMLCanvasElement>("canvas")!;
-  const gl = canvas.getContext("webgl2")!;
-  const original = gl.drawArrays.bind(gl);
-  let draws = 0;
-  gl.drawArrays = (...args) => {
-    draws++;
-    original(...args);
-  };
+  const draws = vi.spyOn(GPURenderPassEncoder.prototype, "draw");
   try {
     window.dispatchEvent(new Event("resize"));
     await new Promise(requestAnimationFrame);
-    expect(draws).toBe(1);
+    expect(draws).toHaveBeenCalledTimes(1);
   } finally {
-    gl.drawArrays = original;
+    draws.mockRestore();
   }
 });
 
@@ -183,7 +192,7 @@ it("announces unavailable GPU rendering rather than silently showing a blank cha
   const original = HTMLCanvasElement.prototype.getContext;
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
     function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
-      if (args[0] === "webgl2") {
+      if (args[0] === "webgpu") {
         return null;
       }
       return original.apply(this, args);
@@ -207,7 +216,7 @@ it("announces unavailable GPU rendering rather than silently showing a blank cha
     .toContain("2");
 });
 
-it.each([undefined, '[data-chart-type="scatter"]'])(
+gpuIt.each([undefined, '[data-chart-type="scatter"]'])(
   "dims dense GPU scatter with selector %s without double opacity",
   async (selector) => {
     const rows = Array.from({ length: 1100 }, (_, i) =>
@@ -263,10 +272,10 @@ it.each([undefined, '[data-chart-type="scatter"]'])(
       bounds.height.baseVal.value * 0.2,
     ).matrixTransform(m);
     const canvas = root.querySelector<HTMLCanvasElement>("canvas")!,
-      gl = canvas.getContext("webgl2")!;
+      gl = await snapshotGpu(canvas);
     window.dispatchEvent(new Event("resize"));
     const alpha = await new Promise<number>((resolve) =>
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         const pixel = new Uint8Array(4),
           ratio = canvas.width / svg.width.baseVal.value;
         gl.readPixels(

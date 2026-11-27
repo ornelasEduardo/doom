@@ -4,6 +4,8 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { acquireWebGpuSurface } from "../../components/Chart/rendering/webgpu-surface";
+import { hasWebGpu } from "../../tests/browser/Chart/webgpu-readback";
 import { Proof } from "./Proof";
 
 afterEach(() => {
@@ -11,33 +13,51 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("reports unavailable rendering without publishing successful draw or interaction readiness", async () => {
-  const getContext = HTMLCanvasElement.prototype.getContext;
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
-    function (this: HTMLCanvasElement, ...args: Parameters<typeof getContext>) {
-      if (args[0] === "webgl2") {
-        return null;
+it.each(["missing API", "missing adapter"] as const)(
+  "reports %s without publishing successful draw or interaction readiness",
+  async (failure) => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, "gpu");
+    Object.defineProperty(navigator, "gpu", {
+      configurable: true,
+      value:
+        failure === "missing API"
+          ? undefined
+          : { requestAdapter: async () => null },
+    });
+    try {
+      const view = render(<Proof initialCount={8} />);
+      await expect
+        .poll(
+          () =>
+            view.container.querySelectorAll('[data-gpu-unavailable="true"]')
+              .length,
+        )
+        .toBe(2);
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      expect(
+        view.container.querySelectorAll("[data-proof-ready-at]"),
+      ).toHaveLength(0);
+      expect(
+        view.container.querySelectorAll("[data-proof-draw-at]"),
+      ).toHaveLength(0);
+      expect(
+        view.getAllByText(
+          failure === "missing API"
+            ? /WebGPU is unavailable/
+            : /WebGPU adapter is unavailable/,
+        ),
+      ).toHaveLength(2);
+    } finally {
+      cleanup();
+      if (descriptor) {
+        Object.defineProperty(navigator, "gpu", descriptor);
+      } else {
+        Reflect.deleteProperty(navigator, "gpu");
       }
-      return getContext.apply(this, args);
-    },
-  );
-  const view = render(<Proof initialCount={8} />);
-  await expect
-    .poll(
-      () =>
-        view.container.querySelectorAll('[data-gpu-unavailable="true"]').length,
-    )
-    .toBe(2);
-  await new Promise(requestAnimationFrame);
-  await new Promise(requestAnimationFrame);
-  expect(view.container.querySelectorAll("[data-proof-ready-at]")).toHaveLength(
-    0,
-  );
-  expect(view.container.querySelectorAll("[data-proof-draw-at]")).toHaveLength(
-    0,
-  );
-  expect(view.getAllByText(/WebGL2 is required/)).toHaveLength(2);
-});
+    }
+  },
+);
 
 it("shows dataset preparation failures instead of silently keeping the previous chart", async () => {
   vi.stubGlobal(
@@ -84,13 +104,16 @@ it("ends the busy state when indexing fails after points have been drawn", async
       positions: buffers.positions,
       preparationMs: 1,
     });
-    await expect
-      .poll(
-        () =>
-          view.container.querySelectorAll('[data-proof-count="100000"]').length,
-        { timeout: 10000 },
-      )
-      .toBe(2);
+    if (await hasWebGpu()) {
+      await expect
+        .poll(
+          () =>
+            view.container.querySelectorAll('[data-proof-count="100000"]')
+              .length,
+          { timeout: 10000 },
+        )
+        .toBe(2);
+    }
     fail!();
     await expect
       .poll(
@@ -109,7 +132,12 @@ it("ends the busy state when indexing fails after points have been drawn", async
   }
 });
 
-it("withdraws readiness during context loss and restores the affected chart independently", async () => {
+it("withdraws readiness during device loss and restores the affected chart independently", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
   const view = render(<Proof initialCount={8} />);
   const primary = () =>
     view.container.querySelector('[data-proof-chart="Primary"]')!;
@@ -118,45 +146,44 @@ it("withdraws readiness during context loss and restores the affected chart inde
   await expect
     .poll(() => view.container.querySelectorAll("[data-proof-ready-at]").length)
     .toBe(2);
-  const gl = primary().querySelector("canvas")!.getContext("webgl2")!;
-  const extension = gl.getExtension("WEBGL_lose_context")!;
-  expect(extension).toBeTruthy();
-  extension.loseContext();
+  const surface = acquireWebGpuSurface(primary().querySelector("canvas")!);
+  surface.device.destroy();
   await expect
     .poll(() => primary().querySelector("[data-proof-ready-at]"))
     .toBeNull();
   expect(comparison().querySelector("[data-proof-ready-at]")).not.toBeNull();
-  extension.restoreContext();
+  surface.recover();
   await expect
     .poll(() => primary().querySelector("[data-proof-ready-at]"))
     .not.toBeNull();
   await expect
     .poll(() => primary().textContent?.includes("GPU rendering unavailable"))
     .toBe(false);
-  expect(gl.getError()).toBe(gl.NO_ERROR);
+  expect(surface.error).toBeUndefined();
+  surface.release();
 });
 
-it("can retry failed context restoration on a later interaction", async () => {
+it("can retry failed device restoration on a later interaction", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
   const view = render(<Proof initialCount={8} />);
   const primary = () =>
     view.container.querySelector('[data-proof-chart="Primary"]')!;
   await expect
     .poll(() => primary().querySelector("[data-proof-ready-at]"))
     .not.toBeNull();
-  const gl = primary().querySelector("canvas")!.getContext("webgl2")!;
-  const extension = gl.getExtension("WEBGL_lose_context")!;
-  extension.loseContext();
+  const surface = acquireWebGpuSurface(primary().querySelector("canvas")!);
+  const allocate = vi
+    .spyOn(navigator.gpu, "requestAdapter")
+    .mockResolvedValue(null);
+  surface.device.destroy();
   await expect
     .poll(() => primary().querySelector("[data-proof-ready-at]"))
     .toBeNull();
-  const failAllocation = () => {
-    throw new Error("GPU allocation failed");
-  };
-  const allocate = vi
-    .spyOn(gl, "createProgram")
-    .mockImplementationOnce(failAllocation)
-    .mockImplementationOnce(failAllocation);
-  extension.restoreContext();
+  surface.recover();
   await expect.poll(() => allocate.mock.calls.length).toBeGreaterThanOrEqual(1);
   allocate.mockRestore();
   await userEvent.click(view.getByRole("button", { name: "Zoom in Primary" }));
@@ -166,4 +193,5 @@ it("can retry failed context restoration on a later interaction", async () => {
   await expect
     .poll(() => primary().textContent)
     .not.toContain("GPU rendering unavailable");
+  surface.release();
 });

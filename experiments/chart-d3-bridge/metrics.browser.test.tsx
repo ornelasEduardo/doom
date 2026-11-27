@@ -5,11 +5,17 @@ import { useRef } from "react";
 import { afterEach, expect, it } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { hasWebGpu } from "../../tests/browser/Chart/webgpu-readback";
 import { Metrics } from "./Metrics";
 import { Proof } from "./Proof";
 
 afterEach(cleanup);
-it("reports measured render timings and makes the isolation chart optional", async () => {
+it("reports measured render timings and makes the isolation chart optional", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
   const view = render(<Proof initialCount={1000} />);
   await expect
     .poll(() =>

@@ -116,7 +116,11 @@ describe("Chart keyboard accessibility in native browsers", () => {
       await userEvent.keyboard("{/ArrowDown}");
       await expect.poll(() => window.scrollY).toBeGreaterThan(100);
       await new Promise((resolve) => setTimeout(resolve, 300));
-      expect(screen.getByRole("status").textContent).toBe("");
+      expect(
+        document.querySelector<HTMLElement>(
+          '[role="status"][aria-live="polite"]',
+        )!.textContent,
+      ).toBe("");
     },
   );
 
@@ -163,14 +167,24 @@ describe("Chart keyboard accessibility in native browsers", () => {
       window.scrollTo(0, 100);
       await userEvent.keyboard("{ArrowDown}");
       await expect
-        .poll(() => screen.getByRole("status").textContent)
+        .poll(
+          () =>
+            document.querySelector<HTMLElement>(
+              '[role="status"][aria-live="polite"]',
+            )!.textContent,
+        )
         .toContain("A: 12");
       if (mode === "custom-channel") {
         expect(customIndex).toBe(0);
       }
       await userEvent.keyboard("{ArrowDown}");
       await expect
-        .poll(() => screen.getByRole("status").textContent)
+        .poll(
+          () =>
+            document.querySelector<HTMLElement>(
+              '[role="status"][aria-live="polite"]',
+            )!.textContent,
+        )
         .toContain("B: 18");
       if (mode === "custom-channel") {
         expect(customIndex).toBe(1);
@@ -195,24 +209,47 @@ describe("Chart keyboard accessibility in native browsers", () => {
     const root = await mount();
     await userEvent.keyboard("{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toContain("Actual: January 2026: $12");
-    expect(screen.getByRole("status").textContent).toContain(
-      "Plan: January 2026: $16",
-    );
+    expect(
+      document.querySelector<HTMLElement>(
+        '[role="status"][aria-live="polite"]',
+      )!.textContent,
+    ).toContain("Plan: January 2026: $16");
     const tooltip = () =>
       root.querySelector("[data-chart-tooltip]")?.textContent;
     expect(tooltip()).toContain("Actual:");
     expect(tooltip()).toContain("Plan:");
     await userEvent.keyboard("{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toContain("Plan: February 2026: $18");
-    expect(screen.getByRole("status").textContent).not.toContain("Actual");
+    expect(
+      document.querySelector<HTMLElement>(
+        '[role="status"][aria-live="polite"]',
+      )!.textContent,
+    ).not.toContain("Actual");
     expect(tooltip()).not.toContain("Actual:");
     expect(tooltip()).toContain("Plan:");
     await userEvent.keyboard("{Escape}");
-    await expect.poll(() => screen.getByRole("status").textContent).toBe("");
+    await expect
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
+      .toBe("");
     expect(tooltip()).toBeUndefined();
   });
 
@@ -256,7 +293,12 @@ describe("Chart keyboard accessibility in native browsers", () => {
     root.focus();
     await userEvent.keyboard("{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toBe("Actual: January: 12. Plan: January: 18");
   });
 
@@ -285,9 +327,18 @@ describe("Chart keyboard accessibility in native browsers", () => {
     root.focus();
     await userEvent.keyboard("{ArrowRight}{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toContain("1.25: 18");
-    expect(screen.getByRole("status").textContent).not.toContain("Tick");
+    expect(
+      document.querySelector<HTMLElement>(
+        '[role="status"][aria-live="polite"]',
+      )!.textContent,
+    ).not.toContain("Tick");
   });
 
   it("keeps candidate indices stable when long tick labels are thinned", async () => {
@@ -325,7 +376,12 @@ describe("Chart keyboard accessibility in native browsers", () => {
     root.focus();
     await userEvent.keyboard("{ArrowRight}{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toContain("Long category 1");
   });
 
@@ -361,7 +417,12 @@ describe("Chart keyboard accessibility in native browsers", () => {
     root.focus();
     await userEvent.keyboard("{ArrowRight}");
     await expect
-      .poll(() => screen.getByRole("status").textContent)
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>(
+            '[role="status"][aria-live="polite"]',
+          )!.textContent,
+      )
       .toContain("Revenue: North region: $30");
     expect(root.querySelector("[data-chart-tooltip]")?.textContent).toBe(
       "Custom details",
@@ -371,7 +432,9 @@ describe("Chart keyboard accessibility in native browsers", () => {
   it("allows Tab traversal and nested text editing without changing chart selection", async () => {
     await mount();
     await userEvent.keyboard("{ArrowRight}");
-    const status = screen.getByRole("status");
+    const status = document.querySelector<HTMLElement>(
+      '[role="status"][aria-live="polite"]',
+    )!;
     await expect.poll(() => status.textContent).not.toBe("");
     const selected = status.textContent;
     await userEvent.tab();

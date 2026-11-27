@@ -727,8 +727,8 @@ streaming, geometry, and behavior-ownership regressions.
 
 ### GPU rendering
 
-Built-in line, area, bar, and scatter marks are rendered by WebGL2 on one shared
-canvas per chart. Gridlines and axis strokes share that scene to preserve their order relative
+Built-in line, area, bar, and scatter marks are rendered by WebGPU on one shared
+canvas per chart. A secure context (HTTPS or localhost) and an available WebGPU adapter are required. Device initialization is asynchronous; unavailable adapters produce an explicit status while retaining keyboard access. No WebGL fallback is bundled. Gridlines and axis strokes share that scene to preserve their order relative
 to data marks.
 Chart composition, accessors, sensors, behaviors, tooltip
 payloads, and keyboard navigation keep the same public API. SVG remains the
@@ -739,8 +739,8 @@ animate between interaction states.
 
 Large scatter series use compact GPU buffers instead of a DOM element for each
 point. Ordinary marks retain semantic SVG identities for accessibility and
-selector-based behaviors. GPU resource ownership, context restoration, and
-canvas cleanup are scoped to each chart. When WebGL2 is unavailable, the chart
+selector-based behaviors. GPU resource ownership, device-loss recovery, and
+canvas cleanup are scoped to each chart. When a WebGPU adapter is unavailable, the chart
 announces the rendering failure while retaining keyboard access to the data.
 
 ## Theme parts

@@ -1,8 +1,14 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+import { hasWebGpu } from "../../tests/browser/Chart/webgpu-readback";
 import { runCold } from "./cold";
 
-it("completes fresh GPU work and resolves exact compact hover targets", async () => {
+it("completes fresh GPU work and resolves exact compact hover targets", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
   const canvas = document.createElement("canvas");
   canvas.width = 500;
   canvas.height = 200;
@@ -29,71 +35,45 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function stalledCanvas() {
-  const gl = {
-    createProgram: () => ({}),
-    createShader: () => ({}),
-    shaderSource() {},
-    compileShader() {},
-    getShaderParameter: () => true,
-    attachShader() {},
-    deleteShader: vi.fn(),
-    linkProgram() {},
-    getProgramParameter: () => true,
-    useProgram() {},
-    createBuffer: () => ({}),
-    bindBuffer() {},
-    bufferData() {},
-    getAttribLocation: () => 0,
-    enableVertexAttribArray() {},
-    vertexAttribPointer() {},
-    viewport() {},
-    clearColor() {},
-    clear() {},
-    drawArrays() {},
-    fenceSync: () => ({}),
-    flush() {},
-    getError: () => 0,
-    NO_ERROR: 0,
-    deleteSync: vi.fn(),
-    deleteBuffer: vi.fn(),
-    deleteProgram: vi.fn(),
-    getExtension: () => null,
-  };
+function stalledQueue() {
+  const done = vi
+    .spyOn(GPUQueue.prototype, "onSubmittedWorkDone")
+    .mockImplementation(() => new Promise<undefined>(() => {}));
+  const destroy = vi.spyOn(GPUDevice.prototype, "destroy");
   const canvas = document.createElement("canvas");
-  vi.spyOn(canvas, "getContext").mockReturnValue(
-    gl as unknown as WebGL2RenderingContext,
-  );
-  vi.stubGlobal(
-    "requestAnimationFrame",
-    vi.fn(() => 1),
-  );
-  vi.stubGlobal("cancelAnimationFrame", vi.fn());
-  return { canvas, gl };
+  canvas.width = canvas.height = 32;
+  return { canvas, done, destroy };
 }
 
-it("times out and releases GPU resources even when animation frames stop", async () => {
-  vi.useFakeTimers();
-  const { canvas, gl } = stalledCanvas();
-  const pending = runCold(canvas, 1, { timeoutMs: 25 });
-  const rejected = expect(pending).rejects.toThrow("timed out");
-  await vi.advanceTimersByTimeAsync(25);
-  await rejected;
-  expect(gl.deleteSync).toHaveBeenCalledTimes(1);
-  expect(gl.deleteBuffer).toHaveBeenCalledTimes(1);
-  expect(gl.deleteProgram).toHaveBeenCalledTimes(1);
-  expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
-  expect(vi.getTimerCount()).toBe(0);
+it("times out and releases GPU resources even when completion stalls", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
+  const { canvas, destroy } = stalledQueue();
+  await expect(runCold(canvas, 1, { timeoutMs: 100 })).rejects.toThrow(
+    "timed out",
+  );
+  expect(destroy).toHaveBeenCalledTimes(1);
 });
 
-it("cancels in-flight work and releases resources immediately", async () => {
-  const { canvas, gl } = stalledCanvas();
+it("cancels in-flight work and releases resources immediately", async ({
+  skip,
+}) => {
+  if (!(await hasWebGpu())) {
+    skip();
+  }
+  const { canvas, done, destroy } = stalledQueue();
   const controller = new AbortController();
   const pending = runCold(canvas, 1, { signal: controller.signal });
+  const rejected = expect(pending).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  await expect.poll(() => done.mock.calls.length).toBe(1);
   controller.abort();
-  await expect(pending).rejects.toMatchObject({ name: "AbortError" });
-  expect(gl.deleteSync).toHaveBeenCalledTimes(1);
-  expect(gl.deleteProgram).toHaveBeenCalledTimes(1);
+  await rejected;
+  expect(destroy).toHaveBeenCalledTimes(1);
 });
 
 it("cancels an already aborted run before allocating a context", async () => {

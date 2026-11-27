@@ -11,6 +11,7 @@ import { readGpuEmphasis, subscribeGpuEffects } from "./gpu-effects";
 import { createGpuVector, type VectorShape } from "./gpu-vector";
 import styles from "./scene.module.scss";
 import type { VectorContour } from "./vector-path";
+import { acquireWebGpuSurface, type GpuTarget } from "./webgpu-surface";
 
 export type GpuMark =
   | {
@@ -38,6 +39,7 @@ function createScene(svg: SVGSVGElement) {
   canvas.setAttribute("aria-hidden", "true");
   canvas.dataset.chartGpu = "preparing";
   svg.parentElement?.insertBefore(canvas, svg);
+  const surface = acquireWebGpuSurface(canvas);
   const marks = new Map<SVGGraphicsElement, GpuMark>();
   const pointSources = new WeakMap<GpuMark, GpuPointSource>();
   const colors = document.createElement("canvas").getContext("2d");
@@ -46,6 +48,7 @@ function createScene(svg: SVGSVGElement) {
   let compositor: ReturnType<typeof createGpuCompositor> | undefined;
   let frame = 0;
   let disposed = false;
+  let recoveryAttempted = false;
   let status: HTMLDivElement | undefined;
   const unavailable = () => {
     canvas.dataset.chartGpu = "unavailable";
@@ -77,6 +80,11 @@ function createScene(svg: SVGSVGElement) {
       frame = requestAnimationFrame(draw);
     }
   };
+  const externalSchedule = () => {
+    recoveryAttempted = false;
+    schedule();
+  };
+  const unsubscribeSurface = surface.subscribe(schedule);
   function matrixFor(node: SVGGraphicsElement) {
     const root = svg.getScreenCTM();
     const local = node.getScreenCTM();
@@ -266,10 +274,15 @@ function createScene(svg: SVGSVGElement) {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     try {
-      if (typeof WebGL2RenderingContext === "undefined") {
+      if (!surface.available) {
+        if (!recoveryAttempted && surface.error) {
+          recoveryAttempted = true;
+          surface.recover();
+        }
         unavailable();
         return;
       }
+      recoveryAttempted = false;
       vector ??= createGpuVector(canvas);
       points ??= createGpuPoints(canvas, { onStatusChange: schedule });
       if (!vector.available) {
@@ -282,14 +295,15 @@ function createScene(svg: SVGSVGElement) {
         unavailable();
         return;
       }
+      surface.beginFrame(w, h);
       vector.draw([], { width, height, ratio });
-      compositor ??= createGpuCompositor(canvas.getContext("webgl2")!);
+      compositor ??= createGpuCompositor(surface);
       compositor.begin(w, h);
       objectBounds = new WeakMap();
       const layers: {
         node: Element;
         opacity: number;
-        target: WebGLFramebuffer;
+        target: GpuTarget;
       }[] = [];
       const target = () => layers.at(-1)?.target ?? null;
       const ordered = [...marks].sort(([a], [b]) =>
@@ -309,7 +323,7 @@ function createScene(svg: SVGSVGElement) {
         clipPolygon?: ClipPolygon;
       };
       let batch: Batch | undefined;
-      const flush = () => {
+      const flushPoints = () => {
         if (!batch) {
           return;
         }
@@ -343,6 +357,33 @@ function createScene(svg: SVGSVGElement) {
           },
         );
         batch = undefined;
+      };
+      let vectorBatch:
+        | {
+            key: string;
+            shapes: VectorShape[];
+            clip?: Rect;
+            clipPolygon?: ClipPolygon;
+          }
+        | undefined;
+      const flushVectors = () => {
+        if (!vectorBatch) {
+          return;
+        }
+        vector!.draw(vectorBatch.shapes, {
+          width,
+          height,
+          ratio,
+          clip: vectorBatch.clip,
+          clipPolygon: vectorBatch.clipPolygon,
+          clear: false,
+          target: target(),
+        });
+        vectorBatch = undefined;
+      };
+      const flush = () => {
+        flushPoints();
+        flushVectors();
       };
       const transition = (ancestry: { node: Element; opacity: number }[]) => {
         let common = 0;
@@ -449,6 +490,7 @@ function createScene(svg: SVGSVGElement) {
             : undefined;
         const { clip, clipPolygon } = clipFor(node);
         if (mark.kind === "point") {
+          flushVectors();
           const pointTransform: [number, number, number, number] = [
             matrix.a,
             matrix.b,
@@ -482,7 +524,7 @@ function createScene(svg: SVGSVGElement) {
           batch!.radii.push(mark.radius);
           continue;
         }
-        flush();
+        flushPoints();
         if (mark.kind === "path") {
           const contours = mark.contours.map((contour) => ({
             ...contour,
@@ -515,16 +557,14 @@ function createScene(svg: SVGSVGElement) {
               : undefined,
             stroke,
           };
-          vector.draw([shape], {
-            width,
-            height,
-            ratio,
-            clip,
-            clipPolygon,
-            clear: false,
-            target: target(),
-          });
+          const key = JSON.stringify([clip, clipPolygon]);
+          if (vectorBatch?.key !== key) {
+            flushVectors();
+            vectorBatch = { key, shapes: [], clip, clipPolygon };
+          }
+          vectorBatch.shapes.push(shape);
         } else {
+          flushVectors();
           let source = pointSources.get(mark);
           if (!source) {
             source = {
@@ -564,10 +604,12 @@ function createScene(svg: SVGSVGElement) {
       flush();
       transition([]);
       compositor.end();
+      surface.endFrame();
       canvas.dataset.chartGpu = "ready";
       status?.remove();
       status = undefined;
     } catch {
+      surface.abortFrame();
       unavailable();
     }
   }
@@ -587,28 +629,28 @@ function createScene(svg: SVGSVGElement) {
             )),
       )
     ) {
-      schedule();
+      externalSchedule();
     }
   });
   observer.observe(svg, { attributes: true, childList: true, subtree: true });
-  const ancestors = new MutationObserver(schedule);
+  const ancestors = new MutationObserver(externalSchedule);
   for (let parent = svg.parentElement; parent; parent = parent.parentElement) {
     ancestors.observe(parent, {
       attributes: true,
       attributeFilter: ["class", "style", "data-theme"],
     });
   }
-  const releaseEffects = subscribeGpuEffects(svg, schedule);
-  window.addEventListener("resize", schedule);
-  canvas.addEventListener("webglcontextrestored", schedule);
+  const releaseEffects = subscribeGpuEffects(svg, externalSchedule);
+  window.addEventListener("resize", externalSchedule);
+
   return {
     register(node: SVGGraphicsElement, mark: GpuMark) {
       marks.set(node, mark);
-      schedule();
+      externalSchedule();
       return () => {
         marks.delete(node);
         if (marks.size) {
-          schedule();
+          externalSchedule();
         } else {
           queueMicrotask(() => {
             if (!marks.size) {
@@ -627,15 +669,12 @@ function createScene(svg: SVGSVGElement) {
       observer.disconnect();
       releaseEffects();
       ancestors.disconnect();
-      window.removeEventListener("resize", schedule);
-      canvas.removeEventListener("webglcontextrestored", schedule);
+      window.removeEventListener("resize", externalSchedule);
+      unsubscribeSurface();
       compositor?.dispose();
       points?.dispose();
       vector?.dispose();
-      canvas
-        .getContext("webgl2")
-        ?.getExtension("WEBGL_lose_context")
-        ?.loseContext();
+      surface.release();
       canvas.remove();
       status?.remove();
       scenes.delete(svg);

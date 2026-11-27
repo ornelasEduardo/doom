@@ -126,10 +126,16 @@ try {
   }
   await session.send("HeapProfiler.collectGarbage");
   const after = await session.send("Runtime.getHeapUsage");
-  const gpu = await page.evaluate(() => {
-    const gl = document.querySelector("canvas").getContext("webgl2");
-    const ext = gl.getExtension("WEBGL_debug_renderer_info");
-    return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null;
+  const gpu = await page.evaluate(async () => {
+    const adapter = await navigator.gpu?.requestAdapter();
+    return adapter
+      ? {
+          vendor: adapter.info.vendor,
+          architecture: adapter.info.architecture,
+          description: adapter.info.description,
+          isFallbackAdapter: adapter.info.isFallbackAdapter,
+        }
+      : null;
   });
   await writeFile(
     process.argv[2] || reportPath("doom-world-million.json"),
