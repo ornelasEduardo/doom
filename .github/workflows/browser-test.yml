@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 20
     env:
       LIBGL_ALWAYS_SOFTWARE: "1"
+      # Retain browser process diagnostics for software GPU failures.
+      DEBUG: "pw:browser"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

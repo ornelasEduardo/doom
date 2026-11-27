@@ -3,7 +3,7 @@ import "../../../styles/globals.scss";
 import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, expect, it } from "vitest";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { Chart } from "../../../components/Chart/Chart";
 import { useChartContext } from "../../../components/Chart/context";
@@ -95,6 +95,7 @@ it("keeps transformed custom handles in SVG space across header, scale, scroll, 
         {["left", "right"].map((id) => (
           <Chart.Root
             key={id}
+            data-testid={`custom-geometry-${id}`}
             data={data}
             sensors={sensors.get(id)}
             style={{ width: 520, height: 380, flexShrink: 0 }}
@@ -129,12 +130,15 @@ it("keeps transformed custom handles in SVG space across header, scale, scroll, 
     const rect = circle.getBoundingClientRect();
     const svg = root.querySelector("svg")!;
     const svgRect = svg.getBoundingClientRect();
-    await userEvent.hover(svg, {
-      position: {
-        x: rect.left + rect.width / 2 + dx - svgRect.left,
-        y: rect.top + rect.height / 2 - svgRect.top,
+    await userEvent.hover(
+      page.getByTestId(`custom-geometry-${id}`).getByRole("img"),
+      {
+        position: {
+          x: rect.left + rect.width / 2 + dx - svgRect.left,
+          y: rect.top + rect.height / 2 - svgRect.top,
+        },
       },
-    });
+    );
     await expect.poll(() => events.get(id)?.signal.x).toBeDefined();
     return { root, circle };
   };
@@ -198,12 +202,15 @@ it("keeps transformed custom handles in SVG space across header, scale, scroll, 
     { x: expected.x, y: expected.y, data: updated[0], dataIndex: 0 },
   ]);
   const svgRect = svg.getBoundingClientRect();
-  await userEvent.hover(svg, {
-    position: {
-      x: oldRect.left + oldRect.width / 2 + 1 - svgRect.left,
-      y: oldRect.top + oldRect.height / 2 - svgRect.top,
+  await userEvent.hover(
+    page.getByTestId("custom-geometry-left").getByRole("img"),
+    {
+      position: {
+        x: oldRect.left + oldRect.width / 2 + 1 - svgRect.left,
+        y: oldRect.top + oldRect.height / 2 - svgRect.top,
+      },
     },
-  });
+  );
   await expect
     .poll(() =>
       events.get("left")?.candidates.some((c) => c.seriesId === disposedSeries),
@@ -458,6 +465,7 @@ it.each([false, true])(
     const tree = (rows: Row[]) => (
       <DesignSystemProvider>
         <Chart.Root
+          data-testid="standalone-geometry-chart"
           behaviors={[markers]}
           data={rows}
           sensors={[sensor]}
@@ -486,8 +494,10 @@ it.each([false, true])(
     ]);
     const access = createInteractionAccess(context.chartStore);
     const hover = () => access.getInteraction(channel);
-    const svg = view.container.querySelector("svg")!;
-    await userEvent.hover(svg, { position: { x: 200, y: 100 } });
+    await userEvent.hover(
+      page.getByTestId("standalone-geometry-chart").getByRole("img"),
+      { position: { x: 200, y: 100 } },
+    );
     await expect.poll(() => hover()?.targets[0].data.label).toBe("owner");
     const token = hover()!.targets[0].geometryOwner;
     expect(token).toBeDefined();
