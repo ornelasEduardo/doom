@@ -1,3 +1,10 @@
+import {
+  clipBounds,
+  type ClipPolygon,
+  counterclockwise,
+  intersectClip,
+  rectangularClip,
+} from "./clip-geometry";
 import { createGpuPoints, type GpuPointSource } from "./gpu";
 import { createGpuCompositor } from "./gpu-compositor";
 import { readGpuEmphasis, subscribeGpuEffects } from "./gpu-effects";
@@ -32,10 +39,7 @@ function createScene(svg: SVGSVGElement) {
   canvas.dataset.chartGpu = "preparing";
   svg.parentElement?.insertBefore(canvas, svg);
   const marks = new Map<SVGGraphicsElement, GpuMark>();
-  const pointSources = new WeakMap<
-    GpuMark,
-    { scale: number; source: GpuPointSource }
-  >();
+  const pointSources = new WeakMap<GpuMark, GpuPointSource>();
   const colors = document.createElement("canvas").getContext("2d");
   let vector: ReturnType<typeof createGpuVector> | undefined;
   let points: ReturnType<typeof createGpuPoints> | undefined;
@@ -78,58 +82,167 @@ function createScene(svg: SVGSVGElement) {
     const local = node.getScreenCTM();
     return root && local ? root.inverse().multiply(local) : null;
   }
-  function clipFor(node: SVGGraphicsElement): Rect | undefined {
-    let clip: Rect | undefined;
+  let objectBounds = new WeakMap<SVGGraphicsElement, Rect>();
+  function objectBoundsFor(element: SVGGraphicsElement): Rect {
+    const cached = objectBounds.get(element);
+    if (cached) {
+      return cached;
+    }
+    const native = element.getBBox();
+    let left = native.width || native.height ? native.x : Infinity;
+    let top = native.width || native.height ? native.y : Infinity;
+    let right =
+      native.width || native.height ? native.x + native.width : -Infinity;
+    let bottom =
+      native.width || native.height ? native.y + native.height : -Infinity;
+    const inverse = element.getScreenCTM()?.inverse();
+    if (inverse) {
+      // Dense clouds retain only a zero-radius SVG selector proxy. Reconstruct
+      // their geometric bounds without creating per-row SVG elements.
+      for (const [child, mark] of marks) {
+        if (mark.kind !== "cloud" || !element.contains(child)) {
+          continue;
+        }
+        const screen = child.getScreenCTM();
+        if (!screen) {
+          continue;
+        }
+        const matrix = inverse.multiply(screen);
+        for (let i = 0; i < mark.radii.length; i++) {
+          const x = mark.positions[i * 2],
+            y = mark.positions[i * 2 + 1];
+          const radius = mark.radii[i];
+          if (
+            !Number.isFinite(x) ||
+            !Number.isFinite(y) ||
+            !Number.isFinite(radius) ||
+            radius < 0
+          ) {
+            continue;
+          }
+          const point = new DOMPoint(x, y).matrixTransform(matrix);
+          const rx = radius * Math.hypot(matrix.a, matrix.c);
+          const ry = radius * Math.hypot(matrix.b, matrix.d);
+          left = Math.min(left, point.x - rx);
+          right = Math.max(right, point.x + rx);
+          top = Math.min(top, point.y - ry);
+          bottom = Math.max(bottom, point.y + ry);
+        }
+      }
+    }
+    const box = Number.isFinite(left)
+      ? { x: left, y: top, width: right - left, height: bottom - top }
+      : { x: 0, y: 0, width: 0, height: 0 };
+    objectBounds.set(element, box);
+    return box;
+  }
+  function clipFor(node: SVGGraphicsElement): {
+    clip?: Rect;
+    clipPolygon?: ClipPolygon;
+  } {
+    let polygon: ClipPolygon | undefined;
     for (
       let element: Element | null = node;
-      element && element !== svg;
+      element;
       element = element.parentElement
     ) {
       const url = getComputedStyle(element).clipPath;
       const id = /#([^"')]+)/.exec(url)?.[1];
-      const rect =
-        id && svg.ownerDocument.getElementById(id)?.querySelector("rect");
-      if (!rect || !(element instanceof SVGGraphicsElement)) {
-        continue;
+      const definition = id ? svg.ownerDocument.getElementById(id) : null;
+      const rect = definition?.querySelector("rect");
+      if (rect && element instanceof SVGGraphicsElement) {
+        let matrix = matrixFor(element);
+        if (matrix) {
+          // Chromium/WebKit may expose legacy SVGMatrix objects whose multiply
+          // rejects DOMMatrix; normalize before composing CSS transforms.
+          matrix = new DOMMatrix([
+            matrix.a,
+            matrix.b,
+            matrix.c,
+            matrix.d,
+            matrix.e,
+            matrix.f,
+          ]);
+          const relative =
+            definition?.getAttribute("clipPathUnits") === "objectBoundingBox";
+          if (relative) {
+            const box = objectBoundsFor(element);
+            matrix = matrix
+              .translate(box.x, box.y)
+              .scale(box.width, box.height);
+          }
+          // Definition geometry has its own coordinate system, including both
+          // clipPath and child transforms, independent of the clipped mark.
+          const transforms: SVGGraphicsElement[] = [];
+          for (
+            let part: Element | null = rect;
+            part;
+            part = part.parentElement
+          ) {
+            transforms.unshift(part as SVGGraphicsElement);
+            if (part === definition) {
+              break;
+            }
+          }
+          for (const part of transforms) {
+            const style = getComputedStyle(part);
+            let local = new DOMMatrix();
+            if (style.transform && style.transform !== "none") {
+              local = new DOMMatrix(style.transform);
+            } else if (!part.style.transform) {
+              // WebKit reports `none` for SVG transform attributes in defs.
+              const list = part.transform?.baseVal;
+              for (let i = 0; list && i < list.numberOfItems; i++) {
+                local = local.multiply(list.getItem(i).matrix);
+              }
+            }
+            const [x = 0, y = 0] = style.transformOrigin
+              .split(/\s+/)
+              .map((value) => Number.parseFloat(value) || 0);
+            matrix = matrix.translate(x, y).multiply(local).translate(-x, -y);
+          }
+          const length = (value: SVGLength) =>
+            relative && value.unitType === 2
+              ? value.valueInSpecifiedUnits / 100
+              : value.value;
+          const x = length(rect.x.baseVal),
+            y = length(rect.y.baseVal);
+          const width = length(rect.width.baseVal),
+            height = length(rect.height.baseVal);
+          const projectedMatrix = matrix;
+          const boundary =
+            width <= 0 || height <= 0
+              ? []
+              : counterclockwise(
+                  [
+                    { x, y },
+                    { x: x + width, y },
+                    { x: x + width, y: y + height },
+                    { x, y: y + height },
+                  ].map((point) =>
+                    new DOMPoint(point.x, point.y).matrixTransform(
+                      projectedMatrix,
+                    ),
+                  ),
+                );
+          polygon =
+            polygon === undefined ? boundary : intersectClip(polygon, boundary);
+          if (!polygon.length) {
+            break;
+          }
+        }
       }
-      const m = matrixFor(element);
-      if (!m) {
-        continue;
-      }
-      const p = new DOMPoint(
-        rect.x.baseVal.value,
-        rect.y.baseVal.value,
-      ).matrixTransform(m);
-      const q = new DOMPoint(
-        rect.x.baseVal.value + rect.width.baseVal.value,
-        rect.y.baseVal.value + rect.height.baseVal.value,
-      ).matrixTransform(m);
-      const next = {
-        x: Math.min(p.x, q.x),
-        y: Math.min(p.y, q.y),
-        width: Math.abs(q.x - p.x),
-        height: Math.abs(q.y - p.y),
-      };
-      if (!clip) {
-        clip = next;
-      } else {
-        const x = Math.max(clip.x, next.x),
-          y = Math.max(clip.y, next.y);
-        clip = {
-          x,
-          y,
-          width: Math.max(
-            0,
-            Math.min(clip.x + clip.width, next.x + next.width) - x,
-          ),
-          height: Math.max(
-            0,
-            Math.min(clip.y + clip.height, next.y + next.height) - y,
-          ),
-        };
+      if (element === svg) {
+        break;
       }
     }
-    return clip;
+    if (!polygon) {
+      return {};
+    }
+    return {
+      clip: clipBounds(polygon),
+      clipPolygon: rectangularClip(polygon) ? undefined : polygon,
+    };
   }
   function draw() {
     frame = 0;
@@ -172,6 +285,7 @@ function createScene(svg: SVGSVGElement) {
       vector.draw([], { width, height, ratio });
       compositor ??= createGpuCompositor(canvas.getContext("webgl2")!);
       compositor.begin(w, h);
+      objectBounds = new WeakMap();
       const layers: {
         node: Element;
         opacity: number;
@@ -189,8 +303,10 @@ function createScene(svg: SVGSVGElement) {
         radii: number[];
         fill: number[];
         opacity: number;
+        pointTransform: [number, number, number, number];
         stroke?: { color: number[]; width: number };
         clip?: Rect;
+        clipPolygon?: ClipPolygon;
       };
       let batch: Batch | undefined;
       const flush = () => {
@@ -217,9 +333,11 @@ function createScene(svg: SVGSVGElement) {
             },
             color: batch.fill,
             opacity: batch.opacity,
+            pointTransform: batch.pointTransform,
             stroke: batch.stroke,
             radius: 6,
             clip: batch.clip,
+            clipPolygon: batch.clipPolygon,
             clear: false,
             target: target(),
           },
@@ -299,34 +417,69 @@ function createScene(svg: SVGSVGElement) {
         const opacity = mark.kind !== "path" ? Number(css.opacity) : 1;
         const fill = color(css.fill, Number(css.fillOpacity)),
           strokeColor = color(css.stroke, Number(css.strokeOpacity));
-        const strokeWidth =
-          Number.parseFloat(css.strokeWidth) *
-          Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c));
+        const strokeWidth = Number.parseFloat(css.strokeWidth);
         const stroke =
           strokeColor && strokeWidth > 0
-            ? { color: strokeColor, width: strokeWidth }
+            ? {
+                color: strokeColor,
+                width: strokeWidth,
+                dashArray:
+                  css.strokeDasharray === "none"
+                    ? []
+                    : css.strokeDasharray
+                        .split(/[ ,]+/)
+                        .map((value) =>
+                          value.endsWith("%")
+                            ? (Number.parseFloat(value) *
+                                Math.hypot(width, height)) /
+                              Math.SQRT2 /
+                              100
+                            : Number.parseFloat(value),
+                        ),
+                dashOffset: css.strokeDashoffset.endsWith("%")
+                  ? (Number.parseFloat(css.strokeDashoffset) *
+                      Math.hypot(width, height)) /
+                    Math.SQRT2 /
+                    100
+                  : Number.parseFloat(css.strokeDashoffset),
+                lineCap: css.strokeLinecap as "butt" | "round" | "square",
+                lineJoin: css.strokeLinejoin as "miter" | "round" | "bevel",
+                miterLimit: Number.parseFloat(css.strokeMiterlimit),
+              }
             : undefined;
-        const clip = clipFor(node);
+        const { clip, clipPolygon } = clipFor(node);
         if (mark.kind === "point") {
-          const key = JSON.stringify([fill, stroke, clip, opacity]);
+          const pointTransform: [number, number, number, number] = [
+            matrix.a,
+            matrix.b,
+            matrix.c,
+            matrix.d,
+          ];
+          const key = JSON.stringify([
+            fill,
+            stroke,
+            clip,
+            clipPolygon,
+            opacity,
+            pointTransform,
+          ]);
           if (batch?.key !== key) {
             flush();
             batch = {
               key,
               opacity,
+              pointTransform,
               positions: [],
               radii: [],
               fill: fill ?? [0, 0, 0, 0],
               stroke,
               clip,
+              clipPolygon,
             };
           }
           const p = new DOMPoint(mark.x, mark.y).matrixTransform(matrix);
           batch!.positions.push(p.x, p.y);
-          batch!.radii.push(
-            mark.radius *
-              Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)),
-          );
+          batch!.radii.push(mark.radius);
           continue;
         }
         flush();
@@ -346,7 +499,8 @@ function createScene(svg: SVGSVGElement) {
             }
           }
           const shape: VectorShape = {
-            contours,
+            contours: mark.contours,
+            transform: matrix,
             fill: fill
               ? {
                   color: fill,
@@ -366,31 +520,20 @@ function createScene(svg: SVGSVGElement) {
             height,
             ratio,
             clip,
+            clipPolygon,
             clear: false,
             target: target(),
           });
         } else {
-          const positions = mark.positions;
-          const scale = Math.sqrt(
-            Math.abs(matrix.a * matrix.d - matrix.b * matrix.c),
-          );
-          let cached = pointSources.get(mark);
-          if (!cached || cached.scale !== scale) {
-            const radii =
-              scale === 1
-                ? mark.radii
-                : Float32Array.from(mark.radii, (radius) => radius * scale);
-            cached = {
-              scale,
-              source: {
-                immutable: true,
-                length: positions.length / 2,
-                buffers: () => ({ positions, radii }),
-              },
+          let source = pointSources.get(mark);
+          if (!source) {
+            source = {
+              immutable: true,
+              length: mark.positions.length / 2,
+              buffers: () => ({ positions: mark.positions, radii: mark.radii }),
             };
-            pointSources.set(mark, cached);
+            pointSources.set(mark, source);
           }
-          const source = cached.source;
           points.draw(source, {
             width,
             height,
@@ -405,15 +548,15 @@ function createScene(svg: SVGSVGElement) {
               y: { type: "linear", domain: [0, height] },
             },
             ratio,
-            radius:
-              mark.radius *
-              Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)),
+            radius: mark.radius,
+            pointTransform: [matrix.a, matrix.b, matrix.c, matrix.d],
             color: fill ?? [0, 0, 0, 0],
             opacity: emphasis ? 1 : opacity,
             stroke,
             clear: false,
             target: target(),
             clip,
+            clipPolygon,
             emphasis,
           });
         }

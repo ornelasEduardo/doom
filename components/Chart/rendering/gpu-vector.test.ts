@@ -7,6 +7,8 @@ function harness() {
     createProgram: vi.fn(() => ({})),
     createShader: vi.fn(() => ({})),
     createBuffer: vi.fn(() => ({})),
+    createTexture: vi.fn(() => ({})),
+    deleteTexture: vi.fn(),
     createVertexArray: vi.fn(() => ({})),
     deleteProgram: vi.fn(),
     deleteShader: vi.fn(),

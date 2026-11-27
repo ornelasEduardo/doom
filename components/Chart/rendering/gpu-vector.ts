@@ -1,3 +1,5 @@
+import { type ClipPolygon, createGpuClip, gpuClipFragment } from "./gpu-clip";
+import { strokeMesh } from "./vector-stroke";
 /** Canvas CSS pixels, including chart margins; colors are straight RGBA in [0, 1]. */
 export interface VectorShape {
   contours: readonly {
@@ -13,7 +15,23 @@ export interface VectorShape {
       endOpacity: number;
     };
   };
-  stroke?: { color: readonly number[]; width: number };
+  stroke?: {
+    color: readonly number[];
+    width: number;
+    dashArray?: readonly number[];
+    dashOffset?: number;
+    lineCap?: "butt" | "round" | "square";
+    lineJoin?: "miter" | "round" | "bevel";
+    miterLimit?: number;
+  };
+  transform?: {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    e: number;
+    f: number;
+  };
   opacity?: number;
 }
 export interface VectorView {
@@ -23,6 +41,7 @@ export interface VectorView {
   height: number;
   ratio: number;
   clip?: { x: number; y: number; width: number; height: number };
+  clipPolygon?: ClipPolygon;
   /** False composites on an existing frame from another renderer sharing this context. */
   clear?: boolean;
 }
@@ -41,7 +60,9 @@ uniform vec4 color;
 uniform vec4 gradient;
 in highp float pixelY;
 out vec4 outputColor;
+${gpuClipFragment}
 void main() {
+  if (outsideGpuClip()) discard;
   float t = gradient.x == gradient.y ? 0.0 : clamp((pixelY - gradient.x) / (gradient.y - gradient.x), 0.0, 1.0);
   float alpha = color.a * mix(gradient.z, gradient.w, t);
   outputColor = vec4(color.rgb * alpha, alpha);
@@ -55,6 +76,7 @@ function resources(gl: WebGL2RenderingContext) {
   const shaders: WebGLShader[] = [];
   let buffer: WebGLBuffer | null = null;
   let vao: WebGLVertexArrayObject | null = null;
+  let clip: ReturnType<typeof createGpuClip> | undefined;
   try {
     for (const [type, source] of [
       [gl.VERTEX_SHADER, vertex],
@@ -100,8 +122,10 @@ function resources(gl: WebGL2RenderingContext) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.enableVertexAttribArray(position);
     gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-    return { program, buffer, vao, uniforms };
+    clip = createGpuClip(gl, program);
+    return { program, buffer, vao, uniforms, clip };
   } catch (error) {
+    clip?.dispose();
     if (vao) {
       gl.deleteVertexArray(vao);
     }
@@ -148,8 +172,15 @@ function validate(
       throw new RangeError("GPU vector clip size must be nonnegative");
     }
   }
+  for (const point of view.clipPolygon ?? []) {
+    finite(point.x);
+    finite(point.y);
+  }
   for (const shape of shapes) {
     unit(shape.opacity ?? 1);
+    if (shape.transform) {
+      Object.values(shape.transform).forEach(finite);
+    }
     for (const paint of [shape.fill, shape.stroke]) {
       if (!paint) {
         continue;
@@ -161,6 +192,17 @@ function validate(
     }
     if (shape.stroke) {
       finite(shape.stroke.width);
+      finite(shape.stroke.dashOffset ?? 0);
+      finite(shape.stroke.miterLimit ?? 4);
+      if ((shape.stroke.miterLimit ?? 4) < 1) {
+        throw new RangeError("Invalid miter limit");
+      }
+      for (const value of shape.stroke.dashArray ?? []) {
+        finite(value);
+        if (value < 0) {
+          throw new RangeError("Negative dash length");
+        }
+      }
       if (shape.stroke.width < 0) {
         throw new RangeError("GPU vector stroke width must be nonnegative");
       }
@@ -200,65 +242,6 @@ function bounds(shape: VectorShape, pad: number): Bounds | undefined {
 function quad([x0, y0, x1, y1]: Bounds) {
   return new Float32Array([x0, y0, x1, y0, x1, y1, x0, y0, x1, y1, x0, y1]);
 }
-function strokeMesh(shape: VectorShape, ratio: number) {
-  const vertices: number[] = [];
-  const radius = shape.stroke!.width / 2;
-  // Polygon sagitta < 0.2 device pixels for ordinary chart widths.
-  const steps = Math.max(
-    12,
-    Math.min(
-      512,
-      Math.ceil(
-        Math.PI /
-          Math.acos(Math.max(-1, 1 - 0.2 / Math.max(radius * ratio, 0.2))),
-      ),
-    ),
-  );
-  for (const { points, closed } of shape.contours) {
-    for (let i = 0; i < points.length; i++) {
-      const a = points[i];
-      // Disks union with segment quads to form round caps and round joins.
-      for (let j = 0; j < steps; j++) {
-        const t = (j * Math.PI * 2) / steps,
-          u = ((j + 1) * Math.PI * 2) / steps;
-        vertices.push(
-          a.x,
-          a.y,
-          a.x + radius * Math.cos(t),
-          a.y + radius * Math.sin(t),
-          a.x + radius * Math.cos(u),
-          a.y + radius * Math.sin(u),
-        );
-      }
-      const b = points[i + 1] ?? (closed ? points[0] : undefined);
-      if (!b) {
-        continue;
-      }
-      const length = Math.hypot(b.x - a.x, b.y - a.y);
-      if (length === 0) {
-        continue;
-      }
-      const dx = ((b.y - a.y) / length) * radius,
-        dy = ((a.x - b.x) / length) * radius;
-      vertices.push(
-        a.x + dx,
-        a.y + dy,
-        b.x + dx,
-        b.y + dy,
-        b.x - dx,
-        b.y - dy,
-        a.x + dx,
-        a.y + dy,
-        b.x - dx,
-        b.y - dy,
-        a.x - dx,
-        a.y - dy,
-      );
-    }
-  }
-  return new Float32Array(vertices);
-}
-
 /** Owns its resources, never the shared canvas/context. Initial allocation failures throw. */
 export function createGpuVector(canvas: HTMLCanvasElement) {
   const context = canvas.getContext("webgl2", {
@@ -320,6 +303,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       gl.scissor(x0, height - y1, x1 - x0, y1 - y0);
     }
     gl.useProgram(r.program);
+    r.clip.set(view.clipPolygon, view.width, view.height, width, height);
     gl.bindVertexArray(r.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, r.buffer);
     gl.uniform2f(r.uniforms.viewport, view.width, view.height);
@@ -366,7 +350,25 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       upload(quad(box));
     };
     for (const shape of shapes) {
-      const box = bounds(shape, 0);
+      const transformed = shape.transform
+        ? {
+            ...shape,
+            contours: shape.contours.map((contour) => ({
+              ...contour,
+              points: contour.points.map((p) => ({
+                x:
+                  shape.transform!.a * p.x +
+                  shape.transform!.c * p.y +
+                  shape.transform!.e,
+                y:
+                  shape.transform!.b * p.x +
+                  shape.transform!.d * p.y +
+                  shape.transform!.f,
+              })),
+            })),
+          }
+        : shape;
+      const box = bounds(transformed, 0);
       if (!box) {
         continue;
       }
@@ -374,7 +376,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
         mask();
         gl.stencilOpSeparate(gl.FRONT, gl.KEEP, gl.KEEP, gl.INCR_WRAP);
         gl.stencilOpSeparate(gl.BACK, gl.KEEP, gl.KEEP, gl.DECR_WRAP);
-        for (const contour of shape.contours) {
+        for (const contour of transformed.contours) {
           if (contour.points.length < 3) {
             continue;
           }
@@ -390,12 +392,27 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       if (shape.stroke && shape.stroke.width > 0) {
         mask();
         gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
-        upload(strokeMesh(shape, view.ratio));
-        paint(
-          bounds(shape, shape.stroke.width / 2)!,
-          shape.stroke.color,
-          shape.opacity ?? 1,
-        );
+        const scale = shape.transform
+          ? Math.hypot(
+              shape.transform.a,
+              shape.transform.b,
+              shape.transform.c,
+              shape.transform.d,
+            )
+          : 1;
+        const mesh = strokeMesh(shape, view.ratio * scale);
+        if (!mesh.length) {
+          continue;
+        }
+        upload(mesh);
+        const strokeBounds: Bounds = [Infinity, Infinity, -Infinity, -Infinity];
+        for (let i = 0; i < mesh.length; i += 2) {
+          strokeBounds[0] = Math.min(strokeBounds[0], mesh[i]);
+          strokeBounds[1] = Math.min(strokeBounds[1], mesh[i + 1]);
+          strokeBounds[2] = Math.max(strokeBounds[2], mesh[i]);
+          strokeBounds[3] = Math.max(strokeBounds[3], mesh[i + 1]);
+        }
+        paint(strokeBounds, shape.stroke.color, shape.opacity ?? 1);
       }
     }
     gl.colorMask(true, true, true, true);
@@ -421,6 +438,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       return true;
     } catch (cause) {
       if (current) {
+        current.clip.dispose();
         gl.deleteBuffer(current.buffer);
         gl.deleteVertexArray(current.vao);
         gl.deleteProgram(current.program);
@@ -474,6 +492,7 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
       canvas.removeEventListener("webglcontextlost", onLost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
       if (current) {
+        current.clip.dispose();
         gl.deleteBuffer(current.buffer);
         gl.deleteVertexArray(current.vao);
         gl.deleteProgram(current.program);

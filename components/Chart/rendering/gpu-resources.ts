@@ -1,3 +1,5 @@
+import { createGpuClip, gpuClipFragment } from "./gpu-clip";
+
 const vertex = `#version 300 es
 in vec2 position;
 in float weight;
@@ -7,6 +9,10 @@ uniform float inactiveOpacity;
 flat out float pointOpacity;
 flat out highp float diameter;
 uniform highp float radiusRatio;
+uniform highp float pointExtent;
+uniform bool pointQuads;
+uniform vec2 framebuffer;
+flat out highp vec2 pointCenter;
 uniform highp float strokeWidth;
 out float intensity;
 uniform float maxWeight;
@@ -38,9 +44,15 @@ void main() {
   vec2 projected = vec2(project(position.x, xAxis), project(position.y, yAxis));
   vec2 local = projected * plot * zoom.z + zoom.xy;
   vec2 pixel = (matrix * vec3(local, 1.0)).xy;
+  pointCenter = pixel;
   gl_Position = vec4(pixel.x / viewport.x * 2.0 - 1.0, 1.0 - pixel.y / viewport.y * 2.0, 0.0, 1.0);
   if (any(lessThan(local, -clipPadding)) || any(greaterThan(local, plot + clipPadding))) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-  gl_PointSize = diameter + 2.0;
+  if (pointExtent == 0.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+  gl_PointSize = diameter * pointExtent + 2.0;
+  if (pointQuads) {
+    const vec2 corners[6] = vec2[6](vec2(-1,-1), vec2(1,-1), vec2(1,1), vec2(-1,-1), vec2(1,1), vec2(-1,1));
+    gl_Position.xy += corners[gl_VertexID] * gl_PointSize / framebuffer * vec2(1.0,-1.0);
+  }
 }`;
 const fragment = `#version 300 es
 precision mediump float;
@@ -53,21 +65,37 @@ uniform highp vec2 framebuffer;
 uniform highp vec2 viewport;
 uniform highp vec2 plot;
 flat in highp float diameter;
+flat in highp vec2 pointCenter;
+uniform bool pointTransformed;
+uniform bool pointQuads;
+uniform highp mat2 pointInverse;
 in float intensity;
 flat in float pointOpacity;
 out vec4 outputColor;
+${gpuClipFragment}
 void main() {
+  if (outsideGpuClip()) discard;
   highp vec2 pixel = vec2(gl_FragCoord.x, framebuffer.y - gl_FragCoord.y) * viewport / framebuffer;
   highp vec3 local = clipMatrix * vec3(pixel, 1.0);
   if (local.z == 0.0 || any(lessThan(local.xy, vec2(0.0))) || any(greaterThan(local.xy, plot))) discard;
   // One device-pixel coverage ramp; output uses premultiplied alpha.
   highp float distance = length((gl_PointCoord - vec2(0.5)) * (diameter + 2.0));
-  float coverage = clamp(diameter * 0.5 + 0.5 - distance, 0.0, 1.0);
+  highp float ramp = 1.0;
+  if (pointQuads) distance = length((pixel - pointCenter) * framebuffer / viewport);
+  if (pointTransformed) {
+    highp vec2 delta = (pixel - pointCenter) * framebuffer / viewport;
+    highp vec2 circle = pointInverse * delta;
+    distance = length(circle);
+    highp vec2 normal = distance > 0.0 ? circle / distance : vec2(1.0, 0.0);
+    // Convert local signed distance into device pixels along the ellipse normal.
+    ramp = max(length(transpose(pointInverse) * normal), 0.000001);
+  }
+  float coverage = clamp((diameter * 0.5 - distance) / ramp + 0.5, 0.0, 1.0);
   if (coverage == 0.0) discard;
   highp float radius = (diameter - strokeWidth) * 0.5;
-  float fillCoverage = clamp(radius + 0.5 - distance, 0.0, 1.0);
+  float fillCoverage = clamp((radius - distance) / ramp + 0.5, 0.0, 1.0);
   float strokeCoverage = strokeWidth > 0.0
-    ? coverage - clamp(radius - strokeWidth * 0.5 + 0.5 - distance, 0.0, 1.0)
+    ? coverage - clamp((radius - strokeWidth * 0.5 - distance) / ramp + 0.5, 0.0, 1.0)
     : 0.0;
   // SVG paints the centered stroke over the fill, including translucent rings.
   float strokeAlpha = strokeColor.a * strokeCoverage;
@@ -85,6 +113,7 @@ export function createGpuResources(context: WebGL2RenderingContext) {
   let buffer: WebGLBuffer | null = null;
   let weights: WebGLBuffer | null = null;
   let vao: WebGLVertexArrayObject | null = null;
+  let clip: ReturnType<typeof createGpuClip> | undefined;
   try {
     for (const [type, source] of [
       [context.VERTEX_SHADER, vertex],
@@ -110,6 +139,7 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         .join("\n");
       throw new Error(detail || "GPU program linking failed");
     }
+    clip = createGpuClip(context, program);
     buffer = context.createBuffer();
     if (!buffer) {
       throw new Error("GPU position buffer allocation failed");
@@ -148,6 +178,10 @@ export function createGpuResources(context: WebGL2RenderingContext) {
         "clipPadding",
         "framebuffer",
         "radiusRatio",
+        "pointExtent",
+        "pointInverse",
+        "pointTransformed",
+        "pointQuads",
         "inactiveOpacity",
         "opacity",
         "color",
@@ -166,10 +200,12 @@ export function createGpuResources(context: WebGL2RenderingContext) {
     );
     return {
       program,
+      clip,
       buffer,
       vao,
       uniforms,
       weights,
+      positionAttribute: attribute,
       weightAttribute,
       radiusAttribute,
       radii: null as WebGLBuffer | null,
@@ -177,6 +213,7 @@ export function createGpuResources(context: WebGL2RenderingContext) {
       emphasis: null as WebGLBuffer | null,
     };
   } catch (error) {
+    clip?.dispose();
     if (buffer) {
       context.deleteBuffer(buffer);
     }

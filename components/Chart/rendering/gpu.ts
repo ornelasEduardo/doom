@@ -1,3 +1,4 @@
+import type { ClipPolygon } from "./gpu-clip";
 import { createGpuResources } from "./gpu-resources";
 
 /** A density frame is immutable; replace its identity when its buffers change. */
@@ -38,6 +39,9 @@ const axisParameters = (axis?: GpuAxis): [number, number, number] => {
 };
 
 export interface GpuView {
+  clipPolygon?: ClipPolygon;
+  /** Affine circle-local radius/stroke basis in canvas CSS pixels; positions use matrix separately. */
+  pointTransform?: readonly [number, number, number, number];
   /** Opacity of each complete point, including its fill and stroke. */
   opacity?: number;
   /** Internal same-context opacity layer. Defaults to the canvas. */
@@ -71,6 +75,49 @@ export interface GpuView {
 }
 
 const gpuFinite = (value: number) => Number.isFinite(Math.fround(value));
+function pointBasis(basis: GpuView["pointTransform"]) {
+  if (!basis) {
+    return { scale: 1, extent: 1, inverse: [1, 0, 0, 1], transformed: false };
+  }
+  if (!basis.every(gpuFinite)) {
+    throw new RangeError("GPU point transform must be finite");
+  }
+  const [a, b, c, d] = basis.map(Math.fround);
+  const determinant = a * d - b * c;
+  if (determinant === 0) {
+    return { scale: 0, extent: 0, inverse: [0, 0, 0, 0], transformed: true };
+  }
+  const xLength = Math.hypot(a, b),
+    yLength = Math.hypot(c, d);
+  // Similarities (including reflection) keep the existing circular sprite fast path.
+  if (
+    Math.abs(xLength - yLength) <= 1e-7 * Math.max(xLength, yLength) &&
+    Math.abs(a * c + b * d) <= 1e-7 * xLength * yLength
+  ) {
+    return {
+      scale: xLength,
+      extent: 1,
+      inverse: [1, 0, 0, 1],
+      transformed: false,
+    };
+  }
+  const inverse = [
+    d / determinant,
+    -b / determinant,
+    -c / determinant,
+    a / determinant,
+  ];
+  if (!inverse.every(gpuFinite)) {
+    throw new RangeError("GPU point inverse must be representable");
+  }
+  return {
+    scale: 1,
+    extent: Math.max(Math.hypot(a, c), Math.hypot(b, d)),
+    inverse,
+    transformed: true,
+  };
+}
+
 function validateView(view: GpuView) {
   if (
     view.opacity !== undefined &&
@@ -173,6 +220,10 @@ export function createGpuPoints(
     throw new Error("WebGL2 is required for GPU point rendering.");
   }
   const context = gl;
+  const pointSizeRange = context.getParameter(
+    context.ALIASED_POINT_SIZE_RANGE,
+  ) as Float32Array | undefined;
+  const maxPointSize = pointSizeRange?.[1] ?? Infinity;
   let disposed = false;
   let uploadedDensity: DensityFrame | undefined;
   let uploaded: GpuPointSource | undefined;
@@ -284,16 +335,21 @@ export function createGpuPoints(
     if (density && uploadedDensity !== density) {
       validateDensity(density);
     }
-    const strokeWidth = (view.stroke?.width ?? 0) * view.ratio;
+    const basis = pointBasis(view.pointTransform);
+    const radiusRatio = view.ratio * basis.scale;
+    const strokeWidth = (view.stroke?.width ?? 0) * radiusRatio;
     const diameter =
       (density
         ? (Math.min(view.plotWidth, view.plotHeight) * view.k) / density.cells
         : (nextRadii ? nextMaxRadius : view.radius) * 2) *
-        view.ratio +
+        radiusRatio +
       strokeWidth;
-    if (!gpuFinite(diameter) || diameter < 0) {
+    if (!gpuFinite(diameter * basis.extent) || diameter < 0) {
       throw new RangeError("GPU point diameter must be finite and nonnegative");
     }
+    // WebGL implementations may cap native sprites at 64 pixels. Larger
+    // circles/ellipses use instanced quads with identical fragment coverage.
+    const pointQuads = diameter * basis.extent + 2 > maxPointSize;
     latest = { data, view };
     if (context.isContextLost()) {
       return;
@@ -324,7 +380,7 @@ export function createGpuPoints(
             (b * e - a * f) / determinant,
             1,
           ];
-    const footprint = diameter * 0.5 + 1;
+    const footprint = diameter * basis.extent * 0.5 + 1;
     const padX =
       determinant === 0
         ? Infinity
@@ -344,6 +400,13 @@ export function createGpuPoints(
     const resources = owned!;
     const { program, buffer, vao, uniforms: u } = resources;
     context.useProgram(program);
+    resources.clip.set(
+      view.clipPolygon,
+      view.width,
+      view.height,
+      canvas.width,
+      canvas.height,
+    );
     context.bindVertexArray(vao);
     context.bindBuffer(context.ARRAY_BUFFER, buffer);
     if (!density && nextRadii) {
@@ -558,6 +621,7 @@ export function createGpuPoints(
     context.disable(context.SAMPLE_COVERAGE);
     context.disable(context.STENCIL_TEST);
     context.disable(context.DEPTH_TEST);
+    context.disable(context.CULL_FACE);
     context.disable(context.SCISSOR_TEST);
     context.disable(context.RASTERIZER_DISCARD);
     context.colorMask(true, true, true, true);
@@ -600,18 +664,30 @@ export function createGpuPoints(
       m.f,
       1,
     ]);
-    context.uniform1f(u.radiusRatio, view.ratio);
+    context.uniform1f(u.radiusRatio, radiusRatio);
+    context.uniform1f(u.pointExtent, basis.extent);
+    context.uniform1i(u.pointTransformed, Number(basis.transformed));
+    context.uniform1i(u.pointQuads, Number(pointQuads));
+    context.uniformMatrix2fv(u.pointInverse, false, basis.inverse);
     context.uniform1f(u.opacity, view.opacity ?? 1);
     context.uniform1f(u.inactiveOpacity, view.emphasis?.opacity ?? 1);
     context.uniform1f(u.maxWeight, density ? maxWeight : 0);
     context.uniform4fv(u.color, view.color);
     context.uniform1f(u.strokeWidth, strokeWidth);
     context.uniform4fv(u.strokeColor, view.stroke?.color ?? view.color);
-    context.drawArrays(
-      context.POINTS,
-      0,
-      density ? density.counts.length : data.length,
-    );
+    for (const attribute of [
+      resources.positionAttribute,
+      resources.radiusAttribute,
+      resources.weightAttribute,
+      resources.selectedAttribute,
+    ]) {
+      context.vertexAttribDivisor(attribute, pointQuads ? 1 : 0);
+    }
+    if (pointQuads) {
+      context.drawArraysInstanced(context.TRIANGLES, 0, 6, count);
+    } else {
+      context.drawArrays(context.POINTS, 0, count);
+    }
     if (recovering) {
       options.onStatusChange?.();
     }
@@ -700,6 +776,7 @@ export function createGpuPoints(
       canvas.removeEventListener("webglcontextlost", lost);
       canvas.removeEventListener("webglcontextrestored", restored);
       if (owned) {
+        owned.clip.dispose();
         context.deleteBuffer(owned.buffer);
         context.deleteBuffer(owned.weights);
         if (owned.radii) {
