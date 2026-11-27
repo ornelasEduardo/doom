@@ -11,6 +11,12 @@ export default defineConfig({
   test: {
     ...base.test,
     include: ["experiments/chart-d3-bridge/*.browser.test.tsx"],
+    // Adapter/device startup and shader compilation can exceed the default 1s
+    // poll budget on CI's software GPU, even for an eight-point chart.
+    expect: {
+      ...base.test?.expect,
+      poll: { ...base.test?.expect?.poll, timeout: 5000 },
+    },
     browser: {
       ...base.test?.browser,
       api: { port: 63418, strictPort: true },
