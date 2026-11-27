@@ -247,3 +247,33 @@ it("rebuilds nested opacity layers after context restoration without stale targe
     f.cleanup();
   }
 });
+
+it("redraws referenced clip geometry on resize and replacement without another event", async () => {
+  const f = fixture();
+  const defs = document.createElementNS(ns, "defs");
+  const clip = document.createElementNS(ns, "clipPath");
+  clip.id = "live-gpu-clip";
+  const rect = document.createElementNS(ns, "rect");
+  rect.setAttribute("width", "50");
+  rect.setAttribute("height", "100");
+  clip.append(rect);
+  defs.append(clip);
+  f.svg.prepend(defs);
+  f.group.setAttribute("clip-path", "url(#live-gpu-clip)");
+  f.point(80);
+  try {
+    expect((await f.pixel(80))[3]).toBe(0);
+    rect.setAttribute("width", "100");
+    expect((await f.pixel(80))[3]).toBe(255);
+    const replacement = rect.cloneNode() as SVGRectElement;
+    replacement.setAttribute("width", "50");
+    clip.replaceChildren(replacement);
+    expect((await f.pixel(80))[3]).toBe(0);
+    clip.remove();
+    expect((await f.pixel(80))[3]).toBe(255);
+    defs.append(clip);
+    expect((await f.pixel(80))[3]).toBe(0);
+  } finally {
+    f.cleanup();
+  }
+});

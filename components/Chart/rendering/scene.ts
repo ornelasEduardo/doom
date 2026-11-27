@@ -253,6 +253,16 @@ function createScene(svg: SVGSVGElement) {
         if (!matrix || css.display === "none" || css.visibility === "hidden") {
           continue;
         }
+        const emphasis =
+          mark.kind === "cloud"
+            ? readGpuEmphasis(
+                node,
+                mark.seriesId,
+                mark.dataIndices,
+                mark.dataAt,
+                Number(css.opacity),
+              )
+            : undefined;
         let hidden = false;
         const ancestry: { node: Element; opacity: number }[] = [];
         for (
@@ -265,7 +275,10 @@ function createScene(svg: SVGSVGElement) {
             hidden = true;
             break;
           }
-          const alpha = Number(ancestorStyle.opacity);
+          // Dense Dim overrides individual point opacity, including a zero
+          // baseline; opacity on real ancestor groups still applies normally.
+          const alpha =
+            ancestor === node && emphasis ? 1 : Number(ancestorStyle.opacity);
           if (alpha === 0) {
             hidden = true;
             break;
@@ -396,17 +409,12 @@ function createScene(svg: SVGSVGElement) {
               mark.radius *
               Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)),
             color: fill ?? [0, 0, 0, 0],
-            opacity,
+            opacity: emphasis ? 1 : opacity,
             stroke,
             clear: false,
             target: target(),
             clip,
-            emphasis: readGpuEmphasis(
-              node,
-              mark.seriesId,
-              mark.dataIndices,
-              mark.dataAt,
-            ),
+            emphasis,
           });
         }
       }
@@ -423,10 +431,17 @@ function createScene(svg: SVGSVGElement) {
   const observer = new MutationObserver((records) => {
     if (
       records.some(
-        ({ target }) =>
+        ({ target, removedNodes }) =>
           target instanceof Element &&
           (target.hasAttribute("data-chart-gpu-mark") ||
-            target.querySelector("[data-chart-gpu-mark]")),
+            target.querySelector("[data-chart-gpu-mark], clipPath") ||
+            // Clip definitions affect marks outside their own DOM subtree.
+            target.closest("defs, clipPath") ||
+            Array.from(removedNodes).some(
+              (node) =>
+                node instanceof Element &&
+                (node.matches("clipPath") || node.querySelector("clipPath")),
+            )),
       )
     ) {
       schedule();

@@ -71,6 +71,7 @@ export function readGpuEmphasis(
   seriesId: string,
   dataIndices: Int32Array,
   dataAt?: (slot: number) => unknown,
+  baselineOpacity = 1,
 ) {
   const probe = node.querySelector("[data-chart-gpu-selector-proxy]") ?? node;
   const effects = [...(registry(node)?.owners.entries() ?? [])]
@@ -114,7 +115,9 @@ export function readGpuEmphasis(
   });
   const indices = new Set(active.flatMap((slots) => [...slots]));
   const overrides = [...indices].map((index) => {
-    let opacity = 1;
+    // Dim replaces the point opacity declaration; active rows retain their
+    // baseline unless another owner still claims that row.
+    let opacity = baselineOpacity;
     effects.forEach((effect, i) => {
       if (!active[i].has(index)) {
         opacity = effect.opacity;
