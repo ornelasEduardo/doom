@@ -26,6 +26,8 @@ export const chartViewportPoint = defineBrowserCommand(
 export const moveChartPointer = defineBrowserCommand(
   async (context, clientX: number, clientY: number) => {
     const point = await chartViewportPoint(context, clientX, clientY);
+    await context.page.bringToFront();
+    await (await context.frame()).evaluate(() => window.focus());
     await context.page.mouse.move(point.x, point.y);
   },
 );

@@ -47,17 +47,28 @@ gpuIt(
     const box = bar.getBoundingClientRect();
     const x = box.left + box.width / 2;
     const y = box.top + box.height / 2;
-    const pixel = () => compositedPixel(x, y);
-    await commands.moveChartPointer(1, 1);
-    await expect.poll(pixel).toEqual([100, 100, 100, 255]);
-    await commands.moveChartPointer(x, y);
-    expect(bar.matches(":hover")).toBe(true);
-    await expect.poll(pixel).toEqual([110, 110, 110, 255]);
-    await commands.moveChartPointer(1, 1);
-    await expect.poll(pixel).toEqual([100, 100, 100, 255]);
+    const pixel = async (hover: boolean, filter: string) => {
+      // Headed screenshot capture can reset native hover. Establish the real
+      // pointer state for each sample, then verify both CSS and rendered paint.
+      await commands.moveChartPointer(hover ? x : 1, hover ? y : 1);
+      expect(bar.matches(":hover")).toBe(hover);
+      expect(
+        getComputedStyle(bar)
+          .getPropertyValue("--chart-gpu-color-filter")
+          .trim(),
+      ).toBe(filter);
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
+      return compositedPixel(x, y);
+    };
+    await expect.poll(() => pixel(false, "none")).toEqual([100, 100, 100, 255]);
+    await expect
+      .poll(() => pixel(true, "brightness(1.1)"))
+      .toEqual([110, 110, 110, 255]);
+    await expect.poll(() => pixel(false, "none")).toEqual([100, 100, 100, 255]);
     bar.style.setProperty("--control-hover-filter", "none");
-    await commands.moveChartPointer(x, y);
-    await expect.poll(pixel).toEqual([100, 100, 100, 255]);
+    await expect.poll(() => pixel(true, "none")).toEqual([100, 100, 100, 255]);
   },
 );
 
