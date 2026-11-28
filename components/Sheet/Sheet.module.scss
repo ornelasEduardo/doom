@@ -144,11 +144,18 @@
   }
   @media (prefers-reduced-motion: no-preference) {
     @starting-style {
-      .panel.isOpen { transform: translateY(100%); }
-      .overlay.isOpen { opacity: 0; }
+      .panel.isOpen {
+        transform: translateY(100%);
+      }
+      .overlay.isOpen {
+        opacity: 0;
+      }
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .panel, .overlay { transition: none; }
+    .panel,
+    .overlay {
+      transition: none;
+    }
   }
 }

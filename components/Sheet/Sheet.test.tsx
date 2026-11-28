@@ -95,8 +95,16 @@ describe("Sheet Component", () => {
 
 it("preserves the host scroll lock until the final sheet closes", () => {
   document.body.style.overflow = "clip";
-  const first = render(<Sheet isOpen title="First" onClose={()=>{}}>One</Sheet>);
-  const second = render(<Sheet isOpen title="Second" onClose={()=>{}}>Two</Sheet>);
+  const first = render(
+    <Sheet isOpen title="First" onClose={() => {}}>
+      One
+    </Sheet>,
+  );
+  const second = render(
+    <Sheet isOpen title="Second" onClose={() => {}}>
+      Two
+    </Sheet>,
+  );
   expect(document.body.style.overflow).toBe("hidden");
   first.unmount();
   expect(document.body.style.overflow).toBe("hidden");
@@ -105,9 +113,18 @@ it("preserves the host scroll lock until the final sheet closes", () => {
   document.body.style.overflow = "";
 });
 it("does not dismiss a sheet when Escape was consumed by nested content", () => {
-  const close=vi.fn();
-  render(<Sheet isOpen title="Nested" onClose={close}>Content</Sheet>);
-  const event=new KeyboardEvent("keydown",{key:"Escape",bubbles:true,cancelable:true});
-  event.preventDefault(); window.dispatchEvent(event);
+  const close = vi.fn();
+  render(
+    <Sheet isOpen title="Nested" onClose={close}>
+      Content
+    </Sheet>,
+  );
+  const event = new KeyboardEvent("keydown", {
+    key: "Escape",
+    bubbles: true,
+    cancelable: true,
+  });
+  event.preventDefault();
+  window.dispatchEvent(event);
   expect(close).not.toHaveBeenCalled();
 });
