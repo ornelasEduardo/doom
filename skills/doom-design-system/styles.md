@@ -20,7 +20,7 @@ Use color sparingly. Most UI should be black/white/gray with one accent.
 
 ### Spacing
 
-Use the numeric spacing scale (base unit = 4px):
+Use the numeric spacing scale with a 0.25rem base unit (4px at the default 16px root):
 
 ```tsx
 // Correct — use token variables
@@ -77,7 +77,7 @@ Source: `styles/_primitives.scss` (primitives), `styles/_semantic.scss` (semanti
 
 ### Base Unit
 
-All spatial tokens derive from a 4px base unit.
+Scalable spatial tokens derive from a 0.25rem base unit (4px at the default 16px root). Pixel annotations below describe that default only. Borders, focus outlines and the hairline token intentionally retain pixels.
 
 ### Spacing Scale
 
@@ -85,16 +85,16 @@ Intentionally gapped scale (no --space-5, --space-7, etc.):
 
 ```
 --space-px:   1px
---space-0.5:  2px
---space-1:    4px
---space-1.5:  6px
---space-2:    8px
---space-3:    12px
---space-4:    16px
---space-6:    24px
---space-8:    32px
---space-12:   48px
---space-16:   64px
+--space-0.5:  0.125rem
+--space-1:    0.25rem
+--space-1.5:  0.375rem
+--space-2:    0.5rem
+--space-3:    0.75rem
+--space-4:    1rem
+--space-6:    1.5rem
+--space-8:    2rem
+--space-12:   3rem
+--space-16:   4rem
 ```
 
 ### Typography Scale
@@ -130,9 +130,9 @@ Intentionally gapped scale (no --space-5, --space-7, etc.):
 
 ```
 --surface-border-width: 2px   (default preset)
---radius-sm:    2px
---radius-md:    4px
---radius-lg:    8px
+--radius-sm:    0.125rem
+--radius-md:    0.25rem
+--radius-lg:    0.5rem
 --radius-pill:  9999px
 --radius-full:  50%
 ```
@@ -184,15 +184,15 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 ### Sizes (primitives)
 
 ```
---size-4:  16px
---size-5:  20px
---size-6:  24px
---size-7:  32px
---size-8:  40px
---size-9:  44px
---size-10: 48px
---size-11: 52px
---size-12: 56px
+--size-4:  1rem
+--size-5:  1.25rem
+--size-6:  1.5rem
+--size-7:  2rem
+--size-8:  2.5rem
+--size-9:  2.75rem
+--size-10: 3rem
+--size-11: 3.25rem
+--size-12: 3.5rem
 ```
 
 #### Prose (reading widths)
@@ -206,23 +206,23 @@ Default tier is "md". Size variants use `@include control-sm` / `@include contro
 #### Layout
 
 ```
---width-sidebar:           240px
---width-sidebar-collapsed: 64px
---width-panel:             400px   (drawers, panels)
---width-panel-wide:        600px
---header-height:           56px
---header-height-sm:        48px
---page-max-width:          1920px
+--width-sidebar:           15rem
+--width-sidebar-collapsed: 4rem
+--width-panel:             25rem   (drawers, panels)
+--width-panel-wide:        37.5rem
+--header-height:           3.5rem
+--header-height-sm:        3rem
+--page-max-width:          120rem
 --drawer-width:            var(--width-panel)
 ```
 
 #### Modals
 
 ```
---width-modal-sm: 400px
---width-modal-md: 600px
---width-modal-lg: 800px
---width-modal-xl: 1024px
+--width-modal-sm: 25rem
+--width-modal-md: 37.5rem
+--width-modal-lg: 50rem
+--width-modal-xl: 64rem
 ```
 
 ### Feedback Tokens (semantic)

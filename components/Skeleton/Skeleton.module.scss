@@ -34,7 +34,7 @@
     }
 
     &.rectangular {
-      height: var(--height, 160px);
+      height: var(--height, 10rem);
       border-radius: var(--radius-md);
     }
   }

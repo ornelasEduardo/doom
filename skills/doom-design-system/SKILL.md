@@ -63,6 +63,7 @@ Use named exports.
 - Keep structural CSS in SCSS Modules. Compile serializable visual recipes through the theme compiler. Inline styles are appropriate for dynamic geometry.
 - Always use `clsx` for conditional class names
 - Always use CSS variables for colors — never hardcode hex values
+- Use rem-based tokens for design dimensions and spacing; allow text-bearing controls to grow above a minimum height. Keep px for intentional borders, hairlines, and measured geometry. Preserve numeric public APIs as pixel values.
 - Use semantic border roles and the corresponding control or surface default.
 - Use theme shadow defaults. Blurred shadows and shadow-free components are valid.
 - Always use `@use "../../styles/mixins" as *;` for interactive states

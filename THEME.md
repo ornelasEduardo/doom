@@ -8,14 +8,17 @@ import { defineTheme } from "doom-design-system/theme";
 
 export const studio = defineTheme({
   name: "Studio",
-  foundations: { fonts: { body: "Georgia, serif" }, radii: { control: "8px" } },
+  foundations: {
+    fonts: { body: "Georgia, serif" },
+    radii: { control: "0.5rem" },
+  },
   roles: { canvas: "#faf9f6", brand: "#315d50", onBrand: "white" },
   defaults: { controls: { radius: "{radii.control}", fontWeight: 500 } },
   components: {
     Button: {
       parts: { label: { letterSpacing: "0.02em" } },
       variants: { primary: { root: { backgroundColor: "{roles.brand}" } } },
-      sizes: { sm: { root: { paddingInline: "14px" } } },
+      sizes: { sm: { root: { paddingInline: "0.875rem" } } },
     },
   },
 });
@@ -52,6 +55,16 @@ Inherited objects merge by key, arrays replace inherited arrays, and omitted or 
 Selected recipes match ARIA selection, an active ARIA current token, or a Doom selection marker. Checkbox, Switch and RadioGroup also expose native checked, focus-visible, invalid and disabled state to their indicators. Pressed styles follow native activation or explicit pressed state on that control.
 
 A theme can attach CSS Modules classes with `components.Button.classNames`. Parent and child classes accumulate. Add instance-specific classes with `<Button classNames={{ label: styles.price }}>Buy</Button>`. Put reusable classes in `@layer doom.theme`. A consumer's unlayered CSS overrides normal declarations in Doom's reset, utilities, components and theme layers. Use a class on the part itself for media queries, pseudo-elements and custom animations. Scoped part hooks include `data-doom-component`, `data-doom-part`, and `data-doom-theme`. Composed components can attach multiple part classes to one element.
+
+## Scalable sizing
+
+Built-in spacing, typography, control dimensions, radii, and layout dimensions use `rem`. Their default proportions match a 16px root font size; a larger browser font preference scales these values together. Leave the document root font size at the browser default (or `100%`) rather than pinning it to pixels. ThemeScope typography does not redefine `rem`: it always refers to the document root.
+
+Use spacing and size tokens in components and prefer `min-height` with content-driven height for text-bearing controls. Flexible widths, wrapping, and container or media queries still determine how layouts adapt to available space. Relative units alone do not prevent overflow. Keep typography line heights unitless; reserve bounded fluid sizing for intentional changes in hierarchy or page spacing.
+
+Pixels remain appropriate for borders, focus outlines, hairlines, and measured coordinates. Numeric React dimensions and public chart, table, virtualization, and positioning APIs retain their pixel meaning. Custom theme values are preserved as supplied: migrate application overrides from pixels to `rem` explicitly when they should scale. Consumers comparing raw token strings should expect relative units rather than pixel literals; read computed layout when pixel measurements are required.
+
+Validate changes at the default root size and with enlarged text, narrow containers, long labels, text-spacing overrides, and browser zoom. Include legacy providers, object themes, and portaled overlays in those checks. Run `npm run test:browser -- tests/browser/Responsive` for the sizing regression matrix: all five presets in both provider modes, root sizes of 16/20/32px, narrow and wide containers, text spacing, baseline control geometry, and portaled overlays.
 
 ## Switch themes and modes
 

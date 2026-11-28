@@ -23,7 +23,7 @@ export function ProgressBar({
   classNames,
   value,
   max = 100,
-  height = "24px",
+  height = "var(--space-6)",
   color = "var(--primary)",
   showStripes = true,
   label,

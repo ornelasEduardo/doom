@@ -12,7 +12,7 @@ import { ProgressBar } from "doom-design-system";
 | ------------- | ------------------ | ------------------ | ------------------------------ |
 | `value`       | `number`           | required           | Current value (0–max)          |
 | `max`         | `number`           | `100`              | Maximum value                  |
-| `height`      | `string \| number` | `"24px"`           | Bar height                     |
+| `height`      | `string \| number` | `"var(--space-6)"` | Bar height                     |
 | `color`       | `string`           | `"var(--primary)"` | Fill color (any CSS color)     |
 | `showStripes` | `boolean`          | `true`             | Show animated diagonal stripes |
 | `label`       | `ReactNode`        | —                  | Label rendered above the bar   |

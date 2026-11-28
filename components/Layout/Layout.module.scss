@@ -52,16 +52,16 @@
     padding-right: var(--space-4);
 
     &.sm {
-      max-width: 640px;
+      max-width: 40rem;
     }
     &.md {
-      max-width: 768px;
+      max-width: 48rem;
     }
     &.lg {
-      max-width: 1024px;
+      max-width: 64rem;
     }
     &.xl {
-      max-width: 1280px;
+      max-width: 80rem;
     }
     &.fluid {
       max-width: 100%;

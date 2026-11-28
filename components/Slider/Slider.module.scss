@@ -58,8 +58,8 @@
     -webkit-appearance: none;
     position: absolute;
     top: 0;
-    left: -10px;
-    width: calc(100% + 20px);
+    left: calc(var(--toggle-size) / -2);
+    width: calc(100% + var(--toggle-size));
     height: 100%;
     background: transparent;
     cursor: pointer;
@@ -108,12 +108,12 @@
 
     &:focus-visible::-webkit-slider-thumb {
       outline: var(--surface-border-width) solid var(--foreground);
-      outline-offset: 4px;
+      outline-offset: 0.25rem;
     }
 
     &:focus-visible::-moz-range-thumb {
       outline: var(--surface-border-width) solid var(--foreground);
-      outline-offset: 4px;
+      outline-offset: 0.25rem;
     }
 
     &:disabled {

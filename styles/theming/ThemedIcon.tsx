@@ -57,6 +57,7 @@ export function ThemedIcon({
   icon: DefaultIcon,
   iconName,
   strokeWidth = 2.5,
+  size = 24,
   ...props
 }: ThemedIconProps) {
   const part = useThemeParts("Icon");
@@ -65,6 +66,9 @@ export function ThemedIcon({
   return (
     <Icon
       {...part("root", props)}
+      // Built-in sizes are authored against a 16px root. CSS recipes and
+      // explicit width/height props can still override these SVG attributes.
+      size={typeof size === "number" ? `${size / 16}rem` : size}
       strokeWidth={
         runtime ? `var(--doom-icons-stroke, ${strokeWidth})` : strokeWidth
       }

@@ -80,20 +80,20 @@
   // ---------------------------------------------------------------------------
   // LAYOUT TOKENS — Widths, heights for structural elements
   // ---------------------------------------------------------------------------
-  --width-sidebar: 240px;
-  --width-sidebar-collapsed: 64px;
-  --width-panel: 400px;
-  --width-panel-wide: 600px;
-  --width-modal-sm: 400px;
-  --width-modal-md: 600px;
-  --width-modal-lg: 800px;
-  --width-modal-xl: 1024px;
+  --width-sidebar: 15rem;
+  --width-sidebar-collapsed: 4rem;
+  --width-panel: 25rem;
+  --width-panel-wide: 37.5rem;
+  --width-modal-sm: 25rem;
+  --width-modal-md: 37.5rem;
+  --width-modal-lg: 50rem;
+  --width-modal-xl: 64rem;
   --width-prose: 65ch;
   --width-prose-narrow: 45ch;
   --width-prose-wide: 80ch;
-  --header-height: 56px;
-  --header-height-sm: 48px;
-  --page-max-width: 1920px;
+  --header-height: 3.5rem;
+  --header-height-sm: 3rem;
+  --page-max-width: 120rem;
   --drawer-width: var(--width-panel);
 
   // ---------------------------------------------------------------------------
