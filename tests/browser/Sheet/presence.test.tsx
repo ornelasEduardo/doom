@@ -90,3 +90,40 @@ it("cancels drags without dismissing, ignores header controls, and dismisses com
   fireEvent.pointerUp(document, { pointerId: 3, clientY: 400 });
   await expect.poll(() => panel.isConnected).toBe(false);
 });
+
+it("returns to rest when dragging above the start and ignores a second pointer", async () => {
+  await commands.setReducedMotion("reduce");
+  render(<Fixture />);
+  fireEvent.click(screen.getByRole("button", { name: "Open" }));
+  const panel = screen.getByRole("dialog", { name: "Review" });
+  const header = panel.querySelector('[data-doom-part="header"]')!;
+  fireEvent.pointerDown(header, { button: 0, pointerId: 1, clientY: 200 });
+  fireEvent.pointerMove(document, { pointerId: 1, clientY: 300 });
+  expect(panel.style.transform).toBe("translateY(100px)");
+  fireEvent.pointerMove(document, { pointerId: 1, clientY: 150 });
+  expect(panel.style.transform).toBe("translateY(0px)");
+  fireEvent.pointerDown(header, { button: 0, pointerId: 2, clientY: 100 });
+  fireEvent.pointerMove(document, { pointerId: 2, clientY: 400 });
+  fireEvent.pointerUp(document, { pointerId: 2, clientY: 400 });
+  expect(panel.isConnected).toBe(true);
+  fireEvent.pointerCancel(document, { pointerId: 1 });
+});
+
+it("animates an external close during a drag rather than removing the sheet immediately", async () => {
+  await commands.setReducedMotion("no-preference");
+  render(<Fixture />);
+  fireEvent.click(screen.getByRole("button", { name: "Open" }));
+  const panel = screen.getByRole("dialog", { name: "Review" });
+  await Promise.allSettled(
+    panel.getAnimations().map((animation) => animation.finished),
+  );
+  const header = panel.querySelector('[data-doom-part="header"]')!;
+  fireEvent.pointerDown(header, { button: 0, pointerId: 1, clientY: 200 });
+  fireEvent.pointerMove(document, { pointerId: 1, clientY: 300 });
+  expect(getComputedStyle(panel).transform).toBe("matrix(1, 0, 0, 1, 0, 100)");
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  expect(panel.isConnected).toBe(true);
+  expect(panel.hasAttribute("inert")).toBe(true);
+  expect(panel.getAnimations().length).toBeGreaterThan(0);
+  await expect.poll(() => panel.isConnected).toBe(false);
+});

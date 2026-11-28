@@ -1,7 +1,7 @@
 "use client";
 import clsx from "clsx";
 import { X } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { usePresence } from "../../hooks/usePresence";
 import {
@@ -170,12 +170,12 @@ function SheetInternal({
   const [mounted, setMounted] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const present = usePresence(isOpen, panelRef);
   const isDragging = useRef(false);
   const startY = useRef(0);
   const cleanupRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
+  // Reset drag overrides before presence measures the exit transition.
+  useLayoutEffect(() => {
     if (!isOpen) {
       cleanupRef.current?.();
       cleanupRef.current = null;
@@ -186,6 +186,8 @@ function SheetInternal({
       panelRef.current.style.transition = "";
     }
   }, [isOpen]);
+
+  const present = usePresence(isOpen, panelRef);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -206,6 +208,7 @@ function SheetInternal({
   const handlePointerDown = (e: React.PointerEvent) => {
     if (
       !isOpen ||
+      isDragging.current ||
       !panelRef.current ||
       e.button !== 0 ||
       (e.target instanceof Element &&
@@ -226,10 +229,7 @@ function SheetInternal({
       ) {
         return;
       }
-      const delta = moveEvent.clientY - startY.current;
-      if (delta < 0) {
-        return;
-      }
+      const delta = Math.max(0, moveEvent.clientY - startY.current);
 
       panelRef.current.style.transition = "none";
       panelRef.current.style.transform = `translateY(${delta}px)`;
