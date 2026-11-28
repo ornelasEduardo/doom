@@ -1,3 +1,5 @@
+import "./scene.scss";
+
 import {
   clipBounds,
   type ClipPolygon,

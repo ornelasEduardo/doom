@@ -135,6 +135,8 @@
     "http-server": "^14.1.1",
     "next": "^15.5.7",
     "playwright": "^1.62.1",
+    "postcss": "8.5.34",
+    "postcss-modules-local-by-default": "4.2.0",
     "prettier": "^3.7.4",
     "publint": "^0.3.16",
     "replace-in-file": "^8.4.0",
