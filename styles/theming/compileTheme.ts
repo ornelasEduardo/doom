@@ -114,8 +114,8 @@ function rules(theme: ResolvedTheme): string {
                 .join("");
             const condition = stateCondition(state, name, theme.id);
             // Keep class and attribute alternatives independently indexable. A
-            // mixed :is() inside :where() makes Blink try every recipe on every
-            // element instead of rejecting unrelated component classes early.
+            // mixed :is() inside :where() can make Blink attempt recipe matching
+            // broadly instead of rejecting unrelated component classes early.
             result.push(
               `:where(${classes}${condition}),:where(${attributes}${condition}){${css}}`,
             );

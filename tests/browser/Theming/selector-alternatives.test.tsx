@@ -56,7 +56,7 @@ for (const classes of [true, false]) {
         </button>
       </ThemeScope>,
     );
-    const button = screen.getByRole("button");
+    const button = screen.getByRole<HTMLButtonElement>("button");
     const style = () => getComputedStyle(button);
     expect(style().color).toBe(normal);
     expect(style().paddingTop).toBe("7px");
@@ -71,3 +71,25 @@ for (const classes of [true, false]) {
     expect(style().color).toBe(normal);
   });
 }
+
+it("keeps generated state selectors below consumer rules in the same layer", () => {
+  render(
+    <ThemeScope theme={theme}>
+      <style>
+        {"@layer doom.theme { button { color: rgb(101, 102, 103); } }"}
+      </style>
+      <button
+        disabled
+        className={`doom-${id}-Button-root`}
+        data-doom-component="Button"
+        data-doom-part="root"
+        data-doom-theme={id}
+      >
+        Overridden
+      </button>
+    </ThemeScope>,
+  );
+  expect(getComputedStyle(screen.getByRole("button")).color).toBe(
+    "rgb(101, 102, 103)",
+  );
+});
