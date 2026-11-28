@@ -5,6 +5,7 @@ import React, {
   KeyboardEvent,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -50,6 +51,8 @@ export function Select({
   disabled,
   name,
   autoFocus,
+  onClick,
+  onKeyDown,
   size = "md",
   ...props
 }: SelectProps) {
@@ -58,8 +61,9 @@ export function Select({
     disabled: disabled,
   });
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [internalValue, setInternalValue] = useState(defaultValue || "");
+  const [requestedOpen, setIsOpen] = useState(false);
+  const isOpen = requestedOpen && !disabled;
+  const [internalValue, setInternalValue] = useState(defaultValue ?? "");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const reactId = useId();
@@ -82,7 +86,24 @@ export function Select({
     }
   }, [isOpen, currentValue, options]);
 
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+    }
+  }, [disabled]);
+
+  useLayoutEffect(() => {
+    if (isOpen && highlightedIndex >= 0 && highlightedIndex < options.length) {
+      document
+        .getElementById(`${listboxId}-option-${highlightedIndex}`)
+        ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }
+  }, [isOpen, highlightedIndex, listboxId, options.length]);
+
   const handleSelect = (newValue: string | number) => {
+    if (disabled) {
+      return;
+    }
     if (value === undefined) {
       setInternalValue(newValue);
     }
@@ -102,7 +123,11 @@ export function Select({
     triggerRef.current?.focus();
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) {
+      return;
+    }
     switch (e.key) {
       case "Enter":
       case " ":
@@ -138,6 +163,7 @@ export function Select({
       case "Escape":
         if (isOpen) {
           e.preventDefault();
+          e.stopPropagation();
           setIsOpen(false);
           triggerRef.current?.focus();
         }
@@ -156,7 +182,12 @@ export function Select({
       style={style}
     >
       {label && (
-        <Label {...doomPart("label")} htmlFor={selectId} required={required}>
+        <Label
+          {...doomPart("label")}
+          htmlFor={selectId}
+          id={labelId}
+          required={required}
+        >
           {label}
         </Label>
       )}
@@ -209,6 +240,13 @@ export function Select({
         trigger={
           <button
             ref={triggerRef}
+            aria-activedescendant={
+              isOpen &&
+              highlightedIndex >= 0 &&
+              highlightedIndex < options.length
+                ? `${listboxId}-option-${highlightedIndex}`
+                : undefined
+            }
             aria-controls={isOpen ? listboxId : undefined}
             aria-expanded={isOpen}
             aria-haspopup="listbox"
@@ -227,7 +265,16 @@ export function Select({
             id={selectId}
             role="combobox"
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={(event) => {
+              onClick?.(event);
+              if (event.defaultPrevented) {
+                return;
+              }
+              // WebKit does not focus pointer-activated buttons. Keep Escape
+              // on this combobox so it dismisses the list before a parent modal.
+              event.currentTarget.focus({ preventScroll: true });
+              setIsOpen(!isOpen);
+            }}
             onKeyDown={handleKeyDown}
             {...props}
           >

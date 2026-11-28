@@ -95,10 +95,18 @@
     border: none;
     color: var(--foreground);
     cursor: pointer;
-    border-radius: calc(var(--control-radius) - var(--surface-border-width));
+    border-radius: max(
+      0px,
+      calc(var(--control-radius) - var(--surface-border-width) - var(--space-1))
+    );
     font-size: var(--control-font-size);
     font-weight: var(--font-semibold, 600);
     transition: background-color var(--duration-fast) var(--ease-in-out);
+
+    &:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
 
     &:hover {
       background-color: color-mix(in srgb, var(--primary), transparent 85%);

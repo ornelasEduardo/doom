@@ -46,6 +46,7 @@ export * from "./components/Toast";
 export * from "./components/ToggleGroup";
 export * from "./components/Tooltip";
 export * from "./DesignSystemProvider";
+export { useMenu } from "./hooks/useMenu";
 export * from "./styles/themes";
 export * from "./styles/theming/index";
 export type { ThemeClassNames } from "./styles/theming/parts";

@@ -20,15 +20,26 @@ vi.mock("../..", () => ({
 }));
 
 describe("Modal Component", () => {
-  it("should be hidden when isOpen is false", () => {
-    render(
+  it("defers initial content, then retains the closed dialog for exit transitions", () => {
+    const { rerender } = render(
       <Modal isOpen={false} title="Test Modal" onClose={() => {}}>
         Content
       </Modal>,
     );
-    // The component stays mounted for exit animations but should be hidden
-    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
+    rerender(
+      <Modal isOpen title="Test Modal" onClose={() => {}}>
+        Content
+      </Modal>,
+    );
+    const dialog = screen.getByRole("dialog");
+    rerender(
+      <Modal isOpen={false} title="Test Modal" onClose={() => {}}>
+        Content
+      </Modal>,
+    );
     expect(dialog).toBeInTheDocument();
+    expect(dialog).not.toHaveAttribute("open");
   });
 
   it("should render when isOpen is true with accessibility attributes", () => {
@@ -39,7 +50,8 @@ describe("Modal Component", () => {
     );
     const dialog = screen.getByRole("dialog", { name: "Test Modal" });
     expect(dialog).toBeInTheDocument();
-    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog.tagName).toBe("DIALOG");
+    expect(dialog).toHaveAttribute("open");
     expect(screen.getByText("Content")).toBeInTheDocument();
     expect(dialog).toHaveAttribute(
       "aria-labelledby",
@@ -80,7 +92,10 @@ describe("Modal Component", () => {
       </Modal>,
     );
 
-    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent(
+      screen.getByRole("dialog"),
+      new Event("cancel", { cancelable: true }),
+    );
     expect(handleClose).toHaveBeenCalled();
   });
 
@@ -102,4 +117,37 @@ describe("Modal Component", () => {
     expect(screen.getByTestId("modal-root")).toBeInTheDocument();
     expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
+});
+
+it("does not dismiss a text selection that starts in content and ends outside", () => {
+  const close = vi.fn();
+  render(
+    <Modal isOpen title="Selection" onClose={close}>
+      <p>Select this text</p>
+    </Modal>,
+  );
+  const dialog = screen.getByRole("dialog");
+  fireEvent.pointerDown(screen.getByText("Select this text"));
+  fireEvent.pointerUp(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(close).not.toHaveBeenCalled();
+  fireEvent.pointerDown(dialog);
+  fireEvent.pointerUp(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(close).toHaveBeenCalledTimes(1);
+});
+
+it("composes and honors a consumer click cancellation", () => {
+  const close = vi.fn();
+  const click = vi.fn((event: React.MouseEvent) => event.preventDefault());
+  render(
+    <Modal isOpen title="Guarded" onClick={click} onClose={close}>
+      Content
+    </Modal>,
+  );
+  const dialog = screen.getByRole("dialog");
+  fireEvent.pointerDown(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(close).not.toHaveBeenCalled();
 });

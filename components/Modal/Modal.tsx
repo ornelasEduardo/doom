@@ -1,7 +1,7 @@
 "use client";
 import clsx from "clsx";
 import { X } from "lucide-react";
-import React, { useEffect, useId, useRef } from "react";
+import React, { useEffect, useId, useLayoutEffect, useRef } from "react";
 
 import {
   type ThemeClassNames,
@@ -10,18 +10,22 @@ import {
   useThemeParts,
 } from "../../styles/theming/parts";
 import { ThemedIcon } from "../../styles/theming/ThemedIcon";
-import { ThemedPortal } from "../../styles/theming/ThemedPortal";
+import {
+  OverlayPortalContext,
+  ThemedPortal,
+} from "../../styles/theming/ThemedPortal";
 import { Button } from "../Button/Button";
 import { Card } from "../Card/Card";
 import { Flex, Stack } from "../Layout/Layout";
 import styles from "./Modal.module.scss";
 
 interface ModalProps extends Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  "title"
+  React.DialogHTMLAttributes<HTMLDialogElement>,
+  "title" | "open"
 > {
   classNames?: ThemeClassNames<"Modal">;
   isOpen: boolean;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
   onClose: () => void;
   title?: React.ReactNode;
   children: React.ReactNode;
@@ -124,6 +128,7 @@ function ModalFooter({
 function ModalInternal({
   classNames,
   isOpen,
+  initialFocusRef,
   onClose,
   title,
   children,
@@ -137,43 +142,58 @@ function ModalInternal({
     variant: variant,
   });
 
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDialogElement>(null);
+  const backdropPress = useRef(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLDivElement | null>(
+    null,
+  );
   const reactId = useId();
   const titleId = `modal-title-${reactId}`;
   const [mounted, setMounted] = React.useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (isOpen) {
+      setMounted(true);
+    }
+  }, [isOpen]);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
+  useLayoutEffect(() => {
+    const dialog = overlayRef.current;
+    if (!dialog || !mounted) {
+      return;
+    }
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+      initialFocusRef?.current?.focus();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen, mounted, initialFocusRef]);
+
+  // Prop/ref updates must not close and reopen the native focus boundary.
+  useLayoutEffect(() => {
+    const dialog = overlayRef.current;
+    return () => {
+      if (dialog?.open) {
+        dialog.close();
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
+  }, [mounted]);
 
   if (!mounted) {
     return null;
   }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    props.onClick?.(e);
+    if (
+      !e.defaultPrevented &&
+      e.target === overlayRef.current &&
+      (backdropPress.current || e.detail === 0)
+    ) {
       onClose();
     }
+    backdropPress.current = false;
   };
 
   return (
@@ -186,61 +206,80 @@ function ModalInternal({
         <ThemedPortal surface={variant === "solid" ? "solid" : undefined}>
           {
             <ModalContext.Provider value={{ onClose, titleId, variant }}>
-              <div
+              <dialog
                 ref={overlayRef}
                 {...doomPart("root", {
-                  className: clsx(
-                    styles.overlay,
-                    isOpen && styles.isOpen,
-                    className,
-                  ),
+                  className: clsx(styles.overlay, className),
                 })}
+                {...props}
+                aria-label={
+                  props["aria-label"] ||
+                  (!title && !props["aria-labelledby"]
+                    ? "Modal Window"
+                    : undefined)
+                }
+                aria-labelledby={title ? titleId : props["aria-labelledby"]}
                 style={style}
+                onCancel={(event) => {
+                  props.onCancel?.(event);
+                  if (!event.defaultPrevented) {
+                    event.preventDefault();
+                    onClose();
+                  }
+                }}
                 onClick={handleOverlayClick}
+                onClose={(event) => {
+                  // Native forms/commands can close without changing isOpen.
+                  // Ignore nested dialogs and delayed events from a prior close.
+                  if (
+                    event.target === event.currentTarget &&
+                    isOpen &&
+                    !event.currentTarget.open
+                  ) {
+                    onClose();
+                  }
+                }}
+                onPointerDown={(event) => {
+                  props.onPointerDown?.(event);
+                  backdropPress.current =
+                    !event.defaultPrevented &&
+                    event.target === event.currentTarget;
+                }}
               >
                 <div
                   {...doomPart("contentContainer", {
                     className: styles.contentContainer,
                   })}
                 >
-                  <div
-                    aria-label={
-                      props["aria-label"] ||
-                      (!title && !props["aria-labelledby"]
-                        ? "Modal Window"
-                        : undefined)
-                    }
-                    aria-labelledby={title ? titleId : props["aria-labelledby"]}
-                    aria-modal="true"
-                    role="dialog"
-                    {...props}
-                  >
-                    <Card
-                      {...doomPart("modalCard", {
-                        className: clsx(styles.modalCard, styles[variant]),
-                      })}
-                      style={{ padding: 0, overflow: "hidden" }}
-                    >
-                      {title ? (
-                        <>
-                          <ModalHeader>{title}</ModalHeader>
-                          <Stack
-                            {...doomPart("modalContent", {
-                              className: styles.modalContent,
-                            })}
-                            gap={0}
-                          >
-                            <ModalBody>{children}</ModalBody>
-                            {footer && <ModalFooter>{footer}</ModalFooter>}
-                          </Stack>
-                        </>
-                      ) : (
-                        children
-                      )}
-                    </Card>
+                  <div ref={setPortalHost}>
+                    <OverlayPortalContext.Provider value={portalHost}>
+                      <Card
+                        {...doomPart("modalCard", {
+                          className: clsx(styles.modalCard, styles[variant]),
+                        })}
+                        style={{ padding: 0, overflow: "hidden" }}
+                      >
+                        {title ? (
+                          <>
+                            <ModalHeader>{title}</ModalHeader>
+                            <Stack
+                              {...doomPart("modalContent", {
+                                className: styles.modalContent,
+                              })}
+                              gap={0}
+                            >
+                              <ModalBody>{children}</ModalBody>
+                              {footer && <ModalFooter>{footer}</ModalFooter>}
+                            </Stack>
+                          </>
+                        ) : (
+                          children
+                        )}
+                      </Card>
+                    </OverlayPortalContext.Provider>
                   </div>
                 </div>
-              </div>
+              </dialog>
             </ModalContext.Provider>
           }
         </ThemedPortal>

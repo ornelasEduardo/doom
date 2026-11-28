@@ -55,6 +55,7 @@
     "THEME-REFERENCE.md"
   ],
   "scripts": {
+    "test:browser:overlays": "vitest run --config vitest.overlays.config.ts",
     "build": "rimraf dist && tsc -p tsconfig.build.json && sass components:dist/components styles:dist/styles lib:dist/lib --no-source-map && node scripts/fix-imports.cjs",
     "verify": "npm run validate:build && npm run lint:package && npm run test:package",
     "prepack": "npm run build && npm run verify",
