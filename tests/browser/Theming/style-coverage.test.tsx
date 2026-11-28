@@ -99,11 +99,23 @@ it("honors reduced motion for themed controls", async () => {
         <Button>Press</Button>
       </ThemeScope>,
     );
-    expect(
-      parseFloat(
-        getComputedStyle(screen.getByRole("button")).transitionDuration,
-      ),
-    ).toBeLessThan(0.001);
+    const style = getComputedStyle(screen.getByRole("button"));
+    // Color feedback remains available; spatial movement and animation do not.
+    expect(style.animationName).toBe("none");
+    expect(style.scrollBehavior).toBe("auto");
+    const properties = style.transitionProperty
+      .split(",")
+      .map((part) => part.trim());
+    expect(properties.length).toBeGreaterThan(0);
+    for (const property of properties) {
+      expect([
+        "none",
+        "color",
+        "background-color",
+        "border-color",
+        "outline-color",
+      ]).toContain(property);
+    }
   } finally {
     await commands.setReducedMotion("no-preference");
   }

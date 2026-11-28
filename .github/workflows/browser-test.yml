@@ -51,6 +51,9 @@ jobs:
       - name: Run browser tests
         run: xvfb-run --auto-servernum npm run test:browser -- --browser.headless=false --no-file-parallelism
 
+      - name: Run overlay focus regressions across browsers
+        run: xvfb-run --auto-servernum npm run test:browser:overlays -- --browser.headless=false --no-file-parallelism
+
       - name: Run Chart cross-browser regressions
         run: |
           for browser in chromium firefox webkit; do

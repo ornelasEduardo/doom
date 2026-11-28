@@ -46,11 +46,10 @@ export * from "./components/Toast";
 export * from "./components/ToggleGroup";
 export * from "./components/Tooltip";
 export * from "./DesignSystemProvider";
+export { useMenu } from "./hooks/useMenu";
 export * from "./styles/themes";
 export * from "./styles/theming/index";
 export type { ThemeClassNames } from "./styles/theming/parts";
 export type { IconName, IconOverrides } from "./styles/theming/ThemedIcon";
 export type { ThemeScopeProps } from "./styles/theming/ThemeScope";
 export { ThemeScope, useResolvedTheme } from "./styles/theming/ThemeScope";
-
-export { useMenu } from "./hooks/useMenu";

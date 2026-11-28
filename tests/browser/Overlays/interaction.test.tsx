@@ -3,7 +3,7 @@ import "../../../styles/theming/scope.scss";
 
 import { cleanup, render as rtlRender, screen } from "@testing-library/react";
 import React, { useRef, useState } from "react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 
 import { Dropdown } from "../../../components/Dropdown/Dropdown";
@@ -19,6 +19,8 @@ import { DesignSystemProvider } from "../../../DesignSystemProvider";
 const render = (ui: React.ReactNode) =>
   rtlRender(<DesignSystemProvider>{ui}</DesignSystemProvider>);
 afterEach(cleanup);
+// Native dialogs restore the previously focused element. WebKit does not
+// focus a button on pointer activation, so keyboard invocation is explicit.
 function Fixture() {
   const [open, setOpen] = useState(false);
   return (
@@ -40,14 +42,16 @@ function Fixture() {
 }
 it("contains focus, keeps nested options reachable, dismisses one layer and returns to the invoker", async () => {
   render(<Fixture />);
-  await userEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+  screen.getByRole("button", { name: "Edit setup" }).focus();
+  await userEvent.keyboard("{Enter}");
   const dialog = screen.getByRole("dialog", { name: "Setup" });
   expect((dialog as HTMLDialogElement).matches(":modal")).toBe(true);
   await userEvent.click(screen.getByRole("button", { name: "Close modal" }));
   expect(document.activeElement).toBe(
     screen.getByRole("button", { name: "Edit setup" }),
   );
-  await userEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+  screen.getByRole("button", { name: "Edit setup" }).focus();
+  await userEvent.keyboard("{Enter}");
   screen.getByRole("button", { name: "Close modal" }).focus();
   await userEvent.tab({ shift: true });
   expect(document.activeElement).not.toBe(
@@ -59,6 +63,7 @@ it("contains focus, keeps nested options reachable, dismisses one layer and retu
   );
   await userEvent.click(screen.getByRole("combobox", { name: "Date format" }));
   expect(dialog.contains(screen.getByRole("listbox"))).toBe(true);
+  expect(screen.getByRole("combobox", { name: "Date format" })).toHaveFocus();
   await userEvent.keyboard("{Escape}");
   expect((dialog as HTMLDialogElement).open).toBe(true);
   expect(screen.queryByRole("listbox")).toBeNull();
@@ -78,7 +83,9 @@ it("menus support last-item entry, wrapping, typeahead, Escape and Tab exit", as
         ]}
         triggerLabel="Actions"
       />
-      <button>After</button>
+      {/* A text field is in the native Tab order even when macOS disables
+          keyboard navigation to buttons. Do not override that preference. */}
+      <input aria-label="After" />
     </>,
   );
   screen.getByRole("button", { name: /Actions/ }).focus();
@@ -101,7 +108,7 @@ it("menus support last-item entry, wrapping, typeahead, Escape and Tab exit", as
   await userEvent.keyboard("{ArrowDown}");
   await userEvent.tab();
   expect(document.activeElement).toBe(
-    screen.getByRole("button", { name: "After" }),
+    screen.getByRole("textbox", { name: "After" }),
   );
 });
 
@@ -181,4 +188,100 @@ it("scrolls the requested initial field into the visible dialog", async () => {
   const bounds = field.getBoundingClientRect();
   expect(bounds.top).toBeGreaterThanOrEqual(0);
   expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+});
+
+it("pointer-opened menus retain an invoker for Escape and keyboard navigation", async () => {
+  render(
+    <Dropdown
+      items={[{ label: "Archive", onClick: () => {} }]}
+      triggerLabel="Pointer actions"
+    />,
+  );
+  const trigger = screen.getByRole("button", { name: /Pointer actions/ });
+  await userEvent.click(trigger);
+  expect(trigger).toHaveFocus();
+  await userEvent.keyboard("{Escape}");
+  expect(trigger).toHaveAttribute("aria-expanded", "false");
+  expect(trigger).toHaveFocus();
+  await userEvent.click(trigger);
+  await userEvent.keyboard("{ArrowDown}");
+  expect(screen.getByRole("menuitem", { name: "Archive" })).toHaveFocus();
+});
+
+it("restores the previously focused field after a pointer-opened modal closes", async () => {
+  render(
+    <>
+      <input aria-label="Previous field" />
+      <Fixture />
+    </>,
+  );
+  const previous = screen.getByRole("textbox", { name: "Previous field" });
+  const invoker = screen.getByRole("button", { name: "Edit setup" });
+  previous.focus();
+  // Exercise pointer invocation independently of each browser's click-focus policy.
+  invoker.addEventListener("mousedown", (event) => event.preventDefault(), {
+    once: true,
+  });
+  await userEvent.click(invoker);
+  expect(screen.getByRole("dialog", { name: "Setup" })).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  await expect.poll(() => document.activeElement).toBe(previous);
+});
+
+it("Shift+Tab exits a menu to the previous keyboard-reachable control", async () => {
+  render(
+    <>
+      <input aria-label="Before" />
+      <Dropdown
+        items={[{ label: "Archive", onClick: () => {} }]}
+        triggerLabel="Reverse actions"
+      />
+      <input aria-label="After" />
+    </>,
+  );
+  const trigger = screen.getByRole("button", { name: /Reverse actions/ });
+  trigger.focus();
+  await userEvent.keyboard("{ArrowDown}");
+  await userEvent.tab({ shift: true });
+  expect(document.activeElement).toBe(
+    screen.getByRole("textbox", { name: "Before" }),
+  );
+  expect(trigger).toHaveAttribute("aria-expanded", "false");
+});
+
+it("composes Select consumer handlers without losing focus and dismissal", async () => {
+  const click = vi.fn();
+  const key = vi.fn();
+  render(
+    <Select
+      label="Composed"
+      options={[{ value: "a", label: "Alpha" }]}
+      onClick={click}
+      onKeyDown={key}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "Composed" });
+  await userEvent.click(trigger);
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(trigger).toHaveFocus();
+  expect(screen.getByRole("listbox")).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  expect(key).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("listbox")).toBeNull();
+});
+it("allows Select consumers to cancel opening and keyboard handling", async () => {
+  render(
+    <Select
+      label="Cancelled"
+      options={[{ value: "a", label: "Alpha" }]}
+      onClick={(event) => event.preventDefault()}
+      onKeyDown={(event) => event.preventDefault()}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "Cancelled" });
+  await userEvent.click(trigger);
+  expect(screen.queryByRole("listbox")).toBeNull();
+  trigger.focus();
+  await userEvent.keyboard("{ArrowDown}");
+  expect(screen.queryByRole("listbox")).toBeNull();
 });
