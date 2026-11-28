@@ -17,6 +17,18 @@ import {
  */
 export default defineConfig({
   cacheDir: ".cache/vitest.browser",
+  // Discovering these lazily reloads the browser mid-test on a cold cache.
+  optimizeDeps: {
+    include: [
+      "d3-quadtree",
+      "d3-array",
+      "d3-axis",
+      "d3-format",
+      "d3-scale",
+      "d3-selection",
+      "d3-shape",
+    ],
+  },
   test: {
     include: ["tests/browser/**/*.test.tsx"],
     browser: {

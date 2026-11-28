@@ -224,3 +224,20 @@ it("restricts recipe and token keys in the public TypeScript contract", () => {
   // @ts-expect-error Theme recipes cannot add disabled behavior.
   check({ components: { Button: { parts: { root: { disabled: true } } } } });
 });
+
+it("keeps class and attribute recipe selectors independently indexable", () => {
+  const css = compileTheme(
+    defineTheme({
+      name: "Indexed",
+      components: {
+        Button: {
+          parts: {
+            root: { color: "red", states: { checked: { color: "blue" } } },
+          },
+        },
+      },
+    }),
+  ).css;
+  expect(css).toMatch(/:where\(\.doom-[^,]+\),:where\(\[data-doom-theme=/);
+  expect(css).not.toMatch(/:where\(:is\(\.doom-[^,]+,\[data-doom-theme=/);
+});

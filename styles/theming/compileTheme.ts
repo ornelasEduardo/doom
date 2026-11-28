@@ -112,8 +112,12 @@ function rules(theme: ResolvedTheme): string {
               conditions
                 .map(([key, value]) => `[data-doom-${key}="${value}"]`)
                 .join("");
+            const condition = stateCondition(state, name, theme.id);
+            // Keep class and attribute alternatives independently indexable. A
+            // mixed :is() inside :where() can make Blink attempt recipe matching
+            // broadly instead of rejecting unrelated component classes early.
             result.push(
-              `:where(:is(${classes},${attributes})${stateCondition(state, name, theme.id)}){${css}}`,
+              `:where(${classes}${condition}),:where(${attributes}${condition}){${css}}`,
             );
           }
         }

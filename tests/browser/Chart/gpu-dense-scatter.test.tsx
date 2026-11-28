@@ -81,6 +81,9 @@ async function ready(container: HTMLElement) {
       () =>
         container.querySelector<HTMLCanvasElement>("[data-chart-gpu]")?.dataset
           .chartGpu,
+      // Software GPU pipeline setup in CI can exceed Vitest's 1s poll default.
+      // This is a readiness assertion; interaction latency has separate budgets.
+      { timeout: 5000 },
     )
     .toBe("ready");
 }
