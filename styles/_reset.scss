@@ -17,7 +17,12 @@
     height: 100%;
   }
 
-  :where([data-doom-legacy], [data-doom-legacy-scope]) {
+  // Internal legacy scopes inherit application typography. Only DOM entry
+  // points need defaults; resetting every scope masks fontClassName overrides.
+  :where([data-doom-legacy]),
+  :where(.doom-portal-scope[data-doom-legacy-scope]):not(
+    :where([data-doom-legacy] *, [data-doom-legacy-scope] *)
+  ) {
     font-size: var(--text-sm);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;

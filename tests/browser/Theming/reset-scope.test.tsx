@@ -5,6 +5,7 @@ import { afterEach, expect, it } from "vitest";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 import { defineTheme } from "../../../styles/theming/defineTheme";
 import { ThemedPortal } from "../../../styles/theming/ThemedPortal";
+import { ThemeScope } from "../../../styles/theming/ThemeScope";
 
 const modern = defineTheme({ name: "Reset isolation" });
 afterEach(cleanup);
@@ -71,6 +72,58 @@ it("retains the full-height document contract for a withBody provider", () => {
       document.body.removeAttribute("data-doom-legacy");
     } else {
       document.body.setAttribute("data-doom-legacy", previous);
+    }
+  }
+});
+
+it("preserves typography supplied by the legacy provider class", () => {
+  render(
+    <>
+      <style>{`.legacy-application-font { font-family: monospace; font-size: 21px; line-height: 2; color: rgb(12, 34, 56); }`}</style>
+      <DesignSystemProvider
+        fontClassName="legacy-application-font"
+        initialTheme="captain"
+      >
+        <ThemeScope>
+          <div data-testid="custom-font">Application typography</div>
+        </ThemeScope>
+      </DesignSystemProvider>
+    </>,
+  );
+  const style = getComputedStyle(screen.getByTestId("custom-font"));
+  expect(style.fontFamily).toBe("monospace");
+  expect(style.fontSize).toBe("21px");
+  expect(style.lineHeight).toBe("42px");
+  expect(style.color).toBe("rgb(12, 34, 56)");
+});
+
+it("inherits body typography in legacy portals under withBody", () => {
+  const previous = document.body.getAttribute("data-doom-legacy");
+  const previousStyle = document.body.getAttribute("style");
+  try {
+    document.body.setAttribute("data-doom-legacy", "");
+    document.body.style.fontFamily = "monospace";
+    document.body.style.fontSize = "21px";
+    render(
+      <DesignSystemProvider initialTheme="captain">
+        <ThemedPortal>
+          <div data-testid="body-portal">Portal typography</div>
+        </ThemedPortal>
+      </DesignSystemProvider>,
+    );
+    const style = getComputedStyle(screen.getByTestId("body-portal"));
+    expect(style.fontFamily).toBe("monospace");
+    expect(style.fontSize).toBe("21px");
+  } finally {
+    for (const [name, value] of [
+      ["data-doom-legacy", previous],
+      ["style", previousStyle],
+    ] as const) {
+      if (value === null) {
+        document.body.removeAttribute(name);
+      } else {
+        document.body.setAttribute(name, value);
+      }
     }
   }
 });
