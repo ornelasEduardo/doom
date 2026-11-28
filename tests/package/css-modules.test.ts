@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 
-import postcss, { type Plugin } from "postcss";
+import postcss, { type AtRule, type Plugin } from "postcss";
 import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
@@ -48,8 +48,16 @@ describe("Published stylesheet compatibility", () => {
       "utf8",
     );
     const root = postcss.parse(css);
+    const layers = new Map<string, string | undefined>();
     const rules = new Map<string, string>();
     root.walkRules((rule) => {
+      const parent = rule.parent;
+      layers.set(
+        rule.selector,
+        parent?.type === "atrule" && (parent as AtRule).name === "layer"
+          ? (parent as AtRule).params
+          : undefined,
+      );
       rule.walkDecls((decl) => {
         rules.set(
           `${rule.selector}:${decl.prop}`,
@@ -57,6 +65,16 @@ describe("Published stylesheet compatibility", () => {
         );
       });
     });
+    // Suppression must beat layered theme paint; transition reset stays layered.
+    expect(layers.get("[data-chart-plot]")).toBeUndefined();
+    expect(layers.get("[data-chart-gpu-mark]")).toBeUndefined();
+    expect(layers.get("[data-chart-plot] [data-chart-gpu-mark]")).toBe(
+      "doom.components",
+    );
+    const manifest = JSON.parse(
+      await readFile(resolve("package.json"), "utf8"),
+    );
+    expect(manifest.sideEffects).toContain("**/*.css");
     expect(rules.get("[data-chart-plot]:--chart-gpu-paint-filter")).toBe(
       "opacity(0)",
     );
