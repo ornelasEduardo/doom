@@ -13,7 +13,7 @@ import { Modal } from "doom-design-system";
 | Prop        | Type                   | Default     | Description                                           |
 | ----------- | ---------------------- | ----------- | ----------------------------------------------------- |
 | `isOpen`    | `boolean`              | required    | Controls visibility                                   |
-| `onClose`   | `() => void`           | required    | Called on close (Escape, overlay click, close button) |
+| `onClose`   | `() => void`           | required    | Called on close requests and native form/command dismissal |
 | `title`     | `ReactNode`            | —           | Title content (shorthand API)                         |
 | `footer`    | `ReactNode`            | —           | Footer content (shorthand API)                        |
 | `variant`   | `"default" \| "solid"` | `"default"` | Visual style                                          |
@@ -66,9 +66,9 @@ import { Modal } from "doom-design-system";
 ## Notes
 
 - Closes on Escape key and overlay click automatically
-- Renders via portal to `document.body`; locks body scroll when open
+- Renders in an owned themed portal and opens in the native top layer; CSS contains scroll chaining where supported, without removing the page scrollbar
 - Title auto-generates `aria-labelledby` linking; use `aria-label` when no title provided
-- Animation: content slides up with fade-in; overlay has backdrop blur
+- Animation: dialog and backdrop fade; reduced motion removes the transition
 - Use `variant="solid"` for critical alerts or high-impact announcements
 - Use composition API when you need custom header content (icons, status badges, etc.)
 
@@ -79,3 +79,5 @@ For public parts, registered sizes and variants, see the [Modal theme contract](
 ### Keyboard and nested overlays
 
 Modal renders a native `dialog` and uses `showModal()`. The browser owns background inertness, focus containment, Escape cancellation and return to the invoker. Keep the controlled Modal mounted and change `isOpen` to permit its exit transition. `initialFocusRef` optionally points to a control to focus after opening. Nested Doom portals stay inside the dialog so selects and menus remain reachable in its top layer. Do not install an additional document Escape handler or focus trap around Modal.
+
+Native `<form method="dialog">` dismissal calls `onClose` so controlled state stays synchronized. Update `isOpen` in this callback. Pointer dismissal requires the press to start outside the content, so selecting text does not accidentally close the dialog. Consumer `onClick` and `onPointerDown` handlers can prevent default dismissal.

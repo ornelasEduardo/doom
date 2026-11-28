@@ -285,3 +285,155 @@ it("allows Select consumers to cancel opening and keyboard handling", async () =
   await userEvent.keyboard("{ArrowDown}");
   expect(screen.queryByRole("listbox")).toBeNull();
 });
+
+it("synchronizes native form dismissal with controlled modal state", async () => {
+  function NativeForm() {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Open form</button>
+        <output>{open ? "Form open" : "Form closed"}</output>
+        <Modal isOpen={open} title="Native form" onClose={() => setOpen(false)}>
+          <form method="dialog">
+            <button>Done</button>
+          </form>
+        </Modal>
+      </>
+    );
+  }
+  render(<NativeForm />);
+  await userEvent.click(screen.getByRole("button", { name: "Open form" }));
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+  await expect
+    .poll(() => screen.getByRole("status").textContent)
+    .toBe("Form closed");
+  await userEvent.click(screen.getByRole("button", { name: "Open form" }));
+  expect(screen.getByRole("dialog", { name: "Native form" })).toBeVisible();
+});
+
+it("does not reset focus when the initial-focus ref identity changes", async () => {
+  function UpdatingDialog() {
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState("");
+    const field = useRef<HTMLInputElement>(null);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Open updating dialog</button>
+        <Modal
+          initialFocusRef={{ current: field.current }}
+          isOpen={open}
+          title="Updating"
+          onClose={() => setOpen(false)}
+        >
+          <input ref={field} aria-label="First field" />
+          <input
+            aria-label="Editing field"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </Modal>
+      </>
+    );
+  }
+  render(<UpdatingDialog />);
+  await userEvent.click(
+    screen.getByRole("button", { name: "Open updating dialog" }),
+  );
+  const editor = screen.getByRole("textbox", { name: "Editing field" });
+  await userEvent.click(editor);
+  await userEvent.keyboard("abc");
+  expect(editor).toHaveFocus();
+  expect(editor).toHaveValue("abc");
+});
+
+it("keeps the active Select option visible while navigating a long list", async () => {
+  render(
+    <Select
+      label="Long list"
+      options={Array.from({ length: 80 }, (_, i) => ({
+        value: i,
+        label: `Option ${i}`,
+      }))}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "Long list" });
+  await userEvent.click(trigger);
+  await userEvent.keyboard("{ArrowUp}");
+  const option = document.getElementById(
+    trigger.getAttribute("aria-activedescendant")!,
+  )!;
+  const bounds = option.getBoundingClientRect();
+  expect(bounds.top).toBeGreaterThanOrEqual(0);
+  expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+});
+
+it("does not allow selection after an open Select becomes disabled", async () => {
+  const change = vi.fn();
+  const options = [{ value: "a", label: "Alpha" }];
+  const result = render(
+    <Select label="Disabled during use" options={options} onChange={change} />,
+  );
+  await userEvent.click(
+    screen.getByRole("combobox", { name: "Disabled during use" }),
+  );
+  result.rerender(
+    <DesignSystemProvider>
+      <Select
+        disabled
+        label="Disabled during use"
+        options={options}
+        onChange={change}
+      />
+    </DesignSystemProvider>,
+  );
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(change).not.toHaveBeenCalled();
+});
+
+it("cycles matching menu items when the same character is repeated", async () => {
+  render(
+    <Dropdown
+      items={["Alpha", "Beta", "Bravo"].map((label) => ({
+        label,
+        onClick: () => {},
+      }))}
+      triggerLabel="Repeated search"
+    />,
+  );
+  screen.getByRole("button", { name: /Repeated search/ }).focus();
+  await userEvent.keyboard("{ArrowDown}bb");
+  expect(screen.getByRole("menuitem", { name: "Bravo" })).toHaveFocus();
+});
+
+it("repositions a popover when its content grows near the viewport edge", async () => {
+  function Growing() {
+    const [open, setOpen] = useState(false);
+    const [wide, setWide] = useState(false);
+    return (
+      <div style={{ position: "fixed", right: 16, top: 16 }}>
+        <Popover
+          content={
+            <div
+              data-testid="growing-content"
+              style={{ width: wide ? 600 : 120 }}
+            >
+              <button onClick={() => setWide(true)}>Expand content</button>
+            </div>
+          }
+          isOpen={open}
+          placement="bottom-end"
+          trigger={<button onClick={() => setOpen(true)}>Grow menu</button>}
+          onClose={() => setOpen(false)}
+        />
+      </div>
+    );
+  }
+  render(<Growing />);
+  await userEvent.click(screen.getByRole("button", { name: "Grow menu" }));
+  await userEvent.click(screen.getByRole("button", { name: "Expand content" }));
+  await expect
+    .poll(
+      () => screen.getByTestId("growing-content").getBoundingClientRect().right,
+    )
+    .toBeLessThanOrEqual(window.innerWidth - 16);
+});

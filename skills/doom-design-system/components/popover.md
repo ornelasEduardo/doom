@@ -40,7 +40,7 @@ const [isOpen, setIsOpen] = useState(false);
 ## Notes
 
 - Fully controlled — you manage open state externally
-- Automatically repositions to stay within viewport bounds
+- Automatically repositions on viewport scroll/resize and trigger/content size changes to stay within viewport bounds
 - Closes on click outside the popover content
 - Used as the base for `Dropdown`, `Select`, `Tooltip`, and `Combobox` internally
 

@@ -5,6 +5,7 @@ import React, {
   KeyboardEvent,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -60,8 +61,9 @@ export function Select({
     disabled: disabled,
   });
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [internalValue, setInternalValue] = useState(defaultValue || "");
+  const [requestedOpen, setIsOpen] = useState(false);
+  const isOpen = requestedOpen && !disabled;
+  const [internalValue, setInternalValue] = useState(defaultValue ?? "");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const reactId = useId();
@@ -84,7 +86,24 @@ export function Select({
     }
   }, [isOpen, currentValue, options]);
 
+  useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+    }
+  }, [disabled]);
+
+  useLayoutEffect(() => {
+    if (isOpen && highlightedIndex >= 0 && highlightedIndex < options.length) {
+      document
+        .getElementById(`${listboxId}-option-${highlightedIndex}`)
+        ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    }
+  }, [isOpen, highlightedIndex, listboxId, options.length]);
+
   const handleSelect = (newValue: string | number) => {
+    if (disabled) {
+      return;
+    }
     if (value === undefined) {
       setInternalValue(newValue);
     }
@@ -222,7 +241,9 @@ export function Select({
           <button
             ref={triggerRef}
             aria-activedescendant={
-              isOpen && highlightedIndex >= 0
+              isOpen &&
+              highlightedIndex >= 0 &&
+              highlightedIndex < options.length
                 ? `${listboxId}-option-${highlightedIndex}`
                 : undefined
             }

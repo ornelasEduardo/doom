@@ -149,17 +149,30 @@ export function Popover({
       left = viewportWidth - contentRect.width - padding;
     }
 
-    setPosition({ top, left });
+    setPosition((previous) =>
+      previous.top === top && previous.left === left ? previous : { top, left },
+    );
     setTransformOrigin(origin);
   }, [isOpen, placement, offset]);
 
   useLayoutEffect(() => {
+    const observer =
+      isOpen && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updatePosition)
+        : null;
     if (isOpen) {
       updatePosition();
+      if (triggerRef.current) {
+        observer?.observe(triggerRef.current);
+      }
+      if (contentRef.current) {
+        observer?.observe(contentRef.current);
+      }
       window.addEventListener("resize", updatePosition);
       window.addEventListener("scroll", updatePosition, true);
     }
     return () => {
+      observer?.disconnect();
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };

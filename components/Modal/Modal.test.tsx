@@ -118,3 +118,36 @@ describe("Modal Component", () => {
     expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
 });
+
+it("does not dismiss a text selection that starts in content and ends outside", () => {
+  const close = vi.fn();
+  render(
+    <Modal isOpen title="Selection" onClose={close}>
+      <p>Select this text</p>
+    </Modal>,
+  );
+  const dialog = screen.getByRole("dialog");
+  fireEvent.pointerDown(screen.getByText("Select this text"));
+  fireEvent.pointerUp(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(close).not.toHaveBeenCalled();
+  fireEvent.pointerDown(dialog);
+  fireEvent.pointerUp(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(close).toHaveBeenCalledTimes(1);
+});
+
+it("composes and honors a consumer click cancellation", () => {
+  const close = vi.fn();
+  const click = vi.fn((event: React.MouseEvent) => event.preventDefault());
+  render(
+    <Modal isOpen title="Guarded" onClick={click} onClose={close}>
+      Content
+    </Modal>,
+  );
+  const dialog = screen.getByRole("dialog");
+  fireEvent.pointerDown(dialog);
+  fireEvent.click(dialog, { detail: 1 });
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(close).not.toHaveBeenCalled();
+});

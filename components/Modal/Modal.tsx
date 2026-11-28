@@ -21,7 +21,7 @@ import styles from "./Modal.module.scss";
 
 interface ModalProps extends Omit<
   React.DialogHTMLAttributes<HTMLDialogElement>,
-  "title"
+  "title" | "open"
 > {
   classNames?: ThemeClassNames<"Modal">;
   isOpen: boolean;
@@ -143,6 +143,7 @@ function ModalInternal({
   });
 
   const overlayRef = useRef<HTMLDialogElement>(null);
+  const backdropPress = useRef(false);
   const [portalHost, setPortalHost] = React.useState<HTMLDivElement | null>(
     null,
   );
@@ -167,21 +168,32 @@ function ModalInternal({
     } else if (!isOpen && dialog.open) {
       dialog.close();
     }
+  }, [isOpen, mounted, initialFocusRef]);
+
+  // Prop/ref updates must not close and reopen the native focus boundary.
+  useLayoutEffect(() => {
+    const dialog = overlayRef.current;
     return () => {
-      if (dialog.open) {
+      if (dialog?.open) {
         dialog.close();
       }
     };
-  }, [isOpen, mounted, initialFocusRef]);
+  }, [mounted]);
 
   if (!mounted) {
     return null;
   }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    props.onClick?.(e);
+    if (
+      !e.defaultPrevented &&
+      e.target === overlayRef.current &&
+      (backdropPress.current || e.detail === 0)
+    ) {
       onClose();
     }
+    backdropPress.current = false;
   };
 
   return (
@@ -216,6 +228,23 @@ function ModalInternal({
                   }
                 }}
                 onClick={handleOverlayClick}
+                onClose={(event) => {
+                  // Native forms/commands can close without changing isOpen.
+                  // Ignore nested dialogs and delayed events from a prior close.
+                  if (
+                    event.target === event.currentTarget &&
+                    isOpen &&
+                    !event.currentTarget.open
+                  ) {
+                    onClose();
+                  }
+                }}
+                onPointerDown={(event) => {
+                  props.onPointerDown?.(event);
+                  backdropPress.current =
+                    !event.defaultPrevented &&
+                    event.target === event.currentTarget;
+                }}
               >
                 <div
                   {...doomPart("contentContainer", {

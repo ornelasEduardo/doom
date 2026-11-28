@@ -48,6 +48,7 @@ export function useMenu() {
   );
   useEffect(() => {
     if (!open) {
+      search.current = { text: "", time: 0 };
       return;
     }
     if (entry.current) {
@@ -156,11 +157,15 @@ export function useMenu() {
               ...options.slice(index + 1),
               ...options.slice(0, index + 1),
             ];
+            // Repeated characters cycle through same-initial items; a mixed
+            // sequence remains a prefix search ("br" finds "Bravo").
+            const query = [...search.current.text].every(
+              (char) => char === search.current.text[0],
+            )
+              ? search.current.text[0]
+              : search.current.text;
             const match = ordered.find((item) =>
-              item.textContent
-                ?.trim()
-                .toLowerCase()
-                .startsWith(search.current.text),
+              item.textContent?.trim().toLowerCase().startsWith(query),
             );
             if (match) {
               event.preventDefault();
