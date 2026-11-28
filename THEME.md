@@ -107,7 +107,7 @@ Load the resulting stylesheet in the document before the application. Import its
 
 ## Migrate existing applications
 
-1. Keep a single legacy root while migrating. `initialTheme="captain"` and `useTheme().setTheme("orbital")` preserve string switching and document canvas/reset behavior.
+1. Keep a single legacy root while migrating. `initialTheme="captain"` and `useTheme().setTheme("orbital")` preserve string switching. Legacy resets apply inside the provider and its portal boundaries; they do not reset adjacent object scopes or unrelated page content. Use `withBody` for a full-document legacy canvas and height reset. A legacy provider mounted inside another application inherits that application’s document layout policy.
 2. Move the selected preset into application state. Replace `initialTheme="captain"` with `theme={captainTheme}` and update that prop to switch. Use `useResolvedTheme()` inside object scopes.
 3. Replace a legacy CSS override such as `--primary` with a `roles.brand` patch and set its paired `roles.onBrand`. The legacy path accepts old names as inputs. Object themes emit old names as compatibility aliases. The [token reference](THEME-REFERENCE.md) lists mappings; inspect shadows, surface contexts, and overrides that relied on selectors inherited through the old document root.
 4. Move selectors targeting generated module names onto documented parts, or use `classNames` for per-instance styles. Use `surface="solid"` for custom compound surfaces that own overlays. Set the provider's direction explicitly for RTL portal content.
