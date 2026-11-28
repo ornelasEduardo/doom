@@ -64,6 +64,8 @@ Use spacing and size tokens in components and prefer `min-height` with content-d
 
 Pixels remain appropriate for borders, focus outlines, hairlines, and measured coordinates. Numeric React dimensions and public chart, table, virtualization, and positioning APIs retain their pixel meaning. Custom theme values are preserved as supplied: migrate application overrides from pixels to `rem` explicitly when they should scale. Consumers comparing raw token strings should expect relative units rather than pixel literals; read computed layout when pixel measurements are required.
 
+Control heights now establish a minimum so enlarged or wrapped text can grow. A previous override such as `style={{ height: 24 }}` does not lower that minimum. For a compact control, use `style={{ minHeight: "1.5rem", paddingBlock: 0 }}` or set `defaults.controls.height` (and appropriate padding) in the theme. Component recipes can likewise override `minHeight`. Avoid forcing a fixed height when labels need to wrap.
+
 Validate changes at the default root size and with enlarged text, narrow containers, long labels, text-spacing overrides, and browser zoom. Include legacy providers, object themes, and portaled overlays in those checks. Run `npm run test:browser -- tests/browser/Responsive` for the sizing regression matrix: all five presets in both provider modes, root sizes of 16/20/32px, narrow and wide containers, text spacing, baseline control geometry, and portaled overlays.
 
 ## Switch themes and modes

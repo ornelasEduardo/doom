@@ -35,6 +35,7 @@
     align-items: center;
     justify-content: center;
 
+    flex-shrink: 0;
     width: var(--toggle-size);
     height: var(--toggle-size);
 
@@ -62,6 +63,8 @@
   }
 
   .labelOverride {
+    min-width: 0;
+    overflow-wrap: anywhere;
     cursor: pointer;
     margin-left: var(--space-1);
   }

@@ -195,6 +195,7 @@ for (const [name, theme] of themes) {
       const baseline = [button, input, textarea, select, icon].map(
         (node) => node.getBoundingClientRect().height,
       );
+      expect(baseline.every((height) => height > 0)).toBe(true);
       const baselineGap = parseFloat(
         getComputedStyle(screen.getByTestId("stack")).rowGap,
       );
@@ -208,10 +209,14 @@ for (const [name, theme] of themes) {
           select,
           icon,
         ].entries()) {
-          // Borders intentionally stay in CSS pixels, so allow their contribution.
+          // Short controls remain at their scaled minimum; icons scale exactly.
           await expect
-            .poll(() => node.getBoundingClientRect().height)
-            .toBeGreaterThanOrEqual(baseline[index] * ratio - 4);
+            .poll(() =>
+              Math.abs(
+                node.getBoundingClientRect().height - baseline[index] * ratio,
+              ),
+            )
+            .toBeLessThanOrEqual(1);
         }
         expect(
           parseFloat(getComputedStyle(screen.getByTestId("stack")).rowGap),
@@ -272,11 +277,27 @@ for (const [name, theme] of themes) {
           expect(labelBounds.top).toBeGreaterThanOrEqual(buttonBounds.top);
           expect(labelBounds.bottom).toBeLessThanOrEqual(buttonBounds.bottom);
           expect(frame.scrollWidth).toBeLessThanOrEqual(frame.clientWidth + 1);
+          const chevron = screen
+            .getByRole("combobox")
+            .querySelector("svg")!
+            .getBoundingClientRect();
+          expect(
+            chevron.width,
+            "Select chevron remains visible beside a long label",
+          ).toBeGreaterThanOrEqual(chevron.height - 1);
+          const checkboxDisplay =
+            screen.getByRole("checkbox").nextElementSibling!;
+          const checkboxBounds = checkboxDisplay.getBoundingClientRect();
+          expect(
+            Math.abs(checkboxBounds.width - checkboxBounds.height),
+            "checkbox keeps its square target beside a wrapping label",
+          ).toBeLessThanOrEqual(1);
         });
       }
     }
 
     it(`${mode}: keeps selection and keyboard interaction working with enlarged text`, async () => {
+      await page.viewport(320, 800);
       document.documentElement.style.fontSize = "32px";
       render(
         <DesignSystemProvider {...provider}>
@@ -294,6 +315,11 @@ for (const [name, theme] of themes) {
       );
       const select = screen.getByRole("combobox");
       await userEvent.click(select);
+      const listbox = screen.getByRole("listbox");
+      await expect
+        .poll(() => listbox.getBoundingClientRect().right)
+        .toBeLessThanOrEqual(320);
+      expect(listbox.getBoundingClientRect().left).toBeGreaterThanOrEqual(0);
       await userEvent.click(screen.getByRole("option", { name: "Autumn" }));
       expect(select.textContent).toContain("Autumn");
       const checkbox = screen.getByRole("checkbox") as HTMLInputElement;
