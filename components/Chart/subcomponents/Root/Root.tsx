@@ -97,7 +97,7 @@ export type RootProps<T> = { classNames?: ThemeClassNames<"Chart"> } & Omit<
     | "render"
     | "behaviors"
     | "sensors"
-  >;
+  > & { dataDescription?: string };
 
 /**
  * The internal bridge for managing behaviors and sensors.
@@ -207,6 +207,7 @@ const accessorSignature = (accessor: unknown, data: any[]): string => {
 export function Root<T>({
   classNames,
   data,
+  dataDescription,
   d3Config,
   xDomain,
   yDomain,
@@ -885,7 +886,7 @@ export function Root<T>({
             >
               <InteractionLayer />
               <SensorManager sensors={sensors} value={value} />
-              <Announcer summaryId={summaryId} />
+              <Announcer description={dataDescription} summaryId={summaryId} />
 
               {isAutoLayout && (title || subtitle) && (
                 <Header subtitle={subtitle} title={title} />

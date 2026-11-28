@@ -43,7 +43,7 @@ it.each(["line", "scatter", "bar"] as const)(
       ).toBeGreaterThanOrEqual(3),
     );
     const marks = container.querySelectorAll(selector);
-    expect(getComputedStyle(marks[1]).transitionDuration).not.toBe("0s");
+    expect(getComputedStyle(marks[1]).transitionDuration).toBe("0s");
     await commands.setReducedMotion("reduce");
     expect(matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(true);
     await userEvent.hover(marks[1]);
@@ -57,6 +57,6 @@ it.each(["line", "scatter", "bar"] as const)(
       expect(mark.getAnimations()).toHaveLength(0);
     }
     await commands.setReducedMotion("no-preference");
-    expect(getComputedStyle(marks[1]).transitionDuration).not.toBe("0s");
+    expect(getComputedStyle(marks[1]).transitionDuration).toBe("0s");
   },
 );

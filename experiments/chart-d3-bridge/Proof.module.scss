@@ -1,0 +1,146 @@
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.example {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.heading,
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.heading {
+  justify-content: space-between;
+}
+.chart {
+  height: 380px;
+}
+.chart :global(.chart-markers-layer) {
+  pointer-events: none;
+}
+.chart :global(.chart-markers-layer circle) {
+  fill: transparent;
+  stroke: var(--foreground);
+  stroke-width: 3;
+}
+.chart :global(.tick text) {
+  font-size: 11px;
+}
+.empty {
+  display: grid;
+  place-items: center;
+  border: var(--surface-border-width) dashed var(--card-border);
+  min-height: 380px;
+}
+@media (max-width: 950px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .page {
+    padding: var(--space-4);
+  }
+}
+
+.overlay,
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.overlay {
+  contain: layout paint;
+}
+
+.page > p {
+  max-width: 76ch;
+}
+.page > h1 {
+  max-width: 24ch;
+}
+.controls {
+  padding: var(--space-4);
+  background: var(--muted);
+  border: var(--surface-border-width) solid var(--card-border);
+  align-items: flex-end;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+}
+.grid[data-comparison="false"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.example {
+  border: var(--surface-border-width) solid var(--card-border);
+  padding: var(--space-4);
+}
+.example > .controls {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.status {
+  min-height: 2.5em;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.performance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-top: var(--surface-border-width) solid var(--card-border);
+  padding-top: var(--space-3);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+.metrics dt {
+  font-size: 0.8rem;
+}
+.metrics dd {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.performance p {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 70ch;
+}
+.lifecycle {
+  border-top: var(--surface-border-width) solid var(--card-border);
+  padding-top: var(--space-4);
+}
+.lifecycle summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.lifecycle summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}

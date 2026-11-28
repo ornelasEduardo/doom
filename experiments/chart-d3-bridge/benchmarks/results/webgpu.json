@@ -1,0 +1,332 @@
+{
+  "date": "2026-11-27T21:25:25.389Z",
+  "backend": "webgpu",
+  "browser": "151.0.7922.34",
+  "hardwareRequested": true,
+  "canvas": "1200x700 DPR1",
+  "revision": "working-tree-selected-vertex4-batched-resolve",
+  "notes": "Renderer only; excludes React, axes, indexing, tooltip and data preparation. 5 warmups then 60 samples per phase. Initial-upload replaces source identity on an initialized renderer (setup reported separately). CPU submission is not GPU time. Completed wall includes CPU submission and WebGL readPixels(1x1) / WebGPU queue.onSubmittedWorkDone plus texture copy/map(1x1); these synchronization methods differ and readback overhead is included. RAF intervals include scheduling and synchronization, not presentation timestamps. Styled mixed-points is a point-style workload. Mixed-vector-scatter draws 30 bars, a 200-vertex line and area, plus 10k points through shared vector/point renderers (MSAA4); excludes React Chart bookkeeping. No isolated GPU timestamps.",
+  "adapterInfo": {
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "device": "",
+    "description": "",
+    "isFallbackAdapter": false
+  },
+  "results": [
+    {
+      "name": "small-scatter",
+      "count": 1000,
+      "setupMs": 3.5,
+      "firstDraw": {
+        "cpuSubmissionMs": 0.7999999523162842,
+        "completedWallMs": 5.299999952316284,
+        "queueCompletedWallMs": 4.199999988079071
+      },
+      "phases": {
+        "initial-upload": {
+          "cpuSubmission": {
+            "medianMs": 0.19999998807907104,
+            "p95Ms": 0.3999999761581421,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 2.100000023841858,
+            "p95Ms": 3.100000023841858,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 1.5999999642372131,
+            "p95Ms": 2.200000047683716,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000011,
+            "p95Ms": 9.199999999999989,
+            "samples": 59
+          }
+        },
+        "update-256": {
+          "cpuSubmission": {
+            "medianMs": 0.2999999523162842,
+            "p95Ms": 0.5,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 2.100000023841858,
+            "p95Ms": 3.399999976158142,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 1.600000023841858,
+            "p95Ms": 2.5,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000068,
+            "p95Ms": 9.5,
+            "samples": 59
+          }
+        },
+        "panzoom": {
+          "cpuSubmission": {
+            "medianMs": 0.19999998807907104,
+            "p95Ms": 0.3999999761581421,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 2.699999988079071,
+            "p95Ms": 3.800000011920929,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 2,
+            "p95Ms": 2.899999976158142,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 9.800000000000182,
+            "samples": 59
+          }
+        }
+      }
+    },
+    {
+      "name": "styled-mixed-points",
+      "count": 10000,
+      "styled": true,
+      "setupMs": 2.5,
+      "firstDraw": {
+        "cpuSubmissionMs": 1.399999976158142,
+        "completedWallMs": 7,
+        "queueCompletedWallMs": 6.5
+      },
+      "phases": {
+        "initial-upload": {
+          "cpuSubmission": {
+            "medianMs": 0.5999999642372131,
+            "p95Ms": 1.100000023841858,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 2.400000035762787,
+            "p95Ms": 4.800000011920929,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 2,
+            "p95Ms": 3.899999976158142,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 9.600000000000364,
+            "samples": 59
+          }
+        },
+        "update-256": {
+          "cpuSubmission": {
+            "medianMs": 0.5,
+            "p95Ms": 0.699999988079071,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 3.699999988079071,
+            "p95Ms": 4.199999988079071,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 2.699999988079071,
+            "p95Ms": 3.100000023841858,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        },
+        "panzoom": {
+          "cpuSubmission": {
+            "medianMs": 0.19999998807907104,
+            "p95Ms": 0.30000001192092896,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 2.800000011920929,
+            "p95Ms": 3.5,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 2.099999964237213,
+            "p95Ms": 2.5,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 9.799999999999727,
+            "samples": 59
+          }
+        }
+      }
+    },
+    {
+      "name": "dense-scatter",
+      "count": 1000000,
+      "setupMs": 1.9000000357627869,
+      "firstDraw": {
+        "cpuSubmissionMs": 2.400000035762787,
+        "completedWallMs": 25,
+        "queueCompletedWallMs": 24.600000023841858
+      },
+      "phases": {
+        "initial-upload": {
+          "cpuSubmission": {
+            "medianMs": 1,
+            "p95Ms": 1.2000000476837158,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 6.399999976158142,
+            "p95Ms": 10.600000023841858,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 6.099999964237213,
+            "p95Ms": 10.100000023841858,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.299999999999727,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        },
+        "update-256": {
+          "cpuSubmission": {
+            "medianMs": 0.30000001192092896,
+            "p95Ms": 0.5,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 7.100000023841858,
+            "p95Ms": 10.599999964237213,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 6.300000011920929,
+            "p95Ms": 9.700000047683716,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        },
+        "panzoom": {
+          "cpuSubmission": {
+            "medianMs": 0.19999998807907104,
+            "p95Ms": 0.40000003576278687,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 5.899999976158142,
+            "p95Ms": 9.300000011920929,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 5.099999964237213,
+            "p95Ms": 8.100000023841858,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        }
+      }
+    },
+    {
+      "name": "mixed-vector-scatter",
+      "count": 10000,
+      "mixed": true,
+      "setupMs": 5.400000035762787,
+      "firstDraw": {
+        "cpuSubmissionMs": 3.5,
+        "completedWallMs": 9.800000011920929,
+        "queueCompletedWallMs": 9.300000011920929
+      },
+      "phases": {
+        "initial-upload": {
+          "cpuSubmission": {
+            "medianMs": 0.800000011920929,
+            "p95Ms": 1.899999976158142,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 4.400000035762787,
+            "p95Ms": 5.300000011920929,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 4,
+            "p95Ms": 4.899999976158142,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        },
+        "update-256": {
+          "cpuSubmission": {
+            "medianMs": 1,
+            "p95Ms": 1.300000011920929,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 5.199999988079071,
+            "p95Ms": 6.099999964237213,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 4.799999952316284,
+            "p95Ms": 5.5,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 10,
+            "samples": 59
+          }
+        },
+        "panzoom": {
+          "cpuSubmission": {
+            "medianMs": 0.699999988079071,
+            "p95Ms": 1.5999999642372131,
+            "samples": 60
+          },
+          "completedWall": {
+            "medianMs": 3.599999964237213,
+            "p95Ms": 5,
+            "samples": 60
+          },
+          "queueCompletedWall": {
+            "medianMs": 3.300000011920929,
+            "p95Ms": 4.399999976158142,
+            "samples": 60
+          },
+          "rafInterval": {
+            "medianMs": 8.300000000000182,
+            "p95Ms": 9.800000000000182,
+            "samples": 59
+          }
+        }
+      }
+    }
+  ]
+}

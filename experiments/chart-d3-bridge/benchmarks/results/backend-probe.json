@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-27T20:49:39.776Z",
+  "platform": "darwin",
+  "results": [
+    {
+      "name": "chromium",
+      "version": "151.0.7922.34",
+      "secure": true,
+      "webgpu": true,
+      "adapter": false,
+      "adapterInfo": null,
+      "features": [],
+      "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "name": "chromium-metal",
+      "version": "151.0.7922.34",
+      "secure": true,
+      "webgpu": true,
+      "adapter": true,
+      "adapterInfo": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "device": "",
+        "description": "",
+        "isFallbackAdapter": false
+      },
+      "features": [
+        "depth32float-stencil8",
+        "rg11b10ufloat-renderable",
+        "bgra8unorm-storage",
+        "texture-formats-tier1",
+        "texture-compression-bc",
+        "dual-source-blending",
+        "core-features-and-limits",
+        "float32-filterable",
+        "indirect-first-instance",
+        "texture-compression-astc-sliced-3d",
+        "float32-blendable",
+        "texture-compression-astc",
+        "texture-compression-etc2",
+        "depth-clip-control",
+        "texture-compression-bc-sliced-3d",
+        "shader-f16",
+        "clip-distances",
+        "timestamp-query",
+        "texture-formats-tier2",
+        "primitive-index",
+        "texture-component-swizzle",
+        "subgroups"
+      ],
+      "webglRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "name": "firefox",
+      "version": "153.0",
+      "secure": true,
+      "webgpu": true,
+      "adapter": false,
+      "adapterInfo": null,
+      "features": [],
+      "webglRenderer": "Apple M1, or similar"
+    },
+    {
+      "name": "firefox-webgpu-prefs",
+      "version": "153.0",
+      "secure": true,
+      "webgpu": true,
+      "adapter": false,
+      "adapterInfo": null,
+      "features": [],
+      "webglRenderer": "Apple M1, or similar"
+    },
+    {
+      "name": "webkit",
+      "version": "26.5",
+      "secure": true,
+      "webgpu": true,
+      "adapter": true,
+      "adapterInfo": {
+        "vendor": "apple",
+        "architecture": "apple",
+        "device": "apple",
+        "description": "apple",
+        "isFallbackAdapter": false
+      },
+      "features": [
+        "depth-clip-control",
+        "depth32float-stencil8",
+        "timestamp-query",
+        "texture-compression-bc",
+        "texture-compression-bc-sliced-3d",
+        "texture-compression-etc2",
+        "texture-compression-astc",
+        "texture-compression-astc-sliced-3d",
+        "indirect-first-instance",
+        "shader-f16",
+        "rg11b10ufloat-renderable",
+        "bgra8unorm-storage",
+        "float32-filterable",
+        "float32-blendable",
+        "clip-distances",
+        "primitive-index",
+        "float16-renderable",
+        "float32-renderable",
+        "core-features-and-limits",
+        "texture-formats-tier1",
+        "texture-formats-tier2",
+        "subgroups"
+      ],
+      "webglRenderer": "Apple GPU"
+    }
+  ]
+}

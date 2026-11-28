@@ -42,6 +42,11 @@ export const useChartBehaviors = <T>(
         break;
       case "bar":
       case "scatter":
+        if (chartContext.config.type === "scatter") {
+          behaviors.push(
+            Markers({ on: InteractionChannel.PRIMARY_HOVER, radius: 8 }),
+          );
+        }
         behaviors.push(
           Dim({
             on: InteractionChannel.PRIMARY_HOVER,

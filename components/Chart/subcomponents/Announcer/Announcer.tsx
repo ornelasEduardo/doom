@@ -1,4 +1,6 @@
 "use client";
+
+import { extent } from "d3-array";
 import React from "react";
 
 import {
@@ -19,6 +21,7 @@ interface AnnouncerProps {
   classNames?: ThemeClassNames<"Chart">;
   /** Id the chart region points its aria-describedby at. */
   summaryId: string;
+  description?: string;
 }
 
 const describe = (value: unknown) =>
@@ -36,9 +39,11 @@ const describe = (value: unknown) =>
  *
  * Subscribes to the store itself so hovering re-renders only this component.
  */
-export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
+export const Announcer: React.FC<AnnouncerProps> = ({
+  summaryId,
+  description,
+}) => {
   const doomPart = useThemeParts("Chart", undefined, {});
-
   const { chartStore, isMobile } = useChartContext();
 
   const data = chartStore.useStore((s) => s.data);
@@ -59,6 +64,9 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
   const getY = yAccessor ? resolveAccessor(yAccessor) : null;
 
   const summary = React.useMemo(() => {
+    if (description !== undefined) {
+      return description;
+    }
     const rows = data?.filter((datum) => datum != null);
     if (!rows?.length || !getX || !getY) {
       return "Empty chart.";
@@ -74,9 +82,8 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
       const categories = rows.map((d) => getY(d));
       const parts = [`${type || "Bar"} chart with ${rows.length} data points.`];
       if (values.length) {
-        parts.push(
-          `${xLabel} from ${Math.min(...values)} to ${Math.max(...values)}.`,
-        );
+        const [min, max] = extent(values);
+        parts.push(`${xLabel} from ${min} to ${max}.`);
       }
       parts.push(
         `${yLabel} from ${describe(categories[0])} to ${describe(categories[categories.length - 1])}.`,
@@ -93,15 +100,14 @@ export const Announcer: React.FC<AnnouncerProps> = ({ summaryId }) => {
     ];
 
     if (yValues.length) {
-      parts.push(
-        `${yLabel} from ${Math.min(...yValues)} to ${Math.max(...yValues)}.`,
-      );
+      const [min, max] = extent(yValues);
+      parts.push(`${yLabel} from ${min} to ${max}.`);
     }
 
     return parts.join(" ");
     // getX/getY are derived from the accessors, which are the real inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, type, config, xAccessor, yAccessor, horizontal]);
+  }, [data, type, config, xAccessor, yAccessor, horizontal, description]);
 
   const active = React.useMemo(() => {
     const candidates = (axis: "x" | "y") => {

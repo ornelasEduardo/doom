@@ -1,7 +1,11 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
-import { moveChartPointer } from "./tests/browser/Chart/coordinateCommands";
+import {
+  captureChartPixel,
+  chartViewportPoint,
+  moveChartPointer,
+} from "./tests/browser/Chart/coordinateCommands";
 
 /**
  * Real-browser lane.
@@ -21,9 +25,27 @@ export default defineConfig({
         port: Number(process.env.BROWSER_TEST_PORT || 63315),
         strictPort: true,
       },
-      provider: playwright(),
+      provider: playwright({
+        launchOptions: {
+          channel: "chromium",
+          args:
+            process.platform === "darwin"
+              ? ["--use-angle=metal"]
+              : [
+                  "--enable-unsafe-webgpu",
+                  "--use-angle=swiftshader",
+                  "--use-webgpu-adapter=swiftshader",
+                  "--enable-features=Vulkan",
+                  "--use-vulkan=swiftshader",
+                  "--disable-vulkan-surface",
+                ],
+        },
+      }),
       headless: true,
+      ui: false,
       commands: {
+        captureChartPixel,
+        chartViewportPoint,
         moveChartPointer,
         async setReducedMotion(
           { page },

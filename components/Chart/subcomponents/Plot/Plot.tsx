@@ -81,6 +81,7 @@ export function Plot({ classNames, children, className, style }: PlotProps) {
           transform={`translate(${dimensions.margin.left}, ${dimensions.margin.top})`}
         >
           <rect
+            data-chart-hit-surface=""
             fill="transparent"
             height={dimensions.innerHeight}
             width={dimensions.innerWidth}

@@ -1,4 +1,4 @@
-"use strict";
+"use client";
 
 import { CurveFactory } from "d3-shape";
 import React, { useEffect, useId, useMemo } from "react";
@@ -9,6 +9,8 @@ import {
 } from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
 import { CHART_DATA_ATTRS } from "../../engine";
+import { GpuPath } from "../../rendering/GpuPath";
+import { createVectorPath } from "../../rendering/vector-path";
 import {
   registerSeries,
   unregisterSeries,
@@ -151,9 +153,24 @@ const LineSeriesComponent = <T,>({
       .y1((point) => point!.y)
       .curve(curve || config.curve || d3.curveLinear);
 
+    const line = lineGenerator(positions);
+    const area = areaGenerator(positions);
+    const lineContext = createVectorPath();
+    const areaContext = createVectorPath();
+    // D3's typings require a full canvas context; line/area use only the
+    // path methods implemented by the collector (no raster canvas operations).
+    lineGenerator.context(lineContext as unknown as CanvasRenderingContext2D)(
+      positions,
+    );
+    areaGenerator.context(areaContext as unknown as CanvasRenderingContext2D)(
+      positions,
+    );
+
     return {
-      line: lineGenerator(positions),
-      area: areaGenerator(positions),
+      line,
+      area,
+      lineContours: lineContext.contours,
+      areaContours: areaContext.contours,
     };
   }, [
     xScale,
@@ -219,18 +236,21 @@ const LineSeriesComponent = <T,>({
       )}
 
       {showGradient && (
-        <path
+        <GpuPath
           {...doomPart("area", { className: styles.area })}
+          contours={paths.areaContours}
           d={paths.area || ""}
+          gradient={{ startOpacity: 0.4, endOpacity: 0 }}
           style={{
-            fill: `url(#${gradientId})`,
+            fill: strokeColor,
           }}
         />
       )}
-      <path
+      <GpuPath
         aria-label={label || "Line Series"}
         aria-roledescription="line"
         {...doomPart("path", { className: styles.path })}
+        contours={paths.lineContours}
         d={paths.line || ""}
         role="graphics-object"
         style={{ stroke: strokeColor }}

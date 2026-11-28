@@ -2,6 +2,7 @@
 
 import { useThemeParts } from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
+import { GpuLine } from "../../rendering/GpuLine";
 import { yTickCount } from "../../utils/scales";
 import { getAxisTicks } from "../../utils/ticks";
 import styles from "./Grid.module.scss";
@@ -40,18 +41,20 @@ export function Grid() {
     >
       {ticks.map((t, i) =>
         horizontal ? (
-          <line
+          <GpuLine
             {...doomPart("gridLine")}
             key={i}
+            strokeOpacity={0.5}
             x1={numeric(t)}
             x2={numeric(t)}
             y1={0}
             y2={dimensions.innerHeight}
           />
         ) : (
-          <line
+          <GpuLine
             {...doomPart("gridLine")}
             key={i}
+            strokeOpacity={0.5}
             x1={0}
             x2={innerWidth}
             y1={numeric(t)}

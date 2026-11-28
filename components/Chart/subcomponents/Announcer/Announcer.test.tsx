@@ -179,3 +179,33 @@ describe("Announcer selected slice", () => {
     );
   });
 });
+
+it.each([false, true])(
+  "summarizes 250,000 rows without exceeding argument limits (horizontal: %s)",
+  (horizontal) => {
+    const data = Array.from({ length: 250000 }, (_, index) => ({
+      category: index,
+      value: index - 125000,
+    }));
+    mount(
+      [
+        {
+          id: "dense",
+          label: "Dense",
+          color: "purple",
+          type: horizontal ? "bar" : "line",
+          orientation: horizontal ? "horizontal" : "vertical",
+        },
+      ],
+      [],
+      {},
+      { data },
+    );
+    expect(document.getElementById("summary")?.textContent).toContain(
+      "250000 data points",
+    );
+    expect(document.getElementById("summary")?.textContent).toContain(
+      horizontal ? "X from 0 to 249999" : "Y from -125000 to 124999",
+    );
+  },
+);

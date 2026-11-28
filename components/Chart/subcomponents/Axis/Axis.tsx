@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { useThemeParts } from "../../../../styles/theming/parts";
 import { useChartContext } from "../../context";
+import { registerAxisStrokes } from "../../rendering/axis-strokes";
 import { d3 } from "../../utils/d3";
 import { yTickCount } from "../../utils/scales";
 import styles from "./Axis.module.scss";
@@ -103,6 +104,12 @@ export function Axis() {
     } catch {
       // Ignore measurement errors if SVG not in DOM
     }
+    const releaseX = registerAxisStrokes(gx.current);
+    const releaseY = registerAxisStrokes(gy.current);
+    return () => {
+      releaseX();
+      releaseY();
+    };
   }, [
     xScale,
     yScale,

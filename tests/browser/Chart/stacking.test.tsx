@@ -146,7 +146,9 @@ it("keeps the actually hovered scatter row when x values repeat", async () => {
 
 it("rounds outward stack caps but leaves the shared seam square", async () => {
   const { container } = render(<Example />);
-  await settle();
+  await expect
+    .poll(() => container.querySelectorAll(".chart-bar").length)
+    .toBe(4);
   const bars = Array.from(
     container.querySelectorAll<SVGPathElement>(".chart-bar"),
   );
