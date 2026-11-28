@@ -8,7 +8,7 @@ import { Chart } from "../../../components/Chart/Chart";
 import { registerGpuMark } from "../../../components/Chart/rendering/scene";
 import { DesignSystemProvider } from "../../../DesignSystemProvider";
 import { compositedPixel } from "./composited-pixel";
-import { hasWebGpu } from "./webgpu-readback";
+import { hasWebGpu, readGpuPixel } from "./webgpu-readback";
 
 const gpuIt = it.skipIf(!(await hasWebGpu()));
 afterEach(cleanup);
@@ -60,7 +60,33 @@ gpuIt(
       await new Promise<void>((resolve) =>
         requestAnimationFrame(() => resolve()),
       );
-      return compositedPixel(x, y);
+      const canvas = view.container.querySelector("canvas")!;
+      const canvasBox = canvas.getBoundingClientRect();
+      const texture = await readGpuPixel(
+        canvas,
+        Math.floor(((x - canvasBox.left) * canvas.width) / canvasBox.width),
+        Math.floor(((y - canvasBox.top) * canvas.height) / canvasBox.height),
+      );
+      const state = () => ({
+        hover: bar.matches(":hover"),
+        filter: getComputedStyle(bar).getPropertyValue(
+          "--chart-gpu-color-filter",
+        ),
+        focus: document.hasFocus(),
+      });
+      const before = state();
+      const actual = await compositedPixel(x, y);
+      const expected = filter === "brightness(1.1)" ? 110 : 100;
+      if (actual.slice(0, 3).some((channel) => channel !== expected)) {
+        console.warn("Chart hover capture mismatch", {
+          before,
+          after: state(),
+          texture,
+          actual,
+          expected,
+        });
+      }
+      return actual;
     };
     await expect.poll(() => pixel(false, "none")).toEqual([100, 100, 100, 255]);
     await expect
