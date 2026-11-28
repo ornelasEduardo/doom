@@ -28,12 +28,9 @@
   :where([data-doom-component]),
   :where([data-doom-component])::before,
   :where([data-doom-component])::after {
-    // Retain completion events used by overlays when skipping movement.
-    animation-delay: 0s !important;
-    transition-delay: 0s !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    // Static final state; completion is handled explicitly by presence owners.
+    animation: none !important;
+    transition-property: color, background-color, border-color, outline-color !important;
     scroll-behavior: auto !important;
   }
 }

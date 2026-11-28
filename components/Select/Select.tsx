@@ -138,6 +138,7 @@ export function Select({
       case "Escape":
         if (isOpen) {
           e.preventDefault();
+          e.stopPropagation();
           setIsOpen(false);
           triggerRef.current?.focus();
         }
@@ -156,7 +157,12 @@ export function Select({
       style={style}
     >
       {label && (
-        <Label {...doomPart("label")} htmlFor={selectId} required={required}>
+        <Label
+          {...doomPart("label")}
+          htmlFor={selectId}
+          id={labelId}
+          required={required}
+        >
           {label}
         </Label>
       )}
@@ -209,6 +215,11 @@ export function Select({
         trigger={
           <button
             ref={triggerRef}
+            aria-activedescendant={
+              isOpen && highlightedIndex >= 0
+                ? `${listboxId}-option-${highlightedIndex}`
+                : undefined
+            }
             aria-controls={isOpen ? listboxId : undefined}
             aria-expanded={isOpen}
             aria-haspopup="listbox"

@@ -1,8 +1,9 @@
 "use client";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
 
+import { useMenu } from "../../hooks/useMenu";
 import {
   type ThemeClassNames,
   useThemeParts,
@@ -15,6 +16,7 @@ import styles from "./SplitButton.module.scss";
 interface SplitButtonItem {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 interface SplitButtonProps {
@@ -25,6 +27,7 @@ interface SplitButtonProps {
   variant?: "primary" | "secondary";
   size?: ControlSize;
   className?: string;
+  disabled?: boolean;
 }
 
 export function SplitButton({
@@ -35,25 +38,36 @@ export function SplitButton({
   variant = "primary",
   size = "md",
   className,
+  disabled = false,
 }: SplitButtonProps) {
   const doomPart = useThemeParts("SplitButton", classNames, {
     variant: variant,
     size: size,
   });
 
-  const [isOpen, setIsOpen] = useState(false);
+  const menu = useMenu();
+  const isOpen = menu.open;
 
   return (
     <Popover
       content={
-        <div {...doomPart("menu", { className: styles.menu })}>
+        <div
+          ref={menu.menuRef}
+          {...menu.menuProps}
+          aria-label={`More ${primaryLabel} options`}
+          {...doomPart("menu", { className: styles.menu })}
+        >
           {items.map((item, index) => (
             <button
               key={index}
+              disabled={disabled || item.disabled}
+              role="menuitem"
+              tabIndex={-1}
+              type="button"
               {...doomPart("item", { className: styles.item })}
               onClick={() => {
+                menu.close(true);
                 item.onClick();
-                setIsOpen(false);
               }}
             >
               {item.label}
@@ -77,18 +91,24 @@ export function SplitButton({
         >
           <button
             {...doomPart("mainButton", { className: styles.mainButton })}
-            onClick={onPrimaryClick}
+            disabled={disabled}
+            type="button"
+            onClick={() => {
+              menu.close();
+              onPrimaryClick();
+            }}
           >
             {primaryLabel}
           </button>
           <button
-            aria-expanded={isOpen}
-            aria-haspopup="menu"
+            ref={menu.triggerRef}
+            {...menu.triggerProps}
             aria-label={`More ${primaryLabel} options`}
+            disabled={disabled}
+            type="button"
             {...doomPart("dropdownTrigger", {
               className: styles.dropdownTrigger,
             })}
-            onClick={() => setIsOpen(!isOpen)}
           >
             <ThemedIcon
               aria-hidden="true"
@@ -100,7 +120,7 @@ export function SplitButton({
           </button>
         </div>
       }
-      onClose={() => setIsOpen(false)}
+      onClose={() => menu.close()}
     />
   );
 }

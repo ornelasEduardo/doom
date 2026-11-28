@@ -4,41 +4,54 @@
   .overlay {
     position: fixed;
     inset: 0;
-    z-index: var(--z-modal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border: 0;
     padding: var(--space-4);
-    backdrop-filter: blur(var(--blur-standard));
-    background-color: var(
-      --overlay-color,
-      rgba(0, 0, 0, var(--overlay-opacity))
-    );
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 0.2s ease-out,
-      visibility 0.2s ease-out;
-
-    &.isOpen {
-      opacity: 1;
-      visibility: visible;
-
-      .contentContainer {
-        transform: translateY(0);
-        opacity: 1;
-      }
+    color: inherit;
+    background: transparent;
+    overscroll-behavior: contain;
+    &[open] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    &::backdrop {
+      background: var(--overlay-color, rgba(0, 0, 0, var(--overlay-opacity)));
+      backdrop-filter: blur(var(--blur-standard));
+      overflow: hidden;
+      overscroll-behavior: contain;
     }
   }
-
   .contentContainer {
     width: 100%;
     max-width: var(--width-modal-md);
-    transform: translateY(var(--space-5));
-    opacity: 0;
-    transition:
-      transform var(--duration-slow) var(--ease-out),
-      opacity var(--duration-slow) var(--ease-out);
+    max-height: 100%;
+    overflow: auto;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .overlay {
+      opacity: 0;
+      transition:
+        opacity var(--duration-normal) var(--ease-out),
+        display var(--duration-normal),
+        overlay var(--duration-normal);
+      transition-behavior: allow-discrete;
+      &[open] {
+        opacity: 1;
+      }
+      &::backdrop { opacity: 0; transition: opacity var(--duration-normal) var(--ease-out), display var(--duration-normal) allow-discrete, overlay var(--duration-normal) allow-discrete; }
+      &[open]::backdrop { opacity: 1; }
+      @starting-style {
+        &[open]::backdrop { opacity: 0; }
+        &[open] {
+          opacity: 0;
+        }
+      }
+    }
   }
 
   .modalCard {

@@ -75,3 +75,7 @@ import { Modal } from "doom-design-system";
 ## Theme parts
 
 For public parts, registered sizes and variants, see the [Modal theme contract](../../../THEME-REFERENCE.md#component-modal).
+
+### Keyboard and nested overlays
+
+Modal renders a native `dialog` and uses `showModal()`. The browser owns background inertness, focus containment, Escape cancellation and return to the invoker. Keep the controlled Modal mounted and change `isOpen` to permit its exit transition. `initialFocusRef` optionally points to a control to focus after opening. Nested Doom portals stay inside the dialog so selects and menus remain reachable in its top layer. Do not install an additional document Escape handler or focus trap around Modal.

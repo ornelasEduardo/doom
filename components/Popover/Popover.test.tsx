@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -276,4 +276,30 @@ describe("Popover Component", () => {
       expect(popover.style.top).toBe("642px");
     });
   });
+});
+
+it("makes closing content inert and cancels stale removal when reopened", async () => {
+  let finish!: () => void;
+  const finished = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const props = {
+    trigger: <button>Open</button>,
+    content: <button>Action</button>,
+    onClose: () => {},
+  };
+  const { rerender } = render(<Popover {...props} isOpen />);
+  const node = document.body.querySelector(`.${styles.popover}`)!;
+  Object.defineProperty(node, "getAnimations", {
+    value: () => [{ finished }],
+    configurable: true,
+  });
+  rerender(<Popover {...props} isOpen={false} />);
+  expect(node).toHaveAttribute("inert");
+  expect(node).toHaveAttribute("aria-hidden", "true");
+  rerender(<Popover {...props} isOpen />);
+  await act(async () => finish());
+  expect(node).toBeInTheDocument();
+  expect(node).not.toHaveAttribute("inert");
+  expect(screen.getByRole("button", { name: "Action" })).toBeInTheDocument();
 });

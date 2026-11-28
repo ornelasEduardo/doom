@@ -11,6 +11,7 @@
     background: var(--input, var(--card-bg));
     color: var(--foreground);
     cursor: pointer;
+    text-align: start;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,12 +65,22 @@
     padding: var(--control-padding-y) var(--control-padding-x);
     background: transparent;
     border: none;
-    border-radius: calc(var(--control-radius) - var(--surface-border-width));
+    border-radius: max(
+      0px,
+      calc(
+        var(--control-radius) - var(
+            --control-border-width,
+            var(--surface-border-width)
+          ) - var(--space-1)
+      )
+    );
     color: var(--foreground);
     cursor: pointer;
     font-size: var(--control-font-size);
     font-weight: var(--font-regular);
-    transition: all var(--duration-fast) var(--ease-in-out);
+    transition:
+      color var(--duration-fast) var(--ease-in-out),
+      background-color var(--duration-fast) var(--ease-in-out);
     width: 100%;
     display: flex;
     align-items: center;

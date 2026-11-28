@@ -88,3 +88,19 @@ describe("SplitButton Component", () => {
     expect(screen.getByText("Save")).toBeInTheDocument();
   });
 });
+
+it("disables already-open menu actions when the control becomes unavailable", () => {
+  const action = vi.fn();
+  const props = {
+    primaryLabel: "Create",
+    onPrimaryClick: vi.fn(),
+    items: [{ label: "Account", onClick: action }],
+  };
+  const { rerender } = render(<SplitButton {...props} />);
+  fireEvent.click(screen.getByRole("button", { name: "More Create options" }));
+  rerender(<SplitButton {...props} disabled />);
+  const item = screen.getByRole("menuitem", { name: "Account" });
+  expect(item).toBeDisabled();
+  fireEvent.click(item);
+  expect(action).not.toHaveBeenCalled();
+});

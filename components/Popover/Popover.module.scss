@@ -2,20 +2,21 @@
   .popover {
     position: fixed;
     z-index: var(--z-tooltip);
-    animation: popoverScale 0.1s ease-out;
-  }
-
-  @keyframes popoverScale {
-    from {
+    opacity: 1;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    &[data-state="closed"] {
       opacity: 0;
-      transform: scale(0.95);
+      pointer-events: none;
     }
-    to {
-      opacity: 1;
-      transform: scale(1);
+    @media (prefers-reduced-motion: no-preference) {
+      transition: opacity var(--duration-fast) var(--ease-out);
+      @starting-style {
+        opacity: 0;
+      }
     }
   }
-
   .triggerWrapper {
     display: inline-block;
   }
