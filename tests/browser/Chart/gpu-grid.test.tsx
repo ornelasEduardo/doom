@@ -52,7 +52,7 @@ gpuIt(
     )!;
     expect(grid.getAttribute("data-chart-gpu-mark")).toBe("path");
     expect(getComputedStyle(grid).strokeOpacity).toBe("0.5");
-    expect(getComputedStyle(grid).filter).toBe("opacity(0)");
+    expect(getComputedStyle(grid).filter).toContain("url(");
     const svg = grid.ownerSVGElement!;
     const matrix = svg.getScreenCTM()!.inverse().multiply(grid.getScreenCTM()!);
     const canvas = container.querySelector("canvas")!;
@@ -115,7 +115,7 @@ gpuIt(
     )!;
     expect(axis.getAttribute("data-chart-gpu-mark")).toBe("path");
     expect(getComputedStyle(axis).strokeOpacity).toBe("1");
-    expect(getComputedStyle(axis).filter).toBe("opacity(0)");
+    expect(getComputedStyle(axis).filter).toContain("url(");
     expect(container.querySelectorAll(".tick text").length).toBeGreaterThan(0);
     const point = container.querySelector<SVGCircleElement>("circle")!;
     const svg = point.ownerSVGElement!;

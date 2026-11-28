@@ -32,8 +32,9 @@ fn project(value: f32, axis: vec4f) -> f32 {
  let corners = array<vec2f,4>(vec2f(-1,-1),vec2f(1,-1),vec2f(-1,1),vec2f(1,1));
  let delta = corners[vertex] * (out.diameter * u.v[9].y + 2.0) / u.v[0].zw;
  out.position = vec4f(out.center / u.v[0].xy * vec2f(2,-2) + vec2f(-1,1) + delta * vec2f(1,-1),0,1);
+ // SVG circles with a zero radius do not paint, even when a stroke is set.
  // IEEE non-finite coordinates fail these comparisons without entering rasterization.
- if (!(abs(p.x) <= 3.402823e38) || !(abs(p.y) <= 3.402823e38) ||
+ if (radius <= 0.0 || !(abs(p.x) <= 3.402823e38) || !(abs(p.y) <= 3.402823e38) ||
      any(local < -u.v[15].xy) || any(local > u.v[1].xy + u.v[15].xy) ||
      (u.v[2].z > 0.5 && p.x <= 0.0) || (u.v[3].z > 0.5 && p.y <= 0.0) || u.v[9].y == 0.0) {
    out.position = vec4f(2,2,2,1);

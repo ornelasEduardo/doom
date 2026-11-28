@@ -10,6 +10,8 @@ import { createGpuCompositor } from "./gpu-compositor";
 import { readGpuEmphasis, subscribeGpuEffects } from "./gpu-effects";
 import { createGpuVector, type VectorShape } from "./gpu-vector";
 import styles from "./scene.module.scss";
+import { createSceneLayers, type PaintPlacement } from "./scene-layers";
+import { createScenePresentation } from "./scene-presentation";
 import type { VectorContour } from "./vector-path";
 import { acquireWebGpuSurface, type GpuTarget } from "./webgpu-surface";
 
@@ -31,14 +33,27 @@ export type GpuMark =
     };
 
 type Rect = { x: number; y: number; width: number; height: number };
-const scenes = new WeakMap<SVGSVGElement, ReturnType<typeof createScene>>();
+const scenes = new WeakMap<
+  SVGSVGElement,
+  ReturnType<typeof createSceneLayers>
+>();
 
-function createScene(svg: SVGSVGElement) {
-  const canvas = document.createElement("canvas");
+const unavailableScenes = new WeakMap<
+  SVGSVGElement,
+  {
+    node: HTMLDivElement;
+    canvases: Set<HTMLCanvasElement>;
+  }
+>();
+
+function createPaintScene(svg: SVGSVGElement, placement?: PaintPlacement) {
+  const canvas = placement?.canvas ?? document.createElement("canvas");
   canvas.className = styles.canvas;
   canvas.setAttribute("aria-hidden", "true");
   canvas.dataset.chartGpu = "preparing";
-  svg.parentElement?.insertBefore(canvas, svg);
+  if (!placement) {
+    svg.parentElement?.insertBefore(canvas, svg);
+  }
   const surface = acquireWebGpuSurface(canvas);
   const marks = new Map<SVGGraphicsElement, GpuMark>();
   const pointSources = new WeakMap<GpuMark, GpuPointSource>();
@@ -48,20 +63,57 @@ function createScene(svg: SVGSVGElement) {
   let compositor: ReturnType<typeof createGpuCompositor> | undefined;
   let frame = 0;
   let disposed = false;
+  let presentationRevision = 0;
+  const presentation = placement
+    ? createScenePresentation(svg, placement)
+    : undefined;
   let recoveryAttempted = false;
-  let status: HTMLDivElement | undefined;
-  const unavailable = () => {
-    canvas.dataset.chartGpu = "unavailable";
-    if (!status) {
-      status = document.createElement("div");
-      status.className = styles.status;
-      status.setAttribute("role", "status");
-      status.textContent =
-        "GPU rendering is unavailable. Chart data remains accessible with the keyboard.";
-      svg.parentElement?.append(status);
+  const clearUnavailable = () => {
+    const state = unavailableScenes.get(svg);
+    if (!state) {
+      return;
+    }
+    state.canvases.delete(canvas);
+    if (!state.canvases.size) {
+      state.node.remove();
+      unavailableScenes.delete(svg);
     }
   };
-  function color(value: string, opacity: number) {
+  const unavailable = () => {
+    canvas.dataset.chartGpu = "unavailable";
+    let state = unavailableScenes.get(svg);
+    if (!state) {
+      const node = document.createElement("div");
+      node.className = styles.status;
+      node.setAttribute("role", "status");
+      node.textContent =
+        "GPU rendering is unavailable. Chart data remains accessible with the keyboard.";
+      let host = svg.parentElement;
+      while (host instanceof SVGElement) {
+        host = host.parentElement;
+      }
+      host?.append(node);
+      state = { node, canvases: new Set() };
+      unavailableScenes.set(svg, state);
+    }
+    state.canvases.add(canvas);
+  };
+  function brightness(css: CSSStyleDeclaration) {
+    // Built-in bar themes use brightness()/none. Read their independent paint
+    // token because the semantic SVG's filter only suppresses duplicate paint.
+    const match = /^brightness\(([^)]*)\)$/i.exec(
+      css.getPropertyValue("--chart-gpu-color-filter").trim(),
+    );
+    const amount = match?.[1].trim();
+    if (!amount) {
+      return 1;
+    }
+    const value = amount.endsWith("%")
+      ? Number(amount.slice(0, -1)) / 100
+      : Number(amount);
+    return Number.isFinite(value) && value >= 0 ? value : 1;
+  }
+  function color(value: string, opacity: number, lightness: number) {
     if (!colors || value === "none") {
       return undefined;
     }
@@ -72,6 +124,9 @@ function createScene(svg: SVGSVGElement) {
       colors.getImageData(0, 0, 1, 1).data,
       (v) => v / 255,
     );
+    for (let channel = 0; channel < 3; channel++) {
+      rgba[channel] = Math.min(1, rgba[channel] * lightness);
+    }
     rgba[3] *= opacity;
     return rgba;
   }
@@ -85,10 +140,38 @@ function createScene(svg: SVGSVGElement) {
     schedule();
   };
   const unsubscribeSurface = surface.subscribe(schedule);
+  let viewport = new DOMMatrix();
+  function viewportFor(width: number, height: number) {
+    if (!svg.hasAttribute("viewBox")) {
+      return new DOMMatrix();
+    }
+    const box = svg.viewBox.baseVal;
+    if (!(box.width > 0 && box.height > 0)) {
+      return null;
+    }
+    let sx = width / box.width;
+    let sy = height / box.height;
+    let x = 0;
+    let y = 0;
+    const aspect = svg.preserveAspectRatio.baseVal;
+    if (aspect.align !== aspect.SVG_PRESERVEASPECTRATIO_NONE) {
+      sx = sy =
+        aspect.meetOrSlice === aspect.SVG_MEETORSLICE_SLICE
+          ? Math.max(sx, sy)
+          : Math.min(sx, sy);
+      // Alignment constants enumerate the three X positions for each Y row.
+      const alignment = aspect.align - aspect.SVG_PRESERVEASPECTRATIO_XMINYMIN;
+      x = ((width - box.width * sx) * (alignment % 3)) / 2;
+      y = ((height - box.height * sy) * Math.floor(alignment / 3)) / 2;
+    }
+    return new DOMMatrix([sx, 0, 0, sy, x - box.x * sx, y - box.y * sy]);
+  }
   function matrixFor(node: SVGGraphicsElement) {
     const root = svg.getScreenCTM();
     const local = node.getScreenCTM();
-    return root && local ? root.inverse().multiply(local) : null;
+    return root && local && root.a * root.d - root.b * root.c
+      ? viewport.multiply(root.inverse()).multiply(local)
+      : null;
   }
   let objectBounds = new WeakMap<SVGGraphicsElement, Rect>();
   function objectBoundsFor(element: SVGGraphicsElement): Rect {
@@ -103,11 +186,16 @@ function createScene(svg: SVGSVGElement) {
       native.width || native.height ? native.x + native.width : -Infinity;
     let bottom =
       native.width || native.height ? native.y + native.height : -Infinity;
-    const inverse = element.getScreenCTM()?.inverse();
+    const screenMatrix = element.getScreenCTM();
+    const inverse =
+      screenMatrix &&
+      screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c
+        ? screenMatrix.inverse()
+        : undefined;
     if (inverse) {
       // Dense clouds retain only a zero-radius SVG selector proxy. Reconstruct
       // their geometric bounds without creating per-row SVG elements.
-      for (const [child, mark] of marks) {
+      for (const [child, mark] of placement?.marks() ?? marks) {
         if (mark.kind !== "cloud" || !element.contains(child)) {
           continue;
         }
@@ -151,7 +239,7 @@ function createScene(svg: SVGSVGElement) {
     let polygon: ClipPolygon | undefined;
     for (
       let element: Element | null = node;
-      element;
+      element && element !== placement?.parent;
       element = element.parentElement
     ) {
       const url = getComputedStyle(element).clipPath;
@@ -257,11 +345,19 @@ function createScene(svg: SVGSVGElement) {
     if (disposed || !svg.isConnected) {
       return;
     }
+    const revision = ++presentationRevision;
     const width = svg.width.baseVal.value,
       height = svg.height.baseVal.value;
-    if (!(width > 0 && height > 0)) {
+    const mapping = width > 0 && height > 0 ? viewportFor(width, height) : null;
+    if (!mapping) {
+      // A zero-size viewBox disables native SVG paint, including a canvas
+      // presented outside the SVG on the ordinary standalone fast path.
+      canvas.style.visibility = "hidden";
+      clearUnavailable();
       return;
     }
+    viewport = mapping;
+    canvas.style.visibility = "";
     const ratio = window.devicePixelRatio || 1;
     const w = Math.round(width * ratio),
       h = Math.round(height * ratio);
@@ -274,7 +370,68 @@ function createScene(svg: SVGSVGElement) {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     try {
+      objectBounds = new WeakMap();
+      if (placement) {
+        // Keep the foreignObject within the preexisting SVG geometry bounds;
+        // full-canvas boxes would change objectBoundingBox clipping.
+        const layers = Array.from(
+          svg.querySelectorAll<SVGElement>(
+            "[data-chart-gpu-layer], [data-chart-gpu-presentation]",
+          ),
+          (layer) => ({ layer, display: layer.style.display }),
+        );
+        layers.forEach(({ layer }) => {
+          layer.style.display = "none";
+        });
+        let box: Rect;
+        try {
+          box = objectBoundsFor(placement.parent);
+        } finally {
+          layers.forEach(({ layer, display }) => {
+            layer.style.display = display;
+          });
+        }
+        const matrix = matrixFor(placement.parent);
+        if (!matrix) {
+          return;
+        }
+        // WebKit cannot reliably composite transformed live WebGPU canvases
+        // inside SVG. Image presentation preserves the same affine coordinates.
+        let isolate =
+          svg.parentElement instanceof SVGElement ||
+          matrix.a !== 1 ||
+          matrix.b !== 0 ||
+          matrix.c !== 0 ||
+          matrix.d !== 1 ||
+          matrix.e !== 0 ||
+          matrix.f !== 0;
+        for (
+          let ancestor: Element | null = placement.parent;
+          ancestor;
+          ancestor = ancestor.parentElement
+        ) {
+          const css = getComputedStyle(ancestor);
+          if (
+            Number(css.opacity) < 1 ||
+            [css.clipPath, css.maskImage, css.filter].some(
+              (value) => value && value !== "none",
+            )
+          ) {
+            isolate = true;
+            break;
+          }
+          if (ancestor === svg) {
+            break;
+          }
+        }
+        presentation!.update(box, matrix, width, height, isolate);
+      }
       if (!surface.available) {
+        if (!surface.error) {
+          canvas.dataset.chartGpu = "preparing";
+          clearUnavailable();
+          return;
+        }
         if (!recoveryAttempted && surface.error) {
           recoveryAttempted = true;
           surface.recover();
@@ -426,7 +583,7 @@ function createScene(svg: SVGSVGElement) {
         const ancestry: { node: Element; opacity: number }[] = [];
         for (
           let ancestor: Element | null = node;
-          ancestor;
+          ancestor && ancestor !== placement?.parent;
           ancestor = ancestor.parentElement
         ) {
           const ancestorStyle = getComputedStyle(ancestor);
@@ -456,8 +613,9 @@ function createScene(svg: SVGSVGElement) {
         }
         transition(ancestry);
         const opacity = mark.kind !== "path" ? Number(css.opacity) : 1;
-        const fill = color(css.fill, Number(css.fillOpacity)),
-          strokeColor = color(css.stroke, Number(css.strokeOpacity));
+        const lightness = brightness(css);
+        const fill = color(css.fill, Number(css.fillOpacity), lightness),
+          strokeColor = color(css.stroke, Number(css.strokeOpacity), lightness);
         const strokeWidth = Number.parseFloat(css.strokeWidth);
         const stroke =
           strokeColor && strokeWidth > 0
@@ -526,20 +684,30 @@ function createScene(svg: SVGSVGElement) {
         }
         flushPoints();
         if (mark.kind === "path") {
-          const contours = mark.contours.map((contour) => ({
-            ...contour,
-            points: contour.points.map((p) =>
-              new DOMPoint(p.x, p.y).matrixTransform(matrix),
-            ),
-          }));
           let y0 = Infinity,
             y1 = -Infinity;
-          for (const contour of contours) {
+          for (const contour of mark.contours) {
             for (const p of contour.points) {
               y0 = Math.min(y0, p.y);
               y1 = Math.max(y1, p.y);
             }
           }
+          const start = y0 + (y1 - y0) * 0.05;
+          const end = y1 - (y1 - y0) * 0.05;
+          const span = end - start;
+          const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
+          // SVG object-bounds gradients live in the path's local coordinates.
+          // Map canvas pixels back through the affine transform before fading.
+          const axis: [number, number, number] =
+            span && determinant
+              ? [
+                  -matrix.b / determinant / span,
+                  matrix.a / determinant / span,
+                  ((matrix.b * matrix.e - matrix.a * matrix.f) / determinant -
+                    start) /
+                    span,
+                ]
+              : [0, 0, 0];
           const shape: VectorShape = {
             contours: mark.contours,
             transform: matrix,
@@ -549,8 +717,9 @@ function createScene(svg: SVGSVGElement) {
                   gradient: mark.gradient
                     ? {
                         ...mark.gradient,
-                        y0: y0 + (y1 - y0) * 0.05,
-                        y1: y1 - (y1 - y0) * 0.05,
+                        y0: start,
+                        y1: end,
+                        axis,
                       }
                     : undefined,
                 }
@@ -605,9 +774,29 @@ function createScene(svg: SVGSVGElement) {
       transition([]);
       compositor.end();
       surface.endFrame();
-      canvas.dataset.chartGpu = "ready";
-      status?.remove();
-      status = undefined;
+      const complete = () => {
+        if (
+          !disposed &&
+          revision === presentationRevision &&
+          surface.available
+        ) {
+          canvas.dataset.chartGpu = "ready";
+          clearUnavailable();
+        }
+      };
+      const pending = presentation?.present(() =>
+        surface.device.queue.onSubmittedWorkDone(),
+      );
+      if (pending) {
+        canvas.dataset.chartGpu = "preparing";
+        void pending.then(complete, () => {
+          if (!disposed && revision === presentationRevision) {
+            unavailable();
+          }
+        });
+      } else {
+        complete();
+      }
     } catch {
       surface.abortFrame();
       unavailable();
@@ -615,19 +804,35 @@ function createScene(svg: SVGSVGElement) {
   }
   const observer = new MutationObserver((records) => {
     if (
-      records.some(
-        ({ target, removedNodes }) =>
-          target instanceof Element &&
-          (target.hasAttribute("data-chart-gpu-mark") ||
-            target.querySelector("[data-chart-gpu-mark], clipPath") ||
-            // Clip definitions affect marks outside their own DOM subtree.
-            target.closest("defs, clipPath") ||
-            Array.from(removedNodes).some(
-              (node) =>
-                node instanceof Element &&
-                (node.matches("clipPath") || node.querySelector("clipPath")),
-            )),
-      )
+      records.some(({ target, removedNodes, addedNodes, type }) => {
+        const generated =
+          "[data-chart-gpu-layer], [data-chart-gpu-presentation]";
+        if (!(target instanceof Element) || target.closest(generated)) {
+          return false;
+        }
+        if (type === "childList") {
+          const changed = [...addedNodes, ...removedNodes];
+          if (
+            changed.length &&
+            changed.every(
+              (node) => node instanceof Element && node.matches(generated),
+            )
+          ) {
+            return false;
+          }
+        }
+        return (
+          target.hasAttribute("data-chart-gpu-mark") ||
+          target.querySelector("[data-chart-gpu-mark], clipPath") ||
+          // Clip definitions affect marks outside their own DOM subtree.
+          target.closest("defs, clipPath") ||
+          Array.from(removedNodes).some(
+            (node) =>
+              node instanceof Element &&
+              (node.matches("clipPath") || node.querySelector("clipPath")),
+          )
+        );
+      })
     ) {
       externalSchedule();
     }
@@ -642,8 +847,11 @@ function createScene(svg: SVGSVGElement) {
   }
   const releaseEffects = subscribeGpuEffects(svg, externalSchedule);
   window.addEventListener("resize", externalSchedule);
+  svg.addEventListener("pointerover", schedule);
+  svg.addEventListener("pointerout", schedule);
 
   return {
+    invalidate: externalSchedule,
     register(node: SVGGraphicsElement, mark: GpuMark) {
       marks.set(node, mark);
       externalSchedule();
@@ -670,14 +878,16 @@ function createScene(svg: SVGSVGElement) {
       releaseEffects();
       ancestors.disconnect();
       window.removeEventListener("resize", externalSchedule);
+      svg.removeEventListener("pointerover", schedule);
+      svg.removeEventListener("pointerout", schedule);
       unsubscribeSurface();
       compositor?.dispose();
       points?.dispose();
       vector?.dispose();
       surface.release();
+      presentation?.dispose();
       canvas.remove();
-      status?.remove();
-      scenes.delete(svg);
+      clearUnavailable();
     },
   };
 }
@@ -688,7 +898,11 @@ export function registerGpuMark(node: SVGGraphicsElement, mark: GpuMark) {
   }
   let scene = scenes.get(svg);
   if (!scene) {
-    scene = createScene(svg);
+    scene = createSceneLayers(
+      svg,
+      (placement) => createPaintScene(svg, placement),
+      () => scenes.delete(svg),
+    );
     scenes.set(svg, scene);
   }
   return scene.register(node, mark);

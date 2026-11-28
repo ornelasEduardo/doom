@@ -2,6 +2,7 @@ import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 import {
+  captureChartPixel,
   chartViewportPoint,
   moveChartPointer,
 } from "./tests/browser/Chart/coordinateCommands";
@@ -43,6 +44,7 @@ export default defineConfig({
       headless: true,
       ui: false,
       commands: {
+        captureChartPixel,
         chartViewportPoint,
         moveChartPointer,
         async setReducedMotion(

@@ -77,7 +77,7 @@ gpuIt(
       const pixels = await Promise.all([45, 60].map((x) => f.pixel(x)));
       expect(pixels[0]).toEqual([64, 0, 0, 64]);
       expect(pixels[1]).toEqual([0, 0, 128, 128]);
-      expect(getComputedStyle(n).filter).toBe("opacity(0)");
+      expect(getComputedStyle(n).filter).toContain("url(");
     } finally {
       f.cleanup();
     }

@@ -728,7 +728,16 @@ streaming, geometry, and behavior-ownership regressions.
 ### GPU rendering
 
 Built-in line, area, bar, and scatter marks are rendered by WebGPU on one shared
-canvas per chart. A secure context (HTTPS or localhost) and an available WebGPU adapter are required. Device initialization is asynchronous; unavailable adapters produce an explicit status while retaining keyboard access. No WebGL fallback is bundled. Gridlines and axis strokes share that scene to preserve their order relative
+canvas for ordinary charts. When custom SVG paint interleaves with GPU marks,
+ordered GPU canvas layers preserve SVG paint order and native group compositing.
+Consecutive marks remain batched; dense point clouds do not create a canvas per point.
+Nested SVG scenes, custom SVG groups with zero-width or zero-height bounds, and
+mixed paint under native transforms, clipping, masks, filters, or group opacity
+use an image of the GPU-rendered frame for presentation, preserving native effects
+and their coordinate systems.
+That uncommon path requires `data:` images to be permitted by the application's
+Content Security Policy and includes GPU readback; ordinary charts do not use it.
+A secure context (HTTPS or localhost) and an available WebGPU adapter are required. Device initialization is asynchronous; unavailable adapters produce an explicit status while retaining keyboard access. No WebGL fallback is bundled. Gridlines and axis strokes share that scene to preserve their order relative
 to data marks.
 Chart composition, accessors, sensors, behaviors, tooltip
 payloads, and keyboard navigation keep the same public API. SVG remains the

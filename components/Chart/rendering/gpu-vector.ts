@@ -14,6 +14,8 @@ export interface VectorShape {
       y1: number;
       startOpacity: number;
       endOpacity: number;
+      /** Maps canvas CSS pixels (x, y, 1) to the normalized gradient offset. */
+      axis?: readonly [number, number, number];
     };
   };
   stroke?: {
@@ -121,6 +123,12 @@ function validate(
       finite(gradient.y1);
       unit(gradient.startOpacity);
       unit(gradient.endOpacity);
+      if (gradient.axis && gradient.axis.length !== 3) {
+        throw new RangeError(
+          "GPU vector gradient axis must have three coordinates",
+        );
+      }
+      gradient.axis?.forEach(finite);
     }
     for (const contour of shape.contours) {
       for (const point of contour.points) {
@@ -151,7 +159,7 @@ function quad([x0, y0, x1, y1]: Bounds) {
   return new Float32Array([x0, y0, x1, y0, x1, y1, x0, y0, x1, y1, x0, y1]);
 }
 const shader = `
-struct Params { viewport: vec4f, color: vec4f, gradient: vec4f, clip: vec4f }
+struct Params { viewport: vec4f, color: vec4f, gradient: vec4f, gradientAxis: vec4f, clip: vec4f }
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> edges: array<vec4f>;
 struct Vertex { @builtin(position) position: vec4f, @location(0) pixelY: f32 }
@@ -167,10 +175,7 @@ struct Vertex { @builtin(position) position: vec4f, @location(0) pixelY: f32 }
   for (var i = 0u; i < u32(params.clip.x); i++) {
     if (dot(edges[i].xy, p) + edges[i].z < -0.00001) { discard; }
   }
-  var t = 0.0;
-  if (params.gradient.x != params.gradient.y) {
-    t = clamp((in.pixelY - params.gradient.x) / (params.gradient.y - params.gradient.x), 0, 1);
-  }
+  let t = clamp(dot(params.gradientAxis.xyz, vec3f(p, 1)), 0, 1);
   let alpha = params.color.a * mix(params.gradient.z, params.gradient.w, t);
   return vec4f(params.color.rgb * alpha, alpha);
 }`;
@@ -349,6 +354,10 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
           if (!mesh.length) {
             return;
           }
+          const span = gradient ? gradient.y1 - gradient.y0 : 0;
+          const gradientAxis =
+            gradient?.axis ??
+            (span ? [0, 1 / span, -gradient!.y0 / span] : [0, 0, 0]);
           const params = buffer(
             new Float32Array([
               view.width,
@@ -363,6 +372,8 @@ export function createGpuVector(canvas: HTMLCanvasElement) {
               gradient?.y1 ?? 1,
               gradient?.startOpacity ?? 1,
               gradient?.endOpacity ?? 1,
+              ...gradientAxis,
+              0,
               view.clipPolygon ? (points.length < 3 ? -1 : points.length) : 0,
               0,
               0,

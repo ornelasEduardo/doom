@@ -30,6 +30,23 @@ export const moveChartPointer = defineBrowserCommand(
   },
 );
 
+/** Captures browser-composited output, including native SVG and GPU canvases. */
+export const captureChartPixel = defineBrowserCommand(
+  async (context, clientX: number, clientY: number) => {
+    const point = await chartViewportPoint(context, clientX, clientY);
+    const png = await context.page.screenshot({
+      clip: {
+        x: Math.floor(point.x),
+        y: Math.floor(point.y),
+        width: 1,
+        height: 1,
+      },
+      scale: "css",
+    });
+    return `data:image/png;base64,${png.toString("base64")}`;
+  },
+);
+
 declare module "vitest/browser" {
   interface BrowserCommands {
     chartViewportPoint: (
@@ -37,5 +54,6 @@ declare module "vitest/browser" {
       clientY: number,
     ) => Promise<{ x: number; y: number }>;
     moveChartPointer: (clientX: number, clientY: number) => Promise<void>;
+    captureChartPixel: (clientX: number, clientY: number) => Promise<string>;
   }
 }

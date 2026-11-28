@@ -486,3 +486,28 @@ it.each([
   ).toThrow(RangeError);
   expect(await pixels()).toEqual(before);
 });
+
+it.each([false, true])(
+  "does not paint zero-radius circles with a stroke (per-point radii: %s)",
+  async (perPoint) => {
+    const { gpu, view, pixel } = await fixture(1);
+    const source = {
+      length: perPoint ? 2 : 1,
+      buffers: () => ({
+        positions: new Float32Array(
+          perPoint ? [0.25, 0.5, 0.75, 0.5] : [0.5, 0.5],
+        ),
+        radii: perPoint ? new Float32Array([0, 8]) : undefined,
+      }),
+    };
+    gpu.draw(source, {
+      ...view,
+      radius: 0,
+      stroke: { color: [0, 0, 1, 1], width: 10 },
+    });
+    expect(await pixel(perPoint ? 25 : 40, 40)).toEqual([0, 0, 0, 0]);
+    if (perPoint) {
+      expect(await pixel(55, 40)).toEqual([255, 0, 0, 255]);
+    }
+  },
+);

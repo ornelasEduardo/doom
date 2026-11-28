@@ -1,5 +1,6 @@
 @layer doom.components {
   .bar {
+    --chart-gpu-color-filter: none;
     fill: var(--primary);
     stroke: var(--card-border);
     stroke-width: var(--surface-border-width);
@@ -7,6 +8,7 @@
     transition: opacity 0.2s;
 
     &:hover {
+      --chart-gpu-color-filter: var(--control-hover-filter, brightness(1.1));
       filter: var(--control-hover-filter, brightness(1.1));
     }
   }
