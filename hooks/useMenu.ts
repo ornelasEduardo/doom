@@ -81,6 +81,9 @@ export function useMenu() {
       "aria-expanded": open,
       "aria-controls": open ? id : undefined,
       onClick: (event: MouseEvent<HTMLElement>) => {
+        // Safari does not focus buttons on pointer activation. Keep keyboard
+        // dismissal and navigation anchored to the menu invoker in every engine.
+        event.currentTarget.focus({ preventScroll: true });
         entry.current = event.detail === 0 ? "first" : null;
         setOpen((value) => !value);
       },

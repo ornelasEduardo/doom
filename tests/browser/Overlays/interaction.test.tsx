@@ -182,3 +182,21 @@ it("scrolls the requested initial field into the visible dialog", async () => {
   expect(bounds.top).toBeGreaterThanOrEqual(0);
   expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
 });
+
+it("pointer-opened menus retain an invoker for Escape and keyboard navigation", async () => {
+  render(
+    <Dropdown
+      triggerLabel="Pointer actions"
+      items={[{ label: "Archive", onClick: () => {} }]}
+    />,
+  );
+  const trigger = screen.getByRole("button", { name: /Pointer actions/ });
+  await userEvent.click(trigger);
+  expect(trigger).toHaveFocus();
+  await userEvent.keyboard("{Escape}");
+  expect(trigger).toHaveAttribute("aria-expanded", "false");
+  expect(trigger).toHaveFocus();
+  await userEvent.click(trigger);
+  await userEvent.keyboard("{ArrowDown}");
+  expect(screen.getByRole("menuitem", { name: "Archive" })).toHaveFocus();
+});
