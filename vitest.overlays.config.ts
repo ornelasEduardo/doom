@@ -7,7 +7,7 @@ export default defineConfig({
   ...base,
   test: {
     ...base.test,
-    include: ["tests/browser/Overlays/interaction.test.tsx"],
+    include: ["tests/browser/Overlays/*.test.tsx"],
     browser: {
       ...base.test!.browser,
       provider: playwright(),

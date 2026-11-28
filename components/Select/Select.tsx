@@ -50,6 +50,8 @@ export function Select({
   disabled,
   name,
   autoFocus,
+  onClick,
+  onKeyDown,
   size = "md",
   ...props
 }: SelectProps) {
@@ -102,7 +104,11 @@ export function Select({
     triggerRef.current?.focus();
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) {
+      return;
+    }
     switch (e.key) {
       case "Enter":
       case " ":
@@ -239,6 +245,10 @@ export function Select({
             role="combobox"
             type="button"
             onClick={(event) => {
+              onClick?.(event);
+              if (event.defaultPrevented) {
+                return;
+              }
               // WebKit does not focus pointer-activated buttons. Keep Escape
               // on this combobox so it dismisses the list before a parent modal.
               event.currentTarget.focus({ preventScroll: true });

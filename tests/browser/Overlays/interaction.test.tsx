@@ -3,7 +3,7 @@ import "../../../styles/theming/scope.scss";
 
 import { cleanup, render as rtlRender, screen } from "@testing-library/react";
 import React, { useRef, useState } from "react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { commands, userEvent } from "vitest/browser";
 
 import { Dropdown } from "../../../components/Dropdown/Dropdown";
@@ -247,4 +247,41 @@ it("Shift+Tab exits a menu to the previous keyboard-reachable control", async ()
     screen.getByRole("textbox", { name: "Before" }),
   );
   expect(trigger).toHaveAttribute("aria-expanded", "false");
+});
+
+it("composes Select consumer handlers without losing focus and dismissal", async () => {
+  const click = vi.fn();
+  const key = vi.fn();
+  render(
+    <Select
+      label="Composed"
+      options={[{ value: "a", label: "Alpha" }]}
+      onClick={click}
+      onKeyDown={key}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "Composed" });
+  await userEvent.click(trigger);
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(trigger).toHaveFocus();
+  expect(screen.getByRole("listbox")).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  expect(key).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("listbox")).toBeNull();
+});
+it("allows Select consumers to cancel opening and keyboard handling", async () => {
+  render(
+    <Select
+      label="Cancelled"
+      options={[{ value: "a", label: "Alpha" }]}
+      onClick={(event) => event.preventDefault()}
+      onKeyDown={(event) => event.preventDefault()}
+    />,
+  );
+  const trigger = screen.getByRole("combobox", { name: "Cancelled" });
+  await userEvent.click(trigger);
+  expect(screen.queryByRole("listbox")).toBeNull();
+  trigger.focus();
+  await userEvent.keyboard("{ArrowDown}");
+  expect(screen.queryByRole("listbox")).toBeNull();
 });
