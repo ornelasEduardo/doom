@@ -3,6 +3,7 @@
 @layer doom.components {
   .container {
     display: inline-flex;
+    max-inline-size: 100%;
     border: var(--control-border-width, var(--surface-border-width)) solid
       var(--card-border);
     border-radius: var(--control-radius);
@@ -36,6 +37,8 @@
   }
 
   .mainButton {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     border: none;
     background: transparent;
     color: inherit;
@@ -56,6 +59,7 @@
   }
 
   .dropdownTrigger {
+    flex-shrink: 0;
     border: none;
     background: transparent;
     color: inherit;
