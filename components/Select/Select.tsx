@@ -238,7 +238,12 @@ export function Select({
             id={selectId}
             role="combobox"
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={(event) => {
+              // WebKit does not focus pointer-activated buttons. Keep Escape
+              // on this combobox so it dismisses the list before a parent modal.
+              event.currentTarget.focus({ preventScroll: true });
+              setIsOpen(!isOpen);
+            }}
             onKeyDown={handleKeyDown}
             {...props}
           >
