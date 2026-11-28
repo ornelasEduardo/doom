@@ -50,7 +50,7 @@
   }
 
   .searchWrapper {
-    width: 288px;
+    width: 18rem;
 
     @include mq("md", "max") {
       width: 100%;
@@ -263,7 +263,7 @@
   }
 
   .expandCol {
-    width: 40px;
+    width: 2.5rem;
     padding: var(--space-2);
   }
 }

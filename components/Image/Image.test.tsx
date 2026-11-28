@@ -14,6 +14,29 @@ describe("Image Component", () => {
     expect(img).toHaveAttribute("alt", "Test Image");
   });
 
+  it("keeps relative CSS dimensions out of pixel attributes and mixed-unit ratios", () => {
+    const { rerender } = render(
+      <Image alt="Scaled" height={160} src="test.jpg" width="20rem" />,
+    );
+    const img = screen.getByRole("img");
+    const wrapper = img.parentElement!;
+    expect(wrapper.style.width).toBe("20rem");
+    expect(wrapper.style.aspectRatio).toBe("");
+    expect(img).not.toHaveAttribute("width");
+    expect(img).toHaveAttribute("height", "160");
+
+    rerender(
+      <Image alt="Scaled" height="10rem" src="test.jpg" width="20rem" />,
+    );
+    expect(wrapper.style.aspectRatio).toBe("20 / 10");
+    expect(img).not.toHaveAttribute("height");
+
+    rerender(<Image alt="Scaled" height="160px" src="test.jpg" width={320} />);
+    expect(wrapper.style.aspectRatio).toBe("320 / 160");
+    expect(img).toHaveAttribute("width", "320");
+    expect(img).toHaveAttribute("height", "160");
+  });
+
   it("handles loading state correctly", async () => {
     render(<Image alt="Loading Test" src="test.jpg" />);
     const img = screen.getByRole("img");

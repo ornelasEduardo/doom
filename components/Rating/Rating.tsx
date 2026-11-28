@@ -83,7 +83,13 @@ export const Rating = React.forwardRef<HTMLDivElement, RatingProps>(
 
     const renderIcon = (fill: string) =>
       CustomIcon ? (
-        <CustomIcon fill={fill} size={iconSize} strokeWidth={2.5} />
+        <CustomIcon
+          fill={fill}
+          height={`${iconSize / 16}rem`}
+          size={iconSize}
+          strokeWidth={2.5}
+          width={`${iconSize / 16}rem`}
+        />
       ) : (
         <ThemedIcon
           fill={fill}

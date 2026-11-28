@@ -34,7 +34,7 @@
     background-color: var(--surface-navigation, var(--card-bg));
     color: var(--on-navigation, var(--foreground));
     z-index: var(--z-drawer);
-    transform: translateX(calc(-100% - 20px));
+    transform: translateX(calc(-100% - 1.25rem));
     transition:
       transform var(--duration-normal) var(--ease-in-out),
       visibility var(--duration-normal) var(--ease-in-out);

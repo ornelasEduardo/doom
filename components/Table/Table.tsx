@@ -484,9 +484,9 @@ export function Table<T>({
                               aria-label="Filter builder"
                               size="sm"
                               style={{
-                                height: "24px",
-                                padding: "0 4px",
-                                marginRight: "-4px",
+                                minHeight: "1.5rem",
+                                padding: "0 0.25rem",
+                                marginRight: "-0.25rem",
                               }}
                               variant="ghost"
                               onClick={() => setIsFilterBuilderOpen(true)}

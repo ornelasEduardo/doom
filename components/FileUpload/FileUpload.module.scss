@@ -14,7 +14,7 @@
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     width: 100%;
     max-width: 100%;
-    min-width: 288px;
+    min-width: min(18rem, 100%);
 
     &.disabled {
       cursor: not-allowed;
@@ -271,15 +271,15 @@
   .requiredMark {
     display: inline-flex;
     vertical-align: middle;
-    margin-left: 2px;
+    margin-left: 0.125rem;
     color: inherit;
-    transform: translateY(-2px);
+    transform: translateY(-0.125rem);
   }
 
   .body {
     padding: var(--space-6);
     background-color: var(--card-bg);
-    min-height: 224px;
+    min-height: 14rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -290,7 +290,7 @@
 
     @include mq("sm", "max") {
       padding: var(--space-4);
-      min-height: 160px;
+      min-height: 10rem;
     }
 
     @include mq("xxs", "max") {

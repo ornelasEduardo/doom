@@ -33,17 +33,25 @@ const toCssValue = (val: string | number | undefined) => {
   return val;
 };
 
-const getIntrinsicSize = (
-  val: string | number | undefined,
-): number | undefined => {
+// HTML intrinsic dimensions are pixels; CSS lengths such as rem must never be
+// parsed as pixel attributes or compared with a dimension in a different unit.
+const getDimension = (val: string | number | undefined) => {
   if (typeof val === "number") {
-    return val;
+    return Number.isFinite(val) && val >= 0
+      ? { value: val, unit: "px" }
+      : undefined;
   }
-  if (typeof val === "string" && !val.endsWith("%")) {
-    const parsed = parseFloat(val);
-    return isNaN(parsed) ? undefined : parsed;
-  }
-  return undefined;
+  const match = val
+    ?.trim()
+    .match(/^(\d+(?:\.\d+)?)(px|rem|em|vw|vh|dvw|dvh)?$/);
+  return match
+    ? { value: Number(match[1]), unit: match[2] || "px" }
+    : undefined;
+};
+
+const getIntrinsicSize = (val: string | number | undefined) => {
+  const dimension = getDimension(val);
+  return dimension?.unit === "px" ? dimension.value : undefined;
 };
 
 const ImageStatus = {
@@ -88,9 +96,11 @@ export function Image({
     if (aspectRatio) {
       return aspectRatio;
     }
-    const w = getIntrinsicSize(width);
-    const h = getIntrinsicSize(height);
-    return w && h ? `${w} / ${h}` : undefined;
+    const w = getDimension(width);
+    const h = getDimension(height);
+    return w && h && w.value > 0 && h.value > 0 && w.unit === h.unit
+      ? `${w.value} / ${h.value}`
+      : undefined;
   }, [aspectRatio, width, height]);
 
   const imgRef = useRef<HTMLImageElement>(null);
@@ -188,9 +198,9 @@ export function Image({
               status === ImageStatus.Loaded ? styles.visible : styles.hidden,
             ),
           })}
-          height={height}
+          height={getIntrinsicSize(height)}
           src={src}
-          width={width}
+          width={getIntrinsicSize(width)}
           onError={handleError}
           onLoad={handleLoad}
           {...props}

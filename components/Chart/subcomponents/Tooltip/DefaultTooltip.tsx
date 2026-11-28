@@ -13,12 +13,17 @@ export const DefaultTooltip = (data: any) => {
   const value = data.value || data.y || "";
 
   return (
-    <Card style={{ padding: "8px 12px", minWidth: 120, pointerEvents: "none" }}>
-      <Text
-        as="p"
-        style={{ marginBottom: 4, color: "var(--muted-foreground)" }}
-        variant="h6"
-      >
+    <Card
+      style={{
+        padding: "0.5rem 0.75rem",
+        minWidth: "7.5rem",
+        pointerEvents: "none",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.25rem",
+      }}
+    >
+      <Text as="p" style={{ color: "var(--muted-foreground)" }} variant="h6">
         {label}
       </Text>
       <Text style={{ fontWeight: 600 }} variant="body">

@@ -41,9 +41,9 @@ Extends all standard `<div>` HTML attributes.
 
 ### Container
 
-| Prop       | Type                                      | Default | Description                                                     |
-| ---------- | ----------------------------------------- | ------- | --------------------------------------------------------------- |
-| `maxWidth` | `"sm" \| "md" \| "lg" \| "xl" \| "fluid"` | `"xl"`  | Max width: sm=640px, md=768px, lg=1024px, xl=1280px, fluid=100% |
+| Prop       | Type                                      | Default | Description                                                   |
+| ---------- | ----------------------------------------- | ------- | ------------------------------------------------------------- |
+| `maxWidth` | `"sm" \| "md" \| "lg" \| "xl" \| "fluid"` | `"xl"`  | Max width: sm=40rem, md=48rem, lg=64rem, xl=80rem, fluid=100% |
 
 Extends all standard `<div>` HTML attributes.
 

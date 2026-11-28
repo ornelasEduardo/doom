@@ -10,7 +10,9 @@
     color: var(--on-readout, var(--background));
     font-size: var(--text-sm);
     font-weight: var(--font-medium, 500);
-    white-space: nowrap;
+    white-space: normal;
+    max-width: min(40ch, calc(100vw - 2rem));
+    overflow-wrap: anywhere;
     border-radius: var(--surface-radius, var(--radius-md));
     border: var(--surface-border-width) solid var(--card-border);
     box-shadow: var(--shadow-sm);

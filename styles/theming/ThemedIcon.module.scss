@@ -1,0 +1,7 @@
+@layer doom.components {
+  // vector-effect does not inherit from the SVG viewport to its painted shapes.
+  .absoluteStroke
+    :is(path, circle, ellipse, line, polygon, polyline, rect, use) {
+    vector-effect: non-scaling-stroke;
+  }
+}

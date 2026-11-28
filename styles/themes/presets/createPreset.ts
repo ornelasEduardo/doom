@@ -8,7 +8,7 @@ const hardEdges: ThemePatch = {
     icons: { stroke: "2.5" },
     motion: { easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
     fonts: { heading: "var(--font-montserrat, system-ui), sans-serif" },
-    radii: { surface: "4px" },
+    radii: { surface: "0.25rem" },
     shadows: {
       raised: "{shadowOffsets.md} {roles.shadow}",
       overlay: "{shadowOffsets.lg} {roles.shadow}",
@@ -38,16 +38,16 @@ const hardEdges: ThemePatch = {
       fontWeight: "700",
       textTransform: "uppercase",
       letterSpacing: "0.05em",
-      hoverTransform: "translate(-2px, -2px)",
-      pressTransform: "translate(2px, 2px)",
+      hoverTransform: "translate(-0.125rem, -0.125rem)",
+      pressTransform: "translate(0.125rem, 0.125rem)",
       ghostPressTransform: "scale(0.95)",
       hoverFilter: "brightness(1.1)",
-      focusTransform: "translate(-2px, -2px)",
+      focusTransform: "translate(-0.125rem, -0.125rem)",
       focusShadow: "{shadowOffsets.xl} {roles.shadowBrand}",
       errorShadow: "{shadowOffsets.lg} {roles.shadowDanger}",
       errorFocusShadow: "{shadowOffsets.xl} {roles.shadowDanger}",
       disabledBackground:
-        "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)",
+        "repeating-linear-gradient(45deg, transparent, transparent 0.625rem, rgba(0,0,0,0.05) 0.625rem, rgba(0,0,0,0.05) 1.25rem)",
     },
     badges: {
       shadow:

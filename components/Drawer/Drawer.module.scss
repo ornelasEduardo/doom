@@ -48,7 +48,7 @@
       @include shadow-directional("right", var(--space-2));
       border-top-right-radius: var(--surface-radius);
       border-bottom-right-radius: var(--surface-radius);
-      transform: translateX(calc(-100% - 20px));
+      transform: translateX(calc(-100% - 1.25rem));
     }
 
     &.right {
@@ -59,7 +59,7 @@
       @include shadow-directional("left", var(--space-2));
       border-top-left-radius: var(--surface-radius);
       border-bottom-left-radius: var(--surface-radius);
-      transform: translateX(calc(100% + 20px));
+      transform: translateX(calc(100% + 1.25rem));
     }
 
     &.isOpen {
@@ -93,6 +93,15 @@
     flex-shrink: 0;
   }
 
+  .headerContent {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .header > button {
+    flex-shrink: 0;
+  }
+
   .title {
     margin: 0;
     font-family: var(--font-heading);
@@ -107,6 +116,7 @@
     flex: 1;
     padding: var(--surface-padding);
     overflow-y: auto;
+    overflow-wrap: anywhere;
     background-color: var(--card-bg);
   }
 
@@ -115,6 +125,7 @@
     border-top: var(--surface-border-width) solid var(--border-strong);
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: var(--space-3);
     background-color: var(--card-bg);
     flex-shrink: 0;

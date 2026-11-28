@@ -74,9 +74,9 @@
   }
 
   .successLabel {
-    transform: scale(0.5) translateY(10px);
+    transform: scale(0.5) translateY(0.625rem);
     opacity: 0;
-    filter: blur(4px);
+    filter: blur(0.25rem);
   }
 
   .copied {

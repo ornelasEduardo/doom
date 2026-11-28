@@ -22,7 +22,7 @@
     background: var(--card-bg);
     color: var(--foreground);
 
-    height: var(--control-height);
+    min-height: var(--control-height);
     padding: var(--control-padding-y) var(--control-padding-x);
     font-size: var(--control-font-size);
     border: none;

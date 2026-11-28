@@ -49,7 +49,7 @@ function resolveSize(size?: SizingProp): string | undefined {
     return undefined;
   }
   if (typeof size === "number") {
-    return `${size}px`; // crude fallback, or could map to spacing
+    return `${size}px`; // Numeric dimensions retain the public CSS-pixel contract.
   }
   if (size in SIZING_MAP) {
     return SIZING_MAP[size as SemanticSize];

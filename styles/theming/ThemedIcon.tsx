@@ -1,8 +1,10 @@
 "use client";
+import clsx from "clsx";
 import type { LucideProps } from "lucide-react";
 import React, { useContext } from "react";
 
 import { useThemeParts } from "./parts";
+import styles from "./ThemedIcon.module.scss";
 import { ThemeRuntimeContext } from "./ThemeScope";
 
 export type IconName =
@@ -57,6 +59,8 @@ export function ThemedIcon({
   icon: DefaultIcon,
   iconName,
   strokeWidth = 2.5,
+  size = 24,
+  absoluteStrokeWidth,
   ...props
 }: ThemedIconProps) {
   const part = useThemeParts("Icon");
@@ -64,9 +68,23 @@ export function ThemedIcon({
   const Icon = runtime?.icons?.[iconName] ?? DefaultIcon;
   return (
     <Icon
-      {...part("root", props)}
+      {...part("root", {
+        ...props,
+        className: clsx(
+          props.className,
+          absoluteStrokeWidth && styles.absoluteStroke,
+        ),
+      })}
+      // Built-in sizes are authored against a 16px root. CSS recipes and
+      // explicit width/height props can still override these SVG attributes.
+      size={typeof size === "number" ? `${size / 16}rem` : size}
+      // Lucide divides absolute strokes by Number(size), which cannot resolve
+      // rem lengths or theme variables. SVG keeps the stroke constant directly.
       strokeWidth={
         runtime ? `var(--doom-icons-stroke, ${strokeWidth})` : strokeWidth
+      }
+      vectorEffect={
+        absoluteStrokeWidth ? "non-scaling-stroke" : props.vectorEffect
       }
     />
   );

@@ -36,7 +36,8 @@
   .container {
     position: fixed;
     bottom: var(--space-8);
-    right: var(--space-8);
+    right: min(var(--space-8), 5vw);
+    max-width: calc(100vw - min(var(--space-8), 5vw) * 2);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
@@ -45,7 +46,9 @@
   }
 
   .toast {
-    min-width: 288px;
+    min-width: min(18rem, calc(100vw - min(var(--space-8), 5vw) * 2));
+    max-width: 100%;
+    overflow-wrap: anywhere;
     background: var(--card-bg);
     border: var(--surface-border-width) solid var(--card-border);
     color: var(--foreground);
@@ -86,6 +89,15 @@
     &.info::before {
       background-color: var(--primary);
     }
+  }
+
+  .toast > span {
+    min-width: 0;
+  }
+
+  .toast > svg,
+  .closeButton {
+    flex-shrink: 0;
   }
 
   .closeButton {

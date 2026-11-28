@@ -33,6 +33,17 @@
     }
   }
 
+  .trigger > svg,
+  .optionItem > svg {
+    flex-shrink: 0;
+  }
+
+  .trigger > span,
+  .optionItem > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   /* Sizes */
   .sm {
     @include control-sm;
@@ -48,7 +59,8 @@
       var(--primary);
     border-radius: var(--control-radius);
     box-shadow: none;
-    min-width: 12.5rem;
+    min-width: min(12.5rem, calc(100vw - 1rem));
+    max-width: calc(100vw - 1rem);
     max-height: 18rem;
     overflow-y: auto;
     display: flex;

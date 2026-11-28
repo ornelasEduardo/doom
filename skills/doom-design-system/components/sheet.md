@@ -61,9 +61,9 @@ import { Sheet } from "doom-design-system";
 
 ## Notes
 
-- Slides up from bottom; fixed height of 85vh
+- Slides up from bottom; height of 85dvh, following the visible mobile viewport
 - **Drag-to-dismiss**: drag the header down 150px+ to close; transitions disabled during drag, snap-back on incomplete gesture
-- Header renders a visible drag handle bar (12px wide, pill-shaped); opacity adjusts in solid variant
+- Header renders a visible drag handle bar (3rem wide, pill-shaped); opacity adjusts in solid variant
 - Closes on Escape key and overlay click automatically
 - Renders via portal to `document.body`; locks body scroll when open
 - Use for bottom sheets on mobile or compact overlays
