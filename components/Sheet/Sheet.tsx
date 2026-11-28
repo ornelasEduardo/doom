@@ -2,6 +2,7 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { usePresence } from "../../hooks/usePresence";
 
 import {
   type ThemeClassNames,
@@ -14,6 +15,22 @@ import { ThemedPortal } from "../../styles/theming/ThemedPortal";
 import { Button } from "../Button/Button";
 import { Flex } from "../Layout/Layout";
 import styles from "./Sheet.module.scss";
+
+// A sheet may overlap another sheet while changing workflows. Preserve the host's lock.
+const scrollLocks = new WeakMap<Document, { count: number; overflow: string }>();
+function lockScroll(document: Document) {
+  const lock = scrollLocks.get(document) ?? { count: 0, overflow: document.body.style.overflow };
+  lock.count += 1;
+  scrollLocks.set(document, lock);
+  document.body.style.overflow = "hidden";
+  return () => {
+    lock.count -= 1;
+    if (!lock.count) {
+      document.body.style.overflow = lock.overflow;
+      scrollLocks.delete(document);
+    }
+  };
+}
 
 const SheetContext = React.createContext<{
   onClose: () => void;
@@ -147,28 +164,27 @@ function SheetInternal({
   const [mounted, setMounted] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const present = usePresence(isOpen, panelRef);
   const isDragging = useRef(false);
   const startY = useRef(0);
   const cleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    if (!isOpen) {
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      isDragging.current = false;
+    }
     if (!isOpen && panelRef.current) {
       panelRef.current.style.transform = "";
       panelRef.current.style.transition = "";
     }
   }, [isOpen]);
 
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    setMounted(true);
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+    if (present) return lockScroll(document);
+  }, [present]);
 
   useEffect(() => {
     return () => {
@@ -180,14 +196,17 @@ function SheetInternal({
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!panelRef.current) {
+    if (!isOpen || !panelRef.current || e.button !== 0 ||
+        (e.target instanceof Element && e.target.closest("button,input,select,textarea,a,[role=button]"))) {
       return;
     }
+    cleanupRef.current?.();
+    const pointerId = e.pointerId;
     isDragging.current = true;
     startY.current = e.clientY;
 
     const onMove = (moveEvent: PointerEvent) => {
-      if (!isDragging.current || !panelRef.current) {
+      if (moveEvent.pointerId !== pointerId || !isDragging.current || !panelRef.current) {
         return;
       }
       const delta = moveEvent.clientY - startY.current;
@@ -200,6 +219,7 @@ function SheetInternal({
     };
 
     const onUp = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId !== pointerId) return;
       isDragging.current = false;
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
@@ -211,12 +231,9 @@ function SheetInternal({
       }
 
       const delta = upEvent.clientY - startY.current;
-      if (delta > 150) {
-        onClose();
-      } else {
-        panelRef.current.style.transition = "";
-        panelRef.current.style.transform = "";
-      }
+      panelRef.current.style.transition = "";
+      panelRef.current.style.transform = "";
+      if (upEvent.type !== "pointercancel" && delta > 150) onClose();
     };
 
     document.addEventListener("pointermove", onMove);
@@ -232,7 +249,7 @@ function SheetInternal({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !e.defaultPrevented) {
         onClose();
       }
     };
@@ -242,7 +259,7 @@ function SheetInternal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  if (!mounted) {
+  if (!mounted || !present) {
     return null;
   }
 
@@ -267,9 +284,10 @@ function SheetInternal({
               />
               <div
                 ref={panelRef}
+                {...(!isOpen ? { inert: true, "aria-hidden": true as const } : {})}
                 aria-label={!title ? "Sheet" : undefined}
                 aria-labelledby={title ? titleId : undefined}
-                aria-modal="true"
+                aria-modal={isOpen ? "true" : undefined}
                 {...doomPart("panel", {
                   className: clsx(
                     styles.panel,

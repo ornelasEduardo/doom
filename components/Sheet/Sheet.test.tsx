@@ -41,9 +41,7 @@ describe("Sheet Component", () => {
         Content
       </Sheet>,
     );
-    // The component stays mounted for exit animations but should be hidden
-    const panel = screen.getByRole("dialog", { hidden: true });
-    expect(panel).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
   });
 
   it("renders when open", () => {
@@ -93,4 +91,23 @@ describe("Sheet Component", () => {
     );
     expect(screen.getByText("Custom Header")).toBeInTheDocument();
   });
+});
+
+it("preserves the host scroll lock until the final sheet closes", () => {
+  document.body.style.overflow = "clip";
+  const first = render(<Sheet isOpen title="First" onClose={()=>{}}>One</Sheet>);
+  const second = render(<Sheet isOpen title="Second" onClose={()=>{}}>Two</Sheet>);
+  expect(document.body.style.overflow).toBe("hidden");
+  first.unmount();
+  expect(document.body.style.overflow).toBe("hidden");
+  second.unmount();
+  expect(document.body.style.overflow).toBe("clip");
+  document.body.style.overflow = "";
+});
+it("does not dismiss a sheet when Escape was consumed by nested content", () => {
+  const close=vi.fn();
+  render(<Sheet isOpen title="Nested" onClose={close}>Content</Sheet>);
+  const event=new KeyboardEvent("keydown",{key:"Escape",bubbles:true,cancelable:true});
+  event.preventDefault(); window.dispatchEvent(event);
+  expect(close).not.toHaveBeenCalled();
 });
