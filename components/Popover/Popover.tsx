@@ -7,11 +7,15 @@ import React, {
   useState,
 } from "react";
 
+import { usePresence } from "../../hooks/usePresence";
 import {
   type ThemeClassNames,
   useThemeParts,
 } from "../../styles/theming/parts";
-import { ThemedPortal } from "../../styles/theming/ThemedPortal";
+import {
+  OverlayPortalContext,
+  ThemedPortal,
+} from "../../styles/theming/ThemedPortal";
 import styles from "./Popover.module.scss";
 
 interface PopoverProps {
@@ -37,6 +41,7 @@ interface PopoverProps {
 }
 
 export function Popover({
+  classNames,
   trigger,
   content,
   isOpen,
@@ -44,10 +49,12 @@ export function Popover({
   placement = "bottom-start",
   offset = 8,
 }: PopoverProps) {
-  const doomPart = useThemeParts("Popover", undefined, {});
+  const doomPart = useThemeParts("Popover", classNames, {});
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const present = usePresence(isOpen, contentRef);
+  const [portalHost, setPortalHost] = useState<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [transformOrigin, setTransformOrigin] = useState("top left");
 
@@ -175,22 +182,42 @@ export function Popover({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isOpen, onClose]);
+
+  function handleEscape(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Escape" || event.defaultPrevented || !isOpen) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    triggerRef.current
+      ?.querySelector<HTMLElement>("button,a[href],[tabindex]")
+      ?.focus();
+    onClose();
+  }
 
   return (
     <>
       <div
         ref={triggerRef}
+        onKeyDown={handleEscape}
         {...doomPart("triggerWrapper", { className: styles.triggerWrapper })}
       >
         {trigger}
       </div>
-      {isOpen && typeof document !== "undefined" && (
+      {present && typeof document !== "undefined" && (
         <ThemedPortal>
           {
             <div
               ref={contentRef}
+              aria-hidden={!isOpen || undefined}
+              data-state={isOpen ? "open" : "closed"}
+              inert={!isOpen || undefined}
+              onKeyDown={handleEscape}
               {...doomPart("root", { className: styles.popover })}
               style={{
                 top: position.top,
@@ -198,7 +225,11 @@ export function Popover({
                 transformOrigin: transformOrigin,
               }}
             >
-              {content}
+              <div ref={setPortalHost}>
+                <OverlayPortalContext.Provider value={portalHost}>
+                  {content}
+                </OverlayPortalContext.Provider>
+              </div>
             </div>
           }
         </ThemedPortal>

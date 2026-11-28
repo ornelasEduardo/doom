@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useContext, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { ThemeRuntimeContext, ThemeScope } from "./ThemeScope";
 import type { SurfaceContext } from "./types";
+
+export const OverlayPortalContext = createContext<Element | null>(null);
 
 const subscribe = () => () => {};
 const clientSnapshot = () => true;
@@ -22,6 +24,7 @@ export function ThemedPortal({
   surface,
 }: ThemedPortalProps) {
   const runtime = useContext(ThemeRuntimeContext);
+  const overlayHost = useContext(OverlayPortalContext);
   const mounted = useSyncExternalStore(
     subscribe,
     clientSnapshot,
@@ -30,7 +33,8 @@ export function ThemedPortal({
   if (!mounted) {
     return null;
   }
-  const host = container ?? runtime?.portalContainer ?? document.body;
+  const host =
+    container ?? overlayHost ?? runtime?.portalContainer ?? document.body;
   if (!(host instanceof Element) || host.getRootNode() !== document) {
     throw new Error(
       "portalContainer must be a connected element in the current document’s light DOM. Shadow trees, iframe documents and detached hosts are unsupported.",
