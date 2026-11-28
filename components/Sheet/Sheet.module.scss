@@ -45,10 +45,10 @@
     z-index: var(--z-drawer);
     transform: translateY(100%);
     transition: transform var(--duration-slow) var(--ease-out);
-    visibility: hidden;
+    pointer-events: none;
 
     &.isOpen {
-      visibility: visible;
+      pointer-events: auto;
       transform: translateY(0);
     }
 
@@ -140,6 +140,22 @@
     @include mq("sm", "max") {
       padding: var(--space-2) var(--surface-padding) var(--space-2)
         var(--surface-padding);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @starting-style {
+      .panel.isOpen {
+        transform: translateY(100%);
+      }
+      .overlay.isOpen {
+        opacity: 0;
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .panel,
+    .overlay {
+      transition: none;
     }
   }
 }
