@@ -1,0 +1,18 @@
+// Suppress only semantic paint, preserving computed fill/stroke opacity for GPU.
+// Filters do not alter SVG hit testing. Keep this outside component layers so
+// theme paint rules cannot accidentally reveal duplicate SVG marks.
+[data-chart-plot] {
+  // The scene replaces this initial value with its native SVG filter URL.
+  --chart-gpu-paint-filter: opacity(0);
+}
+
+[data-chart-gpu-mark] {
+  filter: var(--chart-gpu-paint-filter, opacity(0)) !important;
+}
+
+@layer doom.components {
+  // Semantic SVG marks do not paint; GPU draw frames consume their final styles.
+  [data-chart-plot] [data-chart-gpu-mark] {
+    transition: none;
+  }
+}
